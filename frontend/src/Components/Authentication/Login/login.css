@@ -2,6 +2,27 @@
   max-width: 1200px;
 }
 
+.loginContainer {
+  display: flex;
+  height: 100vh;
+}
+
+.welcomeContent {
+  margin: 0;
+  width: 50%;
+  /* background: #2a7b9b; */
+  background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+  display: flex;
+  align-content: center;
+  align-items: center;
+}
+
+.welcomeText {
+  padding: 2em;
+  width: 90%;
+  color: white;
+}
+
 .loginContent {
   display: flex;
   /* justify-content: space-between; */
@@ -11,16 +32,18 @@
   align-items: center;
   padding: 10px;
   gap: 2em;
+  width: 25vw;
 }
 
 .loginData {
   display: flex;
   gap: 2em;
   height: 75vh;
-  border: 1px solid black;
+  /* border: 1px solid #2a7b9b; */
   border-radius: 10px;
   /* padding: 25px; */
-  width: 60vw;
+  /* width: 60vw; */
+  width: 100%;
 }
 
 .loginImg {
@@ -29,10 +52,20 @@
   align-content: center;
   margin: 10% auto;
   border: 1px solid red; */
-  background-color: red;
+  /* background-color: gray; */
   padding: 10px;
   width: 35vw;
   margin: 0;
+  /* border-radius: 10px; */
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  background: #2a7b9b;
+  background: linear-gradient(
+    346deg,
+    rgba(42, 123, 155, 1) 0%,
+    rgba(87, 199, 133, 1) 50%,
+    rgba(237, 221, 83, 1) 100%
+  );
 }
 
 .loginCred {
@@ -41,13 +74,23 @@
   display: flex;
   align-content: center;
   align-items: center;
-  padding: 10px 35px 10px 0px;
+  padding: 10px;
+  width: 100%;
+}
+
+.loginForm {
+  width: 100%;
 }
 
 .emailData,
 .passwordData {
   display: flex;
   flex-direction: column;
+  margin: 0px 0px 10px 0px;
+}
+
+.passwordData {
+    position: relative;
 }
 
 .emailData label,
@@ -55,10 +98,109 @@
 .passwordData label,
 .passwordData input {
   /* margin: 0; */
-  font-size: 18px;
-  margin: 0px 0px 10px 0px;
+  font-size: 16px;
+  /* margin: 0px 0px 8px 0px; */
+}
+
+.emailData label,
+.passwordData label {
+  margin: 10px 0px 5px 0px;
+  font-weight: 500;
+  display: flex;
+  justify-content: start;
+  align-content: center;
+  align-items: center;
+}
+
+.passwordData input,
+.emailData input {
+  height: 40px;
+  width: 100%;
 }
 
 .loginHeading {
   text-align: center;
+  margin: 0px 0px 20px 0px;
+}
+
+.welcomeHeading {
+  text-align: center;
+  line-height: 1.8;
+  font-size: 40px;
+  font-weight: 800;
+}
+
+.welcomeCon {
+  position: relative;
+  top: 8em;
+  padding: 10px;
+}
+
+.forgotPassword,
+.signinText {
+  text-align: center;
+  margin: 10px 0px;
+  color: #7b7a7a;
+  font-size: 14px;
+}
+
+.forgotPassword a {
+  text-decoration: none;
+}
+
+.forgotPassword span,
+.signinText span {
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.forgotPassword span {
+  color: #7b7a7a;
+}
+
+.login-btn {
+  border: 1px solid var(--main-auth-button-color);
+  padding: 10px;
+  width: 8em;
+  background-color: var(--main-auth-button-color);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  width: 100%;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+}
+
+.loginCred input:focus {
+  outline: 1px solid var(--main-auth-button-color);
+}
+
+.loginBtn {
+  text-align: center;
+  margin: 15px 0px 0px 0px;
+}
+
+.emailData label span,
+.passwordData label span {
+  margin: 0 5px 0 0;
+  display: flex;
+}
+
+.login-btn span {
+  margin: 0 0 0 5px;
+  display: flex;
+}
+
+.passwordVisible {
+  margin: 0;
+  display: inline;
+  position: absolute;
+  top: 63.6%;
+  /* left: 90%; */
+  right: 2%;
 }

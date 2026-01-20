@@ -1,6 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 
 * {
-    margin: 0 auto;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0 auto;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+input {
+  border: 1px solid lightgray;
+  border-radius: 4px;
+  padding: 5px;
+  font-size: 16px;
+}
+
+
+:root{
+    --main-auth-button-color:#1e3a8a
 }
