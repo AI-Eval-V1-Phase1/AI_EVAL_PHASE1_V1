@@ -1,0 +1,64 @@
+.loginWrapper {
+  max-width: 1200px;
+}
+
+.loginContent {
+  display: flex;
+  /* justify-content: space-between; */
+  /* border: 1px solid green; */
+  min-height: 100vh;
+  align-content: center;
+  align-items: center;
+  padding: 10px;
+  gap: 2em;
+}
+
+.loginData {
+  display: flex;
+  gap: 2em;
+  height: 75vh;
+  border: 1px solid black;
+  border-radius: 10px;
+  /* padding: 25px; */
+  width: 60vw;
+}
+
+.loginImg {
+  /* min-height: 100vh; */
+  /* display: inline;
+  align-content: center;
+  margin: 10% auto;
+  border: 1px solid red; */
+  background-color: red;
+  padding: 10px;
+  width: 35vw;
+  margin: 0;
+}
+
+.loginCred {
+  /* border: 1px solid black; */
+  /* padding: 10px; */
+  display: flex;
+  align-content: center;
+  align-items: center;
+  padding: 10px 35px 10px 0px;
+}
+
+.emailData,
+.passwordData {
+  display: flex;
+  flex-direction: column;
+}
+
+.emailData label,
+.emailData input,
+.passwordData label,
+.passwordData input {
+  /* margin: 0; */
+  font-size: 18px;
+  margin: 0px 0px 10px 0px;
+}
+
+.loginHeading {
+  text-align: center;
+}
