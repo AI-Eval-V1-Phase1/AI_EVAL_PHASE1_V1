@@ -20,7 +20,6 @@ const ForgotPassword = () => {
             </div>
           </div>
         </div>
-        {/* <div> */}
         <div className="loginContent">
           <div className="loginData">
             <div className="loginCred">
@@ -58,7 +57,6 @@ const ForgotPassword = () => {
             </div>
           </div>
         </div>
-        {/* </div> */}
       </div>
     </>
   );

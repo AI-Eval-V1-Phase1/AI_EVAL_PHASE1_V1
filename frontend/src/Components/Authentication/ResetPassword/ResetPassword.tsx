@@ -1,5 +1,4 @@
 import { Mail, ArrowRight, LockKeyhole, Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router-dom";
 import "./resetPassword.css";
 import { useState } from "react";
 
@@ -31,7 +30,6 @@ const ResetPassword = () => {
             </div>
           </div>
         </div>
-        {/* <div> */}
         <div className="loginContent">
           <div className="loginData">
             <div className="loginCred">
@@ -95,20 +93,11 @@ const ResetPassword = () => {
                       </span>
                     </button>
                   </div>
-                  {/* <div>
-                  <p className="signinText">
-                    Remember your credentials?{" "}
-                    <Link to="/login">
-                      <span>Sign in</span>
-                    </Link>
-                  </p>
-                </div> */}
                 </form>
               </div>
             </div>
           </div>
         </div>
-        {/* </div> */}
       </div>
     </>
   );

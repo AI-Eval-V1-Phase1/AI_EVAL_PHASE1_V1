@@ -98,7 +98,7 @@
 .passwordData label,
 .passwordData input {
   /* margin: 0; */
-  font-size: 16px;
+  font-size: 1em;
   /* margin: 0px 0px 8px 0px; */
 }
 
@@ -126,7 +126,7 @@
 .welcomeHeading {
   text-align: center;
   line-height: 1.8;
-  font-size: 40px;
+  font-size: 2.5em;
   font-weight: 800;
 }
 
@@ -141,7 +141,7 @@
   text-align: center;
   margin: 10px 0px;
   color: #7b7a7a;
-  font-size: 14px;
+  font-size: 0.875em;
 }
 
 .forgotPassword a {

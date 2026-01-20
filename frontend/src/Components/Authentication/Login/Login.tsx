@@ -36,7 +36,6 @@ const Login = () => {
             </div>
           </div>
         </div>
-        {/* <div> */}
         <div className="loginContent">
           <div className="loginData">
             <div className="loginCred">
@@ -97,7 +96,6 @@ const Login = () => {
             </div>
           </div>
         </div>
-        {/* </div> */}
       </div>
     </>
   );

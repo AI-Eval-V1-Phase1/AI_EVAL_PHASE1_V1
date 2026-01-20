@@ -1,0 +1,90 @@
+.top_nav_content {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.1em 1.5em;
+  /* height: 3em; */
+}
+.nav_left_content {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  gap: 1.2em;
+}
+.nav_right_content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1em;
+  padding: 0 1em 0 0;
+}
+
+.notifications_icon_sec {
+  margin: 3px 0 0 0;
+}
+
+.logo_name h3 {
+  color: var(--main-dark-color);
+  font-size: 1.5em;
+}
+
+.logo_name p {
+  color: #4b5563;
+  font-size: 0.9em;
+}
+
+.logo_img {
+  padding: 0.5em;
+  width: 50px;
+  height: 50px;
+  background-color: var(--main-dark-color);
+  color: white;
+  border-radius: 50%; /* circle */
+}
+
+.user_icon_sec {
+  /* border: 1px solid red; */
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+/* .user_icon_sec span {
+  
+    background-color: var(--main-dark-color);
+    color: white;
+    border-radius: 50%;
+    width: 2.5em;
+    height: 2.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1em;
+  
+} */
+.userName {
+  font-size: 0.9em;
+}
+.initials {
+  width: 35px;
+  height: 35px;
+  color: white;
+  background-color: var(--main-dark-color);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.8em;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notification_icon {
+  fill: var(--main-dark-color);
+  stroke: var(--main-dark-color);
+  cursor: pointer;
+}
+
+.email_id {
+  font-size: 0.9em;
+  color: var(--grey-color);
+}
