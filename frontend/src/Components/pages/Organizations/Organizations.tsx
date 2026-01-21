@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "./organization.css";
 import CreateOrganization from "./CreateOrganization";
 import OrganizationDataTable from "./OrganizationDataTable";
+import { Landmark, Plus } from "lucide-react";
 
 const Organizations = () => {
     document.title = "AI EVAL | Organizations"
@@ -15,9 +16,9 @@ const Organizations = () => {
     <>
       <div className="organizationPage">
         <div className="organizationHeading">
-          <h1>Organizations</h1>
+          <h1 className="screenHeading"><span><Landmark width={26} height={26}/></span>Organizations</h1>
           <button className="createOrg" onClick={createOrganization}>
-            <span>*</span>Create Organization
+            <span className="createOrgImg"><Plus /></span>Organization
           </button>
         </div>
         {isOrganization && (

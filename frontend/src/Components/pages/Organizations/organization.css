@@ -8,7 +8,7 @@
   /* background-color: var(--main-auth-button-color);
     color: white; */
   border: 1px solid var(--main-auth-button-color);
-  padding: 10px;
+  padding: 5px 10px;
   width: 8em;
   background-color: var(--main-auth-button-color);
   font-size: 16px;
@@ -21,6 +21,11 @@
   justify-content: center;
   align-content: center;
   align-items: center;
+  gap: 5px;
+}
+
+.createOrgImg {
+  display: flex;
 }
 
 .modal-overlay {
@@ -39,7 +44,7 @@
 
 .newOrg {
   background-color: white;
-  padding: 30px;
+  padding: 20px 30px;
   border-radius: 10px;
   width: 90%;
   max-width: 30em;
@@ -64,6 +69,11 @@
   justify-content: start;
   align-content: center;
   align-items: center;
+  gap: 5px;
+}
+
+.orgDetails label span {
+  display: flex;
 }
 
 .orgBtns {
@@ -85,6 +95,12 @@
   justify-content: center;
   align-content: center;
   align-items: center;
+  gap: 5px;
+}
+
+.orgCreateBtn span,
+.orgCancelBtn span {
+  display: flex;
 }
 
 .orgCreateBtn {
@@ -125,9 +141,11 @@
   align-content: center;
   align-items: center;
   gap: 0.8em;
+  /* margin: 0 0 15px 0; */
 }
 
-.editOrgImg {
+.editOrgImg,
+.deleteOrgImg {
   font-weight: 600;
   font-size: 1em;
   display: flex;
@@ -136,7 +154,76 @@
   gap: 5px;
 }
 
+.inactiveStatus,
+.activeStatus {
+  font-weight: 600;
+  font-size: 1em;
+  padding: 5px;
+  border-radius: 4px;
+  width: 6em;
+  text-align: center;
+}
 
-.editOrgImg span {
+.editOrgImg span,
+.deleteOrgImg span {
+  display: flex;
+}
+
+.newOrgHeading {
+  display: flex;
+  justify-content: space-between;
+  align-content: center;
+  align-items: center;
+}
+
+.newOrgHeading span {
+  display: flex;
+  cursor: pointer;
+}
+
+.editOrgImg,
+.deleteOrgImg {
+  padding: 2px 10px;
+  /* background-color: var(--main-auth-button-color); */
+  border-radius: 4px;
+  /* color: white; */
+}
+
+.editOrgImg {
+  background-color: var(--edit-button-background);
+  color: var(--edit-button-color);
+}
+
+.deleteOrgImg {
+  background-color: var(--delete-button-background);
+}
+
+.activeStatus {
+  background-color: var(--active-status-background);
+}
+
+.inactiveStatus {
+  background-color: var(--inactive-status-background);
+}
+
+.searchCondition {
+  font-size: 0.6em;
+  position: absolute;
+  top: 5.5em;
+  right: 10em;
+}
+
+.filterInput {
+    position: relative;
+}
+
+.screenHeading {
+    display: flex;
+  align-content: center;
+  align-items: center;
+  gap: 7px;
+}
+
+.screenHeading span {
     display: flex;
 }

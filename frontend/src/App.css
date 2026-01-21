@@ -17,5 +17,10 @@ input {
 
 
 :root{
-    --main-auth-button-color:#1e3a8a
+    --main-auth-button-color:#1e3a8a;
+    --edit-button-background:#bde0fe;
+    --edit-button-color:black;
+    --delete-button-background:#ffccd5;
+    --active-status-background:#d8f3dc;
+    --inactive-status-background:#ffccd5
 }
