@@ -1,0 +1,142 @@
+.organizationHeading {
+  display: flex;
+  justify-content: space-between;
+  margin: 10px 0px 0px 0px;
+}
+
+.createOrg {
+  /* background-color: var(--main-auth-button-color);
+    color: white; */
+  border: 1px solid var(--main-auth-button-color);
+  padding: 10px;
+  width: 8em;
+  background-color: var(--main-auth-button-color);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  width: fit-content;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.newOrg {
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 30em;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgb(148, 163, 184);
+}
+
+.orgName {
+  display: flex;
+  flex-direction: column;
+}
+
+.orgDetails {
+  margin: 10px 0px;
+}
+
+.orgDetails label {
+  margin: 10px 0px 5px 0px;
+  font-weight: 500;
+  display: flex;
+  justify-content: start;
+  align-content: center;
+  align-items: center;
+}
+
+.orgBtns {
+  display: flex;
+  justify-content: space-between;
+  margin: 1.5em 0 0 0;
+  width: 100%;
+  gap: 1em;
+}
+
+.orgCreateBtn,
+.orgCancelBtn {
+  width: 50%;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+}
+
+.orgCreateBtn {
+  border: 1px solid var(--main-auth-button-color);
+  padding: 10px;
+  background-color: var(--main-auth-button-color);
+  color: white;
+}
+
+.orgCancelBtn {
+  background-color: red;
+  color: white;
+  border: 1px solid red;
+}
+
+.tableHeader {
+  font-size: 1.3em;
+  font-weight: 500;
+}
+
+.orgDataTable {
+  /* border: 1px solid lightgray; */
+  border-radius: 4px;
+  margin: 30px 0 0 0;
+}
+
+.orgDataTable header {
+  padding: 10px 0;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 1em;
+}
+
+.filterOption {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  gap: 0.8em;
+}
+
+.editOrgImg {
+  font-weight: 600;
+  font-size: 1em;
+  display: flex;
+  align-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+
+.editOrgImg span {
+    display: flex;
+}

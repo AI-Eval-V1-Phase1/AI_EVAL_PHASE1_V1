@@ -17,6 +17,7 @@ import UserManagement from "./Components/pages/UserManagement/UserManagement";
 import { DirectoryListing } from "./Components/pages/DirectoryListing/DirectoryListing";
 import Reports from "./Components/pages/Reports/Reports";
 import MyVendors from "./Components/pages/MyVendors/MyVendors";
+import Organizations from "./Components/pages/Organizations/Organizations";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/organizations" element={<Organizations />} />
             <Route path="/assessments" element={<Assessments />} />
             <Route path="/vendor-directory" element={<VendorDirectory />} />
             <Route path="/my-vendor" element={<MyVendors />} />

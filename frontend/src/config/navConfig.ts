@@ -11,6 +11,7 @@ import {
   TrendingUp,
   UserCog,
   Users,
+  Landmark,
   type LucideIcon,
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ export interface NavItem {
 export const NAVIGATION = {
   admin: [
     { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+    { label: "Organizations", icon: Landmark, path: "/organizations" },
     { label: "Assessments", icon: ClipboardCheck, path: "/assessments" },
     { label: "Vendor Directory", icon: Building2, path: "/vendor-directory" },
     { label: "My Vendors", icon: Users, path: "/my-vendor" },
