@@ -1,0 +1,21 @@
+/* .sec_user_page{
+    border: 1px solid red;
+} */
+
+.heading_user_page {
+  display: flex;
+  justify-content: space-between;
+}
+
+.heading_user_page {
+  display: flex;
+  justify-content: space-between;
+}
+.title_for_page{
+    font-size: 2em;
+    color: var(--main-dark-color);
+}
+.sub_title{
+  color: #4b5563;
+  font-size: 0.9em;
+}

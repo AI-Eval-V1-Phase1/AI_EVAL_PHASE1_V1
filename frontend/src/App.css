@@ -14,13 +14,32 @@ input {
   font-size: 16px;
   height: 40px;
 }
+button {
+  font-family: "Inter", sans-serif;
+}
 
+.invite_user_btn {
+  background-color: var(--main-dark-color);
+  color: white;
+  padding: 0.5em;
+  border: none;
+  width: 10em;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  font-size: 1em;
+  gap: 0.5em;
+  cursor: pointer;
+  margin: 0 1.7em 0 0;
+}
 
-:root{
-    --main-auth-button-color:#1e3a8a;
-    --edit-button-background:#bde0fe;
-    --edit-button-color:black;
-    --delete-button-background:#ffccd5;
-    --active-status-background:#d8f3dc;
-    --inactive-status-background:#ffccd5
+:root {
+  --main-auth-button-color: #1e3a8a;
+  --edit-button-background: #bde0fe;
+  --edit-button-color: black;
+  --delete-button-background: #ffccd5;
+  --active-status-background: #d8f3dc;
+  --inactive-status-background: #ffccd5;
 }
