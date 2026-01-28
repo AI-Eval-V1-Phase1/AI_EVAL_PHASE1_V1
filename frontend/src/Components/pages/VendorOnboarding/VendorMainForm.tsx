@@ -10,6 +10,8 @@ import StepGeopgraphy from "./StepGeopgraphy";
 import { ChevronLeftCircle, ChevronRightCircle, Send } from "lucide-react";
 import StepVendorOnboardingPreview from "./StepVendorOnboardingPreview";
 import { useNavigate } from "react-router-dom";
+import CardOnBoarding from "../../UI/CardOnBoarding";
+import CardContainerOnBoarding from "../../UI/CardContainerOnBoarding";
 
 const VendorMainForm = () => {
   useEffect(() => {
@@ -41,16 +43,19 @@ const VendorMainForm = () => {
   };
   return (
     <>
-      <div className="main_form_content">
+      <CardContainerOnBoarding>
         <form action="" onSubmit={hanldeVendorOnboardingSubmit}>
-          {currentStep === 0 && <StepCompanyProfile />}
-          {currentStep === 1 && <StepContactInformation />}
-          {currentStep === 2 && <StepCompanyScale />}
-          {currentStep === 3 && <StepGeopgraphy />}
-          {currentStep === 4 && <StepVendorOnboardingPreview />}
+          <CardOnBoarding className="card_vendor">
+            {currentStep === 0 && <StepCompanyProfile />}
+            {currentStep === 1 && <StepContactInformation />}
+            {currentStep === 2 && <StepCompanyScale />}
+            {currentStep === 3 && <StepGeopgraphy />}
+            {currentStep === 4 && <StepVendorOnboardingPreview />}
+          </CardOnBoarding>
+
           {/* {currentStep === 4 && <StepCustomerRiskMitigation/>} */}
 
-          <div className="action_btns">
+          <div className="vendor_action_btns">
             <div className="action_back">
               {currentStep === 0 ? (
                 <>
@@ -108,7 +113,10 @@ const VendorMainForm = () => {
             )}
           </div>
         </form>
-      </div>
+      </CardContainerOnBoarding>
+      {/* <div className="main_form_content"> */}
+
+      {/* </div> */}
     </>
   );
 };

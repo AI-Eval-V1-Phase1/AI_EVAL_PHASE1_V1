@@ -1,0 +1,18 @@
+.user_popup {
+  position: absolute;
+  border: 1px solid red;
+  width: 15em;
+  right: 10%;
+  border-radius: 12px;
+}
+
+.user_popup ul li {
+  list-style-type: none;
+}
+
+.user_popup ul li span {
+    display: flex;
+    align-items: center;
+    align-content: center;
+}
+

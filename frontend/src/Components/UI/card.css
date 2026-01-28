@@ -1,0 +1,38 @@
+.acrd_container{
+  width: 100%;
+}
+
+.card {
+  width: 900px;
+  height: 500px;
+  max-height: 900px;
+  background-color: var(--card-onboarding-bg-color);
+  padding: 1em;
+}
+
+.card_section {
+  display: flex;
+  /* justify-content: space-between; */
+  align-content: center;
+  align-items: center;
+  flex-direction: column;
+
+}
+
+.card_vendor{
+   display: flex;
+   flex-direction: column;
+   padding: 0 6em;
+  /* justify-content: space-between; */
+  /* align-content: center; */
+  /* align-items: center; */
+}
+
+.header_for_vendor{
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-content: center;
+  align-items: center;
+  margin: 0.9em 0 0 0;
+}

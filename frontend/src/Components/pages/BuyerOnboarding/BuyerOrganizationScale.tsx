@@ -1,4 +1,3 @@
-import React from "react";
 import Input from "../../UI/Input";
 import Select from "../../UI/Select";
 import HeaderForBuyer from "./HeaderForBuyer";

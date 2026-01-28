@@ -1,9 +1,11 @@
 import { Mail, ArrowRight, LockKeyhole, Eye, EyeOff } from "lucide-react";
 import "./resetPassword.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const ResetPassword = () => {
-  document.title = "AI EVAL | Reset Password";
+  useEffect(() => {
+    document.title = "AI EVAL | Reset Password";
+  })
 
   const [isVisible, setIsVisible] = useState(false);
   const [isVisibleConfirm, setIsVisibleConfirm] = useState(false);

@@ -11,13 +11,14 @@ const StepGeopgraphy = () => {
       </div> */}
 
       <HeaderForVendor
+      className="header_for_vendor"
         title_vendor="Geography"
-        sub_title_vendor="All the fields are mandatory"
+        // sub_title_vendor="All the fields are mandatory"
       />
-      <div className="step_form_body">
+      {/* <div className="step_form_body"> */}
         {/* <div className="step_form_right"> when the fields are more than 2 uncomment this remove the below line */}
-        <div className="align_form_center">
-          <div className="form_fields">
+        <div >
+          <div className="form_fields_vendor">
             <Input
               labelName="Headquarters Location"
               type="text"
@@ -27,7 +28,7 @@ const StepGeopgraphy = () => {
               onChange=""
             />
           </div>
-          <div className="form_fields">
+          <div className="form_fields_vendor">
             <Input
               labelName="Operating Regions"
               type="operating_reg"
@@ -41,7 +42,7 @@ const StepGeopgraphy = () => {
         
         </div> */}
         </div>
-      </div>
+      {/* </div> */}
     </>
   );
 };

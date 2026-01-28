@@ -47,9 +47,12 @@ select {
 
 :root {
   --main-auth-button-color: #1e3a8a;
+  --background-color-onboarding: #EFF6FF;
   --edit-button-background: #bde0fe;
   --edit-button-color: black;
   --delete-button-background: #ffccd5;
   --active-status-background: #d8f3dc;
   --inactive-status-background: #ffccd5;
+  --card-onboarding-bg-color: #f5f7fa
+  
 }

@@ -1,6 +1,4 @@
-
 .container {
- 
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -18,7 +16,7 @@
   flex-shrink: 0;
   padding: 0.2em 0.1em;
   border-bottom: 0.5px solid #dadce0;
-  background-color: #F5F7FA;
+  background-color: #f5f7fa;
   position: fixed;
   top: 0;
   /* border: 1px solid blue; */
@@ -36,7 +34,7 @@
 .side_nav {
   width: 240px;
   flex-shrink: 0;
-  background-color: #F5F7FA;
+  background-color: #f5f7fa;
   overflow-y: auto;
 }
 
@@ -48,10 +46,28 @@
   margin: 1em 0 1em 0;
 }
 
-.onBoarding_container{
-  background-color: #F8FAFC;
+/* css onboarding layout starts here */
+
+.layout_onBoarrding {
+  background-color: var(--background-color-onboarding);
+  min-height: 100vh; /* ensures it fills full height */
+  display: flex;
+  flex-direction: column;
+}
+.header_onboarding {
+  text-align: center;
+  padding: 20px 20px 0 20px;
 }
 
-.welcome_msg_onboarding{
-  margin: 1em 0 0 0;
+.container_onBoarding {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.main_onBoarding {
+  display: flex;
+  flex-direction: column;
+
+  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); */
+  margin-top: 10px;
 }

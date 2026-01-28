@@ -5,23 +5,21 @@ import HeaderForVendor from "./HeaderForVendor";
 const StepContactInformation = () => {
   return (
     <>
+      {/* <div className="step_form_header">
+        <h2>Contact Information</h2>
+        <p>All the fields are mandatory</p>
+      </div> */}
+
       <HeaderForVendor
-        className="header_for_vendor"
         title_vendor="Contact Information"
-        // sub_title_vendor="Tell us about your AI products and services"
+        sub_title_vendor="All the fields are mandatory"
       />
 
-      {/* <div className="step_form_body"> */}
-      <div>
-        {/* <div className="step_form_right"> */}
-        <div>
-          <div className="form_fields_vendor">
+      <div className="step_form_body">
+        <div className="step_form_right">
+          <div className="form_fields">
             <Input
-              labelName={
-                <>
-                  Primary Contact Name <span className="mandatory">*</span>
-                </>
-              }
+              labelName="Primary Contact Name"
               type="text"
               id="primary_contact_name"
               name="primary_contact_name"
@@ -29,13 +27,9 @@ const StepContactInformation = () => {
               onChange=""
             />
           </div>
-          <div className="form_fields_vendor">
+          <div className="form_fields">
             <Input
-              labelName={
-                <>
-                  Primary Contact Email <span className="mandatory">*</span>
-                </>
-              }
+              labelName="Primary Contact Email"
               type="email"
               id="primary_contact_email"
               name="primary_contact_email"
@@ -44,15 +38,10 @@ const StepContactInformation = () => {
             />
           </div>
         </div>
-        {/* <div className="step_form_left"> */}
-        <div>
-          <div className="form_fields_vendor">
+        <div className="step_form_left">
+          <div className="form_fields">
             <Input
-              labelName={
-                <>
-                  Primary Contact Role <span className="mandatory">*</span>
-                </>
-              }
+              labelName="Primary Contact Role"
               type="text"
               id="primary_contact_role"
               name="primary_contact_role"

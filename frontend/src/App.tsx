@@ -22,6 +22,7 @@ import LayoutWithoutNav from "./Components/layout/LayoutWithoutNav";;
 import VendorMainForm from "./Components/pages/VendorOnboarding/VendorMainForm";
 import Onboarding from "./Components/pages/OnBoarding/Onboarding";
 import BuyerMainForm from "./Components/pages/BuyerOnboarding/BuyerMainForm";
+import SignUp from "./Components/Authentication/SignUp/SignUp";
 
 function App() {
   return (
@@ -32,6 +33,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgotPassword" element={<ForgotPassword />} />
           <Route path="/resetPassword" element={<ResetPassword />} />
+                    <Route path="/signup" element={<SignUp/>}/>
+
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/dashboard" element={<Dashboard />} />

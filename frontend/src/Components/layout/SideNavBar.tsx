@@ -1,4 +1,4 @@
-import { NAVIGATION } from "../../config/navConfig";
+import { NAVIGATION } from "../../config/navConfig"; // the list of side navigation bar
 import { NavLink } from "react-router-dom";
 import "../../styles/layout/sideNav.css";
 

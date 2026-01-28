@@ -7,11 +7,12 @@ const Toaster = () => {
   return (
     <ToastContainer
       position="top-right"      // where the toast appears
-      autoClose={3000}          // auto close after 3s
+      autoClose={2000}          // auto close after 3s
       hideProgressBar={false}   // show/hide progress bar
       newestOnTop={true}
       closeOnClick
       rtl={false}
+      theme="colored"
       pauseOnFocusLoss
       draggable
       pauseOnHover

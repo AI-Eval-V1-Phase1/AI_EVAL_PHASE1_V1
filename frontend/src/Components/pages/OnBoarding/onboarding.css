@@ -4,6 +4,7 @@
   box-sizing: border-box;
 }
 
+
 .radio-wrapper-22 .radio-input {
   clip: rect(0 0 0 0);
   -webkit-clip-path: inset(100%);
@@ -17,7 +18,7 @@
 .radio-wrapper-22 .radio-input:checked + .radio-tile {
   border-color: #2260ff;
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-  color: #2260ff;
+  /* color: #2260ff; */
 }
 .radio-wrapper-22 .radio-input:checked + .radio-tile:before {
   transform: scale(1);
@@ -46,12 +47,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 9rem;
-  min-height: 9rem;
+  width: 21em;
+  min-height: 24em;
   /* width: 9rem;
   min-height: 9rem; */
   border-radius: 0.5rem;
-  border: 2px solid #b5bfd9;
+  /* border: 2px solid #b5bfd9; */
+  border: 2px solid transparent;
   background-color: #fff;
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
   transition: 0.15s ease;
@@ -98,13 +100,16 @@
   color: #707070;
   transition: 0.375s ease;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   /* font-size: 1.2em; */
 }
 
 .onboarding_sec {
   display: flex;
   justify-content: space-around;
-/* margin: 2.2em 0 1em 0; */
+  /* margin: 2.2em 0 1em 0; */
   position: absolute;
   top: 36%;
   left: 27%;
@@ -126,6 +131,71 @@
 }
 
 .disabled_css {
-    opacity: 0.6;
-    cursor: not-allowed;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sub_title_card {
+color: #4b5563;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.card_list ul{
+  margin: 1em;
+}
+.card_list ul li {
+  list-style-type: none;
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.5em;
+  padding: 0.2em 0;
+  font-size: 0.95em;
+}
+
+.title_card {
+font-size: 1.1em;
+  color: black;
+  font-weight: 600;
+  /* margin: 0.5em; */
+  padding: 0.4em 0;
+}
+
+.card_para {
+  color: #4b5563;
+  font-size: 0.95em;
+  line-height: 1.4;
+  text-align: justify;
+  margin: 1em;
+}
+
+.card_continue_btn{
+  width: 100%;
+  margin: 1em 0 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--main-auth-button-color);
+  padding: 10px;
+  background-color: var(--main-auth-button-color);
+  color: white;
+}
+.card_continue_btn span{
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.card_onboarding{
+  display: flex;
+  gap: 5em;
+  margin: 1em 0;
 }
