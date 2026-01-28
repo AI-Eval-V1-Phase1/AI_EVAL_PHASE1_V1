@@ -1,4 +1,4 @@
-import { SquarePen, Trash, Trash2 } from "lucide-react";
+import { SquarePen} from "lucide-react";
 import React from "react";
 import DataTable from "react-data-table-component";
 
@@ -11,13 +11,19 @@ const UserDataTable = () => {
       id: "1",
       userName: "Test User",
       userStatus: "Active",
-      userEmail:"testuser@domain.com"
+      userEmail: "testuser@domain.com",
+      userSystemRole: "System Admin",
+      userRole: "Admin",
+      organization_name: "Organization 1",
     },
     {
       id: "2",
-      userName: "Test User 2",
+      userName: "Demo User 2",
       userStatus: "Inactive",
-      userEmail:"test2@domain.com"
+      userEmail: "test2@domain.com",
+      userSystemRole: "System Admin",
+      userRole: "Admin",
+      organization_name: "Organization 2",
     },
   ];
 
@@ -39,11 +45,11 @@ const UserDataTable = () => {
       <div className="filterOption">
         <label htmlFor="">Search</label>{" "}
         <input
-        className="filterInput"
+          className="filterInput"
           name=""
           type="text"
           id="search"
-          placeholder="Filter By Organization"
+          placeholder="Filter By User Name"
           aria-label="Search Input"
           value={filterText}
           onChange={onFilter}
@@ -97,6 +103,11 @@ const UserDataTable = () => {
       sortable: true,
     },
     {
+      name: <div className="tableHeader">Organization</div>,
+      selector: (row) => row.organization_name,
+      sortable: true,
+    },
+    {
       name: <div className="tableHeader">Status</div>,
       selector: (row) => (
         <p
@@ -104,9 +115,19 @@ const UserDataTable = () => {
             row.userStatus === "Active" ? "activeStatus" : "inactiveStatus"
           }
         >
-          {row.orgStatus}
+          {row.userStatus}
         </p>
       ),
+      sortable: true,
+    },
+    {
+      name: <div className="tableHeader">System Role</div>,
+      selector: (row) => row.userSystemRole,
+      sortable: true,
+    },
+    {
+      name: <div className="tableHeader">User Role</div>,
+      selector: (row) => row.userRole,
       sortable: true,
     },
     {
@@ -154,4 +175,3 @@ const UserDataTable = () => {
 };
 
 export default UserDataTable;
- 

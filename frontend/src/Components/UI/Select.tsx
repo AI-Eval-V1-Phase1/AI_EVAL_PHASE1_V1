@@ -1,19 +1,57 @@
 import React from "react";
 
-const Select = ({ label, ...props }) => {
-  const { typeOfOptions, default_option } = props;
-//   const optionsList = [
-//     organization: {
+type Option = {
+  label: string;
+  value: string;
+};
 
-//     }
-//   ];
+type SelectProps = {
+  labelName: string;
+  id?: string;
+  icon?: React.ReactNode;
+  name: string;
+  value: string;
+  default_option: string;
+  options: Option[];
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+};
+
+const Select = ({
+  labelName,
+  id,
+  icon,
+  name,
+  value,
+  default_option,
+  options,
+  onChange,
+}: SelectProps) => {
+
+  console.log(options);
   return (
-    <div>
-      <label>{label}</label>
-      <select>
-        <option value="" selected disabled>{default_option}</option>
+    <>
+      <label htmlFor={id || name} className="select_label">
+        {icon && <span className="icon">{icon}</span>}
+        {labelName}
+      </label>
+
+      <select
+        id={id || name}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="select_input"
+      >
+        <option value="" disabled>
+          {default_option}
+        </option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
       </select>
-    </div>
+    </>
   );
 };
 

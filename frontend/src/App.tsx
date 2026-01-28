@@ -1,4 +1,3 @@
-import { useState } from "react";
 import "./App.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "./Components/Authentication/Login/Login";
@@ -18,10 +17,16 @@ import { DirectoryListing } from "./Components/pages/DirectoryListing/DirectoryL
 import Reports from "./Components/pages/Reports/Reports";
 import MyVendors from "./Components/pages/MyVendors/MyVendors";
 import Organizations from "./Components/pages/Organizations/Organizations";
+import Toaster from "./Components/Toaster/Toaster";
+import LayoutWithoutNav from "./Components/layout/LayoutWithoutNav";;
+import VendorMainForm from "./Components/pages/VendorOnboarding/VendorMainForm";
+import Onboarding from "./Components/pages/OnBoarding/Onboarding";
+import BuyerMainForm from "./Components/pages/BuyerOnboarding/BuyerMainForm";
 
 function App() {
   return (
     <>
+    <Toaster/>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -43,6 +48,15 @@ function App() {
 
             <Route path="/user-management" element={<UserManagement />} />
           </Route>
+
+{/* This Routing layout is for Vendor and Buyer onboarding without the side navigation bar  */}
+          <Route element={<LayoutWithoutNav/>}>
+          <Route path="/onBoarding" element={<Onboarding/>}/>
+          <Route path="/onBoarding/vendorOnboarding" element={<VendorMainForm/>}/>
+          <Route path="/onBoarding/buyerOnboarding" element={<BuyerMainForm/>}/>
+
+          </Route>
+
         </Routes>
       </BrowserRouter>
     </>

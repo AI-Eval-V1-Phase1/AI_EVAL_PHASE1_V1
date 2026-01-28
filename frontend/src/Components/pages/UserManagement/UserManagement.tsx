@@ -1,21 +1,96 @@
-import { UserPlus } from "lucide-react";
+import {
+  UserCog,
+  UserPlus,
+  Ban,
+  Send,
+  Mail,
+  Landmark,
+  UserStar,
+  CircleX,
+} from "lucide-react";
 import Button from "../../UI/Button";
-import Tabs from "../../UI/Tabs";
+// import Tabs from "../../UI/Tabs";
 import "./user_management.css";
 import { useState } from "react";
 import Modal from "../../UI/Modal";
 import Input from "../../UI/Input";
 import Select from "../../UI/Select";
 import UserDataTable from "./UserDataTable";
+import { useEffect } from "react";
+import { toast } from "react-toastify";
 // import DataTable from "react-data-table-component";
 
 const UserManagement = () => {
+  useEffect(() => {
+    document.title = "AI Eval | User Management";
+  }, []);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [organization, setOrganization] = useState("");
+  const [role, setRole] = useState("");
+
+  const handleInvite = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const userFormData = { email, organization, role };
+    console.log("Submitting form with:", userFormData); // 🔹 add this
+
+    try {
+      const response = await fetch(
+        "http://localhost:5003/api/v1/user/invite_user", // matches backend
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(userFormData),
+        },
+      );
+      const result = await response.json();
+      if (response.ok) {
+        console.log("Success:", result);
+        toast.success("User invited successfully! ");
+        setIsModalOpen(false);
+        setEmail("");
+        setOrganization("");
+        setRole("");
+      } else {
+        console.error("Server error:", result.message);
+        toast.error(result.message);
+      }
+    } catch (err) {
+      console.error("Failed to parse JSON:", err);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEmail("");
+    setOrganization("");
+    setRole("");
+  };
+
+  const orgOptions = [
+    { value: "Organization 1", label: "Organization 1" },
+    { value: "Organization 2", label: "Organization 2" },
+  ];
+  const roleOptions = [
+    { value: "admin", label: "admin" },
+    { value: "system admin", label: "system admin" },
+    { value: "analyst", label: "Analyst" },
+    { value: "manager", label: "manager" },
+    { value: "viewer", label: "viewer" },
+    { value: "user", label: "user" },
+  ];
+
   return (
     <div className="sec_user_page">
       <div className="heading_user_page">
         <div className="headers">
-          <h1 >User Management</h1>
+          <h1>
+            <span>
+              <UserCog width={28} height={28} />
+            </span>
+            User Management
+          </h1>
           <p className="sub_title">Manage users, roles and invitations</p>
         </div>
         <div className="btn_user_page">
@@ -23,40 +98,97 @@ const UserManagement = () => {
             className="invite_user_btn"
             onClick={() => setIsModalOpen(true)}
           >
-            <UserPlus size={20} />
+            <UserPlus size={24} />
             Invite User
           </Button>
         </div>
       </div>
-      <div className="tabs_user_page">
+      {/* <div className="tabs_user_page">
         <Tabs></Tabs>
-      </div>
+      </div> */}
       <div className="table_user_page">
         <UserDataTable />
       </div>
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <h3 className="modal_popup_title">Invite New User</h3>
-        <p className="sub_title">
-          Send an invitation email to add a new user to your organization
-        </p>
-        <div className="popup_fields">
-          <Input label="Email Address" id="email_id" type="email" />
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+        <div className="header_modal">
+          <div>
+            <h2 className="modal_popup_title">Invite New User</h2>
+            <p className="modal_sub_title">
+              Send an invitation email to add a new user to your organization
+            </p>
+          </div>
+          <div className="cancel">
+            <Button
+              className="user_cancel_btn"
+              onClick={() => setIsModalOpen(false)}
+            >
+              <span>
+                <CircleX />
+              </span>
+            </Button>
+          </div>
         </div>
-        <div className="popup_fields">
-          <Select
-            typeOfOptions="organization"
-            label="Organization"
-            default_option="Select Organization"
-          />
-        </div>
-        <div className="popup_fields">
-          <Select
-            typeOfOptions="role"
-            label="Role"
-            default_option="Select Role"
-          />
-        </div>
-        div.
+
+        <form onSubmit={handleInvite} autoComplete="off">
+          <div className="popup_fields">
+            <Input
+              labelName="Email Address"
+              id="email_id"
+              type="email"
+              icon={<Mail width={20} height={24} />}
+              name="user_email_id"
+              value={email}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEmail(e.target.value)
+              }
+            />
+          </div>
+          <div className="popup_fields">
+            <Select
+              labelName="Organization"
+              default_option="Select Organization"
+              icon={<Landmark width={20} height={24} />}
+              name="user_organization"
+              options={orgOptions}
+              value={organization}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                setOrganization(e.target.value)
+              }
+            />
+          </div>
+          <div className="popup_fields">
+            <Select
+              labelName="Role"
+              default_option="Select Role"
+              icon={<UserStar width={20} height={24} />}
+              name="user_role"
+              options={roleOptions}
+              value={role}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                setRole(e.target.value)
+              }
+            />
+          </div>
+          <div className="fields_for_button_actions orgBtns">
+            <Button
+              onClick={() => setIsModalOpen(false)}
+              className="orgCancelBtn"
+              type="button"
+            >
+              <span>
+                <Ban size={16} />
+              </span>
+              Cancel
+            </Button>
+            <Button type="submit" className="orgCreateBtn">
+              {" "}
+              <span>
+                <Send size={16} />
+              </span>{" "}
+              Invite
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

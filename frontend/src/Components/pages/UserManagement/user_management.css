@@ -2,20 +2,77 @@
     border: 1px solid red;
 } */
 
+.headers h1 {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  gap: 7px;
+}
 .heading_user_page {
   display: flex;
   justify-content: space-between;
+  margin: 10px 0px 0px 0px;
 }
 
 .heading_user_page {
   display: flex;
   justify-content: space-between;
 }
-.title_for_page{
-    font-size: 2em;
-    color: var(--main-dark-color);
+.title_for_page {
+  font-size: 2em;
+  color: var(--main-dark-color);
 }
-.sub_title{
+.sub_title,
+.modal_sub_title {
   color: #4b5563;
-  font-size: 0.9em;
+  font-size: 0.7em;
+  margin: 0 0 0 3.2em;
+}
+
+.popup_fields {
+  margin: 0 0 1em 0;
+}
+
+.popup_fields label {
+  margin: 10px 0px 5px 0px;
+  font-weight: 500;
+  display: flex;
+  justify-content: start;
+  align-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.modal_sub_title {
+  margin: 0 0 1em 0;
+}
+
+.popup_fields select{
+    text-transform: capitalize;
+      width: 26em;
+
+
+}
+.popup_fields input {
+  width: 26em;
+}
+
+.popup_fields label span {
+  display: flex;
+}
+
+.label_icons {
+  width: 20px;
+  height: 24px;
+}
+
+.user_cancel_btn {
+  background: none;
+  border: none;
+    cursor: pointer;
+
+}
+.header_modal {
+  display: flex;
+  justify-content: space-between;
 }

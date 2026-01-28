@@ -3,7 +3,7 @@ import Button from './Button'
 import "../../styles/modal/modal.css";
 
 const Modal = ({children, ...props}) => {
-const {isOpen, onClose} = props;
+const {isOpen} = props;
   if (!isOpen) return null; // Don't render anything if modal is closed
   return (
     <div className="modal_overlay" >
@@ -11,7 +11,7 @@ const {isOpen, onClose} = props;
             <div className="modal_content">
                 {children}
             </div>
-            <Button onClick={onClose}>Close</Button>
+            {/* <Button onClick={onClose}>Close</Button> */}
            
         </div>
     </div>
