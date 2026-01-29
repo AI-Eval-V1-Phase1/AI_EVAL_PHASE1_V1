@@ -1,50 +1,71 @@
-import React from "react";
-import Input from "../../UI/Input";
 import HeaderForVendor from "./HeaderForVendor";
+import Select from "../../UI/Select";
+import MultiSelectDropDown from "../../UI/MultiSelectDropDown";
+import Input from "../../UI/Input";
+import { useState } from "react";
+import {
+  HEADQUARTERS_LOCATION,
+  OPERATING_REGIONS,
+} from "../../../config/vendorOnboardingData";
 
-const StepGeopgraphy = () => {
+const StepGeography = () => {
+  const [isVisibleInput, setIsVisibleInput] = useState(false);
+  const [customHeadquarter, setCustomHeadquarter] = useState("");
+  // const [operatingRegions, setOperatingRegions] = useState<string[]>([]);
+  const [selectedHeadquarter, setSelectedHeadquarter] = useState(""); // dropdown
+
+  const handleHeadquartersChange = (val: string) => {
+      setSelectedHeadquarter(val); // always store dropdown selection
+    if (val === "other") {
+      setIsVisibleInput(true);
+      setCustomHeadquarter("");
+    } else {
+      setIsVisibleInput(false);
+      setCustomHeadquarter(val);
+    }
+  };
+
   return (
     <>
-      {/* <div className="step_form_header">
-        <h2>Geography</h2>
-        <p>All the fields are mandatory</p>
-      </div> */}
-
-      <HeaderForVendor
-      className="header_for_vendor"
-        title_vendor="Geography"
-        // sub_title_vendor="All the fields are mandatory"
-      />
-      {/* <div className="step_form_body"> */}
-        {/* <div className="step_form_right"> when the fields are more than 2 uncomment this remove the below line */}
-        <div >
-          <div className="form_fields_vendor">
-            <Input
-              labelName="Headquarters Location"
-              type="text"
-              id="headquarters_loc"
-              name="headquarters_loc"
-              value=""
-              onChange=""
-            />
-          </div>
-          <div className="form_fields_vendor">
-            <Input
-              labelName="Operating Regions"
-              type="operating_reg"
-              id="operating_reg"
-              name="operating_reg"
-              value=""
-              onChange=""
-            />
-          </div>
-          {/* <div className="step_form_left">
-        
-        </div> */}
+      <HeaderForVendor className="header_for_vendor" title_vendor="Geography" />
+      <div>
+        <div className="form_fields_vendor">
+          <Select
+            labelName="Headquarters Location"
+            id="headquarters_loc"
+            name="headquarters_loc"
+            options={HEADQUARTERS_LOCATION}
+            value={selectedHeadquarter}
+            default_option="Select headquarter location"
+            onChange={(e) => handleHeadquartersChange(e.target.value)}
+          />
         </div>
-      {/* </div> */}
+
+        {isVisibleInput && (
+          <div className="form_fields_vendor">
+            <Input
+              labelName="Specify Location"
+              id="custom_headquarter"
+              name="custom_headquarter"
+              value={customHeadquarter}
+              onChange={(e) => setCustomHeadquarter(e.target.value)}
+            />
+          </div>
+        )}
+
+        <div className="form_fields_vendor">
+          <MultiSelectDropDown
+            labelName="Operating Regions"
+            id="operating_reg"
+            options={OPERATING_REGIONS}
+            default_option="Select operating regions"
+            // value={operatingRegions}
+            // onChange={setOperatingRegions}
+          />
+        </div>
+      </div>
     </>
   );
 };
 
-export default StepGeopgraphy;
+export default StepGeography;

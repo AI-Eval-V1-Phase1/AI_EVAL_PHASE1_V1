@@ -1,34 +1,22 @@
+import { BUYER_ANNUAL_REVENUE, BUYER_EMPLOYEE_COUNTS } from "../../../config/buyerOnboardingData";
 import Input from "../../UI/Input";
 import Select from "../../UI/Select";
+import YearPicker from "../../UI/YearPicker";
 import HeaderForBuyer from "./HeaderForBuyer";
 
 const BuyerOrganizationScale = () => {
-  const EMPLOYEE_COUNTS = [
-    "1-10",
-    "11-50",
-    "51-200",
-    "201-1000",
-    "1001-5000",
-    "5001-10000",
-    "10000+",
-  ].map((sector) => ({
-    label: sector,
-    value: sector,
-  }));
-
-  const title_vendor = "Company Scale"
+  const title_vendor = "Organization Scale";
 
   return (
     <>
-      <div className="step_form_header">
-        {/* <h2>Company Scale</h2> */}
-        {/* <p>All the fields are mandatory</p> */}
-        <HeaderForBuyer title_vendor={title_vendor} />
-      </div>
+      <HeaderForBuyer
+        className="header_for_vendor"
+        title_vendor={title_vendor}
+      />
       {/* <div className="step_form_body align_form_center"> */}
-      <div className="step_form_body">
-        <div className="step_form_right">
-          <div className="form_fields">
+      <div>
+        <div>
+          <div className="form_fields_vendor">
             {/* <Input
               labelName="Organization Size*"
               type="text"
@@ -38,40 +26,56 @@ const BuyerOrganizationScale = () => {
               onChange=""
             /> */}
             <Select
-              labelName="Organization Size*"
+              labelName={
+                <>
+                  Organization Size<span className="mandatory">*</span>
+                </>
+              }
               type="text"
               id="orgSize"
               name="org_Size"
               value=""
-              default_option="Select"
-              options={EMPLOYEE_COUNTS}
+              default_option="Select organization size"
+              options={BUYER_EMPLOYEE_COUNTS}
               onChange=""
+              required
             />
           </div>
-          <div className="form_fields">
-            <Input
-              labelName="Annual Revenue Range"
+          <div className="form_fields_vendor">
+            <Select
+              labelName={
+                <>
+                  Annual Revenue Range
+                </>
+              }
+              default_option="Select annual revenue change"
               type="text"
               id="annualRange"
               name="annual_Range"
               value=""
-              onChange=""
+              options={BUYER_ANNUAL_REVENUE}
+              
             />
           </div>
         </div>
-        <div className="step_form_left">
-          <div className="form_fields">
-            <Input
-              labelName="Year Founded"
-              type="year_founded"
-              id="yearFounded"
-              name="year_Founded"
-              value=""
-              onChange=""
-            />
-          </div>
+        {/* <div "> */}
+        <div className="form_fields_vendor">
+          <YearPicker
+            labelName={
+              <>
+                Year Founded
+              </>
+            }
+            startYear={1800}
+            label="Year Founded"
+            
+            value=""
+            onChange=""
+          
+          />
         </div>
       </div>
+      {/* </div> */}
     </>
   );
 };

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "../../styles/layout/topNav.css";
 import { Bell, Shield } from "lucide-react";
 // import UserPopup from "../UI/UserPopup";
-import UserProfile from "../pages/UserProfile/UserProfile";
+// import UserProfile from "../pages/UserProfile/UserProfile";
 const TopNavBar = () => {
   // const [isPopupVisible, setIsPopupVisible] = useState(true);
   const handleUserPopup = () => {};
@@ -35,7 +35,7 @@ const TopNavBar = () => {
       </div>
 
       
-      <UserProfile/>
+      {/* <UserProfile/> */}
     </>
   );
 };

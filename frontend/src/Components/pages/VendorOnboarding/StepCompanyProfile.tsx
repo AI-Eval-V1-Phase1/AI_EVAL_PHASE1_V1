@@ -1,40 +1,12 @@
-import React from "react";
 import Input from "../../UI/Input";
 import HeaderForVendor from "./HeaderForVendor";
 import Select from "../../UI/Select";
-const StepCompanyProfile = () => {
-  const VENDOR_TYPES = [
-    {
-      value: "agentic_ai_industry",
-      label:
-        "Agentic AI for Industries - Healthcare, legal, finance, or other specialized AI agents",
-    },
-    {
-      value: "ai_platform_provider",
-      label:
-        "AI Platform Provider - Workflow automation and orchestration (n8n, Make, Zapier AI)",
-    },
-    {
-      value: "ai_developer_tools",
-      label:
-        "AI Developer Tools - Code assistants, IDEs, dev platforms (Claude Code, Replit, Cursor)",
-    },
-    {
-      value: "ai_productivity_apps",
-      label:
-        "AI Productivity Apps - Note-taking, document processing, knowledge management",
-    },
-  ];
+import { VENDOR_TYPES } from "../../../config/vendorOnboardingData";
+import { VENDOR_MATURITY_LEVELS } from "../../../config/vendorOnboardingData";
+import { INDUSTRY_SECTORS } from "../../../config/vendorOnboardingData";
+import MultiSelectSubCategories  from "../../UI/MultiSelectSubCategories";
 
-  const VENDOR_MATURITY_LEVELS = [
-    { value: "startup", label: "Startup - Early-stage, innovative solutions" },
-    { value: "growth_stage", label: "Growth Stage - Scaling customer base" },
-    { value: "established", label: "Established - Proven track record" },
-    {
-      value: "enterprise",
-      label: "Enterprise - Large-scale global operations",
-    },
-  ];
+const StepCompanyProfile = () => {
   return (
     <>
       <HeaderForVendor
@@ -57,21 +29,36 @@ const StepCompanyProfile = () => {
               id="vendor_type"
               name="vendor_type"
               value=""
-              default_option="Select Vendor Type"
+              default_option="Select vendor type"
               options={VENDOR_TYPES}
+            />
+          </div>
+
+          <div className="form_fields_vendor">
+            <MultiSelectSubCategories
+              labelName={
+                <>
+                  Industry Sector <span className="mandatory">*</span>
+                </>
+              }
+              id="industry_sec"
+              // name="industry_sec"
+              // value=""
+              default_option="Select industry sector"
+              options={INDUSTRY_SECTORS}
             />
           </div>
           <div className="form_fields_vendor">
             <Select
               labelName={
                 <>
-                 Vendor Maturity Stage <span className="mandatory">*</span>
+                  Vendor Maturity Stage <span className="mandatory">*</span>
                 </>
               }
               id="vendor_type"
               name="vendor_type"
               value=""
-              default_option="Select Vendor Maturity Stage"
+              default_option="Select vendor maturity stage"
               options={VENDOR_MATURITY_LEVELS}
             />
           </div>
@@ -82,28 +69,28 @@ const StepCompanyProfile = () => {
             <Input
               labelName={
                 <>
-                Company Website <span className="mandatory">*</span>
+                  Company Website <span className="mandatory">*</span>
                 </>
               }
               type="text"
               id="company_website"
               name="company_website"
               value=""
-              onChange=""
+              onChange={() => console.log("company_website")}
             />
           </div>
           <div className="form_fields_vendor">
             <Input
               labelName={
                 <>
-                Company Description<span className="mandatory">*</span>
+                  Company Description<span className="mandatory">*</span>
                 </>
               }
               type="textarea"
               id="company_description"
               name="company_description"
-              value="www"
-              onChange=""
+              value=""
+              onChange={() => console.log("company_description")}
             />
           </div>
         </div>

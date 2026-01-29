@@ -1,53 +1,57 @@
-import React from "react";
+import { BUYER_INDUSTRY_SECTORS } from "../../../config/buyerOnboardingData";
 import Input from "../../UI/Input";
+import MultiSelectSubCategories from "../../UI/MultiSelectSubCategories";
 import Select from "../../UI/Select";
 import HeaderForBuyer from "./HeaderForBuyer";
 const BuyerOrganizationProfile = () => {
-const SECTORS = [
-  "Healthcare & Medical",
-  "Financial Services & Banking",
-  "Government & Public Services",
-  "Education & Research",
-  "Retail & E-commerce",
-  "Manufacturing & Supply Chain",
-  "Transportation & Logistics",
-  "Energy & Utilities",
-  "Legal & Professional Services",
-  "Media & Entertainment",
-  "Technology & Software",
-  "Telecommunications",
-  "Defense & Security",
-  "Other",
-].map((sector) => ({
-  label: sector,
-  value: sector,
-}));
-const Org_Type = [
-  "Enterprise",
-  "SMB",
-  "Startup",
-  "Government",
-  "Non-profit",
-].map((Org_Type) => ({
-  label: Org_Type,
-  value: Org_Type,
-}));
+  const SECTORS = [
+    "Healthcare & Medical",
+    "Financial Services & Banking",
+    "Government & Public Services",
+    "Education & Research",
+    "Retail & E-commerce",
+    "Manufacturing & Supply Chain",
+    "Transportation & Logistics",
+    "Energy & Utilities",
+    "Legal & Professional Services",
+    "Media & Entertainment",
+    "Technology & Software",
+    "Telecommunications",
+    "Defense & Security",
+    "Other",
+  ].map((sector) => ({
+    label: sector,
+    value: sector,
+  }));
+  const Org_Type = [
+    "Enterprise",
+    "SMB",
+    "Startup",
+    "Government",
+    "Non-profit",
+  ].map((Org_Type) => ({
+    label: Org_Type,
+    value: Org_Type,
+  }));
 
-
-const title_vendor = "Organization Profile"
+  // const title_vendor = "Organization Profile"
 
   return (
     <>
-      <div className="step_form_header">
-        {/* <h2>Organization Profile</h2> */}
-        {/* <p>All the fields are mandatory</p> */}
-        <HeaderForBuyer title_vendor={title_vendor} />
-      </div>
-      <div className="step_form_body">
-        <div className="step_form_right">
-          <div className="buyer_form_fields">
+      <HeaderForBuyer
+        className="header_for_vendor"
+        title_vendor="Organization Profile"
+        sub_title_vendor="This information helps us tailor assessments to your context"
+      />
+      <div>
+        <div>
+          <div className="form_fields_vendor">
             <Input
-              labelName="Organization Name*"
+              labelName={
+                <>
+                  Organization Name <span className="mandatory">*</span>
+                </>
+              }
               type="text"
               id="orgName"
               name="org_Name"
@@ -55,76 +59,47 @@ const title_vendor = "Organization Profile"
               onChange=""
             />
           </div>
-          <div className="buyer_form_fields">
-            
+          <div className="form_fields_vendor">
             <Select
-               labelName="Organization Type*"
+              labelName={
+                <>
+                  Organization Type<span className="mandatory">*</span>
+                </>
+              }
               type="text"
               id="org_Type"
               name="orgType"
               value=""
-               default_option="Select"
+              default_option="Select"
               options={Org_Type}
               onChange=""
             />
           </div>
-          <div className="buyer_form_fields">
-            <Input
-              labelName="Organization Description*"
-              type="text"
-              id="orgDescription"
-              name="org_Description"
-              value=""
-             
-              onChange=""
-            />
-          </div>
+          
         </div>
-        <div className="step_form_left">
-          <div className="buyer_form_fields">
-            {/* <Input
-              labelName="Industry Sector*"
-              type="text"
-              id="orgIndustry"
-              name="org_Industry"
-              value=""
-              onChange=""
-            /> */}
-            <Select
-              labelName="Industry Sector*"
-              name="industrySector"
-              value=""
-              default_option="Select"
-              // options={[
-              //   {
-              //     label: "Healthcare & Medical",
-              //     value: "Healthcare & Medical",
-              //   },
-              //   {
-              //     label: "Financial Services & Banking",
-              //     value: "Financial Services & Banking",
-              //   },
-              //   {
-              //     label: "Government & Public Services",
-              //     value: "Government & Public Services",
-              //   },
-              //   {
-              //     label: "Education & Research",
-              //     value: "Education & Research",
-              //   },
-              //   {
-              //     label: "Education & Research",
-              //     value: "Education & Research",
-              //   },
-              // ]}
-
-              options={SECTORS}
-              onChange=""
-            />
+        <div >
+          <div className="form_fields_vendor">
+           <MultiSelectSubCategories
+           labelName={
+                <>
+                Industry Sector<span className="mandatory">*</span>
+                </>
+              }
+          
+           default_option = "Select industry sector"
+           id="industry_sec"
+           options={BUYER_INDUSTRY_SECTORS}
+           
+           
+           />
           </div>
-          <div className="buyer_form_fields">
+          <div className="form_fields_vendor">
             <Input
-              labelName="Organization Website*"
+              labelName={
+                <>
+                  Organization Website<span className="mandatory">*</span>
+                </>
+              }
               type="text"
               id="orgWeb"
               name="org_Web"
@@ -132,9 +107,23 @@ const title_vendor = "Organization Profile"
               onChange=""
             />
           </div>
+          <div className="form_fields_vendor">
+            <Input
+              labelName={
+                <>
+                  Organization Description<span className="mandatory">*</span>
+                </>
+              }
+              type="textarea"
+              id="orgDescription"
+              name="org_Description"
+              value=""
+              onChange=""
+            />
+          </div>
         </div>
         {/* <div className="step_form_right">
-          <div className="buyer_form_fields">
+          <div className="form_fields_vendor">
             <Input
               labelName="Organization Description"
               type="text"

@@ -1,6 +1,7 @@
-import React from "react";
 import Input from "../../UI/Input";
 import HeaderForVendor from "./HeaderForVendor";
+import Select from "../../UI/Select";
+import { PRIMARY_CONTACT_ROLE } from "../../../config/vendorOnboardingData";
 
 const StepContactInformation = () => {
   return (
@@ -26,7 +27,7 @@ const StepContactInformation = () => {
               id="primary_contact_name"
               name="primary_contact_name"
               value=""
-              onChange=""
+              onChange={() => console.log(" primary_contact_name")}
             />
           </div>
           <div className="form_fields_vendor">
@@ -40,24 +41,26 @@ const StepContactInformation = () => {
               id="primary_contact_email"
               name="primary_contact_email"
               value=""
-              onChange=""
+              onChange={() => console.log("primary_contact_email count")}
             />
           </div>
         </div>
         {/* <div className="step_form_left"> */}
         <div>
           <div className="form_fields_vendor">
-            <Input
+            <Select
               labelName={
                 <>
                   Primary Contact Role <span className="mandatory">*</span>
                 </>
               }
-              type="text"
+              
               id="primary_contact_role"
               name="primary_contact_role"
+              default_option="Select primary role"
+              options={PRIMARY_CONTACT_ROLE}
               value=""
-              onChange=""
+              onChange={() => console.log("primary_contact_role count")}
             />
           </div>
         </div>

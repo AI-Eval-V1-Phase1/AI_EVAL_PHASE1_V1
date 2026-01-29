@@ -5,8 +5,9 @@ import { Link } from "react-router-dom";
 const StepVendorOnboardingPreview = () => {
   return (
     <>
-      <HeaderForVendor title_vendor="Preview" />
-      <div className="vendor_preview_container">
+         <HeaderForVendor className="header_for_vendor" title_vendor="Preview" />
+      {/* <div className="vendor_preview_container"> */}
+      <div>
         <div className="preview_sec">
           <h4>Company Profile</h4>
           <div className="preview_content">

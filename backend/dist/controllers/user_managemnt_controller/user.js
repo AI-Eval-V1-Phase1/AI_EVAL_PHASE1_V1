@@ -57,7 +57,7 @@ const inviteUser = async (req, res) => {
         });
         console.log("User inserted successfully into DB:", email);
         // Generate confirmation link (replace with your frontend URL logic)
-        const confirmationLink = `http://localhost:5173/onboarding?email=${encodeURIComponent(email)}`;
+        const confirmationLink = `http://localhost:5173/signup?email=${encodeURIComponent(email)}`;
         // Setup nodemailer transporter
         const transporter = nodemailer_1.default.createTransport({
             host: "smtp.office365.com",

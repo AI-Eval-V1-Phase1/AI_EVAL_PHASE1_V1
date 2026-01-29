@@ -1,101 +1,111 @@
-import React from "react";
 import Input from "../../UI/Input";
 import HeaderForBuyer from "./HeaderForBuyer";
 import Select from "../../UI/Select";
+import {
+  BUYER_AI_GOVERNANCE_MATURITY,
+  BUYER_AI_SKILLS_AVAILABILITY,
+  BUYER_CHANGE_MANAGEMENT_CAPABILITY,
+  BUYER_DATA_GOVERNANCE_MATURITY,
+  BUYER_EXISTING_AI_INITIATIVES,
+} from "../../../config/buyerOnboardingData";
 
 const CurrentAiMaturity = () => {
   const title_vendor = "Current AI Maturity";
-  const AI_Maturity = ["None", "Basic", "Intermediate", "Advanced"].map(
-    (AI_Maturity) => ({
-      label: AI_Maturity,
-      value: AI_Maturity,
-    }),
-  );
-  const Data_Governance = ["Ad-hoc", "Defined", "Managed", "Optimized"].map(
-    (Data_Governance) => ({
-      label: Data_Governance,
-      value: Data_Governance,
-    }),
-  );
-  const AI_Skills = ["None", "Limited", "Moderate", "Strong"].map(
-    (AI_Skills) => ({
-      label: AI_Skills,
-      value: AI_Skills,
-    }),
-  );
 
   return (
     <>
-      <div className="step_form_header">
-        {/* <h2>Current AI Maturity</h2> */}
-        {/* <p>All the fields are mandatory</p> */}
-        <HeaderForBuyer title_vendor={title_vendor} />
-      </div>
+      <HeaderForBuyer
+        className="header_for_vendor"
+        title_vendor={title_vendor}
+      />
       {/* <div className="step_form_body align_form_center"> */}
-      <div className="step_form_body">
-        <div className="step_form_right">
-          <div className="buyer_form_fields">
-            <Input
+      <div>
+        <div>
+          <div className="form_fields_vendor">
+            <Select
               labelName="Existing AI Initiatives"
-              type="text"
+              default_option="Select existing ai initiatives"
+              options={BUYER_EXISTING_AI_INITIATIVES}
               id="existingInitiative"
               name="existing_Initiative"
               value=""
               onChange=""
             />
           </div>
-          <div className="buyer_form_fields">
-            {/* <Input
-              labelName="AI Governance Maturity Level*"
-              type="text"
+          <div className="form_fields_vendor">
+            <Select
+              labelName={
+                <>
+                  AI Governance Maturity<span className="mandatory">*</span>
+                </>
+              }
               id="aiGovernance"
               name="ai_Governance"
               value=""
+              default_option="Select ai governance maturity"
+              options={BUYER_AI_GOVERNANCE_MATURITY}
               onChange=""
-            /> */}
-            <Select
-              labelName="AI Governance Maturity Level*"
-              id="aiGovernance"
-              name="ai_Governance"
-              value=""
-              default_option="Select"
-              options={AI_Maturity}
-              onChange=""
+              required
             />
           </div>
-          <div className="buyer_form_fields">
-            <Input
-              labelName="Change Management Capability*"
-              type="text"
-              id="managementCapability"
-              name="managementCapability"
-              value=""
-              onChange=""
-            />
-          </div>
-        </div>
-        <div className="step_form_left">
-          <div className="buyer_form_fields">
+         
+
+          <div className="form_fields_vendor">
             <Select
-              labelName="Data Governance Maturity*"
+              labelName={
+                <>
+                  Data Governance Maturity<span className="mandatory">*</span>
+                </>
+              }
               type="text"
               id="dataGovernance"
               name="dataGovernance"
               value=""
-              default_option="Select"
-              options={Data_Governance}
+              default_option="Select data governance maturity"
+              options={BUYER_DATA_GOVERNANCE_MATURITY}
               onChange=""
+              required
             />
           </div>
-          <div className="buyer_form_fields">
-            {/* <Input
-              labelName="In-house AI/ML Skills*"
+          <div className="form_fields_vendor">
+            <Select
+              labelName={
+                <>
+                  AI Skills Availability<span className="mandatory">*</span>
+                </>
+              }
+              type="text"
+              id="dataGovernance"
+              name="dataGovernance"
+              value=""
+              default_option="Select ai skills availability"
+              options={BUYER_AI_SKILLS_AVAILABILITY}
+              onChange=""
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <div className="form_fields_vendor">
+          
+            <Select
+              
+          labelName={
+                <>
+                Change Management Capability<span className="mandatory">*</span>
+                </>
+              }
               type="text"
               id="inhouseSkills"
               name="inhouse_Skills"
               value=""
+              default_option="Select change management capability"
+              options={BUYER_CHANGE_MANAGEMENT_CAPABILITY}
               onChange=""
-            /> */}
+            />
+          </div>
+          {/* <div className="form_fields_vendor">
+          
             <Select
               labelName="In-house AI/ML Skills*"
               type="text"
@@ -106,7 +116,7 @@ const CurrentAiMaturity = () => {
               options={AI_Skills}
               onChange=""
             />
-          </div>
+          </div> */}
         </div>
       </div>
     </>
