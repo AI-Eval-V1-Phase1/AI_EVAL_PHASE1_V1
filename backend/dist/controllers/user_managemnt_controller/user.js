@@ -8,6 +8,7 @@ exports.fetchUsers = exports.inviteUser = void 0;
 const db_1 = require("../../database/db");
 const invite_user_schema_1 = require("../../schema/user_management/invite_user_schema");
 const nodemailer_1 = __importDefault(require("nodemailer"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const inviteUser = async (req, res) => {
     // Helper to generate email HTML
     function userEmailTemplate(email, organization, role, confirmationLink) {
@@ -56,8 +57,13 @@ const inviteUser = async (req, res) => {
             account_status: "invited",
         });
         console.log("User inserted successfully into DB:", email);
+        const token = jsonwebtoken_1.default.sign({ email: email }, process.env.JWT_SECRET_KEY, {
+            expiresIn: "1hr",
+        });
+        // console.log(token)
         // Generate confirmation link (replace with your frontend URL logic)
-        const confirmationLink = `http://localhost:5173/signup?email=${encodeURIComponent(email)}`;
+        // const confirmationLink = `http://localhost:5173/onboarding?email=${encodeURIComponent(email)}`;
+        const confirmationLink = `http://localhost:5173/signup/${token}`;
         // Setup nodemailer transporter
         const transporter = nodemailer_1.default.createTransport({
             host: "smtp.office365.com",

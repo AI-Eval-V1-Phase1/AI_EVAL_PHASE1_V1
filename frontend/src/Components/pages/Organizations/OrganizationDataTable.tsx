@@ -1,29 +1,69 @@
 import { SquarePen, Trash, Trash2 } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
+import { useDispatch, useSelector } from "react-redux";
+import { getOrganizations } from "../../../Context/OrganizationsData";
 
 const OrganizationDataTable = () => {
   const [filterText, setFilterText] = React.useState("");
   const [resetPaginationToggle, setResetPaginationToggle] =
     React.useState(false);
-  const tableData = [
-    {
-      id: "1",
-      organizationName: "Test Organization",
-      orgStatus: "Active",
-    },
-    {
-      id: "2",
-      organizationName: "Test Organization 2",
-      orgStatus: "Inactive",
-    },
-  ];
 
-  const filteredItems = tableData.filter(
+  const [tableData, setTableData] = useState([]);
+  const dispatch = useDispatch();
+  const { data, status, error } = useSelector((state) => state.organizations);
+  console.log("data", data);
+
+  // const getOrganizations = async () => {
+  //   // console.log("here");
+  //   try {
+  //     const response = await fetch(
+  //       "http://localhost:5003/api/v1/allOrganizations",
+  //       {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //       },
+  //     );
+  //     // console.log(response)
+  //     const result = await response.json()
+  //     console.log(result)
+  //     if(response.ok){
+  //       setTableData(result.data)
+  //     }
+
+  //   } catch (error) {
+  //     console.log(error)
+  //   }
+  // };
+
+  useEffect(() => {
+    // if (status == "succeeded") {
+    dispatch(getOrganizations());
+    // }
+  }, [dispatch]);
+
+  // const tableData = [
+  //   {
+  //     id: "1",
+  //     organizationName: "Test Organization",
+  //     orgStatus: "Active",
+  //   },
+  //   {
+  //     id: "2",
+  //     organizationName: "Test Organization 2",
+  //     orgStatus: "Inactive",
+  //   },
+  // ];
+
+  const filteredItems = data.filter(
     (item) =>
       item.organizationName &&
       item.organizationName.toLowerCase().includes(filterText.toLowerCase()),
   );
+
+  console.log(filteredItems);
 
   const handleClear = () => {
     if (filterText) {
@@ -37,7 +77,7 @@ const OrganizationDataTable = () => {
       <div className="filterOption">
         <label htmlFor="">Search</label>{" "}
         <input
-        className="filterInput"
+          className="filterInput"
           name=""
           type="text"
           id="search"
@@ -93,11 +133,14 @@ const OrganizationDataTable = () => {
       name: <div className="tableHeader">Status</div>,
       selector: (row) => (
         <p
+          style={{ textTransform: "capitalize" }}
           className={
-            row.orgStatus === "Active" ? "activeStatus" : "inactiveStatus"
+            row.organizationStatus === "active"
+              ? "activeStatus"
+              : "inactiveStatus"
           }
         >
-          {row.orgStatus}
+          {row.organizationStatus}
         </p>
       ),
       sortable: true,

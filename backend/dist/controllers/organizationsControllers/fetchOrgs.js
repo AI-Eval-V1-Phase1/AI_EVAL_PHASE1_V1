@@ -1,12 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const db_1 = require("../../database/db");
-const schema_1 = require("../../schema");
+const selectOrganization_1 = require("../../schema/organizations/selectOrganization");
+//** Fetch Organization Details and send it to frontend(client) side
 const fetchOrganizations = async (req, res) => {
     try {
-        const organizations = await db_1.db
-            .select()
-            .from(schema_1.createOrg);
+        const organizations = await selectOrganization_1.organizationsData;
         res.status(200).json({
             message: "Organizations fetched successfully",
             data: organizations,

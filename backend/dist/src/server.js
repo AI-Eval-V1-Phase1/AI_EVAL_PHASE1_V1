@@ -27,7 +27,7 @@ async function startServer() {
     try {
         await (0, db_1.initDB)();
         // ✅ Add leading slash here
-        app.use('/api/v1/user', userRoutes_1.default);
+        app.use('/api/v1', userRoutes_1.default);
         app.use("/api/v1", organization_1.default);
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);

@@ -227,3 +227,9 @@
 .screenHeading span {
     display: flex;
 }
+
+.orgError {
+  font-size: 12px;
+  color: red;
+  margin-top: 5px;
+}

@@ -31,7 +31,7 @@ async function startServer() {
     await initDB();
 
     // ✅ Add leading slash here
-    app.use('/api/v1/user', userRoutes);
+    app.use('/api/v1', userRoutes);
     app.use("/api/v1",orgrouter);
 
 

@@ -1,9 +1,49 @@
 {
-  "id": "89536c58-9b56-44de-88d2-12740e8369b6",
+  "id": "5e08bdd2-6175-4143-a138-40bc74ae0a6c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.organizations": {
+      "name": "organizations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "organizationName": {
+          "name": "organizationName",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organizationStatus": {
+          "name": "organizationStatus",
+          "type": "organizationStatus",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.users": {
       "name": "users",
       "schema": "",
@@ -72,6 +112,14 @@
       "values": [
         "invited",
         "confirmed"
+      ]
+    },
+    "public.organizationStatus": {
+      "name": "organizationStatus",
+      "schema": "public",
+      "values": [
+        "active",
+        "inactive"
       ]
     }
   },

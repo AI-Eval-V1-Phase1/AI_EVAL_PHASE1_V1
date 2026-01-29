@@ -1,19 +1,23 @@
-import { timestamp } from "drizzle-orm/pg-core";
-import { varchar } from "drizzle-orm/pg-core";
-import { serial } from "drizzle-orm/pg-core";
-import { pgEnum } from "drizzle-orm/pg-core";
-import { pgTable } from "drizzle-orm/pg-core";
+import {
+  timestamp,
+  varchar,
+  serial,
+  pgEnum,
+  pgTable,
+} from "drizzle-orm/pg-core";
+import z from "zod";
 
 export const organizationStatusEnum = pgEnum("organizationStatus", [
   "active",
   "inactive",
 ]);
 
-export const createOrg = pgTable("organizations", {
+export const createOrganization = pgTable("organizations", {
   id: serial("id").primaryKey(),
   organizationName: varchar("organizationName").notNull(),
   organizationStatus: organizationStatusEnum("organizationStatus")
     .default("active")
     .notNull(),
-  created_at: timestamp("created_at").defaultNow().notNull(),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+    // created_by: varchar("created_by").notNull(),
 });

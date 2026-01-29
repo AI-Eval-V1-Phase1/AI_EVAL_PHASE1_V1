@@ -5,6 +5,8 @@ import { Request, Response } from "express";
 import nodemailer from "nodemailer";
 import { eq } from "drizzle-orm";
 import { error } from "node:console";
+import jwt  from "jsonwebtoken";
+
 
 export const inviteUser = async (req: Request, res: Response) => {
   // Helper to generate email HTML
@@ -66,8 +68,15 @@ export const inviteUser = async (req: Request, res: Response) => {
 
     console.log("User inserted successfully into DB:", email);
 
+    const token = jwt.sign({email:email},process.env.JWT_SECRET_KEY,{
+    expiresIn: "1hr",
+    })
+
+    // console.log(token)
+
     // Generate confirmation link (replace with your frontend URL logic)
-    const confirmationLink = `http://localhost:5173/signup?email=${encodeURIComponent(email)}`;
+    // const confirmationLink = `http://localhost:5173/onboarding?email=${encodeURIComponent(email)}`;
+    const confirmationLink = `http://localhost:5173/signup/${token}`;
 
     // Setup nodemailer transporter
     const transporter = nodemailer.createTransport({

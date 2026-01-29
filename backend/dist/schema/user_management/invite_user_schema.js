@@ -11,4 +11,11 @@ exports.usersTable = (0, pg_core_1.pgTable)("users", {
     role: (0, pg_core_1.varchar)("role", { length: 255 }).notNull(),
     invited_at: (0, pg_core_1.timestamp)("invited_at").defaultNow().notNull(),
     account_status: (0, exports.accountStatusEnum)("account_status").default("invited").notNull(),
+    user_name: (0, pg_core_1.varchar)("user_name").unique(),
+    user_first_name: (0, pg_core_1.varchar)("user_first_name"),
+    user_last_name: (0, pg_core_1.varchar)("user_last_name"),
+    user_password: (0, pg_core_1.text)("user_password"),
+    // user_onboarding_completed:enum(["yes","no"]).default("no"),
+    // user_signup_completed:enum(["yes","no"]).default("no"),
+    // user_app_role:enum(["buyer","vendor"]),
 });

@@ -1,11 +1,11 @@
-import { db } from "../../database/db";
-import { createOrg } from "../../schema";
+import type {Request, Response } from "express";
+import { organizationsData } from "../../schema/organizations/selectOrganization";
 
-const fetchOrganizations = async (req, res) => {
+//** Fetch Organization Details and send it to frontend(client) side
+
+const fetchOrganizations = async (req: Request, res: Response) => {
   try {
-    const organizations = await db
-      .select()
-      .from(createOrg);
+    const organizations = await organizationsData
 
     res.status(200).json({
       message: "Organizations fetched successfully",

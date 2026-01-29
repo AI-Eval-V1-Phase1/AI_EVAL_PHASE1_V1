@@ -3,17 +3,26 @@ import "../ResetPassword/resetPassword.css";
 import "./signup.css";
 import { useEffect, useState } from "react";
 import type { SignUpdata } from "../Validations/sign_up_validations";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { jwtDecode } from "jwt-decode";
 
 const SignUp = () => {
   useEffect(() => {
     document.title = "AI EVAL | Sign Up";
   });
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const [isVisible, setIsVisible] = useState(false);
   const [isVisibleConfirm, setIsVisibleConfirm] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { token } = useParams();
+  // console.log("here")
+  const decode = jwtDecode(token);
+
+  let decodeEmail = decode.email;
+  console.log(decodeEmail);
 
   const passwordVisible = () => {
     setIsVisible((prev) => !prev);
@@ -23,7 +32,7 @@ const SignUp = () => {
   };
 
   const [signUpFormData, setSignUpFormData] = useState<SignUpdata>({
-    email: "demo@company.com",
+    email: decodeEmail,
     firstName: "",
     lastName: "",
     userName: "",
@@ -42,8 +51,22 @@ const SignUp = () => {
   );
   console.log(isDisabledBtn);
 
-  const hanldeSubmitSignUp = (e: React.FormEvent<HTMLFormElement>) => {
+  const hanldeSubmitSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log(signUpFormData);
+    try {
+      const response = await fetch(`${BASE_URL}/signupData/${token}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(signUpFormData),
+      });
+      console.log("response", response);
+    } catch (error) {
+      console.log(error);
+    }
+
     toast.success("Sign Up Successful!");
     setTimeout(() => {
       navigate("/onBoarding");
@@ -108,41 +131,39 @@ const SignUp = () => {
                           value={signUpFormData.userName}
                           onChange={handleChange}
                         />
-
-                    
                       </div>
                     </div>
                     <div className="sign_up_form_rows">
-                            <div className="emailData">
-                          <label htmlFor="loginEmail">
-                            <span>
-                              <User width={20} strokeWidth={1.5} />
-                            </span>{" "}
-                            First Name
-                          </label>
-                          <input
-                            //   className="resetMail"
-                            type="text"
-                            name="firstName"
-                            value={signUpFormData.firstName}
-                            onChange={handleChange}
-                          />
-                        </div>
-                        <div className="emailData">
-                          <label htmlFor="loginEmail">
-                            <span>
-                              <User width={20} strokeWidth={1.5} />
-                            </span>{" "}
-                            Last Name
-                          </label>
-                          <input
-                            //   className="resetMail"
-                            type="text"
-                            name="lastName"
-                            value={signUpFormData.lastName}
-                            onChange={handleChange}
-                          />
-                        </div>
+                      <div className="emailData">
+                        <label htmlFor="loginEmail">
+                          <span>
+                            <User width={20} strokeWidth={1.5} />
+                          </span>{" "}
+                          First Name
+                        </label>
+                        <input
+                          //   className="resetMail"
+                          type="text"
+                          name="firstName"
+                          value={signUpFormData.firstName}
+                          onChange={handleChange}
+                        />
+                      </div>
+                      <div className="emailData">
+                        <label htmlFor="loginEmail">
+                          <span>
+                            <User width={20} strokeWidth={1.5} />
+                          </span>{" "}
+                          Last Name
+                        </label>
+                        <input
+                          //   className="resetMail"
+                          type="text"
+                          name="lastName"
+                          value={signUpFormData.lastName}
+                          onChange={handleChange}
+                        />
+                      </div>
                     </div>
                     <div className="sign_up_form_rows">
                       <div className="passwordData">
