@@ -5,7 +5,6 @@ import userTokenVerify from "../../middlewares/user_management/userTokenVerify";
 import userLogin from "../../controllers/user_managemnt_controller/login";
 
 const router = express.Router();
-console.log("user routes 2");
 
 router.post("/invite_user", inviteUser);
 router.post("/signupData/:token", userTokenVerify, userSignup);

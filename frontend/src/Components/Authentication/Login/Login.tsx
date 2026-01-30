@@ -2,19 +2,48 @@ import { useState } from "react";
 import "./login.css";
 
 import { LockKeyhole, Mail, ArrowRight, Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
   document.title = "AI EVAL | Login";
+
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isVisible, setIsVisible] = useState(false);
+  const [isUser, setIsUser] = useState({});
 
-  const getUser = (e: any) => {
+  const getUser = async (e: any) => {
     e.preventDefault();
 
     const data = { email, password };
-    console.log(data);
+    // console.log(data);
+
+    try {
+      const response = await fetch(`${BASE_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      console.log(response);
+      const result = await response.json();
+      if (response.ok) {
+        navigate("/");
+        console.log(result.userDetails[0]);
+        const userDetails = result.userDetails[0];
+        setIsUser(userDetails);
+
+        sessionStorage.setItem("userEmail", userDetails.email);
+        sessionStorage.setItem("userRole", userDetails.role);
+        sessionStorage.setItem("userId", userDetails.id);
+        // console.log(userDetails.email);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const passwordVisible = () => {
@@ -63,15 +92,15 @@ const Login = () => {
                       Password
                     </label>
                     <input
-                      type={isVisible ? "text":"password"}
+                      type={isVisible ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
                     <span onClick={passwordVisible} className="passwordVisible">
                       {isVisible ? (
-                          <Eye size={20} strokeWidth={1.5} />
-                        ) : (
-                          <EyeOff size={20} strokeWidth={1.5} />
+                        <Eye size={20} strokeWidth={1.5} />
+                      ) : (
+                        <EyeOff size={20} strokeWidth={1.5} />
                       )}
                     </span>
                   </div>

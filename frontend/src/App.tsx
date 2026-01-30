@@ -33,7 +33,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgotPassword" element={<ForgotPassword />} />
           <Route path="/resetPassword" element={<ResetPassword />} />
-                    <Route path="/signup" element={<SignUp/>}/>
+                   <Route path="/signup/:token" element={<SignUp/>} />
 
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />

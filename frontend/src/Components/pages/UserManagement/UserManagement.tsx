@@ -18,6 +18,8 @@ import Select from "../../UI/Select";
 import UserDataTable from "./UserDataTable";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
+import { getOrganizations } from "../../../Context/OrganizationsData";
 // import DataTable from "react-data-table-component";
 
 const UserManagement = () => {
@@ -25,11 +27,16 @@ const UserManagement = () => {
     document.title = "AI Eval | User Management";
   }, []);
 
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [organization, setOrganization] = useState("");
   const [role, setRole] = useState("");
-
+const dispatch = useDispatch()
+  const {data} = useSelector(state=>state.organizations)
+console.log("data of orgs",data)
   const handleInvite = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const userFormData = { email, organization, role };
@@ -37,7 +44,7 @@ const UserManagement = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5003/api/v1/user/invite_user", // matches backend
+        `${BASE_URL}/invite_user`, // matches backend
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -61,6 +68,12 @@ const UserManagement = () => {
     }
   };
 
+    useEffect(() => {
+      // if (status == "succeeded") {
+        dispatch(getOrganizations());
+      // }
+    }, [dispatch]);
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEmail("");
@@ -68,10 +81,23 @@ const UserManagement = () => {
     setRole("");
   };
 
-  const orgOptions = [
-    { value: "Organization 1", label: "Organization 1" },
-    { value: "Organization 2", label: "Organization 2" },
-  ];
+  // const orgOptions = [
+  //   { value: "Organization 1", label: "Organization 1" },
+  //   { value: "Organization 2", label: "Organization 2" },
+  // ];
+
+
+  // const orgOptions = data
+
+ const orgOptions = data.map(
+    (orgOptions) => ({
+      label: orgOptions.organizationName,
+      value: orgOptions.id,
+    }),
+  );
+
+  // console.log(data)
+
   const roleOptions = [
     { value: "admin", label: "admin" },
     { value: "system admin", label: "system admin" },
