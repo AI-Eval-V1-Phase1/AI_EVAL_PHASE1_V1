@@ -1,4 +1,4 @@
-import "../UI/card.css";
+import "../../styles/card.css";
 import type { ReactNode } from "react";
 
 type CardProps = {

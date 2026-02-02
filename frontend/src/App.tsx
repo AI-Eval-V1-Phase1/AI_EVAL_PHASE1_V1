@@ -18,48 +18,64 @@ import Reports from "./Components/pages/Reports/Reports";
 import MyVendors from "./Components/pages/MyVendors/MyVendors";
 import Organizations from "./Components/pages/Organizations/Organizations";
 import Toaster from "./Components/Toaster/Toaster";
-import LayoutWithoutNav from "./Components/layout/LayoutWithoutNav";;
+import LayoutWithoutNav from "./Components/layout/LayoutWithoutNav";
 import VendorMainForm from "./Components/pages/VendorOnboarding/VendorMainForm";
 import Onboarding from "./Components/pages/OnBoarding/Onboarding";
 import BuyerMainForm from "./Components/pages/BuyerOnboarding/BuyerMainForm";
 import SignUp from "./Components/Authentication/SignUp/SignUp";
+import RouteAccess from "./utils/RouteAccess";
+import PageNotFound from "./Components/PageNotFound/PageNotFound";
+import Authorization from "./utils/Authorization";
+import OnboardingAccess from "./utils/OnboardingVerify";
 
 function App() {
   return (
     <>
-    <Toaster/>
+      <Toaster />
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/forgotPassword" element={<ForgotPassword />} />
           <Route path="/resetPassword" element={<ResetPassword />} />
-                   <Route path="/signup/:token" element={<SignUp/>} />
+          <Route path="/signup/:token" element={<SignUp />} />
+          <Route element={<Authorization />}>
+          <Route element={<RouteAccess />}>
 
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/organizations" element={<Organizations />} />
-            <Route path="/assessments" element={<Assessments />} />
-            <Route path="/vendor-directory" element={<VendorDirectory />} />
-            <Route path="/my-vendor" element={<MyVendors />} />
-            <Route path="/compilance" element={<Compilance />} />
-            <Route path="/governance" element={<Goverance />} />
-            <Route path="/sales-enablement" element={<SalesEnablement />} />
-            <Route path="/evidence-library" element={<EvidenceLibrary />} />
-            <Route path="/directory-listing" element={<DirectoryListing />} />
-            <Route path="/reports" element={<Reports />} />
+<Route element={<MainLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/organizations" element={<Organizations />} />
+              <Route path="/assessments" element={<Assessments />} />
+              <Route path="/vendor-directory" element={<VendorDirectory />} />
+              <Route path="/my-vendor" element={<MyVendors />} />
+              <Route path="/compilance" element={<Compilance />} />
+              <Route path="/governance" element={<Goverance />} />
+              <Route path="/sales-enablement" element={<SalesEnablement />} />
+              <Route path="/evidence-library" element={<EvidenceLibrary />} />
+              <Route path="/directory-listing" element={<DirectoryListing />} />
+              <Route path="/reports" element={<Reports />} />
 
-            <Route path="/user-management" element={<UserManagement />} />
+              <Route path="/user-management" element={<UserManagement />} />
+            </Route>
+          </Route>
+            
           </Route>
 
-{/* This Routing layout is for Vendor and Buyer onboarding without the side navigation bar  */}
-          <Route element={<LayoutWithoutNav/>}>
-          <Route path="/onBoarding" element={<Onboarding/>}/>
-          <Route path="/onBoarding/vendorOnboarding" element={<VendorMainForm/>}/>
-          <Route path="/onBoarding/buyerOnboarding" element={<BuyerMainForm/>}/>
-
+          {/* This Routing layout is for Vendor and Buyer onboarding without the side navigation bar  */}
+          <Route element={<OnboardingAccess />}>
+            <Route element={<LayoutWithoutNav />}>
+              <Route path="/onBoarding/:token" element={<Onboarding />} />
+              <Route
+                path="/onBoarding/vendorOnboarding"
+                element={<VendorMainForm type="vendor" />}
+              />
+              <Route
+                path="/onBoarding/buyerOnboarding"
+                element={<BuyerMainForm type="buyer" />}
+              />
+            </Route>
           </Route>
-
+          <Route path="*" element={<PageNotFound />} />
         </Routes>
       </BrowserRouter>
     </>

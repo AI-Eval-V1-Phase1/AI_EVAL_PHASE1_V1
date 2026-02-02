@@ -1,11 +1,29 @@
-import { BUYER_ANNUAL_REVENUE, BUYER_EMPLOYEE_COUNTS } from "../../../config/buyerOnboardingData";
-import Input from "../../UI/Input";
+// import React, { useState } from "react";
+import {
+  BUYER_ANNUAL_REVENUE,
+  BUYER_EMPLOYEE_COUNTS,
+  BUYER_HELPTEXT,
+} from "../../../constants/buyerOnboardingData";
+// import Input from "../../UI/Input";
 import Select from "../../UI/Select";
 import YearPicker from "../../UI/YearPicker";
 import HeaderForBuyer from "./HeaderForBuyer";
+import ClickTooltip from "../../UI/ClickTooltip";
+import { Info } from "lucide-react";
 
-const BuyerOrganizationScale = () => {
+const BuyerOrganizationScale = ({formBuyerData, setFormBuyerData}) => {
   const title_vendor = "Organization Scale";
+  const startYear = 1950;
+
+
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormBuyerData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   return (
     <>
@@ -13,69 +31,67 @@ const BuyerOrganizationScale = () => {
         className="header_for_vendor"
         title_vendor={title_vendor}
       />
-      {/* <div className="step_form_body align_form_center"> */}
       <div>
         <div>
           <div className="form_fields_vendor">
-            {/* <Input
-              labelName="Organization Size*"
-              type="text"
-              id="orgSize"
-              name="org_Size"
-              value=""
-              onChange=""
-            /> */}
             <Select
               labelName={
-                <>
-                  Organization Size<span className="mandatory">*</span>
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Organization Size</span>
+                  <ClickTooltip content={BUYER_HELPTEXT.organizationSize}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
-              type="text"
-              id="orgSize"
-              name="org_Size"
-              value=""
+              id="employeeCount"
+              name="employeeCount"
+              value={formBuyerData.employeeCount}
               default_option="Select organization size"
               options={BUYER_EMPLOYEE_COUNTS}
-              onChange=""
+              onChange={handleChange}
               required
             />
           </div>
+
           <div className="form_fields_vendor">
             <Select
               labelName={
-                <>
-                  Annual Revenue Range
-                </>
+                <div className="labelSection">
+                  <span>Annual Revenue Range</span>
+                  <ClickTooltip content={BUYER_HELPTEXT.annualRevenue}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
-              default_option="Select annual revenue change"
-              type="text"
-              id="annualRange"
-              name="annual_Range"
-              value=""
+              id="annualRevenue"
+              name="annualRevenue"
+              value={formBuyerData.annualRevenue}
+              default_option="Select annual revenue range"
               options={BUYER_ANNUAL_REVENUE}
-              
+              onChange={handleChange}
             />
           </div>
         </div>
-        {/* <div "> */}
+
         <div className="form_fields_vendor">
           <YearPicker
-            labelName={
-              <>
-                Year Founded
-              </>
+            label={
+              <div className="labelSection">
+                <span>Year Founded</span>
+                <ClickTooltip content={BUYER_HELPTEXT.yearFounded}>
+                  <Info size={14} color="#6B7280" />
+                </ClickTooltip>
+              </div>
             }
-            startYear={1800}
-            label="Year Founded"
-            
-            value=""
-            onChange=""
-          
+            id="yearFounded"
+            name="yearFounded"
+            startYear= {startYear}
+            value={formBuyerData.yearFounded}
+            onChange={handleChange}
           />
         </div>
       </div>
-      {/* </div> */}
     </>
   );
 };

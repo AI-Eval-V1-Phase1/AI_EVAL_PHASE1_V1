@@ -1,0 +1,119 @@
+.acrd_container {
+  width: 100%;
+}
+
+.card {
+  width: 900px;
+  /* min-height: 500px; */
+  /* max-height: 900px; */
+  background-color: var(--card-onboarding-bg-color);
+  padding: 1em;
+}
+
+.card_section {
+  display: flex;
+  /* justify-content: space-between; */
+  align-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.card_vendor {
+  display: flex;
+  flex-direction: column;
+  padding: 0 6em 3em 6em;
+  /* justify-content: space-between; */
+  /* align-content: center; */
+  /* align-items: center; */
+}
+
+.header_for_vendor {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-content: center;
+  align-items: center;
+  margin: 0.9em 0 0 0;
+}
+.confirm_onboarding {
+  padding: 1em;
+  width: 100px;
+  height: 100px;
+  background-color: #dcfce7;
+
+  color: green;
+  border-radius: 50%;
+}
+
+.onboarding_setup_card {
+  /* background-color: aliceblue; */
+  padding: 1em;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.onboarding_setup_card p {
+  text-align: center;
+  color: #4b5563;
+  line-height: 1.5em;
+}
+.onboarding_setup_card h2 {
+  font: 2.5em;
+}
+
+.onboarding_setup_card a {
+  color: var(--main-auth-button-color);
+  font-weight: 600;
+}
+.signup_success_note {
+  background-color: #dcfce7;
+
+  color: green;
+  border-radius: 50%;
+}
+
+.signup_confirmation_wrapper {
+  height: 120px; /* reserve fixed space for the card */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1em; /* optional spacing from form */
+}
+
+.signup_confirmation_card {
+  background-color: #d4edda;
+  color: #155724;
+  border-radius: 8px;
+  width: 400px;
+  padding: 1em;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.signup_confirmation_card {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.signup_confirmation_wrapper .signup_confirmation_card {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+.signup_confirmation_card h2{
+  font-size: 1em;
+}
+
+.signup_confirmation_card p {
+  /* color: #4b5563; */
+  font-size: 0.9em;
+}
+
+

@@ -1,12 +1,11 @@
 //** To create Organization Table in DB
 export {
-  createOrganization,
-  organizationStatusEnum,
+  createOrganization
 } from "./createOrganization";
 
 //** To delete or change status of an organization Logs
 
-export { organizationStatusLogs } from "./deleteOrganization";
+// export { organizationStatusLogs } from "./deleteOrganization";
 
 //** Fetch all the Organization Data
 

@@ -31,15 +31,31 @@ const Login = () => {
       console.log(response);
       const result = await response.json();
       if (response.ok) {
-        navigate("/");
-        console.log(result.userDetails[0]);
+        // console.log(result.userDetails[0]);
+        const bearerToken = result.token;
         const userDetails = result.userDetails[0];
         setIsUser(userDetails);
-
+        console.log(userDetails);
+        sessionStorage.setItem("bearerToken", bearerToken);
         sessionStorage.setItem("userEmail", userDetails.email);
         sessionStorage.setItem("userRole", userDetails.role);
         sessionStorage.setItem("userId", userDetails.id);
+        sessionStorage.setItem("systemRole", userDetails.user_platform_role);
+        sessionStorage.setItem(
+          "user_signup_completed",
+          userDetails.user_signup_completed,
+        );
+        sessionStorage.setItem(
+          "user_onboarding_completed",
+          userDetails.user_onboarding_completed,
+        );
         // console.log(userDetails.email);
+        // navigate("/");
+        if (userDetails.user_onboarding_completed) {
+          navigate("/");
+        } else {
+          navigate("/onBoarding");
+        }
       }
     } catch (error) {
       console.log(error);

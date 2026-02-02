@@ -2,17 +2,54 @@ import React, { useEffect, useState } from "react";
 import "./onboarding.css";
 import { Store, ChevronRightCircle, Building2, FileCheck } from "lucide-react";
 import Button from "../../UI/Button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import CardContainerOnBoarding from "../../UI/CardContainerOnBoarding";
 import CardOnBoarding from "../../UI/CardOnBoarding";
+import  {jwtDecode}  from "jwt-decode";
+
+interface TokenPayload {
+  email: string;
+  userId: string;
+  exp: number;
+}
 
 const Onboarding = () => {
-  useEffect(() => {
-    document.title = "AI Eval | Onboarding";
-  }, []);
   const navigate = useNavigate();
   const [role, setRole] = useState("");
   const [disableBtn, setDisabledBtn] = useState(true);
+  const { token } = useParams<{ token: string }>();
+useEffect(() => {
+  document.title = "AI Eval | Onboarding";
+
+  const activeToken = token || sessionStorage.getItem("onboardingToken");
+
+  if (!activeToken) {
+    navigate("/login");
+    return;
+  }
+
+  try {
+    const decoded: TokenPayload = jwtDecode(activeToken);
+
+    if (decoded.exp * 1000 < Date.now()) {
+      alert("Token expired. Please login again.");
+      sessionStorage.clear();
+      navigate("/login");
+      return;
+    }
+
+    sessionStorage.setItem("onboardingToken", activeToken);
+    sessionStorage.setItem("email", decoded.email);
+    sessionStorage.setItem("userId", decoded.userId);
+  } catch (error) {
+    console.error("Invalid token", error);
+    alert("Invalid token. Please login again.");
+    sessionStorage.clear();
+    navigate("/login");
+  }
+}, [token, navigate]);
+
+
   const handleSelection = () => {
     if (role === "buyer") {
       navigate("/onboarding/buyerOnboarding");
@@ -20,6 +57,8 @@ const Onboarding = () => {
       navigate("/onboarding/vendorOnboarding");
     }
   };
+
+  // console.log("role",role)
 
   const handleRole = (val: string) => {
     setRole(val);

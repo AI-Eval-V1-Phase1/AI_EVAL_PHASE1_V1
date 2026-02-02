@@ -23,16 +23,20 @@ const CreateOrganization = ({ setIsOrganization }) => {
       return;
     }
 
-    const orgData = { isOrganizationName };
+    const user = sessionStorage.getItem("userId")
+    // console.log(user)
+    const orgData = { isOrganizationName,user };
 
     // console.log(orgData);
+    const token = sessionStorage.getItem("bearerToken");
 
     try {
       const response = await fetch(`${BASE_URL}/newOrganization`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-        },
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
         body: JSON.stringify(orgData),
       });
       // console.log("response", response);

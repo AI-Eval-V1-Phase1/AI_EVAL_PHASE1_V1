@@ -29,25 +29,30 @@ const UserManagement = () => {
 
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [organization, setOrganization] = useState("");
   const [role, setRole] = useState("");
-const dispatch = useDispatch()
-  const {data} = useSelector(state=>state.organizations)
-console.log("data of orgs",data)
+  const dispatch = useDispatch();
+  const { data } = useSelector((state) => state.organizations);
+  // console.log("data of orgs", data);
+
   const handleInvite = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const userFormData = { email, organization, role };
+    const user = sessionStorage.getItem("userId")
+    const userFormData = { email, organization, role,user };
     console.log("Submitting form with:", userFormData); // 🔹 add this
 
     try {
+      const token = sessionStorage.getItem("bearerToken");
       const response = await fetch(
         `${BASE_URL}/invite_user`, // matches backend
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify(userFormData),
         },
       );
@@ -68,11 +73,11 @@ console.log("data of orgs",data)
     }
   };
 
-    useEffect(() => {
-      // if (status == "succeeded") {
-        dispatch(getOrganizations());
-      // }
-    }, [dispatch]);
+  useEffect(() => {
+    // if (status == "succeeded") {
+    dispatch(getOrganizations());
+    // }
+  }, [dispatch]);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -86,25 +91,35 @@ console.log("data of orgs",data)
   //   { value: "Organization 2", label: "Organization 2" },
   // ];
 
-
   // const orgOptions = data
+  const systemOrg = "AI EVAL";
 
- const orgOptions = data.map(
-    (orgOptions) => ({
-      label: orgOptions.organizationName,
-      value: orgOptions.id,
-    }),
-  );
+  const orgOptions = data?.map((orgOptions) => ({
+    label: orgOptions.organizationName,
+    value: orgOptions.id,
+  }));
 
-  // console.log(data)
+  orgOptions?.push({
+    label: systemOrg,
+    value: systemOrg,
+  });
+
+  // const addorgOptions = orgOptions.length + 1;
+  // console.log("orgOptions", orgOptions);
 
   const roleOptions = [
     { value: "admin", label: "admin" },
-    { value: "system admin", label: "system admin" },
+    // { value: "system admin", label: "system admin" },
     { value: "analyst", label: "Analyst" },
     { value: "manager", label: "manager" },
     { value: "viewer", label: "viewer" },
     { value: "user", label: "user" },
+  ];
+  const systemRoleOptions = [
+    { value: "system admin", label: "system admin" },
+    { value: "system manager", label: "system manager" },
+    { value: "system viewer", label: "system viewer" },
+    { value: "system user", label: "system user" },
   ];
 
   return (
@@ -177,9 +192,10 @@ console.log("data of orgs",data)
               name="user_organization"
               options={orgOptions}
               value={organization}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setOrganization(e.target.value)
-              }
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                setOrganization(e.target.value);
+                setRole("");
+              }}
             />
           </div>
           <div className="popup_fields">
@@ -188,7 +204,10 @@ console.log("data of orgs",data)
               default_option="Select Role"
               icon={<UserStar width={20} height={24} />}
               name="user_role"
-              options={roleOptions}
+              // options={roleOptions}
+              options={
+                organization === systemOrg ? systemRoleOptions : roleOptions
+              }
               value={role}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                 setRole(e.target.value)
@@ -198,6 +217,7 @@ console.log("data of orgs",data)
           <div className="fields_for_button_actions orgBtns">
             <Button
               onClick={() => setIsModalOpen(false)}
+              onClose={handleCloseModal}
               className="orgCancelBtn"
               type="button"
             >

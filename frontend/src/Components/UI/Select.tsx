@@ -13,6 +13,7 @@ type SelectProps = {
   value: string;
   default_option: string;
   options: Option[];
+  required?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 };
 
@@ -24,10 +25,10 @@ const Select = ({
   value,
   default_option,
   options,
+  required,
   onChange,
 }: SelectProps) => {
-
-  console.log(options);
+  // console.log(options);
   return (
     <>
       <label htmlFor={id || name} className="select_label">
@@ -41,6 +42,7 @@ const Select = ({
         value={value}
         onChange={onChange}
         className="select_input"
+        required={required}
       >
         <option value="" disabled>
           {default_option}

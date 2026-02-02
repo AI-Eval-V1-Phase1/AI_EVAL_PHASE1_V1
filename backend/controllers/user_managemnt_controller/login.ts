@@ -3,11 +3,12 @@ import { db } from "../../database/db";
 import { usersTable } from "../../schema/schema";
 import { and, eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import  jwt  from "jsonwebtoken";
 
 const userLogin = async (req: Request, res: Response) => {
   const useremail = req.body.email;
   const userPassword = req.body.password;
-  console.log(req.body);
+  // console.log(req.body);
 
   try {
     const user = await db
@@ -17,17 +18,20 @@ const userLogin = async (req: Request, res: Response) => {
       .limit(1);
     let hashedPassword;
     // console.log(usersTable.user_password)
-const user_table = user[0];
-    
+    const user_table = user[0];
+
     if (user) {
-      hashedPassword = await bcrypt.compare(userPassword,user_table.user_password);
+      hashedPassword = await bcrypt.compare(
+        userPassword,
+        user_table.user_password,
+      );
     }
 
     // console.log("DB",typeof(user_table.user_password))
     // console.log("user",typeof(userPassword))
-// console.log(hashedPassword)
+    // console.log(hashedPassword)
     if (!hashedPassword) {
-      console.log("here")
+      console.log("here");
       return res.status(500).json({ message: "Password Incorrect" });
     }
     // const checkUser = await db
@@ -47,8 +51,22 @@ const user_table = user[0];
       res.status(409).json({ message: "Invalid User" });
       return;
     }
+
+
+
+    const token = jwt.sign(
+      {
+        id: user_table.id,
+        email: user_table.email,
+        userRole:user_table.role
+      },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "24h" }, 
+    );
+
     return res.status(200).json({
       message: "User Login Successful",
+      token,
       userDetails: user,
     });
   } catch (error) {

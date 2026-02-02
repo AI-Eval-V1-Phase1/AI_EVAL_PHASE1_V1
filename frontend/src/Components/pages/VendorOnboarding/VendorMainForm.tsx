@@ -7,29 +7,75 @@ import StepCompanyScale from "./StepCompanyScale";
 import StepGeopgraphy from "./StepGeopgraphy";
 import { ChevronLeftCircle, ChevronRightCircle, Send } from "lucide-react";
 import StepVendorOnboardingPreview from "./StepVendorOnboardingPreview";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import CardOnBoarding from "../../UI/CardOnBoarding";
 import CardContainerOnBoarding from "../../UI/CardContainerOnBoarding";
 import CardConfirmation from "../../UI/CardConfirmation";
+import type { VendorDataInterface } from "../../../types/formDataVendor";
 
-const VendorMainForm = () => {
+const VendorMainForm = ({ type }) => {
   useEffect(() => {
     document.title = "AI Eval | Vendor Onboarding";
   }, []);
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
+let vendor_Id = sessionStorage.getItem("userId");
 
+  // console.log("AI Type",type)
   const navigate = useNavigate();
 
-  const [currentStep, setCurrentStep] = useState(0);
-  const [allStepsFilled, setAllStepsFilled] = useState(false);
+  const allDataVendor = {
+    role: type,
+    vendorId:vendor_Id,
+    vendorType: "",
+    sector: {
+      public_sector: [],
+      private_sector: [],
+      non_profit_sector: [],
+    },
+    vendorMaturity: "",
+    companyWebsite: "",
+    companyDescription: "",
+    primaryContactName: "",
+    // formVendorData: "",
+    primaryContactRole: "",
+    employeeCount: "",
+    yearFounded: "",
+    headquartersLocation: "",
+    operatingRegions: [],
+  };
+
+  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [allStepsFilled, setAllStepsFilled] = useState<boolean>(false);
+  const [formVendorData, setFormVendorData] =
+    useState<VendorDataInterface>(allDataVendor);
 
   const handleContinue = () => setCurrentStep((prev) => prev + 1);
   const handleBack = () => setCurrentStep((prev) => prev - 1);
 
   const handleBackToSelection = () => navigate("/onboarding");
 
-  const handleSubmitPreview = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmitPreview = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setAllStepsFilled(true); // mark form completed
+const token = sessionStorage.getItem("bearerToken");
+const Onboardingtoken = sessionStorage.getItem("onboardingToken");
+    try {
+      const response = await fetch(`${BASE_URL}/vendorOnboarding`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+              Authorization: `Bearer ${Onboardingtoken}`,
+        },
+        body: JSON.stringify(formVendorData),
+      });
+
+      const result = await response.json();
+      console.log(result)
+      if (response.ok) {
+        setAllStepsFilled(true); // mark form completed
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -37,14 +83,38 @@ const VendorMainForm = () => {
       <form onSubmit={handleSubmitPreview}>
         <CardOnBoarding className="card_vendor">
           {/* Render current step */}
-          {currentStep === 0 && <StepCompanyProfile />}
-          {currentStep === 1 && <StepContactInformation />}
-          {currentStep === 2 && <StepCompanyScale />}
-          {currentStep === 3 && <StepGeopgraphy />}
+          {currentStep === 0 && (
+            <StepCompanyProfile
+              formVendorData={formVendorData}
+              setFormVendorData={setFormVendorData}
+            />
+          )}
+          {currentStep === 1 && (
+            <StepContactInformation
+              formVendorData={formVendorData}
+              setFormVendorData={setFormVendorData}
+            />
+          )}
+          {currentStep === 2 && (
+            <StepCompanyScale
+              formVendorData={formVendorData}
+              setFormVendorData={setFormVendorData}
+            />
+          )}
+          {currentStep === 3 && (
+            <StepGeopgraphy
+              formVendorData={formVendorData}
+              setFormVendorData={setFormVendorData}
+            />
+          )}
 
           {/* Step 4: Preview or Confirmation */}
-          {currentStep === 4 && !allStepsFilled && <StepVendorOnboardingPreview />}
-          {currentStep === 4 && allStepsFilled && <CardConfirmation pageNavigateLink="Proceed to Vendor Attestation" />}
+          {currentStep === 4 && !allStepsFilled && (
+            <StepVendorOnboardingPreview formVendorData={formVendorData} />
+          )}
+          {currentStep === 4 && allStepsFilled && (
+            <CardConfirmation pageNavigateLink="Proceed to Vendor Attestation" />
+          )}
         </CardOnBoarding>
 
         {/* Navigation buttons */}

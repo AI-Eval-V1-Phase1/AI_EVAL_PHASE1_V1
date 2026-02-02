@@ -1,5 +1,3 @@
-
-
 .action_btns {
   position: absolute;
   bottom: 5%;
@@ -224,6 +222,43 @@
   display: flex;
   flex-direction: column;
 }
-.mandatory{
+.mandatory {
   color: red;
+}
+
+.labelSection {
+  display: flex;
+  align-items: center;
+  align-content: center;
+  /* gap: 0.5em; */
+}
+
+.labelInfo {
+  margin: 1px 0 0 5px;
+  display: flex;
+  position: relative;
+}
+
+.sector_group {
+  /* margin-top: 4px; */
+  margin: 0.5em 0 0.5em 1em;
+}
+.sector_group p{
+  margin: 10px 0 10px 0;
+}
+
+.sector_tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.sector_tag {
+  font-size: 0.9em;
+  background: #dee2e6;
+  color: black;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 0.85em;
 }

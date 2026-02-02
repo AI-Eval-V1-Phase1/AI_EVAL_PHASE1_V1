@@ -1,17 +1,24 @@
 import React from "react";
-import Input from "../../UI/Input";
 import HeaderForBuyer from "./HeaderForBuyer";
 import Select from "../../UI/Select";
 import MultiSelectDropDown from "../../UI/MultiSelectDropDown";
+import ClickTooltip from "../../UI/ClickTooltip";
+import { Info } from "lucide-react";
 import {
-  BUYER_DATA_CLASSIFICATION_LEVELS_HANDLED,
-  BUYER_PII_SENSITIVE_DATA_HANDLING,
   BUYER_PRIMARY_REGULATORY_FRAMEWORKS,
   BUYER_REGULATORY_PENALTY_EXPOSURE,
-} from "../../../config/buyerOnboardingData";
+  BUYER_DATA_CLASSIFICATION_LEVELS_HANDLED,
+  BUYER_PII_SENSITIVE_DATA_HANDLING,
+  BUYER_HELPTEXT,
+} from "../../../constants/buyerOnboardingData";
 
-const RegulatoryContext = () => {
+const RegulatoryContext = ({ formBuyerData, setFormBuyerData }) => {
   const title_vendor = "Regulatory Context";
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormBuyerData({ ...formBuyerData, [name]: value });
+  };
 
   return (
     <>
@@ -19,74 +26,105 @@ const RegulatoryContext = () => {
         className="header_for_vendor"
         title_vendor={title_vendor}
       />
-      {/* <div className="step_form_body align_form_center"> */}
+
       <div className="step_form_body">
         <div className="step_form_right">
           <div className="form_fields_vendor">
             <MultiSelectDropDown
               labelName={
-                <>
-                  Primary Regulatory Frameworks
+                <div className="labelSection">
                   <span className="mandatory">*</span>
-                </>
+                  <span>Primary Regulatory Frameworks</span>
+                  <ClickTooltip
+                    content={BUYER_HELPTEXT.primaryRegulatoryFrameworks}
+                  >
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
-              id="regulatoryFrameworks"
-              name="regulatoryFrameworks"
-              default_option="Select  primary regulatory frameworks"
+              id="primaryRegulatoryFrameworks"
+              // name="primaryRegulatoryFrameworks"
+              default_option="Select primary regulatory frameworks"
               options={BUYER_PRIMARY_REGULATORY_FRAMEWORKS}
-              value=""
+              value={formBuyerData.primaryRegulatoryFrameworks || []}
+               onChange={(selected: string[]) =>
+                setFormBuyerData({
+                  ...formBuyerData,
+                  primaryRegulatoryFrameworks: selected,
+                })
+              }
             />
           </div>
+
           <div className="form_fields_vendor">
             <Select
               labelName={
-                <>
-                  Regulatory Penalty Exposure
+                <div className="labelSection">
                   <span className="mandatory">*</span>
-                </>
+                  <span>Regulatory Penalty Exposure</span>
+                  <ClickTooltip
+                    content={BUYER_HELPTEXT.regulatoryPenaltyExposure}
+                  >
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
-              type="text"
               id="penaltyExposure"
-              name="penalty_Exposure"
-              value=""
+              name="regulatoryPenaltyExposure"
               default_option="Select regulatory penalty exposure"
               options={BUYER_REGULATORY_PENALTY_EXPOSURE}
-              onChange=""
+              value={formBuyerData.regulatoryPenaltyExposure || ""}
+              onChange={handleChange}
               required
             />
           </div>
         </div>
-        <div >
+
+        <div>
           <div className="form_fields_vendor">
             <MultiSelectDropDown
               labelName={
-                <>
-                  Data Classification Levels Handled
+                <div className="labelSection">
                   <span className="mandatory">*</span>
-                </>
+                  <span>Data Classification Levels Handled</span>
+                  <ClickTooltip
+                    content={BUYER_HELPTEXT.dataClassificationHandled}
+                  >
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
-              id="dataClassification"
-              name="data_Classification"
-              value=""
+              id="dataClassificationHandled"
+              // name="dataClassificationHandled"
               default_option="Select data classification levels handled"
               options={BUYER_DATA_CLASSIFICATION_LEVELS_HANDLED}
-              onChange=""
+              value={formBuyerData.dataClassificationHandled || []}
+              onChange={(selected: string[]) =>
+                setFormBuyerData({
+                  ...formBuyerData,
+                  dataClassificationHandled: selected,
+                })
+              }
             />
           </div>
+
           <div className="form_fields_vendor">
             <Select
               labelName={
-                <>
-                  PII/Sensitive Data Handling
+                <div className="labelSection">
                   <span className="mandatory">*</span>
-                </>
+                  <span>PII/Sensitive Data Handling</span>
+                  <ClickTooltip content={BUYER_HELPTEXT.piiHandling}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               id="pii_phi_handling"
-              name="pii_phi_Handling"
-              default_option="Select  pii/sensitive data handling"
-              value=""
-              onChange=""
+              name="piiHandling"
+              default_option="Select PII/Sensitive data handling"
               options={BUYER_PII_SENSITIVE_DATA_HANDLING}
+              value={formBuyerData.piiHandling || ""}
+              onChange={handleChange}
               required
             />
           </div>

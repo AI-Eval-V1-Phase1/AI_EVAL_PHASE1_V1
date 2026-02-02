@@ -1,52 +1,57 @@
 import HeaderForVendor from "./HeaderForVendor";
-// import type EMPLOYEE_COUNTS from
-import { EMPLOYEE_COUNTS } from "../../../config/vendorOnboardingData";
+import { EMPLOYEE_COUNTS } from "../../../constants/vendorOnboardingData";
 import Select from "../../UI/Select";
 import YearPicker from "../../UI/YearPicker";
+import type { FormChangeEvent, StepPropsVendorData } from "../../../types/formDataVendor";
 
-const StepCompanyScale = () => {
+const StepCompanyScale = ({ formVendorData, setFormVendorData }: StepPropsVendorData) => {
+  const handleChange = (e: FormChangeEvent) => {
+    const { name, value } = e.target;
+    // Convert year to number
+    const newValue = name === "yearFounded" ? (value ? parseInt(value, 10) : undefined) : value;
+    setFormVendorData({ ...formVendorData, [name]: newValue });
+  };
+
   const currentYear = new Date().getFullYear();
-  console.log(currentYear);
 
   return (
     <>
-      <HeaderForVendor
-        className="header_for_vendor"
-        title_vendor="Company Scale"
-      />
-      {/* <div className="step_form_body align_form_center">  when you have the fields 4 uncomment this */}
+      <HeaderForVendor className="header_for_vendor" title_vendor="Company Scale" />
+
       <div className="align_form_center1">
-        {/* <div className="step_form_right"> */}
         <div className="form_fields_vendor">
           <Select
             labelName={
               <>
-                Employee Count <span className="mandatory">*</span>
+                <span className="mandatory">*</span> Employee Count
               </>
             }
             options={EMPLOYEE_COUNTS}
             default_option="Select employee count"
-            id="emp_count"
-            name="emp_count"
-            value=""
-            onChange={() => console.log("employee count")}
+            id="employeeCount"
+            name="employeeCount"
+            value={formVendorData.employeeCount || ""}
+            onChange={handleChange}
+            required
           />
         </div>
+
         <div className="form_fields_vendor">
           <YearPicker
             startYear={1950}
-            label="Year Founded"
             endYear={currentYear}
-            onChange={(year) => console.log("Selected year:", year)}
+            label={
+              <>
+                <span className="mandatory">*</span> Year Founded
+              </>
+            }
+            name="yearFounded"
+            id="yearFounded"
+            value={formVendorData.yearFounded}
+            onChange={handleChange}
           />
         </div>
       </div>
-      {/* <div className="step_form_left">
-      
-      
-       
-        </div> */}
-      {/* </div> */}
     </>
   );
 };

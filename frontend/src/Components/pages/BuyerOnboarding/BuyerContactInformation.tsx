@@ -1,14 +1,27 @@
-// import React from "react";
+import React, { useState } from "react";
 import {
   BUYER_DEPARTMENTS,
   BUYER_PRIMARY_ROLE,
-} from "../../../config/buyerOnboardingData";
+  BUYER_HELPTEXT,
+} from "../../../constants/buyerOnboardingData";
 import Input from "../../UI/Input";
 import Select from "../../UI/Select";
 import HeaderForBuyer from "./HeaderForBuyer";
+import ClickTooltip from "../../UI/ClickTooltip";
+import { Info } from "lucide-react"; // assuming you use react-feather for the info icon
 
-const BuyerContactInformation = () => {
+const BuyerContactInformation = ({formBuyerData, setFormBuyerData}) => {
   const title_vendor = "Contact Information";
+
+
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormBuyerData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   return (
     <>
@@ -21,64 +34,83 @@ const BuyerContactInformation = () => {
           <div className="form_fields_vendor">
             <Input
               labelName={
-                <>
-                  Primary Contact Name<span className="mandatory">*</span>
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Primary Contact Name</span>
+                  <ClickTooltip content={BUYER_HELPTEXT.primaryContactName}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               type="text"
-              id="primary_contact_name"
-              name="primary_contact_name"
-              value=""
-              onChange=""
+              id="primaryContactName"
+              name="primaryContactName"
+              value={formBuyerData.primaryContactName}
+              onChange={handleChange}
               required
             />
           </div>
+
           <div className="form_fields_vendor">
             <Input
               labelName={
-                <>
-                  Primary Contact Email<span className="mandatory">*</span>
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Primary Contact Email</span>
+                  <ClickTooltip content={BUYER_HELPTEXT.primaryContactEmail}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               type="email"
-              id="primary_contact_email"
-              name="primary_contact_email"
-              value=""
-              onChange=""
+              id="primaryContactEmail"
+              name="primaryContactEmail"
+              value={formBuyerData.primaryContactEmail}
+              onChange={handleChange}
               required
             />
           </div>
         </div>
+
         <div>
           <div className="form_fields_vendor">
             <Select
               labelName={
-                <>
-                  Primary Contact Role<span className="mandatory">*</span>
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Primary Contact Role</span>
+                  <ClickTooltip content={BUYER_HELPTEXT.primaryContactRole}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               default_option="Select primary role"
               options={BUYER_PRIMARY_ROLE}
-              id="primary_contact_role"
-              name="primary_contact_role"
-              value=""
-              onChange=""
+              id="primaryContactRole"
+              name="primaryContactRole"
+              value={formBuyerData.primaryContactRole}
+              onChange={handleChange}
               required
             />
           </div>
+
           <div className="form_fields_vendor">
             <Select
               labelName={
-                <>
-                  Department/Business Unit<span className="mandatory">*</span>
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Department/Business Unit</span>
+                  <ClickTooltip content={BUYER_HELPTEXT.departmentOwner}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               default_option="Select department/business unit"
-              id="dept_Business_Role"
-              name="dept_BusinessRole"
+              id="departmentOwner"
+              name="departmentOwner"
               options={BUYER_DEPARTMENTS}
-              value=""
-              onChange=""
+              value={formBuyerData.departmentOwner}
+              onChange={handleChange}
               required
             />
           </div>

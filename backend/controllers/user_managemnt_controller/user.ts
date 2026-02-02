@@ -5,8 +5,8 @@ import { Request, Response } from "express";
 import nodemailer from "nodemailer";
 import { eq } from "drizzle-orm";
 import { error } from "node:console";
-import jwt  from "jsonwebtoken";
-
+import jwt from "jsonwebtoken";
+import emailConfig from "../../functions/emailconfig";
 
 export const inviteUser = async (req: Request, res: Response) => {
   // Helper to generate email HTML
@@ -15,6 +15,7 @@ export const inviteUser = async (req: Request, res: Response) => {
     organization: string,
     role: string,
     confirmationLink: string,
+    user: string,
   ) {
     return `<!DOCTYPE html>
 <html>
@@ -49,14 +50,32 @@ export const inviteUser = async (req: Request, res: Response) => {
   }
 
   try {
-    const { email, organization, role } = req.body;
+    let { email, organization, role, user } = req.body;
 
     if (!email || !organization || !role) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Insert user into DB
+    email = email.toLowerCase();
 
+    const existingUser = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, email));
+
+    if (existingUser.length > 0) {
+      return res
+        .status(409)
+        .json({ message: "User with this email already exists" });
+    }
+
+    // Insert user into DB
+    let platform_role;
+    if (organization === "AI EVAL") {
+      platform_role = "system admin";
+    } else {
+      platform_role = "";
+    }
 
     await db.insert(usersTable).values({
       email,
@@ -64,13 +83,15 @@ export const inviteUser = async (req: Request, res: Response) => {
       role,
       invited_at: new Date(),
       account_status: "invited",
+      invited_by: user,
+      user_platform_role: platform_role,
     });
 
     console.log("User inserted successfully into DB:", email);
 
-    const token = jwt.sign({email:email},process.env.JWT_SECRET_KEY,{
-    expiresIn: "1hr",
-    })
+    const token = jwt.sign({ email: email }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "7d",
+    });
 
     // console.log(token)
 
@@ -79,15 +100,17 @@ export const inviteUser = async (req: Request, res: Response) => {
     const confirmationLink = `http://localhost:5173/signup/${token}`;
 
     // Setup nodemailer transporter
-    const transporter = nodemailer.createTransport({
-      host: "smtp.office365.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env["SENDER_EMAIL"],
-        pass: process.env["SENDER_PASSWORD"],
-      },
-    });
+    // const transporter = nodemailer.createTransport({
+    //   host: "smtp.office365.com",
+    //   port: 587,
+    //   secure: false,
+    //   auth: {
+    //     user: process.env["SENDER_EMAIL"],
+    //     pass: process.env["SENDER_PASSWORD"],
+    //   },
+    // });
+
+    const transporter = emailConfig();
 
     // Send the invitation email
     await transporter.sendMail({
@@ -97,7 +120,13 @@ export const inviteUser = async (req: Request, res: Response) => {
       },
       to: email,
       subject: "Confirm your AI Eval account",
-      html: userEmailTemplate(email, organization, role, confirmationLink),
+      html: userEmailTemplate(
+        email,
+        organization,
+        role,
+        confirmationLink,
+        user,
+      ),
     });
 
     console.log("Invitation email sent to:", email);

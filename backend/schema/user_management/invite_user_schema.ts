@@ -1,8 +1,11 @@
-import { pgTable, serial, varchar, integer, timestamp, pgEnum, text } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, timestamp, text } from "drizzle-orm/pg-core";
 import z from "zod";
-
-// Enum for account_status
-export const accountStatusEnum = pgEnum("account_status", ["invited", "confirmed"]);
+import {
+  accountStatusEnum,
+  onboarding,
+  organizationStatusEnum,
+  signup,
+} from "../EnumValues/enumValues";
 
 export const usersTable = pgTable("users", {
   id: serial("id").primaryKey(), // auto-incrementing primary key
@@ -10,12 +13,20 @@ export const usersTable = pgTable("users", {
   organization_name: varchar("organization_name").notNull(),
   role: varchar("role", { length: 255 }).notNull(),
   invited_at: timestamp("invited_at").defaultNow().notNull(),
-  account_status: accountStatusEnum("account_status").default("invited").notNull(),
-  user_name:varchar("user_name").unique(),
-  user_first_name:varchar("user_first_name"),
-  user_last_name:varchar("user_last_name"),
-  user_password:text("user_password"),
-  // user_onboarding_completed:enum(["yes","no"]).default("no"),
-  // user_signup_completed:enum(["yes","no"]).default("no"),
-  // user_app_role:enum(["buyer","vendor"]),
+  invited_by: varchar("invited_by").notNull(),
+  account_status: accountStatusEnum("account_status")
+    .default("invited")
+    .notNull(),
+  user_name: varchar("user_name").unique(),
+  user_first_name: varchar("user_first_name"),
+  user_last_name: varchar("user_last_name"),
+  user_password: text("user_password"),
+  userStatus: organizationStatusEnum("userStatus").default("active").notNull(),
+  user_signup_completed: signup("user_signup_completed")
+    .default("false")
+    .notNull(),
+  user_onboarding_completed: onboarding("user_onboarding_completed")
+    .default("false")
+    .notNull(),
+  user_platform_role:varchar("user_platform_role"),
 });

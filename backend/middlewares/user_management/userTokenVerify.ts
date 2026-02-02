@@ -1,22 +1,41 @@
 import type { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
-const userTokenVerify = async (req: Request, res: Response, next:NextFunction) => {
-  const { token } = req.params;
+// Extend Request to include email
+interface InviteTokenRequest extends Request {
+  email?: string;
+}
+
+// Your token payload
+interface InviteTokenPayload extends JwtPayload {
+  email: string;
+}
+
+const userTokenVerify = (req: InviteTokenRequest, res: Response, next: NextFunction) => {
+  // Normalize token to string
+  const tokenParam = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+
+  if (!tokenParam) {
+    return res.status(400).json({ message: "Token missing" });
+  }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const decoded = jwt.verify(tokenParam, process.env.JWT_SECRET_KEY!) as JwtPayload | string;
 
-    if (!decoded.email) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid token format!" });
+    // Make sure decoded is an object and has email
+    if (typeof decoded !== "object" || !("email" in decoded)) {
+      return res.status(400).json({ message: "Invalid token format!" });
     }
-    next()
-  } catch (error) {
-    console.log(error);
+
+    req.email = (decoded as InviteTokenPayload).email;
+
+    console.log("Verified email from token:", req.email);
+
+    next();
+  } catch (err: any) {
+    console.log("JWT verify error:", err.message);
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
-
-export default userTokenVerify
+export default userTokenVerify;

@@ -1,9 +1,20 @@
 import Input from "../../UI/Input";
 import HeaderForVendor from "./HeaderForVendor";
 import Select from "../../UI/Select";
-import { PRIMARY_CONTACT_ROLE } from "../../../config/vendorOnboardingData";
+import { PRIMARY_CONTACT_ROLE } from "../../../constants/vendorOnboardingData";
+import type {
+  StepPropsVendorData,
+  FormChangeEvent,
+} from "../../../types/formDataVendor";
 
-const StepContactInformation = () => {
+const StepContactInformation = ({
+  formVendorData,
+  setFormVendorData,
+}: StepPropsVendorData) => {
+  const handleChange = (e: FormChangeEvent) => {
+    const { name, value } = e.target;
+    setFormVendorData({ ...formVendorData, [name]: value });
+  };
   return (
     <>
       <HeaderForVendor
@@ -20,28 +31,30 @@ const StepContactInformation = () => {
             <Input
               labelName={
                 <>
-                  Primary Contact Name <span className="mandatory">*</span>
+                  <span className="mandatory">*</span>Primary Contact Name
                 </>
               }
               type="text"
-              id="primary_contact_name"
-              name="primary_contact_name"
-              value=""
-              onChange={() => console.log(" primary_contact_name")}
+              id="primaryContactName"
+              name="primaryContactName"
+              value={formVendorData.primaryContactName}
+              onChange={handleChange}
+              required
             />
           </div>
           <div className="form_fields_vendor">
             <Input
               labelName={
                 <>
-                  Primary Contact Email <span className="mandatory">*</span>
+                  <span className="mandatory">*</span>Primary Contact Email
                 </>
               }
               type="email"
-              id="primary_contact_email"
-              name="primary_contact_email"
-              value=""
-              onChange={() => console.log("primary_contact_email count")}
+              id="primaryContactEmail"
+              name="primaryContactEmail"
+              value={formVendorData.primaryContactEmail}
+              onChange={handleChange}
+              required
             />
           </div>
         </div>
@@ -51,16 +64,16 @@ const StepContactInformation = () => {
             <Select
               labelName={
                 <>
-                  Primary Contact Role <span className="mandatory">*</span>
+                  <span className="mandatory">*</span>Primary Contact Role
                 </>
               }
-              
-              id="primary_contact_role"
-              name="primary_contact_role"
+              id="primaryContactRole"
+              name="primaryContactRole"
               default_option="Select primary role"
               options={PRIMARY_CONTACT_ROLE}
-              value=""
-              onChange={() => console.log("primary_contact_role count")}
+              value={formVendorData.primaryContactRole}
+              onChange={handleChange}
+              required
             />
           </div>
         </div>

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { useDispatch, useSelector } from "react-redux";
 import { getOrganizations } from "../../../Context/OrganizationsData";
+import EditOrganization from "./EditOrganization";
 
 const OrganizationDataTable = () => {
   const [filterText, setFilterText] = React.useState("");
@@ -14,6 +15,8 @@ const OrganizationDataTable = () => {
   const { data, status, error } = useSelector((state) => state.organizations);
   console.log("data", data);
 
+  const [isEdit, setIsEdit] = useState(false);
+const [selectedOrgId, setSelectedOrgId] = useState(null);
   // const getOrganizations = async () => {
   //   // console.log("here");
   //   try {
@@ -57,7 +60,7 @@ const OrganizationDataTable = () => {
   //   },
   // ];
 
-  const filteredItems = data.filter(
+  const filteredItems = data?.filter(
     (item) =>
       item.organizationName &&
       item.organizationName.toLowerCase().includes(filterText.toLowerCase()),
@@ -70,6 +73,11 @@ const OrganizationDataTable = () => {
       setResetPaginationToggle(!resetPaginationToggle);
       setFilterText("");
     }
+  };
+
+  const editOrg = (id) => {
+    setIsEdit(true);
+    setSelectedOrgId(id)
   };
 
   const FilterComponent = ({ filterText, onFilter, onClear }) => (
@@ -149,7 +157,7 @@ const OrganizationDataTable = () => {
       //   name: "Actions",
       name: <div className="tableHeader">Action</div>,
       selector: (row) => (
-        <div className="actionButtons">
+        <div className="actionButtons" onClick={()=>editOrg(row.id)}>
           <p className="editOrgImg">
             <span>
               <SquarePen width={16} />
@@ -162,30 +170,41 @@ const OrganizationDataTable = () => {
       sortable: true,
     },
   ];
+const selectedOrg = data?.find((org) => org.id === selectedOrgId);
 
   return (
-    <div className="orgDataTable">
-      {/* <div>Organization Data Table</div> */}
+    <>
+      <div className="orgDataTable">
+        {/* <div>Organization Data Table</div> */}
 
-      {/* <DataTable columns={columns} data={filteredItems} pagination /> */}
-      <DataTable
-        customStyles={customStyles}
-        columns={columns}
-        data={filteredItems}
-        pagination
-        paginationResetDefaultPage={resetPaginationToggle}
-        subHeader
-        subHeaderComponent={
-          <FilterComponent
-            onFilter={(e) => setFilterText(e.target.value)}
-            onClear={handleClear}
-            filterText={filterText}
-          />
-        }
-        selectableRows
-        persistTableHead
-      />
-    </div>
+        {/* <DataTable columns={columns} data={filteredItems} pagination /> */}
+        <DataTable
+          customStyles={customStyles}
+          columns={columns}
+          data={filteredItems}
+          pagination
+          paginationResetDefaultPage={resetPaginationToggle}
+          subHeader
+          subHeaderComponent={
+            <FilterComponent
+              onFilter={(e) => setFilterText(e.target.value)}
+              onClear={handleClear}
+              filterText={filterText}
+            />
+          }
+          selectableRows
+          persistTableHead
+        />
+      </div>
+      {isEdit && selectedOrg && (
+  <EditOrganization
+    id={selectedOrgId}
+    orgData={selectedOrg}
+    setIsEdit={setIsEdit}
+  />
+)}
+
+    </>
   );
 };
 

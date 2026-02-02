@@ -11,6 +11,7 @@ type InputProps = {
   ) => void;
   rows?: number;
   cols?: number;
+  required ?: boolean;
 };
 
 const Input = ({
@@ -23,6 +24,7 @@ const Input = ({
   onChange,
   rows = 4,
   cols,
+  required,
 }: InputProps) => {
   return (
     <div className="input_wrapper">
@@ -38,7 +40,7 @@ const Input = ({
           value={value}
           rows={rows}
           cols={cols}
-          required
+          required ={required}
           onChange={onChange}
           className="textarea_field"
         />
@@ -48,9 +50,10 @@ const Input = ({
           type={type}
           name={name}
           value={value}
-          required
+          required = {required}
           onChange={onChange}
           className="input_field"
+          
         />
       )}
     </div>

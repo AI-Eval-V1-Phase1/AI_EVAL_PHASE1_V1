@@ -1,28 +1,36 @@
+import React, { useState } from "react";
 import Input from "../../UI/Input";
 import HeaderForBuyer from "./HeaderForBuyer";
 import Select from "../../UI/Select";
-import { useState } from "react";
-import { BUYER_DATA_RESIDENCY_REQUIREMENTS, BUYER_HEADQUARTERS_LOCATION, BUYER_OPERATING_REGIONS } from "../../../config/buyerOnboardingData";
 import MultiSelectDropDown from "../../UI/MultiSelectDropDown";
+import ClickTooltip from "../../UI/ClickTooltip";
+import { Info } from "lucide-react";
+import {
+  BUYER_DATA_RESIDENCY_REQUIREMENTS,
+  BUYER_HEADQUARTERS_LOCATION,
+  BUYER_OPERATING_REGIONS,
+  BUYER_HELPTEXT,
+} from "../../../constants/buyerOnboardingData";
 
-const BuyerGeopgraphy = () => {
-    const [isVisibleInput, setIsVisibleInput] = useState(false);
-    const [customHeadquarter, setCustomHeadquarter] = useState("");
-    // const [operatingRegions, setOperatingRegions] = useState<string[]>([]);
-    const [selectedHeadquarter, setSelectedHeadquarter] = useState(""); // dropdown
-  
-    const handleHeadquartersChange = (val: string) => {
-        setSelectedHeadquarter(val); // always store dropdown selection
-      if (val === "other") {
-        setIsVisibleInput(true);
-        setCustomHeadquarter("");
-      } else {
-        setIsVisibleInput(false);
-        setCustomHeadquarter(val);
-      }
-    };
-
+const BuyerGeography = ({ formBuyerData, setFormBuyerData }) => {
   const title_vendor = "Geography";
+
+  const [isVisibleInput, setIsVisibleInput] = useState(false);
+  const [customHeadquarter, setCustomHeadquarter] = useState("");
+  const [selectedHeadquarter, setSelectedHeadquarter] = useState("");
+
+  const handleHeadquartersChange = (val: string) => {
+    setSelectedHeadquarter(val);
+    if (val === "Other (Specify)") {
+      setIsVisibleInput(true);
+      setCustomHeadquarter("");
+      setFormBuyerData({ ...formBuyerData, headquartersLocation: "" });
+    } else {
+      setIsVisibleInput(false);
+      setCustomHeadquarter(val);
+      setFormBuyerData({ ...formBuyerData, headquartersLocation: val });
+    }
+  };
 
   return (
     <>
@@ -30,87 +38,97 @@ const BuyerGeopgraphy = () => {
         className="header_for_vendor"
         title_vendor={title_vendor}
       />
-      <div >
-        <div className="form_fields_vendor">
-        <Select
 
+      <div className="form_fields_vendor">
+        <Select
           labelName={
-                <>
-                 Headquarters Location<span className="mandatory">*</span>
-                </>
-              }
-            id="headquarters_loc"
-            required
-            name="headquarters_loc"
-            options={BUYER_HEADQUARTERS_LOCATION}
-            value={selectedHeadquarter}
-            default_option="Select headquarter location"
-            onChange={(e) => handleHeadquartersChange(e.target.value)}
+            <div className="labelSection">
+              <span className="mandatory">*</span>
+              <span>Headquarters Location</span>
+              <ClickTooltip content={BUYER_HELPTEXT.headquartersLocation}>
+                <Info size={14} color="#6B7280" />
+              </ClickTooltip>
+            </div>
+          }
+          id="headquarters_loc"
+          name="headquartersLocation"
+          required
+          options={BUYER_HEADQUARTERS_LOCATION}
+          value={selectedHeadquarter}
+          default_option="Select headquarter location"
+          onChange={(e) => handleHeadquartersChange(e.target.value)}
+        />
+      </div>
+
+      {isVisibleInput && (
+        <div className="form_fields_vendor">
+          <Input
+            labelName={
+              <div className="labelSection">
+                <span className="mandatory">*</span>
+                <span>Specify Location</span>
+                {/* <ClickTooltip content={VENDOR_HELPTEXT.customHeadquarter}>
+                  <Info size={14} color="#6B7280" />
+                </ClickTooltip> */}
+              </div>
+            }
+            id="custom_headquarter"
+            name="headquartersLocation"
+            value={customHeadquarter}
+            onChange={(e) => {
+              setCustomHeadquarter(e.target.value);
+              setFormBuyerData({
+                ...formBuyerData,
+                headquartersLocation: e.target.value,
+              });
+            }}
           />
         </div>
+      )}
+      <div className="form_fields_vendor">
+        <MultiSelectDropDown
+          labelName={
+            <div className="labelSection">
+              <span className="mandatory">*</span>
+              <span>Operating Regions</span>
+              <ClickTooltip content={BUYER_HELPTEXT.operatingRegions}>
+                <Info size={14} color="#6B7280" />
+              </ClickTooltip>
+            </div>
+          }
+          id="operatingRegions"
+          options={BUYER_OPERATING_REGIONS}
+          default_option="Select operating regions"
+          value={formBuyerData.operatingRegions}
+          onChange={(selected: string[]) =>
+            setFormBuyerData({ ...formBuyerData, operatingRegions: selected })
+          }
+        />
+      </div>
 
-        {isVisibleInput && (
-          <div className="form_fields_vendor">
-            <Input
-             labelName={
-                <>
-                Specify Location<span className="mandatory">*</span>
-                </>
-              }
-              id="custom_headquarter"
-              name="custom_headquarter"
-              value={customHeadquarter}
-              onChange={(e) => setCustomHeadquarter(e.target.value)}
-            />
-          </div>
-        )}
-          <div className="form_fields_vendor">
-            {/* <Input
-              labelName="Operating Regions*"
-              type="operating_reg"
-              id="operating_reg"
-              name="operating_reg"
-              value=""
-              onChange=""
-            /> */}
-            <MultiSelectDropDown
-               labelName={
-                <>
-                Operating Regions<span className="mandatory">*</span>
-                </>
-              }
-              required
-              
-              id="operating_reg"
-              name="operating_reg"
-              value=""
-              default_option="Select"
-              options={BUYER_OPERATING_REGIONS}
-              onChange=""
-            />
-          </div>
-        </div>
-        <div>
-          <div className="form_fields_vendor">
-            <MultiSelectDropDown
-
-              labelName={
-                <>
-               Data Residency Requirements<span className="mandatory">*</span>
-                </>
-              }
-              default_option="Select data residency"
-              id="dataResidency"
-              name="data_Residency"
-              value=""
-              onChange=""
-              options={BUYER_DATA_RESIDENCY_REQUIREMENTS}
-            />
-          </div>
-        </div>
-      {/* </div> */}
+      <div className="form_fields_vendor">
+        <MultiSelectDropDown
+          labelName={
+            <div className="labelSection">
+              <span className="mandatory">*</span>
+              <span>Data Residency Requirements</span>
+              <ClickTooltip content={BUYER_HELPTEXT.dataResidencyRequirements}>
+                <Info size={14} color="#6B7280" />
+              </ClickTooltip>
+            </div>
+          }
+          id="dataResidency"
+          // name="dataResidency"
+          value={formBuyerData.dataResidencyRequirements}
+          options={BUYER_DATA_RESIDENCY_REQUIREMENTS}
+          default_option="Select data residency"
+          onChange={(selected: string[]) =>
+            setFormBuyerData({ ...formBuyerData, dataResidencyRequirements: selected })
+          }
+        />
+      </div>
     </>
   );
 };
 
-export default BuyerGeopgraphy;
+export default BuyerGeography;

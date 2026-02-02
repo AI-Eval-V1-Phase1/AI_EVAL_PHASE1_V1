@@ -1,4 +1,12 @@
-import { Mail, ArrowRight, LockKeyhole, Eye, EyeOff, User } from "lucide-react";
+import {
+  Mail,
+  ArrowRight,
+  LockKeyhole,
+  Eye,
+  EyeOff,
+  User,
+  CheckCircle,
+} from "lucide-react";
 import "../ResetPassword/resetPassword.css";
 import "./signup.css";
 import { useEffect, useState } from "react";
@@ -6,6 +14,7 @@ import type { SignUpdata } from "../Validations/sign_up_validations";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
+import CardContainerOnBoarding from "../../UI/CardContainerOnBoarding";
 
 const SignUp = () => {
   useEffect(() => {
@@ -13,15 +22,17 @@ const SignUp = () => {
   });
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-  const [isVisible, setIsVisible] = useState(false);
   const [isVisibleConfirm, setIsVisibleConfirm] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { token } = useParams();
+  const [isVisible, setIsVisible] = useState(false);
+
   // console.log("here")
   const decode = jwtDecode(token);
 
   let decodeEmail = decode.email;
+
   console.log(decodeEmail);
 
   const passwordVisible = () => {
@@ -62,16 +73,25 @@ const SignUp = () => {
         },
         body: JSON.stringify(signUpFormData),
       });
-      console.log("response", response);
+      // console.log("response", response);
+      const result = await response.json();
+      if (response.ok) {
+        toast.success("Sign Up Successful!");
+        // setIsVisible(true);
+        sessionStorage.setItem("signup_completed", "true");
+        console.log("Sign up token for onboarding", result.token);
+        console.log("Sign up user id for onboarding", result.userId);
+        setTimeout(() => {
+          // navigate("/onBoarding");
+        }, 2000);
+      } else {
+        console.log(result.message);
+      }
     } catch (error) {
       console.log(error);
     }
 
-    toast.success("Sign Up Successful!");
-    setTimeout(() => {
-      navigate("/onBoarding");
-    }, 2000);
-    console.log(signUpFormData);
+    // console.log(signUpFormData);
   };
 
   return (
@@ -90,6 +110,22 @@ const SignUp = () => {
           </div>
         </div>
         <div className="signupContent">
+          {/* <h1>hhh</h1> */}
+          {isVisible && (
+            <CardContainerOnBoarding>
+              <div className="signup_confirmation_wrapper">
+                <div className="signup_confirmation_card">
+                  <CheckCircle className="signup_success_note" size={24} />
+                  {/* <h2>Welcome to AI Eval!</h2> */}
+                  <p>
+                    Your AI Eval account has been successfully activated. Please
+                    check your email to complete the onboarding process
+                  </p>
+                </div>
+              </div>
+            </CardContainerOnBoarding>
+          )}
+
           <div className="loginData">
             <div className="loginCred">
               <div className="loginForm">

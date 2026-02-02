@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+// import React, { useState, useEffect } from "react";
 import "../../styles/year_picker.css";
 
 interface YearPickerProps {
@@ -6,7 +6,9 @@ interface YearPickerProps {
   endYear?: number;
   label?: React.ReactNode;
   value?: number;
-  onChange?: (year: number) => void;
+  name?: string;
+  id?: string;
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 const YearPicker: React.FC<YearPickerProps> = ({
@@ -14,6 +16,8 @@ const YearPicker: React.FC<YearPickerProps> = ({
   endYear,
   label,
   value,
+  name,
+  id,
   onChange,
 }) => {
   const currentYear = endYear ?? new Date().getFullYear();
@@ -22,22 +26,15 @@ const YearPicker: React.FC<YearPickerProps> = ({
     years.push(y);
   }
 
-  const [selectedYear, setSelectedYear] = useState<number | undefined>(value);
-
-  useEffect(() => {
-    setSelectedYear(value);
-  }, [value]);
-
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const year = parseInt(e.target.value, 10);
-    setSelectedYear(year);
-    if (onChange) onChange(year);
+    const val = e.target.value ? parseInt(e.target.value, 10) : undefined;
+    if (onChange) onChange(e); // Pass the original event to parent
   };
 
   return (
     <div className="year-picker">
       {label && <label>{label}</label>}
-      <select value={selectedYear ?? ""} onChange={handleChange}>
+      <select value={value ?? ""} onChange={handleChange} name={name} id={id}>
         <option value="">Select year</option>
         {years.map((year) => (
           <option key={year} value={year}>
@@ -50,4 +47,3 @@ const YearPicker: React.FC<YearPickerProps> = ({
 };
 
 export default YearPicker;
-// 
