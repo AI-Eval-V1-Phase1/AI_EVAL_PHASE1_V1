@@ -1,38 +1,41 @@
 import type { Request, Response } from "express";
-import { db } from "../../database/db";
-import { usersTable } from "../../schema/schema";
-import { and, eq } from "drizzle-orm";
+import { db } from "../../database/db.js";
+import { usersTable } from "../../schema/schema.js";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import  jwt  from "jsonwebtoken";
 
 const userLogin = async (req: Request, res: Response) => {
-  const useremail = req.body.email;
+  const rawEmail = req.body.email;
   const userPassword = req.body.password;
-  // console.log(req.body);
+  const emailTrimmed = (rawEmail ?? "").toString().trim();
+  if (!emailTrimmed) {
+    return res.status(401).json({ message: "Invalid email or password" });
+  }
 
   try {
     const user = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.email, useremail))
+      .where(eq(usersTable.email, emailTrimmed))
       .limit(1);
-    let hashedPassword;
-    // console.log(usersTable.user_password)
     const user_table = user[0];
-
-    if (user) {
-      hashedPassword = await bcrypt.compare(
-        userPassword,
-        user_table.user_password,
-      );
+    if (!user_table) {
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // console.log("DB",typeof(user_table.user_password))
-    // console.log("user",typeof(userPassword))
-    // console.log(hashedPassword)
-    if (!hashedPassword) {
-      console.log("here");
-      return res.status(500).json({ message: "Password Incorrect" });
+    if (!user_table.user_password || user_table.user_password.trim() === "") {
+      return res.status(401).json({
+        message: "Please complete your signup first. Check your email for the signup link.",
+      });
+    }
+
+    const passwordMatch = await bcrypt.compare(
+      userPassword,
+      user_table.user_password,
+    );
+    if (!passwordMatch) {
+      return res.status(401).json({ message: "Password Incorrect" });
     }
     // const checkUser = await db
     //   .select()
@@ -47,21 +50,16 @@ const userLogin = async (req: Request, res: Response) => {
 
     // console.log("checkUser", user);
 
-    if (user.length == 0) {
-      res.status(409).json({ message: "Invalid User" });
-      return;
-    }
-
-
-
+    const secret = process.env.JWT_SECRET_KEY ?? "";
+    if (!secret) throw new Error("JWT_SECRET_KEY not set");
     const token = jwt.sign(
       {
         id: user_table.id,
         email: user_table.email,
-        userRole:user_table.role
+        userRole: user_table.role,
       },
-      process.env.JWT_SECRET_KEY,
-      { expiresIn: "24h" }, 
+      secret,
+      { expiresIn: "24h" },
     );
 
     return res.status(200).json({

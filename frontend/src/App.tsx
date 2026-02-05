@@ -27,6 +27,9 @@ import RouteAccess from "./utils/RouteAccess";
 import PageNotFound from "./Components/PageNotFound/PageNotFound";
 import Authorization from "./utils/Authorization";
 import OnboardingAccess from "./utils/OnboardingVerify";
+import VendorAttestationsMainForm from "./Components/pages/VendorAttestations/VendorAttestationsMainForm";
+import VendorCOTSMain from "./Components/pages/Assessments/VendorCOTS/VendorCOTSMain";
+import BuyerAssessment from "./Components/pages/Assessments/BuyerAssessment/BuyerAssessment";
 
 function App() {
   return (
@@ -62,7 +65,7 @@ function App() {
           </Route>
 
           {/* This Routing layout is for Vendor and Buyer onboarding without the side navigation bar  */}
-          <Route element={<OnboardingAccess />}>
+          {/* <Route element={<OnboardingAccess />}> */}
             <Route element={<LayoutWithoutNav />}>
               <Route path="/onBoarding/:token" element={<Onboarding />} />
               <Route
@@ -73,8 +76,23 @@ function App() {
                 path="/onBoarding/buyerOnboarding"
                 element={<BuyerMainForm type="buyer" />}
               />
+              <Route 
+              path="/vendorSelfAttestation"
+              element={<VendorAttestationsMainForm/>}
+              
+              />
+              <Route 
+              path="/vendorcots"
+              element={<VendorCOTSMain/>}
+              
+              />
+               <Route
+              path="/buyerAssessment"
+              element={<BuyerAssessment/>}
+             
+              />
             </Route>
-          </Route>
+          {/* </Route> */}
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </BrowserRouter>

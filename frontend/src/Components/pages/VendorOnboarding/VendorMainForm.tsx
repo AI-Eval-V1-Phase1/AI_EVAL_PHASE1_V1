@@ -18,14 +18,16 @@ const VendorMainForm = ({ type }) => {
     document.title = "AI Eval | Vendor Onboarding";
   }, []);
   const BASE_URL = import.meta.env.VITE_BASE_URL;
-let vendor_Id = sessionStorage.getItem("userId");
+  const vendor_Id = sessionStorage.getItem("userId");
+  const organization_Id = sessionStorage.getItem("organizationId") ?? sessionStorage.getItem("org_Id");
 
   // console.log("AI Type",type)
   const navigate = useNavigate();
 
   const allDataVendor = {
     role: type,
-    vendorId:vendor_Id,
+    vendorId: vendor_Id,
+    organization_Id: organization_Id ?? undefined,
     vendorType: "",
     sector: {
       public_sector: [],
@@ -51,21 +53,28 @@ let vendor_Id = sessionStorage.getItem("userId");
 
   const handleContinue = () => setCurrentStep((prev) => prev + 1);
   const handleBack = () => setCurrentStep((prev) => prev - 1);
+const Onboardingtoken = sessionStorage.getItem("onboardingToken");
 
-  const handleBackToSelection = () => navigate("/onboarding");
+  const handleBackToSelection = () => navigate(`/onboarding/${Onboardingtoken}`);
 
   const handleSubmitPreview = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-const token = sessionStorage.getItem("bearerToken");
-const Onboardingtoken = sessionStorage.getItem("onboardingToken");
+    const onboardingToken = sessionStorage.getItem("onboardingToken");
+    if (!onboardingToken) return;
+    const orgId = sessionStorage.getItem("organizationId") ?? sessionStorage.getItem("org_Id");
     try {
+      const payload = {
+        ...formVendorData,
+        vendorId: sessionStorage.getItem("userId") ?? formVendorData.vendorId,
+        organization_Id: orgId ?? formVendorData.organization_Id ?? undefined,
+      };
       const response = await fetch(`${BASE_URL}/vendorOnboarding`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-              Authorization: `Bearer ${Onboardingtoken}`,
+          Authorization: `Bearer ${onboardingToken}`,
         },
-        body: JSON.stringify(formVendorData),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();

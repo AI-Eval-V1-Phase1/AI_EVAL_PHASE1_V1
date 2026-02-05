@@ -1,24 +1,41 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { initDB } from "../database/db";
-import orgrouter from "../routes/organization";
-import userRoutes from "../routes/userRoutes";
-import authenticateToken from "../middlewares/routesProtection";
-import vendorRoutes from "../routes/vendorOnboarding.routes";
-import buyerRoutes from "../routes/buyerOnboarding.routes";
+import { initDB } from "../database/db.js";
+import orgrouter from "../routes/organization.js";
+import userRoutes from "../routes/userRoutes.js";
+import authenticateToken from "../middlewares/routesProtection.js";
+import vendorRoutes from "../routes/vendorOnboarding.routes.js";
+import buyerRoutes from "../routes/buyerOnboarding.routes.js";
+
 
 dotenv.config({ path: ".env.local" });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5003;
 const app = express();
 
 app.use(express.json());
+
+const allowedOrigins = [
+  process.env.BASE_URL,
+  process.env.FRONTEND_URL,
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:3000",
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: [process.env.BASE_URL],
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        cb(null, true);
+      } else {
+        cb(null, true);
+      }
+    },
     methods: "GET,POST,PUT,DELETE",
-     allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   }),
 );

@@ -1,5 +1,5 @@
 import type {Request, Response } from "express";
-import { usersData } from "../../schema/schema";
+import { usersData } from "../../schema/schema.js";
 
 //** Fetch all users Details and send it to frontend(client) side
 
@@ -12,7 +12,7 @@ const fetchAllUsers = async (req: Request, res: Response) => {
       data: users,
     });
   } catch (error) {
-    console.error("Error in fetchAllUsers:", error.message);
+    console.error("Error in fetchAllUsers:", error instanceof Error ? error.message : String(error));
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -1,11 +1,19 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv_1 = require("dotenv");
-const drizzle_kit_1 = require("drizzle-kit");
-(0, dotenv_1.config)({ path: '.env.local' });
-exports.default = (0, drizzle_kit_1.defineConfig)({
-    schema: "./schema/schema.ts", // points to your schema index
-    out: "./migrations",
+import path from "path";
+import { fileURLToPath } from "url";
+import { config } from "dotenv";
+import { defineConfig } from "drizzle-kit";
+config({ path: ".env.local" });
+const getDirname = () => {
+    if (typeof import.meta?.url !== "undefined") {
+        return path.dirname(fileURLToPath(import.meta.url));
+    }
+    return path.resolve(process.cwd());
+};
+const rootDir = getDirname();
+const migrationsDir = path.join(rootDir, "migrations");
+export default defineConfig({
+    schema: "./schema/schema.ts",
+    out: migrationsDir,
     dialect: "postgresql",
     dbCredentials: {
         url: process.env.DATABASE_URL,

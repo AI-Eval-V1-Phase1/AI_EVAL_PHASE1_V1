@@ -4,10 +4,7 @@ import {
   serial,
   pgTable,
 } from "drizzle-orm/pg-core";
-import z from "zod";
-import { organizationStatusEnum } from "../EnumValues/enumValues";
-
-
+import { organizationStatusEnum } from "../EnumValues/enumValues.js"
 
 export const createOrganization = pgTable("organizations", {
   id: serial("id").primaryKey(),
@@ -15,6 +12,6 @@ export const createOrganization = pgTable("organizations", {
   organizationStatus: organizationStatusEnum("organizationStatus")
     .default("active")
     .notNull(),
-    created_at: timestamp("created_at").defaultNow().notNull(),
-    created_by: varchar("created_by").notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  created_by: varchar("created_by").notNull(),
 });

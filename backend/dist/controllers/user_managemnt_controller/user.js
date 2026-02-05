@@ -1,16 +1,10 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.fetchUsers = exports.inviteUser = void 0;
 // backend/src/controllers/user_management/inviteUserController.ts
-const db_1 = require("../../database/db");
-const invite_user_schema_1 = require("../../schema/user_management/invite_user_schema");
-const drizzle_orm_1 = require("drizzle-orm");
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const emailconfig_1 = __importDefault(require("../../functions/emailconfig"));
-const inviteUser = async (req, res) => {
+import { db } from "../../database/db.js";
+import { usersTable } from "../../schema/user_management/invite_user_schema.js";
+import { eq } from "drizzle-orm";
+import jwt from "jsonwebtoken";
+import emailConfig from "../../functions/emailconfig.js";
+export const inviteUser = async (req, res) => {
     // Helper to generate email HTML
     function userEmailTemplate(email, organization, role, confirmationLink, user) {
         return `<!DOCTYPE html>
@@ -50,10 +44,10 @@ const inviteUser = async (req, res) => {
             return res.status(400).json({ message: "Missing required fields" });
         }
         email = email.toLowerCase();
-        const existingUser = await db_1.db
+        const existingUser = await db
             .select()
-            .from(invite_user_schema_1.usersTable)
-            .where((0, drizzle_orm_1.eq)(invite_user_schema_1.usersTable.email, email));
+            .from(usersTable)
+            .where(eq(usersTable.email, email));
         if (existingUser.length > 0) {
             return res
                 .status(409)
@@ -67,7 +61,7 @@ const inviteUser = async (req, res) => {
         else {
             platform_role = "";
         }
-        await db_1.db.insert(invite_user_schema_1.usersTable).values({
+        await db.insert(usersTable).values({
             email,
             organization_name: organization, // match schema
             role,
@@ -77,9 +71,10 @@ const inviteUser = async (req, res) => {
             user_platform_role: platform_role,
         });
         console.log("User inserted successfully into DB:", email);
-        const token = jsonwebtoken_1.default.sign({ email: email }, process.env.JWT_SECRET_KEY, {
-            expiresIn: "7d",
-        });
+        const secret = process.env.JWT_SECRET_KEY;
+        if (!secret)
+            throw new Error("JWT_SECRET_KEY not set");
+        const token = jwt.sign({ email }, secret, { expiresIn: "7d" });
         // console.log(token)
         // Generate confirmation link (replace with your frontend URL logic)
         // const confirmationLink = `http://localhost:5173/onboarding?email=${encodeURIComponent(email)}`;
@@ -94,12 +89,12 @@ const inviteUser = async (req, res) => {
         //     pass: process.env["SENDER_PASSWORD"],
         //   },
         // });
-        const transporter = (0, emailconfig_1.default)();
+        const transporter = emailConfig();
         // Send the invitation email
         await transporter.sendMail({
             from: {
                 name: "AI_Eval",
-                address: process.env["SENDER_EMAIL"],
+                address: process.env.SENDER_EMAIL ?? "noreply@aieval.example.com",
             },
             to: email,
             subject: "Confirm your AI Eval account",
@@ -115,10 +110,9 @@ const inviteUser = async (req, res) => {
             .json({ message: "Server error", error: err.message });
     }
 };
-exports.inviteUser = inviteUser;
-const fetchUsers = async (req, res) => {
+export const fetchUsers = async (req, res) => {
     try {
-        const allUsers = db_1.db.select().from(invite_user_schema_1.usersTable);
+        const allUsers = db.select().from(usersTable);
         res.status(200).json(allUsers);
     }
     catch (err) {
@@ -126,4 +120,3 @@ const fetchUsers = async (req, res) => {
         res.status(200).json({ message: "Server error", error: err.message });
     }
 };
-exports.fetchUsers = fetchUsers;

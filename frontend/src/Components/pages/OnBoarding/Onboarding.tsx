@@ -10,6 +10,7 @@ import  {jwtDecode}  from "jwt-decode";
 interface TokenPayload {
   email: string;
   userId: string;
+  organizationId?: string;
   exp: number;
 }
 
@@ -41,6 +42,9 @@ useEffect(() => {
     sessionStorage.setItem("onboardingToken", activeToken);
     sessionStorage.setItem("email", decoded.email);
     sessionStorage.setItem("userId", decoded.userId);
+    if (decoded.organizationId != null) {
+      sessionStorage.setItem("organizationId", String(decoded.organizationId));
+    }
   } catch (error) {
     console.error("Invalid token", error);
     alert("Invalid token. Please login again.");
@@ -52,9 +56,9 @@ useEffect(() => {
 
   const handleSelection = () => {
     if (role === "buyer") {
-      navigate("/onboarding/buyerOnboarding");
+      navigate(`/onboarding/buyerOnboarding/${token}`);
     } else if (role === "vendor") {
-      navigate("/onboarding/vendorOnboarding");
+      navigate(`/onboarding/vendorOnboarding/${token}`);
     }
   };
 

@@ -1,26 +1,39 @@
-// Exports all tables
-
-// export * from "./user_management/invite_user_schema";
+// Exports all tables (aligned with AI_Eval_DB_04Feb2026.sql)
 
 export {
   accountStatusEnum,
   organizationStatusEnum,
   onboarding,
   signup,
-} from "./EnumValues/enumValues";
+  assessmentStatusEnum,
+  assessmentTypeEnum,
+  organizationTypeEnum,
+} from "./EnumValues/enumValues.js";
 
 export {
   usersTable,
   usersData,
   userEditLogs,
-} from "./user_management/users.schema";
+} from "./user_management/users.schema.js";
 
 export {
   createOrganization,
   organizationsData,
   organizationEditLogs,
-} from "./organizations/organizations";
+} from "./organizations/organizations.js";
 
-export { vendors } from "./vendor/vendor.schema";
+export { vendors, vendorOnboarding } from "./vendor/vendor.schema.js";
 
-export { buyersTable } from "./buyer/buyer.schema";
+export { buyersTable, buyerOnboarding } from "./buyer/buyer.schema.js";
+
+export {
+  assessments,
+  assessmentDocuments,
+  assessmentRisks,
+  cotsBuyerAssessments,
+  cotsVendorAssessments,
+  customAiAssessments,
+  vendorSelfAttestations,
+} from "./assessments/index.js";
+
+export { risks, riskTop5Mitigations } from "./risks/index.js";

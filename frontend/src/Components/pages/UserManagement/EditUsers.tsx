@@ -186,7 +186,7 @@ const EditUsers = ({ isUserId, setIsEdit, isEdit, isSelectedUser }) => {
               }
             />
           </div>
-          <div className="orgName">
+          <div className="popup_fields">
             <label htmlFor="orgname">
               <span>
                 <Landmark width={20} />
@@ -207,7 +207,7 @@ const EditUsers = ({ isUserId, setIsEdit, isEdit, isSelectedUser }) => {
             </select>
             {isError && <p className="orgError">{isError}</p>}
           </div>
-          <div className="orgName">
+          <div className="popup_fields">
             <label htmlFor="orgname">
               <span>
                 <Landmark width={20} />
@@ -215,7 +215,7 @@ const EditUsers = ({ isUserId, setIsEdit, isEdit, isSelectedUser }) => {
               Reason
             </label>
             <textarea
-              style={{ resize: "none", height: "4em" }}
+              style={{ resize: "none", height: "4em" , width:"100%"}}
               type="text"
               value={isReason}
               onChange={(e) => setIsReason(e.target.value)}

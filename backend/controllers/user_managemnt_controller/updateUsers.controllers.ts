@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { db } from "../../database/db";
+import { db } from "../../database/db.js";
 import { eq } from "drizzle-orm";
-import { userEditLogs, usersTable } from "../../schema/schema";
+import { userEditLogs, usersTable } from "../../schema/schema.js";
 
 const updatesUsers = async (req: Request, res: Response) => {
   const data = req.body;
@@ -22,7 +22,8 @@ const updatesUsers = async (req: Request, res: Response) => {
       .from(usersTable)
       .where(eq(usersTable.email, emailLower));
 
-    if (existingUser.length > 0 && existingUser[0].id !== user_Id) {
+    const conflictUser = existingUser[0];
+    if (existingUser.length > 0 && conflictUser !== undefined && conflictUser.id !== user_Id) {
       return res.status(400).json({
         success: false,
         message: "Email already exists for another user",

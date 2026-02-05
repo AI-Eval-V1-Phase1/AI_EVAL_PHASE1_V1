@@ -3,25 +3,20 @@ import { NavLink } from "react-router-dom";
 import "../../styles/layout/sideNav.css";
 
 const SideNavBar = () => {
-  // const navItems = NAVIGATION["admin"];
-  // console.log(navItems);
+  const userRole = (sessionStorage.getItem("userRole") ?? "").toLowerCase(); // "admin" | "user" | "system admin"
+  const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase(); // "system admin" | "buyer" | "vendor"
 
- const userRole = sessionStorage.getItem("userRole");     // "admin" | "user"
-  const systemRole = sessionStorage.getItem("systemRole"); // "system admin" | "buyer" | "vendor"
+  const isSystemAdminForBoth =
+    systemRole === "system admin" &&
+    (userRole === "system admin" || userRole === "admin");
 
-  const navItems = NAVIGATION.admin.filter((item) => {
-    return (
-      // item.accessRoles.includes(userRole)
-      item.accessRoles.includes(userRole) &&
-      item.systemRoles.includes(systemRole)
-    );
-  });
-
-  NAVIGATION.admin.forEach(item => {
-  console.log(item.label, 
-              "accessRoles:", item.accessRoles.includes(userRole), 
-              "systemRoles:", item.systemRoles.includes(systemRole));
-});
+  const navItems = isSystemAdminForBoth
+    ? NAVIGATION.admin
+    : NAVIGATION.admin.filter((item) => {
+        const roleMatch = item.accessRoles.some((r) => r.toLowerCase() === userRole);
+        const systemMatch = item.systemRoles.some((r) => r.toLowerCase() === systemRole);
+        return roleMatch && systemMatch;
+      });
 
 
   return (
@@ -30,8 +25,8 @@ const SideNavBar = () => {
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
-            <li>
-              <NavLink to ={item.path} className="side_nav_link">
+            <li key={item.path}>
+              <NavLink to={item.path} className="side_nav_link">
                 <span className="side_nav_icon" ><Icon size={16}/></span>
                 <span>{item.label}</span>
               </NavLink>

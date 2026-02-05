@@ -1,38 +1,38 @@
 import Input from "../../UI/Input";
 import HeaderForVendor from "./HeaderForVendor";
 import Select from "../../UI/Select";
-import { PRIMARY_CONTACT_ROLE } from "../../../constants/vendorOnboardingData";
-import type {
-  StepPropsVendorData,
-  FormChangeEvent,
-} from "../../../types/formDataVendor";
+import { PRIMARY_CONTACT_ROLE, VENDOR_HELPTEXT } from "../../../constants/vendorOnboardingData";
+import type { StepPropsVendorData, FormChangeEvent } from "../../../types/formDataVendor";
+import { Info } from "lucide-react";
+import ClickTooltip from "../../UI/ClickTooltip";
 
-const StepContactInformation = ({
-  formVendorData,
-  setFormVendorData,
-}: StepPropsVendorData) => {
+const StepContactInformation = ({ formVendorData, setFormVendorData }: StepPropsVendorData) => {
   const handleChange = (e: FormChangeEvent) => {
     const { name, value } = e.target;
     setFormVendorData({ ...formVendorData, [name]: value });
   };
+
   return (
     <>
       <HeaderForVendor
         className="header_for_vendor"
         title_vendor="Contact Information"
-        // sub_title_vendor="Tell us about your AI products and services"
       />
 
-      {/* <div className="step_form_body"> */}
-      <div>
-        {/* <div className="step_form_right"> */}
-        <div>
+      <div className="step_form_body">
+        {/* Left Column */}
+        <div className="step_form_right">
+          {/* Primary Contact Name */}
           <div className="form_fields_vendor">
             <Input
               labelName={
-                <>
-                  <span className="mandatory">*</span>Primary Contact Name
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Primary Contact Name</span>
+                  <ClickTooltip content={VENDOR_HELPTEXT.primaryContactName}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               type="text"
               id="primaryContactName"
@@ -42,12 +42,18 @@ const StepContactInformation = ({
               required
             />
           </div>
+
+          {/* Primary Contact Email */}
           <div className="form_fields_vendor">
             <Input
               labelName={
-                <>
-                  <span className="mandatory">*</span>Primary Contact Email
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Primary Contact Email</span>
+                  <ClickTooltip content={VENDOR_HELPTEXT.primaryContactEmail}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               type="email"
               id="primaryContactEmail"
@@ -58,14 +64,20 @@ const StepContactInformation = ({
             />
           </div>
         </div>
-        {/* <div className="step_form_left"> */}
-        <div>
+
+        {/* Right Column */}
+        <div className="step_form_left">
+          {/* Primary Contact Role */}
           <div className="form_fields_vendor">
             <Select
               labelName={
-                <>
-                  <span className="mandatory">*</span>Primary Contact Role
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Primary Contact Role</span>
+                  <ClickTooltip content={VENDOR_HELPTEXT.primaryContactRole}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               id="primaryContactRole"
               name="primaryContactRole"

@@ -6,10 +6,10 @@ const RouteAccess = () => {
   const bearerToken = sessionStorage.getItem("bearerToken");
   const systemRole = sessionStorage.getItem("systemRole"); // "admin" | "vendor" | "buyer"
   const userRole = sessionStorage.getItem("userRole"); // optional, if needed
-
+// let system_admin = "system admin"
   // Route access control
   const allowedRoutes = {
-    admin: [
+    "system admin": [
       "/",
       "/dashboard",
       "/organizations",
@@ -27,15 +27,11 @@ const RouteAccess = () => {
       vendor: [
       "/",
       "/dashboard",
-      "/my-vendor",
       "/assessments",
-      "/vendor-directory",
-      "/compilance",
-      "/governance",
       "/sales-enablement",
       "/evidence-library",
-      "/directory-listing",
       "/reports",
+      "/directory-listing",
       "/user-management",
     ],
     buyer: [
@@ -55,7 +51,8 @@ const RouteAccess = () => {
   }
 
   const path = location.pathname;
-  const routesForRole = allowedRoutes[systemRole] || [];
+  const normalizedSystemRole = (systemRole ?? "").toLowerCase();
+  const routesForRole = allowedRoutes[normalizedSystemRole] || allowedRoutes[systemRole] || [];
 
   if (!routesForRole.includes(path)) {
     return <Navigate to="/pageNotFound" replace />;

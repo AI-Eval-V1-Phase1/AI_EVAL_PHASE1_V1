@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { db } from "../../database/db";
-import { createOrganization, organizationEditLogs } from "../../schema/schema";
+import { db } from "../../database/db.js";
+import { createOrganization, organizationEditLogs } from "../../schema/schema.js";
 import { eq } from "drizzle-orm";
 
 const updateOrganization = async (req: Request, res: Response) => {

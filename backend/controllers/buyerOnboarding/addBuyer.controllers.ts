@@ -1,12 +1,14 @@
 import type { Request, Response } from "express";
-import { db } from "../../database/db";
-import { buyersTable, usersTable } from "../../schema/schema";
-import { eq } from "drizzle-orm";
+import { db } from "../../database/db.js";
+import { buyersTable, usersTable } from "../../schema/schema.js";
+import { and, eq, sql } from "drizzle-orm";
 
 const insertBuyerOnboarding = async (req: Request, res: Response) => {
   try {
     const {
-      vendorId,
+      buyer_Id: bodyBuyerId,
+      organization_Id: bodyOrgId,
+      organizationId: bodyOrgIdCamel,
       organizationName,
       organizationType,
       sector,
@@ -36,52 +38,159 @@ const insertBuyerOnboarding = async (req: Request, res: Response) => {
       acceptableRiskLevel,
     } = req.body;
 
- const existingUser = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.id, vendorId))
-      .limit(1);
+    // Prefer user set by onboarding middleware (from token) – same as vendor
+    let user = req.onboardingUser;
 
-    if (!existingUser || existingUser.length === 0) {
+    if (!user && bodyBuyerId != null && !Number.isNaN(Number(bodyBuyerId))) {
+      const byId = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.id, Number(bodyBuyerId)))
+        .limit(1);
+      user = byId[0] ?? undefined;
+    }
+
+    if (!user && (bodyOrgId ?? bodyOrgIdCamel)) {
+      const orgStr = String(bodyOrgId ?? bodyOrgIdCamel ?? "").trim();
+      if (orgStr) {
+        const byOrg = await db
+          .select()
+          .from(usersTable)
+          .where(eq(usersTable.organization_name, orgStr))
+          .limit(1);
+        user = byOrg[0] ?? undefined;
+      }
+    }
+
+    if (!user && bodyBuyerId != null && (bodyOrgId ?? bodyOrgIdCamel)) {
+      const byBoth = await db
+        .select()
+        .from(usersTable)
+        .where(
+          and(
+            eq(usersTable.id, Number(bodyBuyerId)),
+            eq(usersTable.organization_name, String(bodyOrgId ?? bodyOrgIdCamel ?? "")),
+          ),
+        )
+        .limit(1);
+      user = byBoth[0] ?? undefined;
+    }
+
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (existingUser[0].user_onboarding_completed === "true") {
+    if (user.user_onboarding_completed === "true") {
       return res
         .status(200)
         .json({ message: "Onboarding already completed" });
     }
 
-    const addBuyer = await db.insert(buyersTable).values({
-      buyerId: vendorId,
-      organizationName,
-      organizationType,
-      sector: typeof sector === "object" ? JSON.stringify(sector) : sector,
-      organizationWebsite,
-      organizationDescription,
-      primaryContactName,
-      primaryContactEmail,
-      primaryContactRole,
-      departmentOwner,
-      employeeCount,
-      annualRevenue,
-      yearFounded,
-      headquartersLocation,
-      operatingRegions: JSON.stringify(operatingRegions),
-      dataResidencyRequirements: JSON.stringify(dataResidencyRequirements),
-      existingAIInitiatives,
-      aiGovernanceMaturity,
-      dataGovernanceMaturity,
-      aiSkillsAvailability,
-      changeManagementCapability,
-      primaryRegulatoryFrameworks: JSON.stringify(primaryRegulatoryFrameworks),
-      regulatoryPenaltyExposure,
-      dataClassificationHandled: JSON.stringify(dataClassificationHandled),
-      piiHandling,
-      existingTechStack: JSON.stringify(existingTechStack),
-      aiRiskAppetite,
-      acceptableRiskLevel,
-    });
+    const organizationId = bodyOrgId ?? bodyOrgIdCamel ?? user.organization_name;
+    const sectorValue =
+      sector != null && typeof sector === "object"
+        ? JSON.stringify(sector)
+        : sector != null
+          ? String(sector)
+          : null;
+    const operatingRegionsValue =
+      Array.isArray(operatingRegions) || (operatingRegions != null && typeof operatingRegions === "object")
+        ? operatingRegions
+        : null;
+    const dataResidencyValue =
+      dataResidencyRequirements != null && typeof dataResidencyRequirements === "object"
+        ? dataResidencyRequirements
+        : dataResidencyRequirements != null
+          ? JSON.stringify(dataResidencyRequirements)
+          : null;
+    const primaryRegulatoryValue =
+      primaryRegulatoryFrameworks != null && typeof primaryRegulatoryFrameworks === "object"
+        ? primaryRegulatoryFrameworks
+        : primaryRegulatoryFrameworks != null
+          ? JSON.stringify(primaryRegulatoryFrameworks)
+          : null;
+    const dataClassificationValue =
+      dataClassificationHandled != null && typeof dataClassificationHandled === "object"
+        ? dataClassificationHandled
+        : dataClassificationHandled != null
+          ? JSON.stringify(dataClassificationHandled)
+          : null;
+    const existingTechStackValue =
+      existingTechStack != null && typeof existingTechStack === "object"
+        ? existingTechStack
+        : existingTechStack != null
+          ? JSON.stringify(existingTechStack)
+          : null;
+
+    const buyerValues = {
+      userId: user.id,
+      organizationId: String(organizationId ?? user.organization_name),
+      organizationName: String(organizationName ?? ""),
+      organizationType: organizationType != null ? String(organizationType) : null,
+      sector: sectorValue,
+      organizationWebsite: organizationWebsite != null ? String(organizationWebsite) : null,
+      organizationDescription: organizationDescription != null ? String(organizationDescription) : null,
+      primaryContactName: String(primaryContactName ?? ""),
+      primaryContactEmail: String(primaryContactEmail ?? ""),
+      primaryContactRole: primaryContactRole != null ? String(primaryContactRole) : null,
+      departmentOwner: departmentOwner != null ? String(departmentOwner) : null,
+      employeeCount: employeeCount != null ? String(employeeCount) : null,
+      annualRevenue: annualRevenue != null ? String(annualRevenue) : null,
+      yearFounded: yearFounded != null ? Number(yearFounded) : null,
+      headquartersLocation: headquartersLocation != null ? String(headquartersLocation) : null,
+      operatingRegions: operatingRegionsValue,
+      dataResidencyRequirements: dataResidencyValue,
+      existingAIInitiatives: existingAIInitiatives != null ? String(existingAIInitiatives) : null,
+      aiGovernanceMaturity: aiGovernanceMaturity != null ? String(aiGovernanceMaturity) : null,
+      dataGovernanceMaturity: dataGovernanceMaturity != null ? String(dataGovernanceMaturity) : null,
+      aiSkillsAvailability: aiSkillsAvailability != null ? String(aiSkillsAvailability) : null,
+      changeManagementCapability: changeManagementCapability != null ? String(changeManagementCapability) : null,
+      primaryRegulatoryFrameworks: primaryRegulatoryValue,
+      regulatoryPenaltyExposure: regulatoryPenaltyExposure != null ? String(regulatoryPenaltyExposure) : null,
+      dataClassificationHandled: dataClassificationValue,
+      piiHandling: piiHandling != null ? String(piiHandling) : null,
+      existingTechStack: existingTechStackValue,
+      aiRiskAppetite: aiRiskAppetite != null ? String(aiRiskAppetite) : null,
+      acceptableRiskLevel: acceptableRiskLevel != null ? String(acceptableRiskLevel) : null,
+    };
+
+    const addBuyer = await db
+      .insert(buyersTable)
+      .values(buyerValues)
+      .onConflictDoUpdate({
+        target: buyersTable.organizationId,
+        set: {
+          userId: user.id,
+          organizationName: buyerValues.organizationName,
+          organizationType: buyerValues.organizationType,
+          sector: buyerValues.sector,
+          organizationWebsite: buyerValues.organizationWebsite,
+          organizationDescription: buyerValues.organizationDescription,
+          primaryContactName: buyerValues.primaryContactName,
+          primaryContactEmail: buyerValues.primaryContactEmail,
+          primaryContactRole: buyerValues.primaryContactRole,
+          departmentOwner: buyerValues.departmentOwner,
+          employeeCount: buyerValues.employeeCount,
+          annualRevenue: buyerValues.annualRevenue,
+          yearFounded: buyerValues.yearFounded,
+          headquartersLocation: buyerValues.headquartersLocation,
+          operatingRegions: buyerValues.operatingRegions,
+          dataResidencyRequirements: buyerValues.dataResidencyRequirements,
+          existingAIInitiatives: buyerValues.existingAIInitiatives,
+          aiGovernanceMaturity: buyerValues.aiGovernanceMaturity,
+          dataGovernanceMaturity: buyerValues.dataGovernanceMaturity,
+          aiSkillsAvailability: buyerValues.aiSkillsAvailability,
+          changeManagementCapability: buyerValues.changeManagementCapability,
+          primaryRegulatoryFrameworks: buyerValues.primaryRegulatoryFrameworks,
+          regulatoryPenaltyExposure: buyerValues.regulatoryPenaltyExposure,
+          dataClassificationHandled: buyerValues.dataClassificationHandled,
+          piiHandling: buyerValues.piiHandling,
+          existingTechStack: buyerValues.existingTechStack,
+          aiRiskAppetite: buyerValues.aiRiskAppetite,
+          acceptableRiskLevel: buyerValues.acceptableRiskLevel,
+          updatedAt: sql`now()`,
+        },
+      });
 
     await db
       .update(usersTable)
@@ -89,12 +198,12 @@ const insertBuyerOnboarding = async (req: Request, res: Response) => {
         user_platform_role: "buyer",
         user_onboarding_completed: "true",
       })
-      .where(eq(usersTable.id, vendorId));
+      .where(eq(usersTable.id, user.id));
 
     res.status(201).json({ success: true, data: addBuyer });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to insert vendor" });
+    res.status(500).json({ error: "Failed to insert buyer" });
   }
 };
 

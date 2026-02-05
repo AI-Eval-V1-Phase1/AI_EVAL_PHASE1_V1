@@ -1,5 +1,5 @@
 import type {Request, Response } from "express";
-import { organizationsData } from "../../schema/organizations/selectOrganization";
+import { organizationsData } from "../../schema/organizations/selectOrganization.js";
 
 //** Fetch Organization Details and send it to frontend(client) side
 
@@ -12,7 +12,7 @@ const fetchOrganizations = async (req: Request, res: Response) => {
       data: organizations,
     });
   } catch (error) {
-    console.error("Error in fetchOrganizations:", error.message);
+    console.error("Error in fetchOrganizations:", error instanceof Error ? error.message : String(error));
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -6,17 +6,23 @@ import { useState } from "react";
 import {
   HEADQUARTERS_LOCATION,
   OPERATING_REGIONS,
+  VENDOR_HELPTEXT,
 } from "../../../constants/vendorOnboardingData";
-import type {  StepPropsVendorData } from "../../../types/formDataVendor";
+import type { StepPropsVendorData } from "../../../types/formDataVendor";
+import { Info } from "lucide-react";
+import ClickTooltip from "../../UI/ClickTooltip";
 
-const StepGeography = ({ formVendorData, setFormVendorData }: StepPropsVendorData) => {
+const StepGeography = ({
+  formVendorData,
+  setFormVendorData,
+}: StepPropsVendorData) => {
   const [isVisibleInput, setIsVisibleInput] = useState(false);
   const [customHeadquarter, setCustomHeadquarter] = useState("");
-  const [selectedHeadquarter, setSelectedHeadquarter] = useState(""); 
+  const [selectedHeadquarter, setSelectedHeadquarter] = useState("");
 
   const handleHeadquartersChange = (val: string) => {
     setSelectedHeadquarter(val);
-    if (val === "other") {
+    if (val === "Other (Specify)") {
       setIsVisibleInput(true);
       setCustomHeadquarter("");
       setFormVendorData({ ...formVendorData, headquartersLocation: "" });
@@ -31,9 +37,18 @@ const StepGeography = ({ formVendorData, setFormVendorData }: StepPropsVendorDat
     <>
       <HeaderForVendor className="header_for_vendor" title_vendor="Geography" />
 
+      {/* Headquarters Location */}
       <div className="form_fields_vendor">
         <Select
-          labelName="Headquarters Location"
+          labelName={
+            <div className="labelSection">
+              <span className="mandatory">*</span>
+              <span>Headquarters Location</span>
+              <ClickTooltip content={VENDOR_HELPTEXT.headquartersLocation}>
+                <Info size={14} color="#6B7280" />
+              </ClickTooltip>
+            </div>
+          }
           id="headquartersLocation"
           name="headquartersLocation"
           options={HEADQUARTERS_LOCATION}
@@ -46,7 +61,15 @@ const StepGeography = ({ formVendorData, setFormVendorData }: StepPropsVendorDat
       {isVisibleInput && (
         <div className="form_fields_vendor">
           <Input
-            labelName="Specify Location"
+            labelName={
+              <div className="labelSection">
+                <span className="mandatory">*</span>
+                <span>Specify Location</span>
+                {/* <ClickTooltip content={VENDOR_HELPTEXT.customHeadquarter}>
+                  <Info size={14} color="#6B7280" />
+                </ClickTooltip> */}
+              </div>
+            }
             id="custom_headquarter"
             name="headquartersLocation"
             value={customHeadquarter}
@@ -61,9 +84,18 @@ const StepGeography = ({ formVendorData, setFormVendorData }: StepPropsVendorDat
         </div>
       )}
 
+      {/* Operating Regions */}
       <div className="form_fields_vendor">
         <MultiSelectDropDown
-          labelName="Operating Regions"
+          labelName={
+            <div className="labelSection">
+              <span className="mandatory">*</span>
+              <span>Operating Regions</span>
+              <ClickTooltip content={VENDOR_HELPTEXT.operatingRegions}>
+                <Info size={14} color="#6B7280" />
+              </ClickTooltip>
+            </div>
+          }
           id="operatingRegions"
           options={OPERATING_REGIONS}
           default_option="Select operating regions"

@@ -1,6 +1,24 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
+// Enums from SQL (AI_Eval_DB)
+export const assessmentStatusEnum = pgEnum("assessment_status", [
+  "draft",
+  "submitted",
+]);
 
+export const assessmentTypeEnum = pgEnum("assessment_type", [
+  "custom_ai",
+  "cots_buyer",
+  "cots_vendor",
+  "vendor_self_attestation",
+]);
+
+export const organizationTypeEnum = pgEnum("organization_type", [
+  "buyer",
+  "vendor",
+]);
+
+// Legacy enums (for users table / app use)
 export const accountStatusEnum = pgEnum("account_status", ["invited", "confirmed"]);
 
 export const organizationStatusEnum = pgEnum("organizationStatus", [

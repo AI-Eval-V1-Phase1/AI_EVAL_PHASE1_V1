@@ -3,7 +3,7 @@ type InputProps = {
   labelName: string | React.ReactNode;
   id: string;
   icon?: React.ReactNode;
-  type?: "text" | "email" | "password" | "number" | "textarea";
+  type?: "text" | "email" | "password" | "number" | "textarea" | "file";
   name: string;
   value: string;
   onChange?: (
@@ -25,6 +25,7 @@ const Input = ({
   rows = 4,
   cols,
   required,
+  ...props
 }: InputProps) => {
   return (
     <div className="input_wrapper">
@@ -53,6 +54,7 @@ const Input = ({
           required = {required}
           onChange={onChange}
           className="input_field"
+          {...props}
           
         />
       )}

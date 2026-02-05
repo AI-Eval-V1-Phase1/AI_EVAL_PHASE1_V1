@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
-import { db } from "../../database/db";
-import { createOrganization } from "../../schema/schema";
+import { db } from "../../database/db.js";
+import { createOrganization } from "../../schema/schema.js";
 import type { Request, Response } from "express";
 
 const insertOrganization = async (req: Request, res: Response) => {
@@ -40,7 +40,8 @@ console.log("userId",userId)
       .insert(createOrganization)
       .values({
         organizationName: lowerCaseOrgName,
-        created_by: userId,
+        organizationStatus: "active",
+        created_by: String(userId),
       })
       .returning();
 

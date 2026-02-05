@@ -1,18 +1,16 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const selectOrganization_1 = require("../../schema/organizations/selectOrganization");
+import { organizationsData } from "../../schema/organizations/selectOrganization.js";
 //** Fetch Organization Details and send it to frontend(client) side
 const fetchOrganizations = async (req, res) => {
     try {
-        const organizations = await selectOrganization_1.organizationsData;
+        const organizations = await organizationsData;
         res.status(200).json({
             message: "Organizations fetched successfully",
             data: organizations,
         });
     }
     catch (error) {
-        console.error("Error in fetchOrganizations:", error.message);
+        console.error("Error in fetchOrganizations:", error instanceof Error ? error.message : String(error));
         res.status(500).json({ error: "Internal server error" });
     }
 };
-exports.default = fetchOrganizations;
+export default fetchOrganizations;

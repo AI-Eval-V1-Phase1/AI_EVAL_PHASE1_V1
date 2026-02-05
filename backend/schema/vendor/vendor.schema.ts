@@ -1,1 +1,1 @@
-export { vendors } from "./addVendor.schema";
+export { vendors, vendorOnboarding } from "./addVendor.schema.js";

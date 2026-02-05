@@ -5,7 +5,7 @@ import {
   onboarding,
   organizationStatusEnum,
   signup,
-} from "../EnumValues/enumValues";
+} from "../EnumValues/enumValues.js";
 
 export const usersTable = pgTable("users", {
   id: serial("id").primaryKey(), // auto-incrementing primary key

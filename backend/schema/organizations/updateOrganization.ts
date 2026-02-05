@@ -3,7 +3,7 @@
 //** Edit Organization schema
 
 import { pgTable, serial, varchar, timestamp } from "drizzle-orm/pg-core";
-import { organizationStatusEnum } from "../EnumValues/enumValues";
+import { organizationStatusEnum } from "../EnumValues/enumValues.js";
 
 export const organizationEditLogs = pgTable("organizationEditLogs", {
   id: serial("id").primaryKey(),

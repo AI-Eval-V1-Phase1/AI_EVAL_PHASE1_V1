@@ -2,17 +2,20 @@ import { useState } from "react";
 import "./login.css";
 
 import { LockKeyhole, Mail, ArrowRight, Eye, EyeOff } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const Login = () => {
   document.title = "AI EVAL | Login";
 
   const BASE_URL = import.meta.env.VITE_BASE_URL;
   const navigate = useNavigate();
+  const location = useLocation();
+  const resetSuccess = (location.state as { resetSuccess?: boolean } | null)?.resetSuccess;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [isUser, setIsUser] = useState({});
+  const [isError, setError] = useState("");
 
   const getUser = async (e: any) => {
     e.preventDefault();
@@ -56,6 +59,8 @@ const Login = () => {
         } else {
           navigate("/onBoarding");
         }
+      } else {
+        setError(result.message)
       }
     } catch (error) {
       console.log(error);
@@ -68,24 +73,12 @@ const Login = () => {
 
   return (
     <>
-      <div className="loginContainer">
-        <div className="welcomeContent">
-          <div className="welcomeText">
-            <div>
-              <h1 className="welcomeHeading">Welcome to Website</h1>
-              <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam
-                eum optio voluptatem, ea velit impedit ducimus praesentium magni
-                laudantium unde.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="loginContent">
+      <div className="authPage">
+        <div className="authContent">
           <div className="loginData">
             <div className="loginCred">
               <div className="loginForm">
-                <h1 className="loginHeading">User Login</h1>
+                <h1 className="loginHeading">Sign in</h1>
                 <form action="" autoComplete="off" onSubmit={getUser}>
                   <div className="emailData">
                     <label htmlFor="loginEmail">
@@ -120,7 +113,12 @@ const Login = () => {
                       )}
                     </span>
                   </div>
-
+                  {resetSuccess && (
+                    <p className="loginSuccess">
+                      Password reset successfully. You can sign in with your new password.
+                    </p>
+                  )}
+                  {isError && <p className="orgError">{isError}</p>}
                   <div className="loginBtn">
                     <button type="submit" className="login-btn">
                       Login{" "}

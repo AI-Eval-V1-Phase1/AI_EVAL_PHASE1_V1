@@ -11,11 +11,13 @@ type SelectProps = {
   icon?: React.ReactNode;
   name: string;
   value: string;
-  default_option: string;
-  options: Option[];
+  default_option?: string;
+  options : Option[];
   required?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 };
+
+
 
 const Select = ({
   labelName,

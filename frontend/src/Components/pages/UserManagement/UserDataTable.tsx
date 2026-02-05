@@ -185,7 +185,7 @@ selectedIsUser(row)
         <p
           style={{ textTransform: "capitalize" }}
           className={
-            row.account_status === "invited" ? "activeStatus" : "inactiveStatus"
+            row.account_status === "invited" ? "inactiveStatus" : "activeStatus"
           }
         >
           {row.account_status}
@@ -199,7 +199,7 @@ selectedIsUser(row)
         <p
           style={{ textTransform: "capitalize" }}
           className={
-            row.userStatus === "Active" ? "activeStatus" : "inactiveStatus"
+            row.userStatus === "active" ? "activeStatus" : "inactiveStatus"
           }
         >
           {row.userStatus}

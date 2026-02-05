@@ -1,39 +1,49 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const db_1 = require("../database/db");
-const organization_1 = __importDefault(require("../routes/organization"));
-const userRoutes_1 = __importDefault(require("../routes/userRoutes"));
-const routesProtection_1 = __importDefault(require("../middlewares/routesProtection"));
-const vendorOnboarding_routes_1 = __importDefault(require("../routes/vendorOnboarding.routes"));
-const buyerOnboarding_routes_1 = __importDefault(require("../routes/buyerOnboarding.routes"));
-dotenv_1.default.config({ path: ".env.local" });
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import { initDB } from "../database/db.js";
+import orgrouter from "../routes/organization.js";
+import userRoutes from "../routes/userRoutes.js";
+import authenticateToken from "../middlewares/routesProtection.js";
+import vendorRoutes from "../routes/vendorOnboarding.routes.js";
+import buyerRoutes from "../routes/buyerOnboarding.routes.js";
+dotenv.config({ path: ".env.local" });
 const PORT = process.env.PORT || 3000;
-const app = (0, express_1.default)();
-app.use(express_1.default.json());
-app.use((0, cors_1.default)({
-    origin: [process.env.BASE_URL],
+const app = express();
+app.use(express.json());
+const allowedOrigins = [
+    process.env.BASE_URL,
+    process.env.FRONTEND_URL,
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+].filter(Boolean);
+app.use(cors({
+    origin: (origin, cb) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            cb(null, true);
+        }
+        else {
+            cb(null, true);
+        }
+    },
     methods: "GET,POST,PUT,DELETE",
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
 }));
-app.use("/api/v1", userRoutes_1.default);
-app.use("/api/v1", organization_1.default);
-app.use("/api/v1", vendorOnboarding_routes_1.default);
-app.use("/api/v1", buyerOnboarding_routes_1.default);
+app.use("/api/v1", userRoutes);
+app.use("/api/v1", orgrouter);
+app.use("/api/v1", vendorRoutes);
+app.use("/api/v1", buyerRoutes);
 console.log("Starting server...");
 // Health check route
-app.get("/api/v1/health", routesProtection_1.default, (req, res) => {
+app.get("/api/v1/health", authenticateToken, (req, res) => {
     res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
 });
 async function startServer() {
     try {
-        await (0, db_1.initDB)();
+        await initDB();
         // ✅ Add leading slash here
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);

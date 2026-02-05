@@ -1,1 +1,1 @@
-export { buyersTable } from "./addBuyer.schema";
+export { buyersTable, buyerOnboarding } from "./addBuyer.schema.js";

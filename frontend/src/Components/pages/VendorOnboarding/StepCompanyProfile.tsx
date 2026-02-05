@@ -3,13 +3,27 @@ import Input from "../../UI/Input";
 import HeaderForVendor from "./HeaderForVendor";
 import Select from "../../UI/Select";
 import DropdownTreeSelect from "../../UI/DropdownTreeSelect";
-import { VENDOR_TYPES, VENDOR_MATURITY_LEVELS, INDUSTRY_SECTORS } from "../../../constants/vendorOnboardingData";
-import type { StepPropsVendorData, VendorDataInterface } from "../../../types/formDataVendor";
+import {
+  VENDOR_TYPES,
+  VENDOR_MATURITY_LEVELS,
+  INDUSTRY_SECTORS,
+  VENDOR_HELPTEXT,
+} from "../../../constants/vendorOnboardingData";
+import type {
+  StepPropsVendorData,
+  VendorDataInterface,
+} from "../../../types/formDataVendor";
+import { Info } from "lucide-react";
+import ClickTooltip from "../../UI/ClickTooltip";
 
-const StepCompanyProfile = ({ formVendorData, setFormVendorData }: StepPropsVendorData) => {
-
+const StepCompanyProfile = ({
+  formVendorData,
+  setFormVendorData,
+}: StepPropsVendorData) => {
   // Generic handler for inputs/selects
-  const handleChangeVendor = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChangeVendor = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setFormVendorData({ ...formVendorData, [name]: value });
   };
@@ -34,13 +48,15 @@ const StepCompanyProfile = ({ formVendorData, setFormVendorData }: StepPropsVend
       if (!sectorKey) return;
 
       const allowedValues = sectorNode.options.map((opt) => opt.value);
-      newSectorData[sectorKey] = selectedValues.filter((val) => allowedValues.includes(val));
+      newSectorData[sectorKey] = selectedValues.filter((val) =>
+        allowedValues.includes(val),
+      );
     });
 
     setFormVendorData({ ...formVendorData, sector: newSectorData });
   };
 
-  // Flatten all selected sector values to pass as `value` to DropdownTreeSelect
+  // Flatten all selected sector values
   const allSelectedSectors = [
     ...(formVendorData.sector?.public_sector || []),
     ...(formVendorData.sector?.private_sector || []),
@@ -57,12 +73,17 @@ const StepCompanyProfile = ({ formVendorData, setFormVendorData }: StepPropsVend
 
       <div className="step_form_body">
         <div className="step_form_right">
+          {/* Vendor Type */}
           <div className="form_fields_vendor">
             <Select
               labelName={
-                <>
-                  <span className="mandatory">*</span> Vendor Type
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Vendor Type</span>
+                  <ClickTooltip content={VENDOR_HELPTEXT.vendorType}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               id="vendorType"
               name="vendorType"
@@ -74,12 +95,17 @@ const StepCompanyProfile = ({ formVendorData, setFormVendorData }: StepPropsVend
             />
           </div>
 
+          {/* Industry Sector */}
           <div className="form_fields_vendor">
             <DropdownTreeSelect
               labelName={
-                <>
-                  <span className="mandatory">*</span> Industry Sector
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Industry Sector</span>
+                  <ClickTooltip content={VENDOR_HELPTEXT.sector}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               id="industry_sec"
               default_option="Select industry sector"
@@ -90,12 +116,17 @@ const StepCompanyProfile = ({ formVendorData, setFormVendorData }: StepPropsVend
             />
           </div>
 
+          {/* Vendor Maturity Stage */}
           <div className="form_fields_vendor">
             <Select
               labelName={
-                <>
-                  <span className="mandatory">*</span> Vendor Maturity Stage
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Vendor Maturity Stage</span>
+                  <ClickTooltip content={VENDOR_HELPTEXT.vendorMaturity}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               id="vendorMaturity"
               name="vendorMaturity"
@@ -109,12 +140,17 @@ const StepCompanyProfile = ({ formVendorData, setFormVendorData }: StepPropsVend
         </div>
 
         <div className="step_form_left">
+          {/* Company Website */}
           <div className="form_fields_vendor">
             <Input
               labelName={
-                <>
-                  <span className="mandatory">*</span> Company Website
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Company Website</span>
+                  <ClickTooltip content={VENDOR_HELPTEXT.companyWebsite}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               type="text"
               id="companyWebsite"
@@ -124,12 +160,18 @@ const StepCompanyProfile = ({ formVendorData, setFormVendorData }: StepPropsVend
             />
           </div>
 
+          {/* Company Description */}
           <div className="form_fields_vendor">
             <Input
               labelName={
-                <>
-                  Company Description<span className="mandatory">*</span>
-                </>
+                <div className="labelSection">
+                  <span className="mandatory">*</span>
+                  <span>Company Description</span>
+                  
+                  <ClickTooltip content={VENDOR_HELPTEXT.companyDescription}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
               }
               type="textarea"
               id="companyDescription"

@@ -1,22 +1,23 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.db = void 0;
-exports.initDB = initDB;
 // backend/src/database/db.ts
-const dotenv_1 = require("dotenv");
-(0, dotenv_1.config)({ path: ".env.local" });
-const node_postgres_1 = require("drizzle-orm/node-postgres");
-const pg_1 = require("pg");
+import { config } from "dotenv";
+config({ path: ".env.local" });
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 // Create the postgresql client
-const pool = new pg_1.Pool({
-    connectionString: process.env.DATABASE_URL,
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL, // Connection String
+    // user: process.env.DATABASE_USER,
+    // password: process.env.DATABASE_PASSWORD,
+    // host: process.env.DATABASE_HOST,
+    // port: Number(process.env.DATABASE_PORT),
+    // database: process.env.DATABASE_NAME,
 });
 // Create Drizzle ORM instance
-exports.db = (0, node_postgres_1.drizzle)({ client: pool });
+export const db = drizzle({ client: pool });
 // Optional: function to check connection
-async function initDB() {
+export async function initDB() {
     try {
-        await exports.db.execute(`SELECT 1 AS connected`);
+        await db.execute(`SELECT 1 AS connected`);
         //     const result = await db.execute(`
         //   SELECT inet_server_addr(), inet_server_port(), current_database();
         // `);

@@ -1,6 +1,6 @@
 import express from "express";
-import onboardingAccess from "../middlewares/onboarding/onboardingTokenVerify.middleware";
-import insertBuyerOnboarding from "../controllers/buyerOnboarding/addBuyer.controllers";
+import onboardingAccess from "../middlewares/onboarding/onboardingTokenVerify.middleware.js";
+import insertBuyerOnboarding from "../controllers/buyerOnboarding/addBuyer.controllers.js";
 
 const buyerRoutes = express.Router();
 

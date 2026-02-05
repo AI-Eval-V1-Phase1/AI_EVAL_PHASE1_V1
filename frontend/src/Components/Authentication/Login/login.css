@@ -1,49 +1,25 @@
-.loginWrapper {
-  max-width: 1200px;
-}
-
-.loginContainer {
+/* Auth pages layout (Login, Forgot Password, Reset Password, Sign Up) */
+.authPage {
   display: flex;
-  height: 100vh;
-}
-
-.welcomeContent {
-  margin: 0;
-  width: 50%;
-  /* background: #2a7b9b; */
-  background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
-  display: flex;
-  align-content: center;
   align-items: center;
-}
-
-.welcomeText {
-  padding: 2em;
-  width: 90%;
-  color: white;
-}
-
-.loginContent {
-  display: flex;
-  /* justify-content: space-between; */
-  /* border: 1px solid green; */
+  justify-content: center;
   min-height: 100vh;
-  align-content: center;
+  padding: 1rem;
+}
+
+.authContent {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 10px;
-  gap: 2em;
-  width: 25vw;
-  margin: 0 auto;
+  justify-content: center;
 }
 
 .loginData {
   display: flex;
   gap: 2em;
-  height: 75vh;
-  /* border: 1px solid #2a7b9b; */
   border-radius: 10px;
-  /* padding: 25px; */
-  /* width: 60vw; */
   width: 100%;
 }
 
@@ -124,19 +100,6 @@
   margin: 0px 0px 20px 0px;
 }
 
-.welcomeHeading {
-  text-align: center;
-  line-height: 1.8;
-  font-size: 2.5em;
-  font-weight: 800;
-}
-
-.welcomeCon {
-  position: relative;
-  top: 8em;
-  padding: 10px;
-}
-
 .forgotPassword,
 .signinText {
   text-align: center;
@@ -179,6 +142,12 @@
 
 .loginCred input:focus {
   outline: 1px solid var(--main-auth-button-color);
+}
+
+.loginSuccess {
+  font-size: 14px;
+  color: #0f766e;
+  margin: 0.5em 0;
 }
 
 .loginBtn {

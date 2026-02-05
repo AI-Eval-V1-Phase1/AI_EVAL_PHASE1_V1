@@ -7,6 +7,21 @@
   font-family: "Inter", sans-serif;
 }
 
+
+
+:root {
+  --main-auth-button-color: #1e3a8a;
+  --background-color-onboarding: #EFF6FF;
+  --edit-button-background: #bde0fe;
+  --edit-button-color: black;
+  --delete-button-background: #ffccd5;
+  --active-status-background: #d8f3dc;
+  --inactive-status-background: #ffccd5;
+  --card-onboarding-bg-color: #f5f7fa
+  
+}
+
+
 input {
   border: 1px solid lightgray;
   border-radius: 4px;
@@ -18,12 +33,22 @@ button {
   font-family: "Inter", sans-serif;
 }
 
+
+input[type="textarea"]{
+  border: 1px solid lightgray;
+  border-radius: 4px;
+  padding: 5px;
+  font-size: 16px;
+  height: 40px;
+}
+
 select {
   border: 1px solid lightgray;
   border-radius: 4px;
   padding: 5px;
   font-size: 16px;
   height: 40px;
+  background-color: white;
 }
 
 .invite_user_btn {
@@ -45,14 +70,26 @@ select {
   width: 10em;
 }
 
-:root {
-  --main-auth-button-color: #1e3a8a;
-  --background-color-onboarding: #EFF6FF;
-  --edit-button-background: #bde0fe;
-  --edit-button-color: black;
-  --delete-button-background: #ffccd5;
-  --active-status-background: #d8f3dc;
-  --inactive-status-background: #ffccd5;
-  --card-onboarding-bg-color: #f5f7fa
-  
+.error_icon{
+  transform: rotate(180deg); /* or any angle */
+  transition: transform 0.2s ease;
+  color: red;
+}
+
+.error_text_sec{
+  display: flex;
+  align-items: center;
+padding: 0.2em 0 0 0;
+  gap: 0.4em;
+}
+
+.error_text_sec p {
+  color: red;
+  font-size: 14px;
+}
+.main_onBoarding input{
+  cursor: pointer
+}
+.main_onBoarding select{
+  cursor: pointer
 }

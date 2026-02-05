@@ -1,66 +1,180 @@
-import { Mail, ArrowRight, LockKeyhole, Eye, EyeOff } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import {
+  ArrowRight,
+  LockKeyhole,
+  Eye,
+  EyeOff,
+  Mail,
+} from "lucide-react";
+import { jwtDecode } from "jwt-decode";
+import "../Login/login.css";
 import "./resetPassword.css";
-import { useEffect, useState } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+
+interface ResetTokenPayload {
+  email?: string;
+  purpose?: string;
+  exp?: number;
+}
 
 const ResetPassword = () => {
   useEffect(() => {
     document.title = "AI EVAL | Reset Password";
-  })
+  }, []);
 
+  const BASE_URL = (import.meta.env.VITE_BASE_URL ?? "").toString().trim();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const token = searchParams.get("token");
+
+  const decodedToken = useMemo(() => {
+    if (!token) return null;
+    try {
+      return jwtDecode<ResetTokenPayload>(token);
+    } catch {
+      return null;
+    }
+  }, [token]);
+
+  const emailFromToken = decodedToken?.email ?? "";
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [isVisibleConfirm, setIsVisibleConfirm] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
+    "idle"
+  );
+  const [message, setMessage] = useState("");
 
-  const passwordVisible = () => {
-    setIsVisible((prev) => !prev);
-  };
-  const confirmPasswordVisible = () => {
+  const passwordVisible = () => setIsVisible((prev) => !prev);
+  const confirmPasswordVisible = () =>
     setIsVisibleConfirm((prev) => !prev);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!token) {
+      setMessage("Invalid or expired reset link.");
+      setStatus("error");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setMessage("Password must be at least 8 characters.");
+      setStatus("error");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setMessage("Passwords do not match.");
+      setStatus("error");
+      return;
+    }
+
+    setStatus("loading");
+    setMessage("");
+
+    try {
+      const response = await fetch(`${BASE_URL}/resetPassword`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          newPassword,
+          email: emailFromToken,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        setStatus("success");
+        setMessage(data.message || "Password reset successfully.");
+        setTimeout(() => navigate("/login", { state: { resetSuccess: true } }), 2000);
+      } else {
+        setStatus("error");
+        setMessage(data.message || "Something went wrong. Please try again.");
+      }
+    } catch {
+      setStatus("error");
+      setMessage("Unable to connect. Please try again later.");
+    }
   };
 
-  return (
-    <>
-      <div className="loginContainer">
-        <div className="welcomeContent">
-          <div className="welcomeText">
-            <div>
-              <h1 className="welcomeHeading">Reset Password</h1>
-              <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam
-                eum optio voluptatem, ea velit impedit ducimus praesentium magni
-                laudantium unde.
-              </p>
+  if (!token || !decodedToken || !emailFromToken) {
+    return (
+      <div className="authPage">
+        <div className="authContent">
+          <div className="loginData">
+            <div className="loginCred">
+              <div className="loginForm">
+                <h1 className="loginHeading">Invalid link</h1>
+                <p className="resetError">
+                  Invalid or expired reset link. Please use the link from your
+                  email or{" "}
+                  <Link to="/forgotPassword">request a new one</Link>.
+                </p>
+                <div className="loginBtn">
+                  <Link to="/login" className="login-btn">
+                    Back to Sign in
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div className="loginContent">
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="authPage">
+        <div className="authContent">
           <div className="loginData">
             <div className="loginCred">
               <div className="loginForm">
                 <h1 className="loginHeading">Reset Password</h1>
-                <form action="" autoComplete="off">
+                <form onSubmit={handleSubmit} autoComplete="off">
                   <div className="emailData">
-                    <label htmlFor="loginEmail">
+                    <label htmlFor="resetEmail">
                       <span>
                         <Mail width={20} strokeWidth={1.5} />
                       </span>{" "}
-                      Email
+                      Account email (from reset link)
                     </label>
                     <input
-                      className="resetMail"
+                      id="resetEmail"
                       type="email"
-                      value="registered email"
+                      value={emailFromToken}
                       readOnly
+                      className="resetMail readOnlyField"
+                      tabIndex={-1}
+                      aria-readonly
                     />
                   </div>
                   <div className="passwordData">
-                    <label htmlFor="loginPassword">
+                    <label htmlFor="newPassword">
                       <span>
                         <LockKeyhole width={20} strokeWidth={1.5} />
-                      </span>
+                      </span>{" "}
                       New Password
                     </label>
-                    <input type={isVisible ? "text" : "password"} maxLength={16}/>
-                    <span onClick={passwordVisible} className="passwordVisible">
+                    <input
+                      id="newPassword"
+                      type={isVisible ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      maxLength={128}
+                      minLength={8}
+                      placeholder="At least 8 characters"
+                      disabled={status === "loading" || status === "success"}
+                    />
+                    <span
+                      onClick={passwordVisible}
+                      className="passwordVisible"
+                      aria-hidden
+                    >
                       {isVisible ? (
                         <Eye size={20} strokeWidth={1.5} />
                       ) : (
@@ -69,16 +183,25 @@ const ResetPassword = () => {
                     </span>
                   </div>
                   <div className="passwordData">
-                    <label htmlFor="loginPassword">
+                    <label htmlFor="confirmPassword">
                       <span>
                         <LockKeyhole width={20} strokeWidth={1.5} />
-                      </span>
+                      </span>{" "}
                       Confirm Password
                     </label>
-                    <input type={isVisibleConfirm ? "text" : "password"} maxLength={16} />
+                    <input
+                      id="confirmPassword"
+                      type={isVisibleConfirm ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      maxLength={128}
+                      placeholder="Confirm new password"
+                      disabled={status === "loading" || status === "success"}
+                    />
                     <span
                       onClick={confirmPasswordVisible}
                       className="passwordVisible"
+                      aria-hidden
                     >
                       {isVisibleConfirm ? (
                         <Eye size={20} strokeWidth={1.5} />
@@ -87,14 +210,44 @@ const ResetPassword = () => {
                       )}
                     </span>
                   </div>
+                  {message && (
+                    <p
+                      className={
+                        status === "success"
+                          ? "resetSuccess"
+                          : "resetError"
+                      }
+                    >
+                      {message}
+                    </p>
+                  )}
                   <div className="loginBtn">
-                    <button type="submit" className="login-btn">
-                      Confirm{" "}
+                    <button
+                      type="submit"
+                      className="login-btn"
+                      disabled={
+                        status === "loading" ||
+                        status === "success" ||
+                        !newPassword ||
+                        !confirmPassword
+                      }
+                    >
+                      {status === "loading"
+                        ? "Resetting…"
+                        : status === "success"
+                          ? "Success — redirecting…"
+                          : "Confirm"}{" "}
                       <span>
                         <ArrowRight width={20} />
                       </span>
                     </button>
                   </div>
+                  <p className="signinText">
+                    Remember your password?{" "}
+                    <Link to="/login">
+                      <span>Sign in</span>
+                    </Link>
+                  </p>
                 </form>
               </div>
             </div>

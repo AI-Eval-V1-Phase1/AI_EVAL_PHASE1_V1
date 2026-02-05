@@ -1,12 +1,12 @@
 // backend/src/controllers/user_management/inviteUserController.ts
-import { db } from "../../database/db";
-import { usersTable } from "../../schema/user_management/invite_user_schema";
-import { Request, Response } from "express";
+import { db } from "../../database/db.js";
+import { usersTable } from "../../schema/user_management/invite_user_schema.js";
+import type { Request, Response } from "express";
 import nodemailer from "nodemailer";
 import { eq } from "drizzle-orm";
 import { error } from "node:console";
 import jwt from "jsonwebtoken";
-import emailConfig from "../../functions/emailconfig";
+import emailConfig from "../../functions/emailconfig.js";
 
 export const inviteUser = async (req: Request, res: Response) => {
   // Helper to generate email HTML
@@ -89,9 +89,9 @@ export const inviteUser = async (req: Request, res: Response) => {
 
     console.log("User inserted successfully into DB:", email);
 
-    const token = jwt.sign({ email: email }, process.env.JWT_SECRET_KEY, {
-      expiresIn: "7d",
-    });
+    const secret = process.env.JWT_SECRET_KEY;
+    if (!secret) throw new Error("JWT_SECRET_KEY not set");
+    const token = jwt.sign({ email }, secret, { expiresIn: "7d" });
 
     // console.log(token)
 
@@ -116,7 +116,7 @@ export const inviteUser = async (req: Request, res: Response) => {
     await transporter.sendMail({
       from: {
         name: "AI_Eval",
-        address: process.env["SENDER_EMAIL"],
+        address: process.env.SENDER_EMAIL ?? "noreply@aieval.example.com",
       },
       to: email,
       subject: "Confirm your AI Eval account",

@@ -1,5 +1,5 @@
-export { usersTable } from "./invite_user_schema";
+export { usersTable } from "./invite_user_schema.js";
 
-export { usersData } from "./selectUsers.schema";
+export { usersData } from "./selectUsers.schema.js";
 
-export { userEditLogs } from "./updateUser.schema"
+export { userEditLogs } from "./updateUser.schema.js"

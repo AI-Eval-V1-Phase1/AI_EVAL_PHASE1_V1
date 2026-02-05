@@ -1,8 +1,8 @@
 
 //** Select the complete organization table
 
-import { db } from "../../database/db";
-import { createOrganization } from "./createOrganization";
+import { db } from "../../database/db.js";
+import { createOrganization } from "./createOrganization.js";
 
 export const organizationsData = db
       .select()

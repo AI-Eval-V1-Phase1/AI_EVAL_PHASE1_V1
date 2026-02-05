@@ -1,9 +1,9 @@
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+import type { JwtPayload } from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 
-// Extend Request to include 'user'
 interface AuthRequest extends Request {
-  user?: JwtPayload | string;
+  user?: string | JwtPayload;
 }
 
 const JWT_SECRET = process.env.JWT_SECRET_KEY || "your-secret-key";
@@ -16,9 +16,7 @@ const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) 
 
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) return res.status(403).json({ message: "Token invalid or expired" });
-
-    req.user = decoded; // now TypeScript knows about 'user'
-
+    if (decoded !== undefined) req.user = decoded;
     next();
   });
 };

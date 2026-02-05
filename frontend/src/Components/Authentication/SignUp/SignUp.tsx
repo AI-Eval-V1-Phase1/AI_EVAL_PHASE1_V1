@@ -7,6 +7,7 @@ import {
   User,
   CheckCircle,
 } from "lucide-react";
+import "../Login/login.css";
 import "../ResetPassword/resetPassword.css";
 import "./signup.css";
 import { useEffect, useState } from "react";
@@ -96,20 +97,8 @@ const SignUp = () => {
 
   return (
     <>
-      <div className="loginContainer">
-        <div className="welcomeContent">
-          <div className="welcomeText">
-            <div>
-              <h1 className="welcomeHeading">Sign Up</h1>
-              <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam
-                eum optio voluptatem, ea velit impedit ducimus praesentium magni
-                laudantium unde.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="signupContent">
+      <div className="authPage">
+        <div className="signupContent authContent">
           {/* <h1>hhh</h1> */}
           {isVisible && (
             <CardContainerOnBoarding>

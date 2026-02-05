@@ -1,41 +1,32 @@
 import {
   pgTable,
-  serial,
+  uuid,
   varchar,
-  text,
   timestamp,
+  integer,
   jsonb,
 } from "drizzle-orm/pg-core";
 
- export const vendors = pgTable("vendors", {
-  id: serial("id").primaryKey(),
-
-  vendorId: varchar("vendor_id", { length: 255 }).notNull().unique(),
-  vendorType: varchar("vendor_type", { length: 255 }).notNull(),
-  sector: text("sector").notNull(),
-  vendorMaturity: varchar("vendor_maturity", { length: 255 }).notNull(),
-
-  companyWebsite: varchar("company_website", { length: 255 }).notNull(),
-  companyDescription: text("company_description").notNull(),
-
-  primaryContactName: varchar("primary_contact_name", { length: 255 }).notNull(),
-  primaryContactEmail: varchar("primary_contact_email", { length: 255 })
-    .notNull()
-    .unique(),
-  primaryContactRole: varchar("primary_contact_role", { length: 255 }).notNull(),
-
-  employeeCount: varchar("employee_count", { length: 255 }).notNull(),
-  yearFounded: varchar("year_founded", { length: 255 }).notNull(),
-  headquartersLocation: varchar("headquarters_location", {
-    length: 255,
-  }).notNull(),
-
-  operatingRegions: jsonb("operating_regions").notNull(),
-
-  createdAt: timestamp("created_at", { withTimezone: false })
-    .defaultNow()
-    .notNull(),
+// Table: vendor_onboarding (SQL). camelCase keys for .values(), first arg = DB column.
+// One onboarding per org: unique on organization_id.
+export const vendorOnboarding = pgTable("vendor_onboarding", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: integer("user_id").notNull(),
+  organizationId: varchar("organization_id", { length: 255 }).notNull().unique(),
+  vendorType: varchar("vendor_type", { length: 100 }).notNull(),
+  sector: varchar("sector", { length: 500 }),
+  vendorMaturity: varchar("vendor_maturity", { length: 100 }),
+  companyWebsite: varchar("company_website", { length: 500 }).notNull(),
+  companyDescription: varchar("company_description", { length: 500 }).notNull(),
+  primaryContactName: varchar("primary_contact_name", { length: 100 }).notNull(),
+  primaryContactEmail: varchar("primary_contact_email", { length: 255 }).notNull(),
+  primaryContactRole: varchar("primary_contact_role", { length: 100 }),
+  employeeCount: varchar("employee_count", { length: 50 }).notNull(),
+  yearFounded: integer("year_founded").notNull(),
+  headquartersLocation: varchar("headquarters_location", { length: 100 }).notNull(),
+  operatingRegions: jsonb("operating_regions"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-
-
+export const vendors = vendorOnboarding;

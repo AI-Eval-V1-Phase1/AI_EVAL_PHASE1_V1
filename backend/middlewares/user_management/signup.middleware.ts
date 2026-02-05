@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
-import { db } from "../../database/db";
+import { db } from "../../database/db.js";
 import type { NextFunction, Request, Response } from "express";
-import { usersTable } from "../../schema/schema";
+import { usersTable } from "../../schema/schema.js";
 
 const signupAccess = async (
   req: Request,
@@ -23,7 +23,8 @@ if (!userEmail) {
       .where(eq(usersTable.email, userEmail))
       .limit(1);
 
-    if (existingUser.length > 0 && existingUser[0].user_signup_completed === "true") {
+    const existingRow = existingUser[0];
+    if (existingUser.length > 0 && existingRow !== undefined && existingRow.user_signup_completed === "true") {
       return res.status(409).json({ message: "Signup already completed" });
     }
 
