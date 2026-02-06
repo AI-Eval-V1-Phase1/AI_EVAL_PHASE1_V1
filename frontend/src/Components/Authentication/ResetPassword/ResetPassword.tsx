@@ -5,6 +5,8 @@ import {
   Eye,
   EyeOff,
   Mail,
+  CheckCircle,
+  CircleAlert,
 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import "../Login/login.css";
@@ -19,7 +21,7 @@ interface ResetTokenPayload {
 
 const ResetPassword = () => {
   useEffect(() => {
-    document.title = "AI EVAL | Reset Password";
+    document.title = "AI Eval Platform | Reset Password";
   }, []);
 
   const BASE_URL = (import.meta.env.VITE_BASE_URL ?? "").toString().trim();
@@ -108,12 +110,16 @@ const ResetPassword = () => {
           <div className="loginData">
             <div className="loginCred">
               <div className="loginForm">
+                <p className="authPlatformTitle">AI Eval Platform</p>
                 <h1 className="loginHeading">Invalid link</h1>
-                <p className="resetError">
-                  Invalid or expired reset link. Please use the link from your
-                  email or{" "}
-                  <Link to="/forgotPassword">request a new one</Link>.
-                </p>
+                <div className="authMessage authMessage--error">
+                  <CircleAlert className="authMessage__icon" size={16} aria-hidden />
+                  <p className="resetError">
+                    Invalid or expired reset link. Please use the link from your
+                    email or{" "}
+                    <Link to="/forgotPassword">request a new one</Link>.
+                  </p>
+                </div>
                 <div className="loginBtn">
                   <Link to="/login" className="login-btn">
                     Back to Sign in
@@ -134,6 +140,7 @@ const ResetPassword = () => {
           <div className="loginData">
             <div className="loginCred">
               <div className="loginForm">
+                <p className="authPlatformTitle">AI Eval Platform</p>
                 <h1 className="loginHeading">Reset Password</h1>
                 <form onSubmit={handleSubmit} autoComplete="off">
                   <div className="emailData">
@@ -211,15 +218,22 @@ const ResetPassword = () => {
                     </span>
                   </div>
                   {message && (
-                    <p
+                    <div
                       className={
                         status === "success"
-                          ? "resetSuccess"
-                          : "resetError"
+                          ? "authMessage authMessage--success"
+                          : "authMessage authMessage--error"
                       }
                     >
-                      {message}
-                    </p>
+                      {status === "success" ? (
+                        <CheckCircle className="authMessage__icon" size={16} aria-hidden />
+                      ) : (
+                        <CircleAlert className="authMessage__icon" size={16} aria-hidden />
+                      )}
+                      <p className={status === "success" ? "resetSuccess" : "resetError"}>
+                        {message}
+                      </p>
+                    </div>
                   )}
                   <div className="loginBtn">
                     <button

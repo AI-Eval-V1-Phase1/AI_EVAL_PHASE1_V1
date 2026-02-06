@@ -3,6 +3,7 @@ import insertOrganization from "../controllers/organizationsControllers/insertOr
 import fetchOrganizations from "../controllers/organizationsControllers/fetchOrgs.js";
 import authenticateToken from "../middlewares/routesProtection.js";
 import updateOrganization from "../controllers/organizationsControllers/updateOrg.controllers.js";
+import fetchOrgOnboarding from "../controllers/organizationsControllers/fetchOrgOnboarding.controller.js";
 
 const orgrouter = express.Router();
 
@@ -13,6 +14,7 @@ orgrouter.put(
   authenticateToken,
   updateOrganization,
 );
+orgrouter.get("/orgOnboarding/:id", authenticateToken, fetchOrgOnboarding);
 
 // orgrouter.get("/orgOnboarding/:id",authenticateToken,onboardingData)
 

@@ -1,0 +1,104 @@
+.vendor-attestation-preview {
+  padding: 0 0 1.5rem 0;
+}
+.vendor-attestation-preview .preview-main-title {
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+}
+.vendor-attestation-preview .preview-section {
+  margin-bottom: 1.75rem;
+}
+.vendor-attestation-preview .preview-title {
+  font-size: 1rem;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+}
+.vendor-attestation-preview .preview-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.vendor-attestation-preview .preview-label {
+  padding: 0.5rem 0.5rem 0.5rem 0;
+  vertical-align: top;
+  font-weight: 500;
+  width: 40%;
+  line-height: 1.4;
+}
+.vendor-attestation-preview .preview-value {
+  padding: 0.5rem 0;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* Document Uploads section: clearer spacing and layout */
+.vendor-attestation-preview .preview-section--documents {
+  margin-bottom: 2rem;
+}
+.vendor-attestation-preview .preview-section--documents .preview-title {
+  margin-bottom: 0.75rem;
+}
+.vendor-attestation-preview .preview-table--documents {
+  border-spacing: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.vendor-attestation-preview .preview-table--documents .preview-doc-row {
+  border-bottom: 1px solid #e5e7eb;
+}
+.vendor-attestation-preview .preview-table--documents .preview-doc-row:last-child {
+  border-bottom: none;
+}
+.vendor-attestation-preview .preview-table--documents .preview-label {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+  background: #f9fafb;
+  width: 42%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.vendor-attestation-preview .preview-doc-label-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.4;
+}
+.vendor-attestation-preview .preview-table--documents .preview-value--doc {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.vendor-attestation-preview .preview-table--documents .preview-doc-actions {
+  flex-shrink: 0;
+}
+
+/* View button and edit icon for document rows */
+.vendor-attestation-preview .preview-doc-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+.vendor-attestation-preview .preview-view-btn,
+.vendor-attestation-preview .preview-edit-icon {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.75rem;
+  color: var(--color-link, #2563eb);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.vendor-attestation-preview .preview-view-btn:hover,
+.vendor-attestation-preview .preview-edit-icon:hover {
+  text-decoration: underline;
+  background: rgba(0, 0, 0, 0.04);
+}
+.vendor-attestation-preview .preview-edit-icon {
+  padding: 0.2rem;
+}

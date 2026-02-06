@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Mail, ArrowRight } from "lucide-react";
+import { Mail, ArrowRight, CheckCircle, CircleAlert } from "lucide-react";
 import "../Login/login.css";
 import "./forgotPassword.css";
 import { Link } from "react-router-dom";
 
 const ForgotPassword = () => {
-  document.title = "AI EVAL | Forgot Password";
+  document.title = "AI Eval Platform | Forgot Password";
 
   const BASE_URL = (import.meta.env.VITE_BASE_URL ?? "").toString().trim();
   const [email, setEmail] = useState("");
@@ -51,6 +51,7 @@ const ForgotPassword = () => {
           <div className="loginData">
             <div className="loginCred">
               <div className="loginForm">
+                <p className="authPlatformTitle">AI Eval Platform</p>
                 <h1 className="loginHeading">Forgot Password</h1>
                 <form onSubmit={handleSubmit} autoComplete="off">
                   <p className="mailText">
@@ -74,13 +75,22 @@ const ForgotPassword = () => {
                     />
                   </div>
                   {message && (
-                    <p
+                    <div
                       className={
-                        status === "success" ? "forgotSuccess" : "forgotError"
+                        status === "success"
+                          ? "authMessage authMessage--success"
+                          : "authMessage authMessage--error"
                       }
                     >
-                      {message}
-                    </p>
+                      {status === "success" ? (
+                        <CheckCircle className="authMessage__icon" size={16} aria-hidden />
+                      ) : (
+                        <CircleAlert className="authMessage__icon" size={16} aria-hidden />
+                      )}
+                      <p className={status === "success" ? "forgotSuccess" : "forgotError"}>
+                        {message}
+                      </p>
+                    </div>
                   )}
                   <div className="loginBtn">
                     <button

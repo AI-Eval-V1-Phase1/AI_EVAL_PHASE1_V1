@@ -37,12 +37,12 @@
   justify-content: space-between;
 }
 
-.step_form_body {
+/* .step_form_body {
   display: flex;
-  gap: 40px; /* spacing between left/right */
+  gap: 40px; 
   justify-content: space-between;
   padding: 1em 0;
-}
+} */
 .buyer_form_fields,
 .form_fields {
   display: flex;

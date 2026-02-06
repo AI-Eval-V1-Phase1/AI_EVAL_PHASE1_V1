@@ -56,9 +56,9 @@ useEffect(() => {
 
   const handleSelection = () => {
     if (role === "buyer") {
-      navigate(`/onboarding/buyerOnboarding/${token}`);
+      navigate(`/onBoarding/buyerOnboarding/${token}`);
     } else if (role === "vendor") {
-      navigate(`/onboarding/vendorOnboarding/${token}`);
+      navigate(`/onBoarding/vendorOnboarding/${token}`);
     }
   };
 

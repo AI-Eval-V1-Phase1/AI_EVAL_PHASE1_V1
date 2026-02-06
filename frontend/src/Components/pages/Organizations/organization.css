@@ -121,6 +121,21 @@
   font-weight: 500;
 }
 
+.orgNameClickable {
+  cursor: pointer;
+  color: var(--main-auth-button-color, #1e3a8a);
+  text-decoration: underline;
+}
+
+.orgNameClickable:hover {
+  opacity: 0.85;
+}
+
+.organizationPreviewEmpty {
+  margin-top: 1rem;
+  color: #666;
+}
+
 .orgDataTable {
   /* border: 1px solid lightgray; */
   border-radius: 4px;
@@ -167,6 +182,25 @@
 .editOrgImg span,
 .deleteOrgImg span {
   display: flex;
+}
+
+.assessment_action_cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.assessment_view_btn {
+  cursor: pointer;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.assessment_view_btn:hover {
+  background-color: #f3f4f6;
 }
 
 .newOrgHeading {

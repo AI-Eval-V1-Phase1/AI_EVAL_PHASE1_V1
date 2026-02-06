@@ -38,11 +38,13 @@ const RouteAccess = () => {
       "/",
       "/dashboard",
       "/assessments",
+      "/buyerAssessment",
       "/vendor-directory",
       "/my-vendor",
       "/compilance",
       "/governance",
       "/reports",
+      "/user-management",
     ],
   };
 

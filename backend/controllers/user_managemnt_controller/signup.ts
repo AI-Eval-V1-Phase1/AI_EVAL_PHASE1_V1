@@ -16,6 +16,11 @@ const userSignup = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Email is required" });
   }
 
+  function capitalizeFirstLetter(str: string): string {
+    if (!str || typeof str !== "string") return str;
+    return str.trim().split(/\s+/).map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(" ");
+  }
+
   function userEmailTemplate(
     name: string,
     role: string,
@@ -29,32 +34,32 @@ const userSignup = async (req: Request, res: Response) => {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Welcome to AI Eval!</title>
 <style>
-  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f6f8; }
-  .container { max-width: 600px; margin: 20px auto; padding: 30px; background: #fff; border-radius: 8px; }
+  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f6f8; color:#333333; }
+  .container { max-width: 600px; margin: 20px auto; padding: 30px; background: #ffffff; border-radius: 8px; color:#333333; }
   h1 { color: #1e3a8a; }
-  p { font-size:16px; line-height:1.5; color:#333; }
+  p { font-size:16px; line-height:1.5; color:#333333; }
   .button-container { margin:20px 0; }
-  .login-button { background-color: #1e3a8a; color:white; padding:14px 28px; border-radius:6px; text-decoration:none; font-weight:bold; }
-  .footer { font-size:12px; color:#888; margin-top:20px; text-align:center; }
+  .login-button { background-color: #1e3a8a; color:#ffffff; padding:14px 28px; border-radius:6px; text-decoration:none; font-weight:bold; }
+  .footer { font-size:12px; color:#666666; margin-top:20px; text-align:center; }
 </style>
 </head>
-<body>
-<div class="container">
-  <h1>Welcome to AI Eval, ${name}!</h1>
-  <p>We're excited to have you join <strong>${organization}</strong> as a <strong>${role}</strong>.</p>
-  <p>Your account has been successfully activated, and you can now access all the features of AI Eval.</p>
-  <div class="button-container">
-    <a href="${onboardingLink}" class="login-button">Go to Onboarding</a>
+<body style="font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f6f8; color:#333333;">
+<div class="container" style="max-width: 600px; margin: 20px auto; padding: 30px; background: #ffffff; border-radius: 8px; color:#333333;">
+  <h1 style="color: #1e3a8a;">Welcome to AI Eval, ${name}!</h1>
+  <p style="font-size:16px; line-height:1.5; color:#333333;">We're excited to have you join <strong>${organization}</strong> as a <strong>${role}</strong>.</p>
+  <p style="font-size:16px; line-height:1.5; color:#333333;">Your account has been successfully activated, and you can now access all the features of AI Eval.</p>
+  <div class="button-container" style="margin:20px 0;">
+    <a href="${onboardingLink}" class="login-button" style="background-color: #1e3a8a; color:#ffffff; padding:14px 28px; border-radius:6px; text-decoration:none; font-weight:bold;">Go to Onboarding</a>
   </div>
-  <p>Here are a few things you can do next:</p>
-  <ul>
+  <p style="font-size:16px; line-height:1.5; color:#333333;">Here are a few things you can do next:</p>
+  <ul style="font-size:16px; line-height:1.5; color:#333333;">
     <li>Set up your profile and preferences.</li>
     <li>Explore AI Eval features tailored for your role.</li>
     <li>Invite teammates to collaborate and evaluate efficiently.</li>
   </ul>
-  <p>If you have any questions, feel free to reply to this email—we’re here to help!</p>
-  <p>Cheers,<br>The AI Eval Team</p>
-  <div class="footer">&copy; 2026 AI Eval. All rights reserved.</div>
+  <p style="font-size:16px; line-height:1.5; color:#333333;">If you have any questions, feel free to reply to this email—we’re here to help!</p>
+  <p style="font-size:16px; line-height:1.5; color:#333333;">Cheers,<br>The AI Eval Team</p>
+  <div class="footer" style="font-size:12px; color:#666666; margin-top:20px; text-align:center;">&copy; 2026 AI Eval. All rights reserved.</div>
 </div>
 </body>
 </html>`;
@@ -162,7 +167,7 @@ const userSignup = async (req: Request, res: Response) => {
     });
 
     // console.log("dbUser",dbUser)
-    const onboardingLink = `${BASE_URL}/onboarding/${token}`;
+    const onboardingLink = `${BASE_URL}/onBoarding/${token}`;
 
     // Resolve organization display name for email (org name, not org id)
     const orgIdFromUser = dbUser.organization_name;
@@ -191,9 +196,9 @@ const userSignup = async (req: Request, res: Response) => {
         subject: "Onboarding in AI Eval",
         html: userEmailTemplate(
           dbUser.user_name ?? "User",
-          dbUser.role,
+          capitalizeFirstLetter(String(dbUser.role ?? "")),
           onboardingLink,
-          orgDisplayName,
+          capitalizeFirstLetter(String(orgDisplayName ?? "")),
         ),
       });
 

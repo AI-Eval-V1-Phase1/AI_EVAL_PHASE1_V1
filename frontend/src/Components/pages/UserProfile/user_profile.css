@@ -1,4 +1,4 @@
-/* Wrapper popup */
+/* Wrapper popup - above data tables and page content so Logout is clickable */
 .user_popup {
   position: absolute;
   top: 60px;
@@ -8,7 +8,7 @@
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   padding: 12px 0;
-  z-index: 1000;
+  z-index: 10000;
   font-family:
     system-ui,
     -apple-system,
@@ -77,7 +77,7 @@
   cursor: pointer;
   border-radius: 4px;
   display: flex;
-  /* justify-content: center; */
+  justify-content: center;
   align-content: center;
   align-items: center;
   gap: 5px;

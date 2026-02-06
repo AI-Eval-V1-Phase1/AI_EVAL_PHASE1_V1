@@ -4,7 +4,7 @@ import { assessmentStatusEnum, assessmentTypeEnum } from "../EnumValues/enumValu
 export const assessments = pgTable("assessments", {
   id: uuid("id").defaultRandom().primaryKey(),
   type: assessmentTypeEnum("type").notNull(),
-  organization_id: uuid("organization_id").notNull(),
+  organization_id: varchar("organization_id", { length: 255 }).notNull(),
   status: assessmentStatusEnum("status").default("draft").notNull(),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

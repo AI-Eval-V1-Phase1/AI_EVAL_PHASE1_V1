@@ -5,11 +5,14 @@ import {
   text,
   timestamp,
   jsonb,
+  integer,
 } from "drizzle-orm/pg-core";
 
 export const vendorSelfAttestations = pgTable("vendor_self_attestations", {
   id: uuid("id").defaultRandom().primaryKey(),
-  assessment_id: uuid("assessment_id").notNull(),
+  /** Links to the logged-in vendor user; used for fetch/upsert when assessment_id is not required */
+  user_id: integer("user_id"),
+  assessment_id: uuid("assessment_id"),
   purchase_decision_makers: jsonb("purchase_decision_makers"),
   pain_points_solved: text("pain_points_solved"),
   alternatives_considered: text("alternatives_considered"),
@@ -37,6 +40,8 @@ export const vendorSelfAttestations = pgTable("vendor_self_attestations", {
   interaction_data_available: varchar("interaction_data_available", { length: 100 }),
   audit_logs_available: varchar("audit_logs_available", { length: 100 }),
   testing_results_available: varchar("testing_results_available", { length: 100 }),
+  /** Stored document metadata: { "0": ["file1.pdf"], "1": [], "2": ["doc.docx"] } keyed by upload slot */
+  document_uploads: jsonb("document_uploads"),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

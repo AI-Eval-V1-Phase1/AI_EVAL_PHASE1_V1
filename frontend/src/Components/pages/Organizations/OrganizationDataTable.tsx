@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getOrganizations } from "../../../Context/OrganizationsData";
 import EditOrganization from "./EditOrganization";
 
-const OrganizationDataTable = () => {
+const OrganizationDataTable = ({openPreview}) => {
   const [filterText, setFilterText] = React.useState("");
   const [resetPaginationToggle, setResetPaginationToggle] =
     React.useState(false);
@@ -14,9 +14,8 @@ const OrganizationDataTable = () => {
   const dispatch = useDispatch();
   const { data, status, error } = useSelector((state) => state.organizations);
   console.log("data", data);
-
   const [isEdit, setIsEdit] = useState(false);
-const [selectedOrgId, setSelectedOrgId] = useState(null);
+  const [selectedOrgId, setSelectedOrgId] = useState(null);
   // const getOrganizations = async () => {
   //   // console.log("here");
   //   try {
@@ -77,7 +76,7 @@ const [selectedOrgId, setSelectedOrgId] = useState(null);
 
   const editOrg = (id) => {
     setIsEdit(true);
-    setSelectedOrgId(id)
+    setSelectedOrgId(id);
   };
 
   const FilterComponent = ({ filterText, onFilter, onClear }) => (
@@ -134,7 +133,17 @@ const [selectedOrgId, setSelectedOrgId] = useState(null);
     },
     {
       name: <div className="tableHeader">Organization Name</div>,
-      selector: (row) => row.organizationName,
+      selector: (row) => (
+        <p
+          className="orgNameClickable"
+          onClick={() => openPreview?.(row)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && openPreview?.(row)}
+        >
+          {row.organizationName}
+        </p>
+      ),
       sortable: true,
     },
     {
@@ -157,7 +166,7 @@ const [selectedOrgId, setSelectedOrgId] = useState(null);
       //   name: "Actions",
       name: <div className="tableHeader">Action</div>,
       selector: (row) => (
-        <div className="actionButtons" onClick={()=>editOrg(row.id)}>
+        <div className="actionButtons" onClick={() => editOrg(row.id)}>
           <p className="editOrgImg">
             <span>
               <SquarePen width={16} />
@@ -170,7 +179,7 @@ const [selectedOrgId, setSelectedOrgId] = useState(null);
       sortable: true,
     },
   ];
-const selectedOrg = data?.find((org) => org.id === selectedOrgId);
+  const selectedOrg = data?.find((org) => org.id === selectedOrgId);
 
   return (
     <>
@@ -178,6 +187,7 @@ const selectedOrg = data?.find((org) => org.id === selectedOrgId);
         {/* <div>Organization Data Table</div> */}
 
         {/* <DataTable columns={columns} data={filteredItems} pagination /> */}
+        
         <DataTable
           customStyles={customStyles}
           columns={columns}
@@ -197,13 +207,12 @@ const selectedOrg = data?.find((org) => org.id === selectedOrgId);
         />
       </div>
       {isEdit && selectedOrg && (
-  <EditOrganization
-    id={selectedOrgId}
-    orgData={selectedOrg}
-    setIsEdit={setIsEdit}
-  />
-)}
-
+        <EditOrganization
+          id={selectedOrgId}
+          orgData={selectedOrg}
+          setIsEdit={setIsEdit}
+        />
+      )}
     </>
   );
 };

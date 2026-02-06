@@ -2,13 +2,15 @@
 import React from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "./Toaster.css";
 
 const Toaster = () => {
   return (
     <ToastContainer
-      position="top-right"      // where the toast appears
-      autoClose={2000}          // auto close after 3s
-      hideProgressBar={false}   // show/hide progress bar
+      className="app-toast-container"
+      position="top-right"
+      autoClose={2000}
+      hideProgressBar={false}
       newestOnTop={true}
       closeOnClick
       rtl={false}

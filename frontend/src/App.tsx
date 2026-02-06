@@ -42,56 +42,57 @@ function App() {
           <Route path="/resetPassword" element={<ResetPassword />} />
           <Route path="/signup/:token" element={<SignUp />} />
           <Route element={<Authorization />}>
-          <Route element={<RouteAccess />}>
+            <Route element={<RouteAccess />}>
+              <Route element={<MainLayout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/organizations" element={<Organizations />} />
+                <Route path="/assessments" element={<Assessments />} />
+                <Route path="/vendor-directory" element={<VendorDirectory />} />
+                <Route path="/my-vendor" element={<MyVendors />} />
+                <Route path="/compilance" element={<Compilance />} />
+                <Route path="/governance" element={<Goverance />} />
+                <Route path="/sales-enablement" element={<SalesEnablement />} />
+                <Route path="/evidence-library" element={<EvidenceLibrary />} />
+                <Route
+                  path="/directory-listing"
+                  element={<DirectoryListing />}
+                />
+                <Route path="/reports" element={<Reports />} />
 
-<Route element={<MainLayout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/organizations" element={<Organizations />} />
-              <Route path="/assessments" element={<Assessments />} />
-              <Route path="/vendor-directory" element={<VendorDirectory />} />
-              <Route path="/my-vendor" element={<MyVendors />} />
-              <Route path="/compilance" element={<Compilance />} />
-              <Route path="/governance" element={<Goverance />} />
-              <Route path="/sales-enablement" element={<SalesEnablement />} />
-              <Route path="/evidence-library" element={<EvidenceLibrary />} />
-              <Route path="/directory-listing" element={<DirectoryListing />} />
-              <Route path="/reports" element={<Reports />} />
-
-              <Route path="/user-management" element={<UserManagement />} />
+                <Route path="/user-management" element={<UserManagement />} />
+              </Route>
             </Route>
-          </Route>
-            
           </Route>
 
           {/* This Routing layout is for Vendor and Buyer onboarding without the side navigation bar  */}
           {/* <Route element={<OnboardingAccess />}> */}
-            <Route element={<LayoutWithoutNav />}>
-              <Route path="/onBoarding/:token" element={<Onboarding />} />
-              <Route
-                path="/onBoarding/vendorOnboarding"
-                element={<VendorMainForm type="vendor" />}
-              />
-              <Route
-                path="/onBoarding/buyerOnboarding"
-                element={<BuyerMainForm type="buyer" />}
-              />
-              <Route 
+          <Route element={<LayoutWithoutNav />}>
+            <Route path="/onBoarding/:token" element={<Onboarding />} />
+            <Route
+              path="/onBoarding/vendorOnboarding/:token"
+              element={<VendorMainForm type="vendor" />}
+            />
+            <Route
+              path="/onBoarding/buyerOnboarding/:token"
+              element={<BuyerMainForm type="buyer" />}
+            />
+            <Route
               path="/vendorSelfAttestation"
-              element={<VendorAttestationsMainForm/>}
-              
-              />
-              <Route 
-              path="/vendorcots"
-              element={<VendorCOTSMain/>}
-              
-              />
-               <Route
-              path="/buyerAssessment"
-              element={<BuyerAssessment/>}
-             
-              />
+              element={<VendorAttestationsMainForm />}
+            />
+            <Route
+              path="/vendorSelfAttestation/:token"
+              element={<VendorAttestationsMainForm />}
+            />
+            <Route path="/vendorcots" element={<VendorCOTSMain />} />
+            <Route element={<Authorization />}>
+              <Route element={<RouteAccess />}>
+                <Route path="/buyerAssessment" element={<BuyerAssessment />} />
+              </Route>
             </Route>
+            <Route path="/buyerAssessment" element={<BuyerAssessment />} />
+          </Route>
           {/* </Route> */}
           <Route path="*" element={<PageNotFound />} />
         </Routes>

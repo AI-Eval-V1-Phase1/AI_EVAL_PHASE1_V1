@@ -95,9 +95,18 @@
   width: 100%;
 }
 
+.authPlatformTitle {
+  text-align: center;
+  font-size: 1.9em;
+  font-weight: 600;
+  color: var(--main-dark-color, #1e293b);
+  margin: 0 0 0.9em 0;
+}
+
 .loginHeading {
   text-align: center;
   margin: 0px 0px 20px 0px;
+  font-size: 1.5em;
 }
 
 .forgotPassword,
@@ -144,10 +153,39 @@
   outline: 1px solid var(--main-auth-button-color);
 }
 
+/* Success/error message with icon (Login, Forgot Password, Reset Password, Confirm email) */
+.authMessage {
+  display: flex;
+  /* align-items: flex-start; */
+gap: 0.4rem;
+  margin: 0.5em 0;
+  align-content: center;
+  align-items: center;
+}
+.authMessage__icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.authMessage--success .authMessage__icon {
+  color: #0f766e;
+}
+.authMessage--error .authMessage__icon {
+  color: red;
+}
+.authMessage p {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
 .loginSuccess {
   font-size: 14px;
   color: #0f766e;
-  margin: 0.5em 0;
+}
+
+.orgError {
+  font-size: 14px;
+  color: #b91c1c;
 }
 
 .loginBtn {

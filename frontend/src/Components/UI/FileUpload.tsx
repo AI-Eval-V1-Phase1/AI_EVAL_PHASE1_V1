@@ -1,37 +1,101 @@
+/**
+ * Controlled file upload with optional validation (type, size).
+ * Valid files are passed to onFilesChange; invalid ones are reported via onValidationError.
+ */
 import React, { useRef, useState } from "react";
 import "../../styles/file_upload.css";
 import { UploadIcon } from "lucide-react";
 
-const FileUpload = ({ maxFiles = 5, accept = "*", onFilesChange }) => {
-  const [files, setFiles] = useState([]);
-  const fileInputRef = useRef();
+interface FileUploadProps {
+  maxFiles?: number;
+  /** e.g. ".pdf,.doc,.docx,.ppt,.pptx" */
+  accept?: string;
+  /** Max size per file in bytes (e.g. 10 * 1024 * 1024 for 10MB). */
+  maxSizeBytes?: number;
+  /** Controlled: list of file names to display. */
+  value?: string[];
+  /** Called with updated list of file names when user adds valid files. */
+  onFilesChange?: (fileNames: string[]) => void;
+  /** Called when validation fails (e.g. file too large or wrong type). */
+  onValidationError?: (message: string) => void;
+}
 
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    const newFiles = selectedFiles.filter(
-      (file) => !files.some((f) => f.name === file.name && f.size === file.size)
-    );
+const DEFAULT_ACCEPT = ".pdf,.doc,.docx,.ppt,.pptx";
 
-    const totalFiles = [...files, ...newFiles].slice(0, maxFiles);
-    setFiles(totalFiles);
-    if (onFilesChange) onFilesChange(totalFiles);
+const FileUpload = ({
+  maxFiles = 5,
+  accept = DEFAULT_ACCEPT,
+  maxSizeBytes,
+  value = [],
+  onFilesChange,
+  onValidationError,
+}: FileUploadProps) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [validationMessage, setValidationMessage] = useState<string | null>(null);
+
+  const getExtension = (name: string) => {
+    const i = name.lastIndexOf(".");
+    return i >= 0 ? name.slice(i).toLowerCase() : "";
+  };
+
+  const allowedExtensions = accept
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.startsWith("."));
+
+  const isValidType = (fileName: string) => {
+    if (allowedExtensions.length === 0) return true;
+    const ext = getExtension(fileName);
+    return allowedExtensions.includes(ext);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files ?? []);
+    setValidationMessage(null);
+    onValidationError?.("");
+
+    const validNames: string[] = [];
+    const errors: string[] = [];
+
+    for (const file of selectedFiles) {
+      if (!isValidType(file.name)) {
+        errors.push(`${file.name}: invalid type. Accepted: ${accept}`);
+        continue;
+      }
+      if (maxSizeBytes != null && file.size > maxSizeBytes) {
+        const mb = (maxSizeBytes / (1024 * 1024)).toFixed(1);
+        errors.push(`${file.name}: exceeds ${mb}MB`);
+        continue;
+      }
+      validNames.push(file.name);
+    }
+
+    if (errors.length > 0) {
+      const msg = errors.join("; ");
+      setValidationMessage(msg);
+      onValidationError?.(msg);
+    }
+
+    const combined = [...value, ...validNames].slice(0, maxFiles);
+    onFilesChange?.(combined);
     e.target.value = "";
   };
 
-  const removeFile = (index) => {
-    const updatedFiles = files.filter((_, i) => i !== index);
-    setFiles(updatedFiles);
-    if (onFilesChange) onFilesChange(updatedFiles);
-  };
-
-  const triggerFileSelect = () => {
-    fileInputRef.current.click();
+  const removeFile = (index: number) => {
+    const updated = value.filter((_, i) => i !== index);
+    onFilesChange?.(updated);
+    setValidationMessage(null);
+    onValidationError?.("");
   };
 
   return (
     <div className="upload-container">
-      <div className="custom-file-button" onClick={triggerFileSelect}>
-      <UploadIcon size={16} className="upload_icon"/>  Upload Files
+      <div
+        className="custom-file-button"
+        onClick={() => fileInputRef.current?.click()}
+        role="button"
+      >
+        <UploadIcon size={16} className="upload_icon" /> Upload Files
       </div>
       <input
         type="file"
@@ -39,13 +103,22 @@ const FileUpload = ({ maxFiles = 5, accept = "*", onFilesChange }) => {
         accept={accept}
         ref={fileInputRef}
         onChange={handleFileChange}
-        style={{ display: "none" }} // hide the default input
+        style={{ display: "none" }}
       />
+      {validationMessage && (
+        <p className="upload-validation-error" style={{ color: "#b91c1c", fontSize: "0.875rem", marginTop: 4 }}>
+          {validationMessage}
+        </p>
+      )}
       <ul className="file-list">
-        {files.map((file, index) => (
-          <li key={index}>
-            {file.name}
-            <span className="remove-btn" onClick={() => removeFile(index)}>
+        {value.map((name, index) => (
+          <li key={`${name}-${index}`}>
+            {name}
+            <span
+              className="remove-btn"
+              onClick={() => removeFile(index)}
+              role="button"
+            >
               ×
             </span>
           </li>

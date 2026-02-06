@@ -44,6 +44,8 @@ export const cotsBuyerAssessments = pgTable("cots_buyer_assessments", {
   risk_domain_scores: text("risk_domain_scores"),
   contextual_multipliers: text("contextual_multipliers"),
   risk_mitigation: text("risk_mitigation"),
+  /** Risk mitigation mapping IDs from risk_top5_mitigations.mapping_id – store only IDs, not full text */
+  risk_mitigation_mapping_ids: jsonb("risk_mitigation_mapping_ids"),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

@@ -29,7 +29,27 @@ const EditOrganization = ({ setIsEdit, id, orgData }) => {
   const updateOrg = async (e) => {
     e.preventDefault();
     const userId = sessionStorage.getItem("userId");
+    if (!isOrganizationName.trim()) {
+      setIsError("Organization Name is required");
+      return;
+    }
+    if (!isStatus.trim() || isStatus === "select") {
+      setIsError("Status is required");
+      return;
+    }
+    if (!isReason.trim()) {
+      setIsError("Reason is required");
+      return;
+    }
 
+    if (
+      orgData &&
+      isOrganizationName.trim() === orgData.organizationName &&
+      isStatus.trim() === orgData.organizationStatus 
+    ) {
+      setIsError("Nothing is Updated");
+      return;
+    }
     const data = {
       isOrganization: isOrganizationName,
       isStatus,
@@ -90,7 +110,7 @@ const EditOrganization = ({ setIsEdit, id, orgData }) => {
                 value={isOrganizationName}
                 onChange={(e) => setIsOrganizationName(e.target.value)}
               />
-              {isError && <p className="orgError">{isError}</p>}
+              {/* {isError && <p className="orgError">{isError}</p>} */}
             </div>
             <div className="orgName">
               <label htmlFor="orgname">
@@ -111,7 +131,7 @@ const EditOrganization = ({ setIsEdit, id, orgData }) => {
                 <option value="active">Active</option>
                 <option value="inactive">In active</option>
               </select>
-              {isError && <p className="orgError">{isError}</p>}
+              {/* {isError && <p className="orgError">{isError}</p>} */}
             </div>
             <div className="orgName">
               <label htmlFor="orgname">

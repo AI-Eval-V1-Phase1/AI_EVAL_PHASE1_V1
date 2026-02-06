@@ -10,7 +10,10 @@
     "start": "node --watch dist/src/server.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:run-0003": "node run-migration-0003.js",
+    "db:run-0004": "node run-migration-0004.js",
+    "db:run-0005": "node run-migration-0005.js"
   },
   "keywords": [],
   "author": "",

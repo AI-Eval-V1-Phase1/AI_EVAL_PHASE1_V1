@@ -4,9 +4,15 @@ import { Link } from "react-router-dom";
 // css is in card.css
 
 interface CardConfirmationProps {
-  pageNavigateLink ?: string; // the text or path for the link
+  /** Link text shown to the user */
+  pageNavigateLink?: string;
+  /** Route path to navigate to when the link is clicked (e.g. /vendorSelfAttestation/:token). If omitted, uses "/" */
+  navigateTo?: string;
 }
-const CardConfirmation = ({ pageNavigateLink }: CardConfirmationProps) => {
+const CardConfirmation = ({ pageNavigateLink, navigateTo }: CardConfirmationProps) => {
+  const linkTo = (navigateTo && navigateTo.trim() !== "") ? navigateTo : "/";
+  const linkText = pageNavigateLink ?? "Continue";
+
   return (
     <>
       <CardContainerOnBoarding>
@@ -18,7 +24,7 @@ const CardConfirmation = ({ pageNavigateLink }: CardConfirmationProps) => {
             pre-fill assessment fields and personalize your experience on the
             platform.
           </p>
-          <Link to="/">{pageNavigateLink}</Link>
+          <Link to={linkTo}>{linkText}</Link>
         </div>
       </CardContainerOnBoarding>
     </>

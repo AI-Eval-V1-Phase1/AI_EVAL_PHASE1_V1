@@ -68,7 +68,7 @@ const UserProfile = () => {
   return (
     <>
       <UserPopup className="user_popup">
-        <h5>My Account</h5>
+        <h5>Account</h5>
 
         <ul>
           <li>
@@ -76,7 +76,7 @@ const UserProfile = () => {
               <User />
             </span>
 
-            <span>User Profile</span>
+            <span>Profile</span>
           </li>
 
           <li>
@@ -84,7 +84,7 @@ const UserProfile = () => {
               <Settings />
             </span>
 
-            <span>User Settings</span>
+            <span>Settings</span>
           </li>
         </ul>
 

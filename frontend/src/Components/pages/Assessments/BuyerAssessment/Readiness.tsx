@@ -1,53 +1,35 @@
-import FormField from "../../../UI/FormField";
-// import Input from "../../UI/Input";
-import HeaderForVendor from "../../VendorOnboarding/HeaderForVendor";
+import HeaderForBuyer from "../../BuyerOnboarding/HeaderForBuyer";
+import { BUYER_COTS_FIELD_KEYS } from "../../../../constants/buyerCotsAssessmentKeys";
+import BuyerCotsField from "./BuyerCotsField";
 
-const Readiness = ({ data }) => {
+const Readiness = ({ data, formData, setFormData, readOnlyKeys = [] }) => {
+  const keys = BUYER_COTS_FIELD_KEYS.readiness;
+  const isReadOnly = (key) => readOnlyKeys.includes(key);
   return (
     <>
-      <HeaderForVendor
+      <HeaderForBuyer
         className="header_for_vendor"
         title_vendor="Readiness"
-        // sub_title_vendor="Tell us about your AI products and services"
       />
       <div>
-        <div className="form_fields_vendor">
-          <FormField
-            label={data[0].label}
-            mandatory={data[0].required}
-            tooltipText={data[0].placeholder}
-          >
-            <input type="text" />
-          </FormField>
-          <FormField
-            label={data[1].label}
-            mandatory={data[1].required}
-            tooltipText={data[1].placeholder}
-          >
-            <input type="text" />
-          </FormField>
-          <FormField
-            label={data[2].label}
-            mandatory={data[2].required}
-            tooltipText={data[2].placeholder}
-          >
-            <input type="text" />
-          </FormField>
-          <FormField
-            label={data[3].label}
-            mandatory={data[3].required}
-            tooltipText={data[3].placeholder}
-          >
-            <input type="text" />
-          </FormField>
-          <FormField
-            label={data[4].label}
-            mandatory={data[4].required}
-            tooltipText={data[4].placeholder}
-          >
-            <input type="text" />
-          </FormField>
-        </div>
+        {keys.map((key, i) => {
+          const config = data[i];
+          return (
+            <div key={key} className="form_fields_vendor buyer_cots_field">
+              <BuyerCotsField
+                fieldKey={key}
+                label={config.label}
+                placeholder={config.placeholder}
+                required={config.required}
+                options={config.options}
+                multiselect={config.multiselect}
+                value={formData[key]}
+                onChange={(val) => setFormData((prev) => ({ ...prev, [key]: val }))}
+                readOnly={isReadOnly(key)}
+              />
+            </div>
+          );
+        })}
       </div>
     </>
   );

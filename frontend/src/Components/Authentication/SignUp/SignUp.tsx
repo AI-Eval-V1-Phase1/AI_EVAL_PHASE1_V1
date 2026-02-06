@@ -19,8 +19,8 @@ import CardContainerOnBoarding from "../../UI/CardContainerOnBoarding";
 
 const SignUp = () => {
   useEffect(() => {
-    document.title = "AI EVAL | Sign Up";
-  });
+    document.title = "AI Eval Platform | Sign Up";
+  }, []);
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const [isVisibleConfirm, setIsVisibleConfirm] = useState(false);
@@ -28,6 +28,7 @@ const SignUp = () => {
   const [searchParams] = useSearchParams();
   const { token } = useParams();
   const [isVisible, setIsVisible] = useState(false);
+  const [isConfirmSignup, setIsConfirmSignup] = useState(false)
 
   // console.log("here")
   const decode = jwtDecode(token);
@@ -77,8 +78,9 @@ const SignUp = () => {
       // console.log("response", response);
       const result = await response.json();
       if (response.ok) {
-        toast.success("Sign Up Successful!");
+        // toast.success("Sign Up Successful!");
         // setIsVisible(true);
+        setIsConfirmSignup(true);
         sessionStorage.setItem("signup_completed", "true");
         console.log("Sign up token for onboarding", result.token);
         console.log("Sign up user id for onboarding", result.userId);
@@ -100,13 +102,12 @@ const SignUp = () => {
       <div className="authPage">
         <div className="signupContent authContent">
           {/* <h1>hhh</h1> */}
-          {isVisible && (
+          {isConfirmSignup && (
             <CardContainerOnBoarding>
               <div className="signup_confirmation_wrapper">
-                <div className="signup_confirmation_card">
-                  <CheckCircle className="signup_success_note" size={24} />
-                  {/* <h2>Welcome to AI Eval!</h2> */}
-                  <p>
+                <div className="signup_confirmation_card authMessage authMessage--success">
+                  <CheckCircle className="authMessage__icon signup_success_note" size={24} aria-hidden />
+                  <p style={{ margin: 0, fontSize: "14px", color: "#0f766e" }}>
                     Your AI Eval account has been successfully activated. Please
                     check your email to complete the onboarding process
                   </p>
@@ -118,6 +119,7 @@ const SignUp = () => {
           <div className="loginData">
             <div className="loginCred">
               <div className="loginForm">
+                <p className="authPlatformTitle">AI Eval Platform</p>
                 <h1 className="loginHeading">Sign up</h1>
                 <form
                   action=""
