@@ -1,0 +1,711 @@
+/* Attestation page layout */
+.attestation_page .attestation_page_title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+/* Section cards (Directory Requirements + Trust Profile) */
+.attestation_section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.attestation_details_header_icon{
+  display: flex;
+}
+.attestation_section_header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.attestation_section_header_with_status {
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.attestation_section_title_row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.attestation_section_icon {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.attestation_section_icon_warning {
+  color: #ea580c;
+}
+
+.attestation_section_icon_primary {
+  color: #2563eb;
+}
+
+.attestation_section_title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.attestation_section_subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+/* Directory Listing Requirements - three columns */
+.attestation_directory_requirements {
+  margin-top: 1rem;
+}
+
+.attestation_requirements_grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .attestation_requirements_grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.attestation_requirement_item h3.attestation_requirement_heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.attestation_requirement_item p {
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Trust Profile - coverage list */
+.attestation_covers_heading {
+  font-size: 0.9375rem;
+  color: #374151;
+  margin: 0 0 0.75rem 0;
+}
+
+.attestation_covers_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 2rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .attestation_covers_grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.attestation_covers_list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.attestation_covers_list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.attestation_check {
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+/* YOUR ATTESTATIONS */
+.attestation_your_heading {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+}
+
+/* Latest attestation card */
+.attestation_latest_card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.attestation_latest_card_inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.attestation_latest_card_icon {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.attestation_latest_card_content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.attestation_latest_card_title {
+  font-weight: 600;
+  color: #111827;
+}
+
+.attestation_latest_card_date {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.attestation_actions_row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.attestation_btn_primary,
+.attestation_btn_secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.attestation_btn_primary {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.attestation_btn_primary:hover {
+  opacity: 0.9;
+}
+
+.attestation_btn_secondary {
+  background: white;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.attestation_btn_secondary:hover {
+  background: #f9fafb;
+}
+
+.attestation_no_data {
+  padding: 1.5rem;
+  text-align: center;
+  background: white;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+}
+
+.attestation_no_data p {
+  margin: 0 0 1rem 0;
+  color: #6b7280;
+}
+
+.vendor_attestation_cards_extra {
+  margin-top: 1rem;
+}
+
+.vendor_attestation_status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vendor_attestation_details_page {
+  padding: 0;
+}
+
+/* New attestation page layout: Directory Listing at top, Trust Profile below */
+.attestation_page .attestation_page_title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.attestation_section {
+background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.attestation_section_header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.attestation_section_header_with_status {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.attestation_section_title_row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.attestation_section_icon {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.attestation_section_icon_primary {
+  color: #2563eb;
+}
+
+.attestation_section_icon_warning {
+  color: #ea580c;
+}
+
+.attestation_section_title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.attestation_section_subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+/* Directory Listing Requirements - three columns */
+.attestation_requirements_grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .attestation_requirements_grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.attestation_requirement_item h3.attestation_requirement_heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.attestation_requirement_item p {
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Trust Profile: coverage list */
+.attestation_covers_heading {
+  font-size: 0.9375rem;
+  color: #374151;
+  margin: 0 0 0.75rem 0;
+}
+
+.attestation_covers_grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.attestation_covers_list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.attestation_covers_list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.attestation_check {
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.attestation_your_heading {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+}
+
+/* Latest attestation card */
+.attestation_latest_card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.attestation_latest_card_inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.attestation_latest_card_icon {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.attestation_latest_card_content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.attestation_latest_card_title {
+  font-weight: 600;
+  color: #111827;
+  font-size: 1rem;
+}
+
+.attestation_latest_card_date {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.attestation_actions_row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.attestation_btn_primary,
+.attestation_btn_secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid transparent;
+  font-family: inherit;
+}
+
+.attestation_btn_primary {
+  background-color: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.attestation_btn_primary:hover {
+  opacity: 0.9;
+}
+
+.attestation_btn_secondary {
+  background: white;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.attestation_btn_secondary:hover {
+  background-color: #f9fafb;
+}
+
+.attestation_no_data {
+  padding: 1.5rem;
+  text-align: center;
+  background: white;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+}
+
+.attestation_no_data p {
+  margin: 0 0 1rem 0;
+  color: #6b7280;
+  font-size: 0.9375rem;
+}
+
+.vendor_attestation_cards_extra {
+  margin-top: 1rem;
+}
+
+.vendor_attestation_status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vendor_attestation_heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0 20px 0;
+}
+
+.vendor_attestation_heading h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--main-dark-color, #2463eb);
+}
+
+.vendor_attestation_cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.vendor_attestation_card {
+  /* background-color: var(--card-onboarding-bg-color, #f5f7fa);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06); */
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem;
+  transition: box-shadow 0.15s ease;
+}
+
+.vendor_attestation_card_title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.vendor_attestation_card_meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--grey-color, #4b5563);
+}
+
+.vendor_attestation_card_meta_row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vendor_attestation_card_meta_label {
+  font-weight: 500;
+  min-width: 6rem;
+}
+
+.vendor_attestation_status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.vendor_attestation_status_draft {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.vendor_attestation_status_completed {
+  background-color: var(--active-status-background, #d8f3dc);
+  color: #166534;
+}
+
+.vendor_attestation_status_rejected {
+  background-color: var(--inactive-status-background, #ffccd5);
+  color: #991b1b;
+}
+
+.vendor_attestation_card_actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.vendor_attestation_card_btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  background-color: transparent;
+  color: inherit;
+  font-family: inherit;
+}
+
+.vendor_attestation_card_btn_primary {
+  background-color: var(--main-auth-button-color, #2463eb);
+  color: white;
+  border-color: var(--main-auth-button-color, #2463eb);
+}
+
+.vendor_attestation_card_btn_primary:hover {
+  opacity: 0.9;
+}
+
+.vendor_attestation_card_btn_secondary {
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.vendor_attestation_card_btn_secondary:hover {
+  background-color: #f3f4f6;
+}
+
+.vendor_attestation_loading,
+.vendor_attestation_error {
+  padding: 2rem;
+  text-align: center;
+  color: var(--grey-color, #4b5563);
+}
+
+.vendor_attestation_error {
+  color: #dc2626;
+}
+
+.screenHeading {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  gap: 7px;
+}
+
+.screenHeading span {
+  display: flex;
+}
+
+/* Preview modal (read-only attestation) – above top nav (z-index: 10001) */
+.vendor_attestation_preview_modal_overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10002;
+  backdrop-filter: blur(2px);
+}
+
+.vendor_attestation_preview_modal {
+  background-color: white;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 56em;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgb(148, 163, 184);
+}
+
+.vendor_attestation_preview_modal_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.vendor_attestation_preview_modal_header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.vendor_attestation_preview_modal_close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563;
+}
+
+.vendor_attestation_preview_modal_close:hover {
+  color: #111827;
+}
+
+.vendor_attestation_preview_modal_body {
+  padding: 1.25rem;
+  overflow-y: auto;
+  flex: 1;
+}

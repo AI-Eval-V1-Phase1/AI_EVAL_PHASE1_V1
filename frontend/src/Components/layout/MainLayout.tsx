@@ -3,6 +3,7 @@ import TopNavBar from "./TopNavBar";
 import SideNavBar from "./SideNavBar";
 import { Outlet } from "react-router-dom";
 import "../../styles/layout/layout.css";
+import "../../styles/card.css";
 
 const MainLayout = () => {
   return (

@@ -43,7 +43,7 @@ const Select = ({
         name={name}
         value={value}
         onChange={onChange}
-        className="select_input"
+        className={`select_input ${!value ? "select_input--placeholder" : ""}`}
         required={required}
       >
         <option value="" disabled>

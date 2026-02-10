@@ -5,4 +5,4 @@ if [ -n "$DATABASE_URL" ]; then
   echo "Running database migrations..."
   npm run db:migrate || true
 fi
-exec node --watch dist/src/server.js
+exec node dist/server.js

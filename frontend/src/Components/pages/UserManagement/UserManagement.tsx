@@ -1,5 +1,4 @@
 import {
-  UserCog,
   UserPlus,
   Ban,
   Send,
@@ -7,76 +6,103 @@ import {
   Landmark,
   UserStar,
   CircleX,
+  Settings,
+  Users,
+  ClipboardList,
+  Eye,
+  Info,
 } from "lucide-react";
 import Button from "../../UI/Button";
-// import Tabs from "../../UI/Tabs";
 import "./user_management.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "../../UI/Modal";
 import Input from "../../UI/Input";
 import Select from "../../UI/Select";
 import UserDataTable from "./UserDataTable";
-import { useEffect } from "react";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { getOrganizations } from "../../../Context/OrganizationsData";
-// import DataTable from "react-data-table-component";
+
+const ROLE_DEFINITIONS = [
+  {
+    title: "Org Admin",
+    description: "Full access to settings, billing, and user management.",
+    icon: Settings,
+  },
+  {
+    title: "Assessor",
+    description: "Can create and run assessments, view reports, and map risks.",
+    icon: ClipboardList,
+  },
+  {
+    title: "Viewer",
+    description: "Read-only access to published reports and directory.",
+    icon: Eye,
+  },
+  {
+    title: "Manager",
+    description: "Read-only access to published reports and directory.",
+    icon: Eye,
+  },
+  {
+    title: "Analyst",
+    description: "Read-only access to published reports and directory.",
+    icon: Eye,
+  },
+  {
+    title: "User",
+    description: "Read-only access to published reports and directory.",
+    icon: Eye,
+  },
+];
 
 const UserManagement = () => {
   useEffect(() => {
-    document.title = "AI Eval | User Management";
+    document.title = "AI Eval | User Management Settings";
   }, []);
 
   const BASE_URL = import.meta.env.VITE_BASE_URL;
-
+  const [activeTab, setActiveTab] = useState<"users" | "general">("users");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [organization, setOrganization] = useState("");
   const [role, setRole] = useState("");
+  const [userListRefreshKey, setUserListRefreshKey] = useState(0);
   const dispatch = useDispatch();
   const { data } = useSelector((state) => state.organizations);
-  // console.log("data of orgs", data);
 
   const handleInvite = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const user = sessionStorage.getItem("userId")
-    const userFormData = { email, organization, role,user };
-    console.log("Submitting form with:", userFormData); // 🔹 add this
-
+    const user = sessionStorage.getItem("userId");
+    const userFormData = { email, organization, role, user };
     try {
       const token = sessionStorage.getItem("bearerToken");
-      const response = await fetch(
-        `${BASE_URL}/invite_user`, // matches backend
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(userFormData),
+      const response = await fetch(`${BASE_URL}/invite_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify(userFormData),
+      });
       const result = await response.json();
       if (response.ok) {
-        console.log("Success:", result);
-        toast.success("User invited successfully! ");
+        toast.success("User invited successfully!");
         setIsModalOpen(false);
         setEmail("");
         setOrganization("");
         setRole("");
+        setUserListRefreshKey((k) => k + 1);
       } else {
-        console.error("Server error:", result.message);
         toast.error(result.message);
       }
     } catch (err) {
-      console.error("Failed to parse JSON:", err);
+      console.error("Failed to invite:", err);
     }
   };
 
   useEffect(() => {
-    // if (status == "succeeded") {
     dispatch(getOrganizations());
-    // }
   }, [dispatch]);
 
   const handleCloseModal = () => {
@@ -86,70 +112,127 @@ const UserManagement = () => {
     setRole("");
   };
 
-  // const orgOptions = [
-  //   { value: "Organization 1", label: "Organization 1" },
-  //   { value: "Organization 2", label: "Organization 2" },
-  // ];
-
-  // const orgOptions = data
   const systemOrg = "AI EVAL";
+  const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim();
+  const isVendorOrBuyer = systemRole === "vendor" || systemRole === "buyer";
+  const userOrgName = (sessionStorage.getItem("organizationName") ?? "").trim();
 
-  const orgOptions = data?.map((orgOptions) => ({
-    label: orgOptions.organizationName,
-    value: orgOptions.id,
+  const baseOrgs = data ?? [];
+  const orgsForDropdown = isVendorOrBuyer && userOrgName
+    ? baseOrgs.filter(
+        (org) => (org.organizationName ?? "").trim() === userOrgName
+      )
+    : baseOrgs;
+
+  const orgOptions = orgsForDropdown.map((org) => ({
+    label: org.organizationName,
+    value: org.id,
   }));
+  if (!isVendorOrBuyer) {
+    orgOptions.push({ label: systemOrg, value: systemOrg });
+  }
 
-  orgOptions?.push({
-    label: systemOrg,
-    value: systemOrg,
-  });
-
-  // const addorgOptions = orgOptions.length + 1;
-  // console.log("orgOptions", orgOptions);
-
-  const roleOptions = [
-    { value: "admin", label: "admin" },
-    // { value: "system admin", label: "system admin" },
-    { value: "analyst", label: "Analyst" },
-    { value: "manager", label: "manager" },
-    { value: "viewer", label: "viewer" },
-    { value: "user", label: "user" },
+  const allRoleOptions = [
+    { value: "admin", label: "Org Admin" },
+    { value: "analyst", label: "Assessor" },
+    { value: "manager", label: "Manager" },
+    { value: "viewer", label: "Viewer" },
+    { value: "user", label: "User" },
   ];
+  const selectedOrg = data?.find((o) => String(o.id) === String(organization));
+  const roleOptions =
+    selectedOrg?.hasAdmin === true
+      ? allRoleOptions.filter((r) => r.value !== "admin")
+      : allRoleOptions;
+
   const systemRoleOptions = [
-    { value: "system admin", label: "system admin" },
-    { value: "system manager", label: "system manager" },
-    { value: "system viewer", label: "system viewer" },
-    { value: "system user", label: "system user" },
+    { value: "system admin", label: "System Admin" },
+    { value: "system manager", label: "System Manager" },
+    { value: "system viewer", label: "System Viewer" },
+    { value: "system user", label: "System User" },
   ];
 
   return (
-    <div className="sec_user_page">
-      <div className="heading_user_page">
-        <div className="headers">
-          <h1>
-            <span>
-              <UserCog width={28} height={28} />
-            </span>
-            User Management
-          </h1>
-          <p className="sub_title">Manage users, roles and invitations</p>
-        </div>
-        <div className="btn_user_page">
-          <Button
-            className="invite_user_btn"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <UserPlus size={24} />
-            Invite User
-          </Button>
+    <div className="sec_user_page org_settings_page">
+      <div className="org_settings_header page_header_align">
+        <div className="org_settings_headers page_header_row">
+          <span className="icon_size_header" aria-hidden>
+            <Settings size={24} />
+          </span>
+          <div className="page_header_title_block">
+            <h1 className="org_settings_title">User Management Settings</h1>
+            <p className="org_settings_subtitle sub_title_card">Manage users and roles.</p>
+          </div>
         </div>
       </div>
-      {/* <div className="tabs_user_page">
-        <Tabs></Tabs>
-      </div> */}
-      <div className="table_user_page">
-        <UserDataTable />
+
+      <div className="org_settings_tabs">
+        <button
+          type="button"
+          className={`org_settings_tab ${activeTab === "users" ? "org_settings_tab_active" : ""}`}
+          onClick={() => setActiveTab("users")}
+        >
+          <Users size={18} />
+          Users & Roles
+        </button>
+        <button
+          type="button"
+          className={`org_settings_tab ${activeTab === "general" ? "org_settings_tab_active" : ""}`}
+          onClick={() => setActiveTab("general")}
+        >
+          <Info size={18} />
+          General Info
+        </button>
       </div>
+
+      {activeTab === "users" && (
+        <>
+          <div className="org_settings_card team_members_card">
+            <div className="team_members_card_header">
+              <div>
+                <h2 className="org_settings_card_title">Team Members</h2>
+                <p className="org_settings_card_subtitle">Manage access and permissions for your organization.</p>
+              </div>
+              <Button
+                className="invite_user_btn org_invite_btn"
+                onClick={() => setIsModalOpen(true)}
+              >
+                <UserPlus size={20} />
+                Invite User
+              </Button>
+            </div>
+            <div className="team_members_table_wrapper">
+              <UserDataTable refreshKey={userListRefreshKey} />
+            </div>
+          </div>
+
+        </>
+      )}
+
+      {activeTab === "general" && (
+        <div className="org_settings_card">
+          <h2 className="org_settings_card_title">General</h2>
+          <p className="org_settings_card_subtitle">Organization name and general preferences.</p>
+          <div className="role_definitions_section">
+            <h3 className="org_settings_card_title" style={{ fontSize: "1rem", marginTop: "1.25rem", marginBottom: "0.5rem" }}>Role Definitions</h3>
+            <p className="org_settings_card_subtitle" style={{ marginBottom: "1rem" }}>Permissions matrix for available roles.</p>
+            <div className="role_definitions_grid">
+              {ROLE_DEFINITIONS.map((r) => {
+                const Icon = r.icon;
+                return (
+                  <div key={r.title} className="role_definition_card">
+                    <div className="role_definition_icon">
+                      <Icon size={24} />
+                    </div>
+                    <h3 className="role_definition_title">{r.title}</h3>
+                    <p className="role_definition_desc">{r.description}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
         <div className="header_modal">
           <div>
@@ -204,7 +287,6 @@ const UserManagement = () => {
               default_option="Select Role"
               icon={<UserStar width={20} height={24} />}
               name="user_role"
-              // options={roleOptions}
               options={
                 organization === systemOrg ? systemRoleOptions : roleOptions
               }

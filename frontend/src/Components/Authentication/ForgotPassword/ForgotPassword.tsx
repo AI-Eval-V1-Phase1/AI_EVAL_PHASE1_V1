@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Mail, ArrowRight, CheckCircle, CircleAlert } from "lucide-react";
+import { Mail, ArrowRight, CheckCircle, CircleAlert, Loader2 } from "lucide-react";
 import "../Login/login.css";
 import "./forgotPassword.css";
 import { Link } from "react-router-dom";
+import HeaderForAuth from "../../UI/HeaderForAuth";
 
 const ForgotPassword = () => {
   document.title = "AI Eval Platform | Forgot Password";
@@ -46,16 +47,18 @@ const ForgotPassword = () => {
 
   return (
     <>
-      <div className="authPage">
+      <div className="authPage forgotPasswordPage">
         <div className="authContent">
           <div className="loginData">
             <div className="loginCred">
+              <HeaderForAuth />
               <div className="loginForm">
-                <p className="authPlatformTitle">AI Eval Platform</p>
-                <h1 className="loginHeading">Forgot Password</h1>
+                {/* <p className="forgotPwdHeading">Forgot Password</p> */}
+                <p className="loginHeading">Forgot Password</p>
                 <form onSubmit={handleSubmit} autoComplete="off">
-                  <p className="mailText">
-                    <span>*</span> Enter your registered email to receive a
+                  <p className="loginCaption mailText">
+                    {/* <span >*</span> */}
+                     Enter your registered email to receive a
                     password reset link
                   </p>
                   <div className="emailData">
@@ -70,7 +73,7 @@ const ForgotPassword = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
+                      placeholder="johndoe@domain.com"
                       disabled={status === "loading"}
                     />
                   </div>
@@ -95,13 +98,23 @@ const ForgotPassword = () => {
                   <div className="loginBtn">
                     <button
                       type="submit"
-                      className="login-btn"
-                      disabled={status === "loading"}
+                      className={`login-btn ${!email.trim() || status === "loading" ? "disabled_css" : ""} ${status === "loading" ? "auth_btn_loading" : ""}`}
+                      disabled={!email.trim() || status === "loading"}
+                      aria-busy={status === "loading"}
                     >
-                      {status === "loading" ? "Sending…" : "Submit"}{" "}
-                      <span>
-                        <ArrowRight width={20} />
-                      </span>
+                      {status === "loading" ? (
+                        <>
+                          Sending…
+                          <Loader2 className="auth_spinner" size={20} aria-hidden />
+                        </>
+                      ) : (
+                        <>
+                          Submit
+                          <span>
+                            <ArrowRight width={20} />
+                          </span>
+                        </>
+                      )}
                     </button>
                   </div>
                   <div>

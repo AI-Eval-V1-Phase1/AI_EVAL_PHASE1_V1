@@ -6,16 +6,17 @@ import {
   EyeOff,
   User,
   CheckCircle,
+  Loader2,
 } from "lucide-react";
 import "../Login/login.css";
 import "../ResetPassword/resetPassword.css";
 import "./signup.css";
 import { useEffect, useState } from "react";
 import type { SignUpdata } from "../Validations/sign_up_validations";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useNavigate, useSearchParams, useParams, Link } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import CardContainerOnBoarding from "../../UI/CardContainerOnBoarding";
+import HeaderForAuth from "../../UI/HeaderForAuth";
 
 const SignUp = () => {
   useEffect(() => {
@@ -28,14 +29,25 @@ const SignUp = () => {
   const [searchParams] = useSearchParams();
   const { token } = useParams();
   const [isVisible, setIsVisible] = useState(false);
-  const [isConfirmSignup, setIsConfirmSignup] = useState(false)
-
+  const [isConfirmSignup, setIsConfirmSignup] = useState(false);
+  const [onboardingEmailSent, setOnboardingEmailSent] = useState(false);
+  const [isError, setIsError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   // console.log("here")
   const decode = jwtDecode(token);
 
   let decodeEmail = decode.email;
 
-  console.log(decodeEmail);
+  // After signup success: redirect to sign in after a few seconds
+  const REDIRECT_DELAY_MS = 5000;
+  const LOGIN_PATH = "/login";
+  useEffect(() => {
+    if (!isConfirmSignup) return;
+    const timer = setTimeout(() => {
+      navigate(LOGIN_PATH, { replace: true });
+    }, REDIRECT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [isConfirmSignup, navigate]);
 
   const passwordVisible = () => {
     setIsVisible((prev) => !prev);
@@ -59,14 +71,13 @@ const SignUp = () => {
   };
 
   console.log(signUpFormData);
-  const isDisabledBtn = Object.values(signUpFormData).some(
-    (val) => val.trim() === "",
-  );
-  console.log(isDisabledBtn);
+  const isDisabledBtn =
+    Object.values(signUpFormData).some((val) => val.trim() === "") || isLoading;
 
   const hanldeSubmitSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(signUpFormData);
+    setIsLoading(true);
+    setIsError("");
     try {
       const response = await fetch(`${BASE_URL}/signupData/${token}`, {
         method: "POST",
@@ -75,26 +86,28 @@ const SignUp = () => {
         },
         body: JSON.stringify(signUpFormData),
       });
-      // console.log("response", response);
       const result = await response.json();
       if (response.ok) {
-        // toast.success("Sign Up Successful!");
-        // setIsVisible(true);
         setIsConfirmSignup(true);
+        setOnboardingEmailSent(Boolean(result.onboardingEmailSent));
         sessionStorage.setItem("signup_completed", "true");
-        console.log("Sign up token for onboarding", result.token);
-        console.log("Sign up user id for onboarding", result.userId);
-        setTimeout(() => {
-          // navigate("/onBoarding");
-        }, 2000);
+        setSignUpFormData({
+          email: decodeEmail,
+          firstName: "",
+          lastName: "",
+          userName: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
       } else {
-        console.log(result.message);
+        setIsError(result.message ?? "Sign up failed. Please try again.");
       }
     } catch (error) {
       console.log(error);
+      setIsError("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-
-    // console.log(signUpFormData);
   };
 
   return (
@@ -102,30 +115,49 @@ const SignUp = () => {
       <div className="authPage">
         <div className="signupContent authContent">
           {/* <h1>hhh</h1> */}
-          {isConfirmSignup && (
+          {isConfirmSignup ? (
             <CardContainerOnBoarding>
               <div className="signup_confirmation_wrapper">
                 <div className="signup_confirmation_card authMessage authMessage--success">
-                  <CheckCircle className="authMessage__icon signup_success_note" size={24} aria-hidden />
+                  <CheckCircle
+                    className="authMessage__icon signup_success_note"
+                    size={24}
+                    aria-hidden
+                  />
                   <p style={{ margin: 0, fontSize: "14px", color: "#0f766e" }}>
-                    Your AI Eval account has been successfully activated. Please
-                    check your email to complete the onboarding process
+                    Your account has been successfully activated.
+                    {onboardingEmailSent
+                      ? " Please check your email to complete onboarding."
+                      : ""}{" "}
+                    You will be redirected to sign in shortly.
+                  </p>
+                  <p style={{ margin: "8px 0 0", fontSize: "13px", color: "#64748b" }}>
+                    Redirecting to sign in in a few seconds…
+                  </p>
+                  <p style={{ margin: "12px 0 0", fontSize: "14px" }}>
+                    <Link to={LOGIN_PATH} style={{ color: "var(--main-auth-button-color, #2463eb)", fontWeight: 600 }}>
+                      Sign in
+                    </Link>
+                    {" "}
+                    to continue to your account.
                   </p>
                 </div>
               </div>
             </CardContainerOnBoarding>
-          )}
-
+          ) : (
           <div className="loginData">
             <div className="loginCred">
+              <HeaderForAuth />
               <div className="loginForm">
-                <p className="authPlatformTitle">AI Eval Platform</p>
-                <h1 className="loginHeading">Sign up</h1>
+                <p className="loginHeading">Sign up</p>
                 <form
                   action=""
                   autoComplete="off"
                   onSubmit={hanldeSubmitSignUp}
                 >
+                   <p className="loginCaption mailText">
+                   Create an account to get started with the AI Eval platform.
+                  </p>
                   <div className="sign_up_form">
                     <div className="sign_up_form_rows">
                       <div className="emailData">
@@ -245,22 +277,41 @@ const SignUp = () => {
                       </div>
                     </div>
                   </div>
+                  {isError && <p className="orgError">{isError}</p>}
                   <div className="loginBtn">
                     <button
                       type="submit"
-                      className={`login-btn ${isDisabledBtn ? "disabled_css" : " "}`}
+                      className={`login-btn ${isDisabledBtn ? "disabled_css" : ""} ${isLoading ? "auth_btn_loading" : ""}`}
                       disabled={isDisabledBtn}
+                      aria-busy={isLoading}
                     >
-                      Sign Up{" "}
-                      <span>
-                        <ArrowRight width={20} />
-                      </span>
+                      {isLoading ? (
+                        <>
+                          Signing up…
+                          <Loader2 className="auth_spinner" size={20} aria-hidden />
+                        </>
+                      ) : (
+                        <>
+                          Sign Up
+                          <span>
+                            <ArrowRight width={20} />
+                          </span>
+                        </>
+                      )}
                     </button>
                   </div>
+                  {/* {isLinkVisible && (
+                    <div>
+                      <p className="signinText">
+                        Proceed to <Link to="/login"><span>Login</span></Link>
+                      </p>
+                    </div>
+                  )} */}
                 </form>
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
     </>

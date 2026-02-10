@@ -7,11 +7,13 @@ import {
   Mail,
   CheckCircle,
   CircleAlert,
+  Loader2,
 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import "../Login/login.css";
 import "./resetPassword.css";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import HeaderForAuth from "../../UI/HeaderForAuth";
 
 interface ResetTokenPayload {
   email?: string;
@@ -44,14 +46,13 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [isVisibleConfirm, setIsVisibleConfirm] = useState(false);
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
-    "idle"
-  );
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [message, setMessage] = useState("");
 
   const passwordVisible = () => setIsVisible((prev) => !prev);
-  const confirmPasswordVisible = () =>
-    setIsVisibleConfirm((prev) => !prev);
+  const confirmPasswordVisible = () => setIsVisibleConfirm((prev) => !prev);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -84,7 +85,7 @@ const ResetPassword = () => {
         body: JSON.stringify({
           token,
           newPassword,
-          email: emailFromToken,
+          email: (emailFromToken ?? "").toString().trim().toLowerCase(),
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -92,7 +93,10 @@ const ResetPassword = () => {
       if (response.ok) {
         setStatus("success");
         setMessage(data.message || "Password reset successfully.");
-        setTimeout(() => navigate("/login", { state: { resetSuccess: true } }), 2000);
+        setTimeout(
+          () => navigate("/login", { state: { resetSuccess: true } }),
+          2000,
+        );
       } else {
         setStatus("error");
         setMessage(data.message || "Something went wrong. Please try again.");
@@ -109,15 +113,19 @@ const ResetPassword = () => {
         <div className="authContent">
           <div className="loginData">
             <div className="loginCred">
+              <HeaderForAuth />
               <div className="loginForm">
-                <p className="authPlatformTitle">AI Eval Platform</p>
                 <h1 className="loginHeading">Invalid link</h1>
                 <div className="authMessage authMessage--error">
-                  <CircleAlert className="authMessage__icon" size={16} aria-hidden />
+                  <CircleAlert
+                    className="authMessage__icon"
+                    size={16}
+                    aria-hidden
+                  />
                   <p className="resetError">
                     Invalid or expired reset link. Please use the link from your
-                    email or{" "}
-                    <Link to="/forgotPassword">request a new one</Link>.
+                    email or <Link to="/forgotPassword">request a new one</Link>
+                    .
                   </p>
                 </div>
                 <div className="loginBtn">
@@ -139,10 +147,13 @@ const ResetPassword = () => {
         <div className="authContent">
           <div className="loginData">
             <div className="loginCred">
+              <HeaderForAuth />
               <div className="loginForm">
-                <p className="authPlatformTitle">AI Eval Platform</p>
-                <h1 className="loginHeading">Reset Password</h1>
+                <p className="loginHeading">Reset Password</p>
                 <form onSubmit={handleSubmit} autoComplete="off">
+                  <p className="loginCaption mailText">
+                    Reset your password to regain access to your account.
+                  </p>
                   <div className="emailData">
                     <label htmlFor="resetEmail">
                       <span>
@@ -226,11 +237,23 @@ const ResetPassword = () => {
                       }
                     >
                       {status === "success" ? (
-                        <CheckCircle className="authMessage__icon" size={16} aria-hidden />
+                        <CheckCircle
+                          className="authMessage__icon"
+                          size={16}
+                          aria-hidden
+                        />
                       ) : (
-                        <CircleAlert className="authMessage__icon" size={16} aria-hidden />
+                        <CircleAlert
+                          className="authMessage__icon"
+                          size={16}
+                          aria-hidden
+                        />
                       )}
-                      <p className={status === "success" ? "resetSuccess" : "resetError"}>
+                      <p
+                        className={
+                          status === "success" ? "resetSuccess" : "resetError"
+                        }
+                      >
                         {message}
                       </p>
                     </div>
@@ -238,22 +261,46 @@ const ResetPassword = () => {
                   <div className="loginBtn">
                     <button
                       type="submit"
-                      className="login-btn"
+                      className={`login-btn ${
+                        status === "loading" ||
+                        status === "success" ||
+                        !newPassword ||
+                        !confirmPassword
+                          ? "disabled_css"
+                          : ""
+                      } ${status === "loading" ? "auth_btn_loading" : ""}`}
                       disabled={
                         status === "loading" ||
                         status === "success" ||
                         !newPassword ||
                         !confirmPassword
                       }
+                      aria-busy={status === "loading"}
                     >
-                      {status === "loading"
-                        ? "Resetting…"
-                        : status === "success"
-                          ? "Success — redirecting…"
-                          : "Confirm"}{" "}
-                      <span>
-                        <ArrowRight width={20} />
-                      </span>
+                      {status === "loading" ? (
+                        <>
+                          Resetting…
+                          <Loader2
+                            className="auth_spinner"
+                            size={20}
+                            aria-hidden
+                          />
+                        </>
+                      ) : status === "success" ? (
+                        <>
+                          Success — redirecting…
+                          <span>
+                            <ArrowRight width={20} />
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          Confirm
+                          <span>
+                            <ArrowRight width={20} />
+                          </span>
+                        </>
+                      )}
                     </button>
                   </div>
                   <p className="signinText">

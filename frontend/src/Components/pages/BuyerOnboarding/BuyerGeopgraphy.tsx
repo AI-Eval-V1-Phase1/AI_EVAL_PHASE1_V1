@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import Input from "../../UI/Input";
 import HeaderForBuyer from "./HeaderForBuyer";
 import Select from "../../UI/Select";
-import MultiSelectDropDown from "../../UI/MultiSelectDropDown";
+import ChipMultiSelect from "../../UI/ChipMultiSelect";
 import ClickTooltip from "../../UI/ClickTooltip";
+import FieldError from "../../UI/FieldError";
 import { Info } from "lucide-react";
 import {
   BUYER_DATA_RESIDENCY_REQUIREMENTS,
@@ -11,10 +12,16 @@ import {
   BUYER_OPERATING_REGIONS,
   BUYER_HELPTEXT,
 } from "../../../constants/buyerOnboardingData";
+import type { StepPropsBuyerrData } from "../../../types/formDataBuyer";
 
-const BuyerGeography = ({ formBuyerData, setFormBuyerData }) => {
-  const title_vendor = "Geography";
-
+const BuyerGeography = ({
+  formBuyerData,
+  setFormBuyerData,
+  fieldErrors,
+  title,
+  subTitle,
+  icon,
+}: StepPropsBuyerrData) => {
   const [isVisibleInput, setIsVisibleInput] = useState(false);
   const [customHeadquarter, setCustomHeadquarter] = useState("");
   const [selectedHeadquarter, setSelectedHeadquarter] = useState("");
@@ -36,14 +43,16 @@ const BuyerGeography = ({ formBuyerData, setFormBuyerData }) => {
     <>
       <HeaderForBuyer
         className="header_for_vendor"
-        title_vendor={title_vendor}
+        title_vendor={title ?? "Geography"}
+        sub_title_vendor={subTitle}
+        icon={icon}
       />
 
       <div className="form_fields_vendor">
         <Select
           labelName={
             <div className="labelSection">
-              <span className="mandatory">*</span>
+              <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
               <span>Headquarters Location</span>
               <ClickTooltip content={BUYER_HELPTEXT.headquartersLocation}>
                 <Info size={14} color="#6B7280" />
@@ -58,6 +67,9 @@ const BuyerGeography = ({ formBuyerData, setFormBuyerData }) => {
           default_option="Select headquarter location"
           onChange={(e) => handleHeadquartersChange(e.target.value)}
         />
+        {fieldErrors?.headquartersLocation && (
+          <FieldError message={fieldErrors.headquartersLocation} />
+        )}
       </div>
 
       {isVisibleInput && (
@@ -65,7 +77,7 @@ const BuyerGeography = ({ formBuyerData, setFormBuyerData }) => {
           <Input
             labelName={
               <div className="labelSection">
-                <span className="mandatory">*</span>
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                 <span>Specify Location</span>
                 {/* <ClickTooltip content={VENDOR_HELPTEXT.customHeadquarter}>
                   <Info size={14} color="#6B7280" />
@@ -86,46 +98,49 @@ const BuyerGeography = ({ formBuyerData, setFormBuyerData }) => {
         </div>
       )}
       <div className="form_fields_vendor">
-        <MultiSelectDropDown
+        <ChipMultiSelect
+          id="operatingRegions"
           labelName={
             <div className="labelSection">
-              <span className="mandatory">*</span>
+              <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
               <span>Operating Regions</span>
               <ClickTooltip content={BUYER_HELPTEXT.operatingRegions}>
                 <Info size={14} color="#6B7280" />
               </ClickTooltip>
             </div>
           }
-          id="operatingRegions"
           options={BUYER_OPERATING_REGIONS}
-          default_option="Select operating regions"
-          value={formBuyerData.operatingRegions}
+          value={formBuyerData.operatingRegions || []}
           onChange={(selected: string[]) =>
             setFormBuyerData({ ...formBuyerData, operatingRegions: selected })
           }
         />
+        {fieldErrors?.operatingRegions && (
+          <FieldError message={fieldErrors.operatingRegions} />
+        )}
       </div>
 
       <div className="form_fields_vendor">
-        <MultiSelectDropDown
+        <ChipMultiSelect
+          id="dataResidency"
           labelName={
             <div className="labelSection">
-              <span className="mandatory">*</span>
+              <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
               <span>Data Residency Requirements</span>
               <ClickTooltip content={BUYER_HELPTEXT.dataResidencyRequirements}>
                 <Info size={14} color="#6B7280" />
               </ClickTooltip>
             </div>
           }
-          id="dataResidency"
-          // name="dataResidency"
-          value={formBuyerData.dataResidencyRequirements}
           options={BUYER_DATA_RESIDENCY_REQUIREMENTS}
-          default_option="Select data residency"
+          value={formBuyerData.dataResidencyRequirements || []}
           onChange={(selected: string[]) =>
             setFormBuyerData({ ...formBuyerData, dataResidencyRequirements: selected })
           }
         />
+        {fieldErrors?.dataResidencyRequirements && (
+          <FieldError message={fieldErrors.dataResidencyRequirements} />
+        )}
       </div>
     </>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   BUYER_DEPARTMENTS,
   BUYER_PRIMARY_ROLE,
@@ -8,14 +8,19 @@ import Input from "../../UI/Input";
 import Select from "../../UI/Select";
 import HeaderForBuyer from "./HeaderForBuyer";
 import ClickTooltip from "../../UI/ClickTooltip";
-import { Info } from "lucide-react"; // assuming you use react-feather for the info icon
+import FieldError from "../../UI/FieldError";
+import { Info } from "lucide-react";
+import type { StepPropsBuyerrData } from "../../../types/formDataBuyer";
 
-const BuyerContactInformation = ({formBuyerData, setFormBuyerData}) => {
-  const title_vendor = "Contact Information";
-
-
-
-  const handleChange = (e) => {
+const BuyerContactInformation = ({
+  formBuyerData,
+  setFormBuyerData,
+  fieldErrors,
+  title,
+  subTitle,
+  icon,
+}: StepPropsBuyerrData) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormBuyerData((prev) => ({
       ...prev,
@@ -27,7 +32,9 @@ const BuyerContactInformation = ({formBuyerData, setFormBuyerData}) => {
     <>
       <HeaderForBuyer
         className="header_for_vendor"
-        title_vendor={title_vendor}
+        title_vendor={title ?? "Contact Information"}
+        sub_title_vendor={subTitle}
+        icon={icon}
       />
       <div>
         <div>
@@ -35,7 +42,7 @@ const BuyerContactInformation = ({formBuyerData, setFormBuyerData}) => {
             <Input
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Primary Contact Name</span>
                   <ClickTooltip content={BUYER_HELPTEXT.primaryContactName}>
                     <Info size={14} color="#6B7280" />
@@ -49,13 +56,16 @@ const BuyerContactInformation = ({formBuyerData, setFormBuyerData}) => {
               onChange={handleChange}
               required
             />
+            {fieldErrors?.primaryContactName && (
+              <FieldError message={fieldErrors.primaryContactName} />
+            )}
           </div>
 
           <div className="form_fields_vendor">
             <Input
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Primary Contact Email</span>
                   <ClickTooltip content={BUYER_HELPTEXT.primaryContactEmail}>
                     <Info size={14} color="#6B7280" />
@@ -69,6 +79,9 @@ const BuyerContactInformation = ({formBuyerData, setFormBuyerData}) => {
               onChange={handleChange}
               required
             />
+            {fieldErrors?.primaryContactEmail && (
+              <FieldError message={fieldErrors.primaryContactEmail} />
+            )}
           </div>
         </div>
 
@@ -77,7 +90,7 @@ const BuyerContactInformation = ({formBuyerData, setFormBuyerData}) => {
             <Select
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Primary Contact Role</span>
                   <ClickTooltip content={BUYER_HELPTEXT.primaryContactRole}>
                     <Info size={14} color="#6B7280" />
@@ -92,13 +105,16 @@ const BuyerContactInformation = ({formBuyerData, setFormBuyerData}) => {
               onChange={handleChange}
               required
             />
+            {fieldErrors?.primaryContactRole && (
+              <FieldError message={fieldErrors.primaryContactRole} />
+            )}
           </div>
 
           <div className="form_fields_vendor">
             <Select
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Department/Business Unit</span>
                   <ClickTooltip content={BUYER_HELPTEXT.departmentOwner}>
                     <Info size={14} color="#6B7280" />
@@ -113,6 +129,9 @@ const BuyerContactInformation = ({formBuyerData, setFormBuyerData}) => {
               onChange={handleChange}
               required
             />
+            {fieldErrors?.departmentOwner && (
+              <FieldError message={fieldErrors.departmentOwner} />
+            )}
           </div>
         </div>
       </div>

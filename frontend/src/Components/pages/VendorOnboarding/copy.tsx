@@ -1,7 +1,7 @@
 import type { StepPropsVendorData } from "../../../types/formDataVendor";
 import HeaderForVendor from "./HeaderForVendor";
 import "./vendor_onboarding.css";
-
+import { FileCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 const StepVendorOnboardingPreview = ({
   formVendorData,
@@ -45,7 +45,7 @@ const StepVendorOnboardingPreview = ({
 
   return (
     <>
-      <HeaderForVendor className="header_for_vendor" title_vendor="Preview" />
+      <HeaderForVendor className="header_for_vendor" title_vendor="Preview" icon={<FileCheck size={18} />} />
       {/* <div className="vendor_preview_container"> */}
       <div>
         <div className="preview_sec">

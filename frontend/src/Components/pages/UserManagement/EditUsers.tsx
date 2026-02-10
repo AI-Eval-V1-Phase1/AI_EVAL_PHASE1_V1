@@ -198,6 +198,7 @@ const EditUsers = ({ isUserId, setIsEdit, isEdit, isSelectedUser }) => {
               id=""
               value={isStatus}
               onChange={(e) => setIsStatus(e.target.value)}
+              className={`select_input ${!isStatus || isStatus === "select" ? "select_input--placeholder" : ""}`}
             >
               <option value="select" disabled>
                 SELECT

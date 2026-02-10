@@ -1,3 +1,22 @@
+/* Center the success card after Vendor Self Attestation submit */
+.vendor_self_attestation_confirmation_center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  padding: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vendor_self_attestation_confirmation_center > div {
+  width: 100%;
+  max-width: 32rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .vendor-attestation-preview {
   padding: 0 0 1.5rem 0;
 }
@@ -101,4 +120,37 @@
 }
 .vendor-attestation-preview .preview-edit-icon {
   padding: 0.2rem;
+}
+
+/* Save draft button on attestation form */
+.vendor_attestation_save_draft_wrapper {
+  display: flex;
+  align-items: center;
+}
+.vendor_attestation_save_draft_btn_form {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* width: 120px; */
+  padding: 10px;
+  /* padding: 8px 16px; */
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid var(--main-auth-button-color, #2463eb);
+  color: var(--main-auth-button-color, #2463eb);
+}
+.vendor_attestation_save_draft_btn_form:hover {
+  background-color: rgba(30, 58, 138, 0.08);
+}
+.vendor_attestation_save_draft_btn_form span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.last_two_btns{
+  display: flex;
+  gap: 1em;
 }

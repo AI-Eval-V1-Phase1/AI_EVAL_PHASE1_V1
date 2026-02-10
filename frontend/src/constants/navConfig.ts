@@ -1,8 +1,9 @@
-// src/config/navConfig.js
+// src/config/navConfig.ts
 import {
   Building2,
   ClipboardCheck,
   FileArchive,
+  FileCheck,
   FileText,
   Globe,
   LayoutDashboard,
@@ -13,22 +14,26 @@ import {
   Users,
   Landmark,
   type LucideIcon,
-} from "lucide-react";
+  BotIcon,
+} from "lucide-react"
 
-export interface NavItem {
-  label: string;
-  icon: LucideIcon;
+export interface NavItemConfig {
+  label: string
+  icon: LucideIcon
+  path: string
+  accessRoles: string[]
+  systemRoles: string[]
 }
+
 export const NAVIGATION = {
   admin: [
     {
       label: "Dashboard",
       icon: LayoutDashboard,
       path: "/dashboard",
-      accessRoles: ["admin","user"],
+      accessRoles: ["admin", "user"],
       systemRoles: ["system admin", "buyer", "vendor"],
     },
-
     {
       label: "Organizations",
       icon: Landmark,
@@ -37,53 +42,61 @@ export const NAVIGATION = {
       systemRoles: ["system admin"],
     },
     {
-      label: "Assessments",
-      icon: ClipboardCheck,
-      path: "/assessments",
-     accessRoles: ["admin","user"],
-      systemRoles: ["system admin", "buyer", "vendor"],
+      label: "Attestation",
+      icon: FileCheck,
+      path: "/attestation_details",
+      accessRoles: ["admin", "user"],
+      systemRoles: ["system admin", "vendor"],
     },
     {
-      label: "Vendor Directory",
+      label: "Sales Agent",
+      icon:  BotIcon,
+      path: "/sales-enablement",
+      accessRoles: ["admin"],
+      systemRoles: ["system admin", "vendor"],
+    },
+    {
+      label: "Solutions Architect",
+      icon: FileArchive,
+      path: "/evidence-library",
+      accessRoles: ["admin"],
+      systemRoles: ["system admin", "vendor"],
+    },
+    {
+      label: "Vendor Portal",
       icon: Building2,
       path: "/vendor-directory",
       accessRoles: ["admin"],
       systemRoles: ["system admin", "buyer"],
     },
     {
-      label: "My Vendors",
+      label: "Assessments",
+      icon: ClipboardCheck,
+      path: "/assessments",
+      accessRoles: ["admin", "user"],
+      systemRoles: ["system admin", "buyer", "vendor"],
+    },
+    
+    {
+      label: "Risk Mapping",
       icon: Users,
       path: "/my-vendor",
       accessRoles: ["admin"],
       systemRoles: ["system admin", "buyer"],
     },
     {
-      label: "Compliance",
+      label: "Security Center",
       icon: Shield,
       path: "/compilance",
       accessRoles: ["admin"],
       systemRoles: ["system admin", "buyer"],
     },
     {
-      label: "Governance",
+      label: "Testing",
       icon: Scale,
       path: "/governance",
       accessRoles: ["admin"],
       systemRoles: ["system admin", "buyer"],
-    },
-    {
-      label: "Sales Enablement",
-      icon: TrendingUp,
-      path: "/sales-enablement",
-      accessRoles: ["admin"],
-      systemRoles: ["system admin", "vendor"],
-    },
-    {
-      label: "Evidence Library",
-      icon: FileArchive,
-      path: "/evidence-library",
-     accessRoles: ["admin"],
-      systemRoles: ["system admin", "buyer", "vendor"],
     },
     {
       label: "Reports",
@@ -93,11 +106,11 @@ export const NAVIGATION = {
       systemRoles: ["system admin", "buyer", "vendor"],
     },
     {
-      label: "Directory Listing",
+      label: "Product Profile",
       icon: Globe,
-      path: "/directory-listing",
-      accessRoles: ["admin"],
-      systemRoles: ["system admin","vendor"],
+      path: "/product_profile",
+      accessRoles: ["admin", "user"],
+      systemRoles: ["system admin", "vendor"],
     },
     {
       label: "User Management",
@@ -106,5 +119,5 @@ export const NAVIGATION = {
       accessRoles: ["admin"],
       systemRoles: ["system admin", "buyer", "vendor"],
     },
-  ],
-};
+  ] as NavItemConfig[],
+}

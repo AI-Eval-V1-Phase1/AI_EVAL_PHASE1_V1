@@ -1,22 +1,65 @@
-// import { Building2 } from 'lucide-react'
-
-import { Store } from "lucide-react";
+import { FileText } from "lucide-react";
+import type { ReactNode } from "react";
 
 type HeaderProps = {
-    title_vendor : string;
-    sub_title_vendor?: string;
-    className ?: string;
-}
+  title_vendor: string;
+  sub_title_vendor?: string;
+  className?: string;
+  icon?: ReactNode;
+};
 
-const HeaderForVendor = ({title_vendor, sub_title_vendor, className}: HeaderProps) => {
+const DEFAULT_HEADER_ICON = <FileText size={18} aria-hidden />;
+
+const ICON_WRAPPER_STYLE: React.CSSProperties = {
+  width: 18,
+  height: 18,
+  minWidth: 18,
+  minHeight: 18,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  color: "inherit",
+};
+
+const HeaderForVendor = ({
+  title_vendor,
+  sub_title_vendor,
+  className,
+  icon,
+}: HeaderProps) => {
   return (
-     <div className={className}>
-        <p className='selected_role_vendor'><span><Store size={16}/></span>Vendor</p>
-        <h2>{title_vendor}</h2>
-        <p className='sub_title_card'>{sub_title_vendor}</p>
-        {/* <p className='selected_role'><span><Building2 size={16}/></span>Vendor</p> */}
+    <div className={className}>
+      <div className="header_title_vendor">
+        <div className="headers_icons">
+          <span
+            className="icon_size_header"
+            aria-hidden="true"
+            style={ICON_WRAPPER_STYLE}
+          >
+            {icon ?? DEFAULT_HEADER_ICON}
+          </span>
+        </div>
+        <div className="headers_title_sections">
+          <p>{title_vendor}</p>
+          <p className="sub_title_card">{sub_title_vendor}</p>
+        </div>
       </div>
-  )
-}
+    </div>
+    // <div className={className}>
+    //   <div className="header_title_vendor">
+    //     <span
+    //       className="icon_size_header"
+    //       aria-hidden="true"
+    //       style={ICON_WRAPPER_STYLE}
+    //     >
+    //       {icon ?? DEFAULT_HEADER_ICON}
+    //     </span>
+    //     <p>{title_vendor}</p>
+    //   </div>
+    //   <p className="sub_title_card">{sub_title_vendor}</p>
+    // </div>
+  );
+};
 
-export default HeaderForVendor
+export default HeaderForVendor;

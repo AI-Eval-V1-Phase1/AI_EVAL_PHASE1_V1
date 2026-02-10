@@ -1,19 +1,22 @@
-import { SquarePen, Trash, Trash2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { Eye, SquarePen } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
 import DataTable from "react-data-table-component";
 import { useDispatch, useSelector } from "react-redux";
 import { getOrganizations } from "../../../Context/OrganizationsData";
+import LoadingMessage from "../../UI/LoadingMessage";
 import EditOrganization from "./EditOrganization";
 
-const OrganizationDataTable = ({openPreview}) => {
+const LOADER_MIN_MS = 1500;
+
+const OrganizationDataTable = ({ openPreview }) => {
   const [filterText, setFilterText] = React.useState("");
   const [resetPaginationToggle, setResetPaginationToggle] =
     React.useState(false);
+  const [loading, setLoading] = useState(true);
+  const startTimeRef = useRef(null);
 
-  const [tableData, setTableData] = useState([]);
   const dispatch = useDispatch();
-  const { data, status, error } = useSelector((state) => state.organizations);
-  console.log("data", data);
+  const { data, status } = useSelector((state) => state.organizations);
   const [isEdit, setIsEdit] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState(null);
   // const getOrganizations = async () => {
@@ -41,10 +44,20 @@ const OrganizationDataTable = ({openPreview}) => {
   // };
 
   useEffect(() => {
-    // if (status == "succeeded") {
     dispatch(getOrganizations());
-    // }
+    startTimeRef.current = Date.now();
   }, [dispatch]);
+
+  useEffect(() => {
+    if (status === "succeeded" || status === "failed") {
+      const start = startTimeRef.current ?? Date.now();
+      const elapsed = Date.now() - start;
+      const remaining = Math.max(0, LOADER_MIN_MS - elapsed);
+      const t = setTimeout(() => setLoading(false), remaining);
+      return () => clearTimeout(t);
+    }
+    if (status === "loading") setLoading(true);
+  }, [status]);
 
   // const tableData = [
   //   {
@@ -59,13 +72,11 @@ const OrganizationDataTable = ({openPreview}) => {
   //   },
   // ];
 
-  const filteredItems = data?.filter(
+  const filteredItems = (data ?? []).filter(
     (item) =>
       item.organizationName &&
       item.organizationName.toLowerCase().includes(filterText.toLowerCase()),
   );
-
-  console.log(filteredItems);
 
   const handleClear = () => {
     if (filterText) {
@@ -123,29 +134,61 @@ const OrganizationDataTable = ({openPreview}) => {
         border: "1px solid lightgray",
       },
     },
+    // headCells: {
+    //   style: {
+    //     justifyContent: "left",
+    //     textAlign: "left",
+    //   },
+    // },
+    // cells: {
+    //   style: {
+    //     justifyContent: "center",
+    //     textAlign: "center",
+    //   },
+    // },
   };
 
   const columns = [
     {
-      name: <div className="tableHeader">S.No</div>,
+      name: (
+        <div
+          className="tableHeader"
+          style={{ textAlign: "center", width: "100%" }}
+        >
+          SL.No
+        </div>
+      ),
       selector: (row, index) => index + 1,
       sortable: true,
+      width: "200px",
+      minWidth: "200px",
+      center: true,
     },
+
     {
       name: <div className="tableHeader">Organization Name</div>,
-      selector: (row) => (
-        <p
-          className="orgNameClickable"
-          onClick={() => openPreview?.(row)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === "Enter" && openPreview?.(row)}
+      cell: (row) => (
+        <div
+          style={{
+            width: "100%",
+            textAlign: "left",
+            textTransform: "capitalize",
+          }}
         >
-          {row.organizationName}
-        </p>
+          <p
+            className="orgNameClickable"
+            onClick={() => openPreview?.(row)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && openPreview?.(row)}
+          >
+            {row.organizationName}
+          </p>
+        </div>
       ),
       sortable: true,
     },
+
     {
       name: <div className="tableHeader">Status</div>,
       selector: (row) => (
@@ -163,20 +206,33 @@ const OrganizationDataTable = ({openPreview}) => {
       sortable: true,
     },
     {
-      //   name: "Actions",
-      name: <div className="tableHeader">Action</div>,
-      selector: (row) => (
-        <div className="actionButtons" onClick={() => editOrg(row.id)}>
-          <p className="editOrgImg">
-            <span>
-              <SquarePen width={16} />
-            </span>
+      name: <div className="tableHeader">Actions</div>,
+      center: true,
+      cell: (row) => (
+        <div className="user_table_actions">
+          <button
+            type="button"
+            className="user_table_action_btn"
+            onClick={() => openPreview?.(row)}
+            title="View organization details"
+          >
+            <Eye size={16} />
+            View
+          </button>
+          <button
+            type="button"
+            className="user_table_action_btn"
+            onClick={() => editOrg(row.id)}
+            title="Edit organization"
+          >
+            <SquarePen size={16} />
             Edit
-          </p>
-          {/* <p className="deleteOrgImg"><span><Trash2 width={16} /></span>Delete</p> */}
+          </button>
         </div>
       ),
-      sortable: true,
+      ignoreRowClick: true,
+      minWidth: "160px",
+      width: "160px",
     },
   ];
   const selectedOrg = data?.find((org) => org.id === selectedOrgId);
@@ -184,32 +240,37 @@ const OrganizationDataTable = ({openPreview}) => {
   return (
     <>
       <div className="orgDataTable">
-        {/* <div>Organization Data Table</div> */}
-
-        {/* <DataTable columns={columns} data={filteredItems} pagination /> */}
-        
-        <DataTable
-          customStyles={customStyles}
-          columns={columns}
-          data={filteredItems}
-          pagination
-          paginationResetDefaultPage={resetPaginationToggle}
-          subHeader
-          subHeaderComponent={
-            <FilterComponent
-              onFilter={(e) => setFilterText(e.target.value)}
-              onClear={handleClear}
-              filterText={filterText}
-            />
-          }
-          selectableRows
-          persistTableHead
-        />
+        <div className="filterOption">
+          <label htmlFor="org-search">Search</label>
+          <input
+            className="filterInput"
+            type="text"
+            id="org-search"
+            placeholder="Filter by organization name"
+            aria-label="Search organizations"
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+          />
+        </div>
+        {loading ? (
+          <LoadingMessage message="Loading organizations…" />
+        ) : (
+          <DataTable
+            customStyles={customStyles}
+            columns={columns}
+            data={filteredItems}
+            pagination
+            paginationResetDefaultPage={resetPaginationToggle}
+            selectableRows
+            persistTableHead
+          />
+        )}
       </div>
       {isEdit && selectedOrg && (
         <EditOrganization
           id={selectedOrgId}
           orgData={selectedOrg}
+          allOrganizations={data ?? []}
           setIsEdit={setIsEdit}
         />
       )}

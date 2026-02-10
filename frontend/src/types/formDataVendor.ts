@@ -21,9 +21,16 @@ export interface VendorDataInterface {
   operatingRegions: string[];
 }
 
+/** Field-level validation errors (field name -> message) from Zod */
+export interface StepFieldErrors {
+  [field: string]: string;
+}
+
 export interface StepPropsVendorData {
   formVendorData: VendorDataInterface;
   setFormVendorData: React.Dispatch<React.SetStateAction<VendorDataInterface>>;
+  /** When Continue fails, parent passes Zod field errors for this step */
+  fieldErrors?: StepFieldErrors;
 }
 
 export type FormElement =

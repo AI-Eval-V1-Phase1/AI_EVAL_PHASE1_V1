@@ -68,37 +68,42 @@ export const VENDOR_SELF_ATTESTATION = {
       label: "Regulatory and Compliance Certification Material",
       placeholder:
         "Ability to upload the documents and be parsed to pull necessary information for aspects of the assessment",
-      required: false
+      required: true,
     },
   },
 
   product_profile: {
     0: {
+      label: "Product name",
+      placeholder: "Enter the name of your AI product or solution",
+      required: true,
+    },
+    1: {
       label:
         "Who typically makes the purchase decision for Purchasing your AI solution?",
       placeholder:
         "Select all buyer personas that commonly evaluate your solution",
       required: true,
     },
-    1: {
+    2: {
       label: "What pain points does your solution solve?",
       placeholder:
         "Describe the top 2-3 problems your AI solution addresses for customers",
       required: true,
     },
-    2: {
+    3: {
       label: "What alternatives do customers typically consider?",
       placeholder:
         "List 2-3 direct competitors or alternative solutions (can include 'Build In-House')",
       required: false
     },
-    3: {
+    4: {
       label: "What makes your solution unique?",
       placeholder:
         "Describe your top 2-3 competitive advantages or unique capabilities",
       required: false
     },
-    4: {
+    5: {
       label: "Typical Customer ROI or Value Metrics",
       placeholder:
         "Example: '30% reduction in manual processing time' or '2x improvement in prediction accuracy'",
@@ -154,8 +159,7 @@ export const VENDOR_SELF_ATTESTATION = {
     },
     2: {
       label: "Data Retention & Deletion",
-      placeholder:
-        "Describe how long you retain customer data and your deletion procedures",
+      placeholder: "Select Yes or No",
       required: true,
     },
   },

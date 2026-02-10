@@ -20,9 +20,11 @@ const FormField = ({
 }: FormFieldProps) => {
   return (
     <>
-      <div className="labelSection" style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 8 }}>
-        {mandatory && <span style={{ color: "red" }}>*</span>}
+      <div className="labelSection">
         <span>{label}</span>
+        {mandatory && (
+          <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+        )}
         {tooltipText && (
           <ClickTooltip content={tooltipText}>
             <Info size={14} color="#6B7280" />

@@ -1,32 +1,54 @@
-// Import the React library to use JSX and React types in this component. JSX compiles to React.createElement under the hood. :contentReference[oaicite:2]{index=2}
 import React from "react";
-
-// Import our reusable table component that renders labeled fields in a preview layout.
-import PreviewTable from "../../preview/PreviewTable";
-
-// Import the shared type defining the vendor form data shape for type safety in this component.
 import type { BuyerDataInterface } from "../../../types/formDataBuyer";
+import { BUYER_PREVIEW_SECTIONS } from "../../../constants/buyerOnboardingData";
+import HeaderForBuyer from "./HeaderForBuyer";
+import { formatPreviewValue } from "../../../utils/formatPreviewValue";
+import "../VendorOnboarding/StepVendorOnboardingPreview.css";
 
-// Import the preview sections configuration, defining section titles and fields to display.
-import {BUYER_PREVIEW_SECTIONS} from "../../../constants/buyerOnboardingData";
-interface StepVendorOnboardingPreviewProps {
+interface StepBuyerOnboardingPreviewProps {
   formBuyerData: BuyerDataInterface;
+  title?: string;
+  subTitle?: string;
+  icon?: React.ReactNode;
 }
 
-const StepBuyerOnboardingPreview: React.FC<
-  StepVendorOnboardingPreviewProps
-> = ({ formBuyerData }) => {
+const StepBuyerOnboardingPreview: React.FC<StepBuyerOnboardingPreviewProps> = ({
+  formBuyerData,
+  title,
+  subTitle,
+  icon,
+}) => {
   return (
-    <div>
-      {BUYER_PREVIEW_SECTIONS.map((section) => (
-        <div key={section.title} style={{ marginBottom: 24 }}>
-          <PreviewTable<BuyerDataInterface>
-            dataForPreview={formBuyerData}
-            previewFields={section.fields}
-            previewTitle={section.title}
-          />
-        </div>
-      ))}
+    <div className="vendor_preview">
+      <HeaderForBuyer
+        className="header_for_vendor"
+        title_vendor={title ?? "Review"}
+        sub_title_vendor={subTitle}
+        icon={icon}
+      />
+      <p className="vendor_preview_intro">
+        Review your information below. Submit when everything looks correct.
+      </p>
+      <div className="vendor_preview_sections">
+        {BUYER_PREVIEW_SECTIONS.map((section) => (
+          <section key={section.title} className="vendor_preview_card">
+            <h3 className="vendor_preview_card_title">{section.title}</h3>
+            <dl className="vendor_preview_list">
+              {section.fields.map((field) => {
+                const value = field.value(formBuyerData);
+                return (
+                  <div key={field.label} className="vendor_preview_row">
+                    <dt className="vendor_preview_label">{field.label}</dt>
+                    <dd className="vendor_preview_value">
+                      {formatPreviewValue(value, field.label)}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </section>
+        ))}
+      </div>
     </div>
   );
 };

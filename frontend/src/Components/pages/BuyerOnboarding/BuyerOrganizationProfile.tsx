@@ -3,6 +3,7 @@ import Select from "../../UI/Select";
 import HeaderForBuyer from "./HeaderForBuyer";
 import DropdownTreeSelect from "../../UI/DropdownTreeSelect";
 import ClickTooltip from "../../UI/ClickTooltip";
+import FieldError from "../../UI/FieldError";
 import { Info } from "lucide-react";
 import {
   BUYER_ORGANIZATION_TYPE,
@@ -17,8 +18,12 @@ import type {
 const BuyerOrganizationProfile = ({
   formBuyerData,
   setFormBuyerData,
+  fieldErrors,
+  title,
+  subTitle,
+  icon,
 }: StepPropsBuyerrData) => {
-  const handleChangeBuyer = (e) => {
+  const handleChangeBuyer = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormBuyerData({ ...formBuyerData, [name]: value });
   };
@@ -68,8 +73,9 @@ const BuyerOrganizationProfile = ({
     <>
       <HeaderForBuyer
         className="header_for_vendor"
-        title_vendor="Organization Profile"
-        sub_title_vendor="This information helps us tailor assessments to your context"
+        title_vendor={title ?? "Organization Profile"}
+        sub_title_vendor={subTitle ?? "This information helps us tailor assessments to your context"}
+        icon={icon}
       />
       <div>
         <div>
@@ -78,7 +84,7 @@ const BuyerOrganizationProfile = ({
               labelName={
                 <>
                   <div className="labelSection">
-                    <span className="mandatory">*</span>
+                    <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                     <span>Organization Name</span>
                     <ClickTooltip content={BUYER_HELPTEXT.organizationName}>
                       <Info size={14} color="#6B7280" />
@@ -92,12 +98,15 @@ const BuyerOrganizationProfile = ({
               value={formBuyerData.organizationName || ""}
               onChange={handleChangeBuyer}
             />
+            {fieldErrors?.organizationName && (
+              <FieldError message={fieldErrors.organizationName} />
+            )}
           </div>
           <div className="form_fields_vendor">
             <Select
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Organization Type</span>
                   <ClickTooltip content={BUYER_HELPTEXT.organizationType}>
                     <Info size={14} color="#6B7280" />
@@ -111,6 +120,9 @@ const BuyerOrganizationProfile = ({
               default_option="Select"
               options={BUYER_ORGANIZATION_TYPE}
             />
+            {fieldErrors?.organizationType && (
+              <FieldError message={fieldErrors.organizationType} />
+            )}
           </div>
         </div>
         <div>
@@ -118,7 +130,7 @@ const BuyerOrganizationProfile = ({
             <DropdownTreeSelect
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Industry Sector</span>
                   <ClickTooltip content={BUYER_HELPTEXT.sector}>
                     <Info size={14} color="#6B7280" />
@@ -132,12 +144,15 @@ const BuyerOrganizationProfile = ({
               required
               onChange={handleSectorChange}
             />
+            {fieldErrors?.sector && (
+              <FieldError message={fieldErrors.sector} />
+            )}
           </div>
           <div className="form_fields_vendor">
             <Input
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Organization Website</span>
                   <ClickTooltip content={BUYER_HELPTEXT.organizationWebsite}>
                     <Info size={14} color="#6B7280" />
@@ -150,13 +165,16 @@ const BuyerOrganizationProfile = ({
               value={formBuyerData.organizationWebsite || ""}
               onChange={handleChangeBuyer}
             />
+            {fieldErrors?.organizationWebsite && (
+              <FieldError message={fieldErrors.organizationWebsite} />
+            )}
           </div>
 
           <div className="form_fields_vendor">
             <Input
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Organization Description</span>
                   <ClickTooltip
                     content={BUYER_HELPTEXT.organizationDescription}
@@ -171,6 +189,9 @@ const BuyerOrganizationProfile = ({
               value={formBuyerData.organizationDescription || ""}
               onChange={handleChangeBuyer}
             />
+            {fieldErrors?.organizationDescription && (
+              <FieldError message={fieldErrors.organizationDescription} />
+            )}
           </div>
         </div>
         {/* <div className="step_form_right">

@@ -3,6 +3,7 @@
 import FormField from "../../UI/FormField";
 import Input from "../../UI/Input";
 import HeaderForVendor from "../VendorOnboarding/HeaderForVendor";
+import { Package } from "lucide-react";
 
 const StepProductProfile = ({ data }) => {
   const PRODUCT_PROFILE = data;
@@ -11,6 +12,7 @@ const StepProductProfile = ({ data }) => {
       <HeaderForVendor
         className="header_for_vendor"
         title_vendor="Product Profile "
+        icon={<Package size={18} />}
         // sub_title_vendor="Tell us about your AI products and services"
       />
       <div>

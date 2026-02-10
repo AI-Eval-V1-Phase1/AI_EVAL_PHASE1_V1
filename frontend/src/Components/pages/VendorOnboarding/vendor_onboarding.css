@@ -1,3 +1,62 @@
+/* Error color used across vendor onboarding, vendor COTS, and vendor attestation */
+:root {
+  --vendor-error-color: #b91c1c;
+}
+
+/* Inline field validation error (below each field) – icon + message */
+.vendor_field_error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--vendor-error-color);
+}
+
+.vendor_field_error svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+/* FormField/ErrorText when used inside vendor tabs – same colour as vendor onboarding */
+.vendor_onboarding_tabs .error_text_sec p,
+.vendor_onboarding_tabs .error_icon {
+  color: var(--vendor-error-color) !important;
+}
+
+/* Block-level error (e.g. submit error) in vendor forms */
+.vendor_form_block_error {
+  font-size: 0.8125rem;
+  color: var(--vendor-error-color);
+  margin: 0.5rem 0 0;
+}
+
+/* MultiStepTabs wrapper in vendor onboarding – no gap so button bar attaches to content */
+.vendor_onboarding_tabs {
+  margin-bottom: 0;
+}
+
+/* Only the form content (step panel) has white background; tabs do not */
+.vendor_onboarding_tabs{
+  min-height: 200px;
+  background-color: white;
+  padding: 1rem;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+/* .vendor_onboarding_tabs .multi_step_tabs_panel {
+  min-height: 200px;
+  background-color: white;
+  padding: 1rem;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+} */
+
+/* Tab buttons: subtle background so they don’t look like the white form */
+.vendor_onboarding_tabs .multi_step_tabs_tab:not(.multi_step_tabs_tab--active) {
+  background: #f1f5f9;
+}
+
 .action_btns {
   position: absolute;
   bottom: 5%;
@@ -13,6 +72,11 @@
   justify-content: space-between;
   padding: 1em 0;
 } */
+ /* .step_form_body{
+  background-color: white;
+  padding: 1em;
+  border-radius: 10px;
+ } */
 .form_fields_vendor {
   display: flex;
   flex-direction: column;
@@ -30,9 +94,9 @@
   resize: vertical;
 }
 
-.form_fields_vendor label {
+/* .form_fields_vendor label {
   padding: 0 0 0.5em 0;
-}
+} */
 
 /* Buttons size naturally */
 
@@ -88,6 +152,12 @@
   align-items: center;
   gap: 5px;
 }
+
+.stepsForm {
+  width: 650px;
+  max-width: 900px;
+  /* No white here so tabs don’t get it; only panel + card_vendor are white */
+}
 .back_btn,
 .continue_btn {
   font-size: 16px;
@@ -99,7 +169,8 @@
   align-content: center;
   align-items: center;
   gap: 5px;
-  width: 20em;
+  width: 120px;
+  /* width: 20em; */
 }
 .submit_btn_vendor {
   font-size: 16px;
@@ -213,9 +284,12 @@
 
 .vendor_action_btns {
   width: 100%;
-  margin: 1em 0 0 0;
+  margin: 0;
+  padding: 1rem;
   display: flex;
   justify-content: space-between;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 .input_wrapper {
@@ -230,6 +304,7 @@
   display: flex;
   align-items: center;
   align-content: center;
+  padding: 0 0  0.5em 0;
   /* gap: 0.5em; */
 }
 
@@ -261,4 +336,44 @@
   padding: 2px 8px;
   border-radius: 2px;
   font-size: 0.85em;
+}
+
+/* Centered form card layout: COTS assessment + Vendor Self Attestation (with side/top nav) */
+.form_card_centered {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 1.5rem;
+  width: 100%;
+  min-height: 60vh;
+  box-sizing: border-box;
+}
+
+.form_card_centered > div {
+  width: 100%;
+  max-width: 920px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  padding: 1em;
+}
+
+/* Back to Assessments link at top of form (Vendor COTS, Self Attestation) */
+.form_back_to_assessments {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.35rem 0;
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--main-auth-button-color, #2463eb);
+  cursor: pointer;
+}
+
+.form_back_to_assessments:hover {
+  text-decoration: underline;
 }

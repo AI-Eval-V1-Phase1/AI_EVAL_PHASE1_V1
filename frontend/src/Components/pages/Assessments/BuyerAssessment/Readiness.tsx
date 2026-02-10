@@ -2,14 +2,25 @@ import HeaderForBuyer from "../../BuyerOnboarding/HeaderForBuyer";
 import { BUYER_COTS_FIELD_KEYS } from "../../../../constants/buyerCotsAssessmentKeys";
 import BuyerCotsField from "./BuyerCotsField";
 
-const Readiness = ({ data, formData, setFormData, readOnlyKeys = [] }) => {
+const Readiness = ({
+  data,
+  formData,
+  setFormData,
+  readOnlyKeys = [],
+  fieldErrors,
+  title,
+  subTitle,
+  icon,
+}) => {
   const keys = BUYER_COTS_FIELD_KEYS.readiness;
   const isReadOnly = (key) => readOnlyKeys.includes(key);
   return (
     <>
       <HeaderForBuyer
         className="header_for_vendor"
-        title_vendor="Readiness"
+        title_vendor={title ?? "Readiness"}
+        sub_title_vendor={subTitle}
+        icon={icon}
       />
       <div>
         {keys.map((key, i) => {
@@ -26,6 +37,7 @@ const Readiness = ({ data, formData, setFormData, readOnlyKeys = [] }) => {
                 value={formData[key]}
                 onChange={(val) => setFormData((prev) => ({ ...prev, [key]: val }))}
                 readOnly={isReadOnly(key)}
+                errorMessage={fieldErrors?.[key]}
               />
             </div>
           );

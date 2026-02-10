@@ -2,23 +2,24 @@ import type { ChangeEvent } from "react";
 import Input from "../../UI/Input";
 import HeaderForVendor from "./HeaderForVendor";
 import Select from "../../UI/Select";
-import DropdownTreeSelect from "../../UI/DropdownTreeSelect";
+import IndustrySectorDependency from "../../UI/IndustrySectorDependency";
 import {
   VENDOR_TYPES,
   VENDOR_MATURITY_LEVELS,
-  INDUSTRY_SECTORS,
   VENDOR_HELPTEXT,
 } from "../../../constants/vendorOnboardingData";
 import type {
   StepPropsVendorData,
   VendorDataInterface,
 } from "../../../types/formDataVendor";
-import { Info } from "lucide-react";
+import { Building2, Info } from "lucide-react";
 import ClickTooltip from "../../UI/ClickTooltip";
+import FieldError from "../../UI/FieldError";
 
 const StepCompanyProfile = ({
   formVendorData,
   setFormVendorData,
+  fieldErrors,
 }: StepPropsVendorData) => {
   // Generic handler for inputs/selects
   const handleChangeVendor = (
@@ -28,57 +29,28 @@ const StepCompanyProfile = ({
     setFormVendorData({ ...formVendorData, [name]: value });
   };
 
-  // Mapping from sector labels to keys in formVendorData.sector
-  const SECTOR_KEY_MAP: Record<string, keyof VendorDataInterface["sector"]> = {
-    "Public Sector": "public_sector",
-    "Private Sector": "private_sector",
-    "Non-Profit": "non_profit_sector",
+  const sectorValue: VendorDataInterface["sector"] = {
+    public_sector: formVendorData.sector?.public_sector ?? [],
+    private_sector: formVendorData.sector?.private_sector ?? [],
+    non_profit_sector: formVendorData.sector?.non_profit_sector ?? [],
   };
-
-  // Handle selected sectors
-  const handleSectorChange = (selectedValues: string[]) => {
-    const newSectorData: VendorDataInterface["sector"] = {
-      public_sector: [],
-      private_sector: [],
-      non_profit_sector: [],
-    };
-
-    INDUSTRY_SECTORS.forEach((sectorNode) => {
-      const sectorKey = SECTOR_KEY_MAP[sectorNode.label];
-      if (!sectorKey) return;
-
-      const allowedValues = sectorNode.options.map((opt) => opt.value);
-      newSectorData[sectorKey] = selectedValues.filter((val) =>
-        allowedValues.includes(val),
-      );
-    });
-
-    setFormVendorData({ ...formVendorData, sector: newSectorData });
-  };
-
-  // Flatten all selected sector values
-  const allSelectedSectors = [
-    ...(formVendorData.sector?.public_sector || []),
-    ...(formVendorData.sector?.private_sector || []),
-    ...(formVendorData.sector?.non_profit_sector || []),
-  ];
 
   return (
     <>
-      <HeaderForVendor
-        className="header_for_vendor"
-        title_vendor="Company Profile"
-        sub_title_vendor="Tell us about your AI products and services"
-      />
-
       <div className="step_form_body">
+        <HeaderForVendor
+          icon=<Building2/>
+          className="header_for_vendor"
+          title_vendor="Company Profile"
+          sub_title_vendor="Basic information about your company"
+        />
         <div className="step_form_right">
           {/* Vendor Type */}
           <div className="form_fields_vendor">
             <Select
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Vendor Type</span>
                   <ClickTooltip content={VENDOR_HELPTEXT.vendorType}>
                     <Info size={14} color="#6B7280" />
@@ -93,14 +65,17 @@ const StepCompanyProfile = ({
               options={VENDOR_TYPES}
               required
             />
+            {fieldErrors?.vendorType && (
+              <FieldError message={fieldErrors.vendorType} />
+            )}
           </div>
 
           {/* Industry Sector */}
           <div className="form_fields_vendor">
-            <DropdownTreeSelect
+            <IndustrySectorDependency
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Industry Sector</span>
                   <ClickTooltip content={VENDOR_HELPTEXT.sector}>
                     <Info size={14} color="#6B7280" />
@@ -108,12 +83,14 @@ const StepCompanyProfile = ({
                 </div>
               }
               id="industry_sec"
-              default_option="Select industry sector"
-              options={INDUSTRY_SECTORS}
-              value={allSelectedSectors}
+              sector={sectorValue}
+              onChange={(sector) =>
+                setFormVendorData({ ...formVendorData, sector })
+              }
+              defaultCategoryOption="Select sector category"
               required
-              onChange={handleSectorChange}
             />
+            {fieldErrors?.sector && <FieldError message={fieldErrors.sector} />}
           </div>
 
           {/* Vendor Maturity Stage */}
@@ -121,7 +98,7 @@ const StepCompanyProfile = ({
             <Select
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Vendor Maturity Stage</span>
                   <ClickTooltip content={VENDOR_HELPTEXT.vendorMaturity}>
                     <Info size={14} color="#6B7280" />
@@ -136,6 +113,9 @@ const StepCompanyProfile = ({
               default_option="Select vendor maturity stage"
               options={VENDOR_MATURITY_LEVELS}
             />
+            {fieldErrors?.vendorMaturity && (
+              <FieldError message={fieldErrors.vendorMaturity} />
+            )}
           </div>
         </div>
 
@@ -145,7 +125,7 @@ const StepCompanyProfile = ({
             <Input
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Company Website</span>
                   <ClickTooltip content={VENDOR_HELPTEXT.companyWebsite}>
                     <Info size={14} color="#6B7280" />
@@ -158,6 +138,9 @@ const StepCompanyProfile = ({
               value={formVendorData.companyWebsite || ""}
               onChange={handleChangeVendor}
             />
+            {fieldErrors?.companyWebsite && (
+              <FieldError message={fieldErrors.companyWebsite} />
+            )}
           </div>
 
           {/* Company Description */}
@@ -165,9 +148,9 @@ const StepCompanyProfile = ({
             <Input
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Company Description</span>
-                  
+
                   <ClickTooltip content={VENDOR_HELPTEXT.companyDescription}>
                     <Info size={14} color="#6B7280" />
                   </ClickTooltip>
@@ -179,6 +162,9 @@ const StepCompanyProfile = ({
               value={formVendorData.companyDescription || ""}
               onChange={handleChangeVendor}
             />
+            {fieldErrors?.companyDescription && (
+              <FieldError message={fieldErrors.companyDescription} />
+            )}
           </div>
         </div>
       </div>

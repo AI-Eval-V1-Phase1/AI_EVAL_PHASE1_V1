@@ -14,25 +14,30 @@ const RouteAccess = () => {
       "/dashboard",
       "/organizations",
       "/assessments",
+      "/attestation_details",
       "/vendor-directory",
       "/my-vendor",
       "/compilance",
       "/governance",
       "/sales-enablement",
       "/evidence-library",
-      "/directory-listing",
+      "/product_profile",
       "/reports",
-      "/user-management"
+      "/user-management",
+      "/vendorSelfAttestation",
     ],
       vendor: [
       "/",
       "/dashboard",
       "/assessments",
+      "/vendorcots",
       "/sales-enablement",
       "/evidence-library",
       "/reports",
-      "/directory-listing",
+      "/product_profile",
       "/user-management",
+      "/attestation_details",
+      "/vendorSelfAttestation",
     ],
     buyer: [
       "/",
@@ -53,10 +58,17 @@ const RouteAccess = () => {
   }
 
   const path = location.pathname;
-  const normalizedSystemRole = (systemRole ?? "").toLowerCase();
-  const routesForRole = allowedRoutes[normalizedSystemRole] || allowedRoutes[systemRole] || [];
+  let normalizedSystemRole = (systemRole ?? "").toLowerCase().trim();
+  if (normalizedSystemRole === "system_admin") normalizedSystemRole = "system admin";
+  const routesForRole = allowedRoutes[normalizedSystemRole] || [];
 
-  if (!routesForRole.includes(path)) {
+  const pathAllowed =
+    routesForRole.includes(path) ||
+    (normalizedSystemRole === "vendor" && path.startsWith("/vendorSelfAttestation/")) ||
+    (normalizedSystemRole === "vendor" && path.startsWith("/vendorcots/")) ||
+    (normalizedSystemRole === "buyer" && path.startsWith("/buyerAssessment/"));
+
+  if (!pathAllowed) {
     return <Navigate to="/pageNotFound" replace />;
   }
 

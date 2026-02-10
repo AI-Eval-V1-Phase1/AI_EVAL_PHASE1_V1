@@ -2,7 +2,7 @@ import HeaderForVendor from "../VendorOnboarding/HeaderForVendor";
 import FormField from "../../UI/FormField";
 import Select from "../../UI/Select";
 import Input from "../../UI/Input";
-
+import { Activity } from "lucide-react";
 
 const StepOperationsAndReliablity = ({data}) => {
  const dummy_Data = ["A"]; // just for now to UI wokring
@@ -11,6 +11,7 @@ const StepOperationsAndReliablity = ({data}) => {
       <HeaderForVendor
         title_vendor="Operations & Reliability "
         className="header_for_vendor"
+        icon={<Activity size={18} />}
       />
 
       <div>

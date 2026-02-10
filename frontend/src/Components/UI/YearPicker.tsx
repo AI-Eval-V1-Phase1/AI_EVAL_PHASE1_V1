@@ -34,7 +34,13 @@ const YearPicker: React.FC<YearPickerProps> = ({
   return (
     <div className="year-picker">
       {label && <label>{label}</label>}
-      <select value={value ?? ""} onChange={handleChange} name={name} id={id}>
+      <select
+        value={value ?? ""}
+        onChange={handleChange}
+        name={name}
+        id={id}
+        className={`select_input ${value == null || value === "" ? "select_input--placeholder" : ""}`}
+      >
         <option value="">Select year</option>
         {years.map((year) => (
           <option key={year} value={year}>

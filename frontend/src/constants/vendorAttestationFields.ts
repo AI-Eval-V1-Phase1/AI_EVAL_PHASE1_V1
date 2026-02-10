@@ -15,6 +15,7 @@ export interface AttestationFieldMapping {
 /** Section key -> list of (payload key, type). Index in array = data index; use null to skip (e.g. upload-only row). */
 export const ATTESTATION_SECTION_FIELDS: Record<string, (AttestationFieldMapping | null)[]> = {
   product_profile: [
+    { key: "product_name", type: "string" },
     { key: "purchase_decision_makers", type: "array" },
     { key: "pain_points_solved", type: "string" },
     { key: "alternatives_considered", type: "string" },

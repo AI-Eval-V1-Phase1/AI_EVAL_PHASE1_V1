@@ -1,6 +1,7 @@
 import React from "react";
 import FormField from "../../../UI/FormField";
-import MultiSelectDropDown from "../../../UI/MultiSelectDropDown";
+import ChipMultiSelect from "../../../UI/ChipMultiSelect";
+import FieldError from "../../../UI/FieldError";
 
 const defaultOption = "Select";
 
@@ -15,6 +16,7 @@ const BuyerCotsField = ({
   value,
   onChange,
   readOnly,
+  errorMessage,
 }) => {
   const safeValue = value ?? "";
 
@@ -31,58 +33,66 @@ const BuyerCotsField = ({
         displayText = typeof safeValue === "string" ? safeValue : String(safeValue ?? "");
       }
       return (
-        <FormField label={label} mandatory={required} tooltipText={placeholder}>
-          <input
-            type="text"
-            value={displayText}
-            readOnly
-            style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed", color: "#333" }}
-            aria-label={label}
-          />
-        </FormField>
+        <>
+          <FormField label={label} mandatory={required} tooltipText={placeholder}>
+            <input
+              type="text"
+              value={displayText}
+              readOnly
+              style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed", color: "#333" }}
+              aria-label={label}
+            />
+          </FormField>
+          {errorMessage && <FieldError message={errorMessage} />}
+        </>
       );
     }
     if (options && !multiselect) {
       const strValue = typeof safeValue === "string" ? safeValue : String(safeValue);
       const valueInOptions = options.some((o) => o.value === strValue || o.label === strValue);
       return (
-        <FormField label={label} mandatory={required} tooltipText={placeholder}>
-          <select
-            value={strValue || ""}
-            disabled
-            readOnly
-            style={{
-              width: "100%",
-              padding: "8px",
-              backgroundColor: "#f5f5f5",
-              cursor: "not-allowed",
-              color: "#333",
-            }}
-            aria-label={label}
-          >
-            <option value="">{placeholder || defaultOption}</option>
-            {options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-            {!valueInOptions && strValue ? (
-              <option value={strValue}>{strValue}</option>
-            ) : null}
-          </select>
-        </FormField>
+        <>
+          <FormField label={label} mandatory={required} tooltipText={placeholder}>
+            <select
+              value={strValue || ""}
+              disabled
+              readOnly
+              className="select_input"
+              style={{
+                backgroundColor: "#f5f5f5",
+                cursor: "not-allowed",
+                color: "#333",
+              }}
+              aria-label={label}
+            >
+              <option value="">{placeholder || defaultOption}</option>
+              {options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+              {!valueInOptions && strValue ? (
+                <option value={strValue}>{strValue}</option>
+              ) : null}
+            </select>
+          </FormField>
+          {errorMessage && <FieldError message={errorMessage} />}
+        </>
       );
     }
     return (
-      <FormField label={label} mandatory={required} tooltipText={placeholder}>
-        <input
-          type="text"
-          value={typeof safeValue === "string" ? safeValue : (Array.isArray(safeValue) ? safeValue.join(", ") : JSON.stringify(safeValue))}
-          readOnly
-          style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
-          aria-label={label}
-        />
-      </FormField>
+      <>
+        <FormField label={label} mandatory={required} tooltipText={placeholder}>
+          <input
+            type="text"
+            value={typeof safeValue === "string" ? safeValue : (Array.isArray(safeValue) ? safeValue.join(", ") : JSON.stringify(safeValue))}
+            readOnly
+            style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
+            aria-label={label}
+          />
+        </FormField>
+        {errorMessage && <FieldError message={errorMessage} />}
+      </>
     );
   }
 
@@ -97,46 +107,55 @@ const BuyerCotsField = ({
       selected = [];
     }
     return (
-      <FormField label={label} mandatory={required} tooltipText={placeholder}>
-        <MultiSelectDropDown
-          id={fieldKey}
-          labelName=""
-          default_option={placeholder || defaultOption}
-          options={options}
-          value={selected}
-          onChange={(selectedValues) => onChange(JSON.stringify(selectedValues))}
-        />
-      </FormField>
+      <>
+        <FormField label={label} mandatory={required} tooltipText={placeholder}>
+          <ChipMultiSelect
+            id={fieldKey}
+            labelName=""
+            options={options}
+            value={selected}
+            onChange={(selectedValues) => onChange(JSON.stringify(selectedValues))}
+          />
+        </FormField>
+        {errorMessage && <FieldError message={errorMessage} />}
+      </>
     );
   }
 
   if (options && !multiselect) {
     return (
-      <FormField label={label} mandatory={required} tooltipText={placeholder}>
-        <select
-          value={safeValue}
-          onChange={(e) => onChange(e.target.value)}
-          style={{ width: "100%", padding: "8px" }}
-        >
-          <option value="">{placeholder || defaultOption}</option>
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </FormField>
+      <>
+        <FormField label={label} mandatory={required} tooltipText={placeholder}>
+          <select
+            value={safeValue}
+            onChange={(e) => onChange(e.target.value)}
+            className={`select_input ${!safeValue ? "select_input--placeholder" : ""}`}
+            aria-label={label}
+          >
+            <option value="">{placeholder || defaultOption}</option>
+            {options.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </FormField>
+        {errorMessage && <FieldError message={errorMessage} />}
+      </>
     );
   }
 
   return (
-    <FormField label={label} mandatory={required} tooltipText={placeholder}>
-      <input
-        type="text"
-        value={safeValue}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </FormField>
+    <>
+      <FormField label={label} mandatory={required} tooltipText={placeholder}>
+        <input
+          type="text"
+          value={safeValue}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </FormField>
+      {errorMessage && <FieldError message={errorMessage} />}
+    </>
   );
 };
 

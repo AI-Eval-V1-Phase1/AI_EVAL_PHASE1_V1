@@ -1,8 +1,9 @@
 import React from "react";
 import HeaderForBuyer from "./HeaderForBuyer";
 import Select from "../../UI/Select";
-import MultiSelectDropDown from "../../UI/MultiSelectDropDown";
+import ChipMultiSelect from "../../UI/ChipMultiSelect";
 import ClickTooltip from "../../UI/ClickTooltip";
+import FieldError from "../../UI/FieldError";
 import { Info } from "lucide-react";
 import {
   BUYER_PRIMARY_REGULATORY_FRAMEWORKS,
@@ -11,11 +12,17 @@ import {
   BUYER_PII_SENSITIVE_DATA_HANDLING,
   BUYER_HELPTEXT,
 } from "../../../constants/buyerOnboardingData";
+import type { StepPropsBuyerrData } from "../../../types/formDataBuyer";
 
-const RegulatoryContext = ({ formBuyerData, setFormBuyerData }) => {
-  const title_vendor = "Regulatory Context";
-
-  const handleChange = (e) => {
+const RegulatoryContext = ({
+  formBuyerData,
+  setFormBuyerData,
+  fieldErrors,
+  title,
+  subTitle,
+  icon,
+}: StepPropsBuyerrData) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormBuyerData({ ...formBuyerData, [name]: value });
   };
@@ -24,16 +31,19 @@ const RegulatoryContext = ({ formBuyerData, setFormBuyerData }) => {
     <>
       <HeaderForBuyer
         className="header_for_vendor"
-        title_vendor={title_vendor}
+        title_vendor={title ?? "Regulatory Context"}
+        sub_title_vendor={subTitle}
+        icon={icon}
       />
 
       <div className="step_form_body">
         <div className="step_form_right">
           <div className="form_fields_vendor">
-            <MultiSelectDropDown
+            <ChipMultiSelect
+              id="primaryRegulatoryFrameworks"
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Primary Regulatory Frameworks</span>
                   <ClickTooltip
                     content={BUYER_HELPTEXT.primaryRegulatoryFrameworks}
@@ -42,25 +52,25 @@ const RegulatoryContext = ({ formBuyerData, setFormBuyerData }) => {
                   </ClickTooltip>
                 </div>
               }
-              id="primaryRegulatoryFrameworks"
-              // name="primaryRegulatoryFrameworks"
-              default_option="Select primary regulatory frameworks"
               options={BUYER_PRIMARY_REGULATORY_FRAMEWORKS}
               value={formBuyerData.primaryRegulatoryFrameworks || []}
-               onChange={(selected: string[]) =>
+              onChange={(selected: string[]) =>
                 setFormBuyerData({
                   ...formBuyerData,
                   primaryRegulatoryFrameworks: selected,
                 })
               }
             />
+            {fieldErrors?.primaryRegulatoryFrameworks && (
+              <FieldError message={fieldErrors.primaryRegulatoryFrameworks} />
+            )}
           </div>
 
           <div className="form_fields_vendor">
             <Select
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Regulatory Penalty Exposure</span>
                   <ClickTooltip
                     content={BUYER_HELPTEXT.regulatoryPenaltyExposure}
@@ -77,15 +87,19 @@ const RegulatoryContext = ({ formBuyerData, setFormBuyerData }) => {
               onChange={handleChange}
               required
             />
+            {fieldErrors?.regulatoryPenaltyExposure && (
+              <FieldError message={fieldErrors.regulatoryPenaltyExposure} />
+            )}
           </div>
         </div>
 
         <div>
           <div className="form_fields_vendor">
-            <MultiSelectDropDown
+            <ChipMultiSelect
+              id="dataClassificationHandled"
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Data Classification Levels Handled</span>
                   <ClickTooltip
                     content={BUYER_HELPTEXT.dataClassificationHandled}
@@ -94,9 +108,6 @@ const RegulatoryContext = ({ formBuyerData, setFormBuyerData }) => {
                   </ClickTooltip>
                 </div>
               }
-              id="dataClassificationHandled"
-              // name="dataClassificationHandled"
-              default_option="Select data classification levels handled"
               options={BUYER_DATA_CLASSIFICATION_LEVELS_HANDLED}
               value={formBuyerData.dataClassificationHandled || []}
               onChange={(selected: string[]) =>
@@ -106,13 +117,16 @@ const RegulatoryContext = ({ formBuyerData, setFormBuyerData }) => {
                 })
               }
             />
+            {fieldErrors?.dataClassificationHandled && (
+              <FieldError message={fieldErrors.dataClassificationHandled} />
+            )}
           </div>
 
           <div className="form_fields_vendor">
             <Select
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>PII/Sensitive Data Handling</span>
                   <ClickTooltip content={BUYER_HELPTEXT.piiHandling}>
                     <Info size={14} color="#6B7280" />
@@ -127,6 +141,9 @@ const RegulatoryContext = ({ formBuyerData, setFormBuyerData }) => {
               onChange={handleChange}
               required
             />
+            {fieldErrors?.piiHandling && (
+              <FieldError message={fieldErrors.piiHandling} />
+            )}
           </div>
         </div>
       </div>

@@ -1,6 +1,9 @@
 declare module "bcrypt" {
-  export function hash(s: string, rounds: number): Promise<string>;
-  export function compare(plain: string, hashed: string): Promise<boolean>;
-  export function hashSync(s: string, rounds: number): string;
-  export function compareSync(plain: string, hashed: string): boolean;
+  function hash(s: string, rounds: number): Promise<string>;
+  function compare(plain: string, hashed: string): Promise<boolean>;
+  function hashSync(s: string, rounds: number): string;
+  function compareSync(plain: string, hashed: string): boolean;
+  export { hash, compare, hashSync, compareSync };
+  const bcrypt: { hash: typeof hash; compare: typeof compare; hashSync: typeof hashSync; compareSync: typeof compareSync };
+  export default bcrypt;
 }

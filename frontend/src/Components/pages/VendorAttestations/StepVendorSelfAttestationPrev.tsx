@@ -1,12 +1,14 @@
 /**
  * Preview step for Vendor Self Attestation: shows Company Profile, Document Uploads, and all attestation data.
- * For each document row: View button and edit icon; edit navigates back to the section that contains that document.
+ * Uses the same UI as Vendor Onboarding preview (vendor_preview cards). Document rows keep View/Edit actions.
  */
 import React from "react";
 import { Eye, Pencil } from "lucide-react";
 import type { VendorSelfAttestationFormState } from "../../../types/vendorSelfAttestation";
 import { VENDOR_SELF_ATTESTATION } from "../../../constants/vendorAttestionData";
 import { ATTESTATION_SECTION_FIELDS } from "../../../constants/vendorAttestationFields";
+import { formatPreviewValueAsString } from "../../../utils/formatPreviewValue";
+import "../VendorOnboarding/StepVendorOnboardingPreview.css";
 import "./vendor_attestation_preview.css";
 
 /** Step index for Document Upload section; step for Evidence & Supporting Documentation (Testing and Policy upload). */
@@ -19,14 +21,12 @@ interface StepVendorSelfAttestationPrevProps {
   onNavigateToStep?: (step: number) => void;
 }
 
+/** User-friendly preview: multi-select/industry/dependent dropdown as readable text, never raw array or JSON. */
 function formatValue(val: unknown): string {
-  if (val == null || val === "") return "N/A";
-  if (Array.isArray(val)) return val.length ? val.join(", ") : "N/A";
-  if (typeof val === "object") return JSON.stringify(val);
-  return String(val);
+  return formatPreviewValueAsString(val);
 }
 
-const StepVendorSelfAttestationPrev = ({ formState, onNavigateToStep }: StepVendorSelfAttestationPrevProps) => {
+function StepVendorSelfAttestationPrev({ formState, onNavigateToStep }: StepVendorSelfAttestationPrevProps) {
   const { companyProfile, attestation, documentUpload } = formState;
 
   /** Actions for a document row: View (navigate to section) and Edit (navigate to section). */
@@ -56,30 +56,39 @@ const StepVendorSelfAttestationPrev = ({ formState, onNavigateToStep }: StepVend
     );
   };
 
+  const companyProfileRows: { label: string; value: string }[] = [
+    { label: "Vendor Type", value: formatValue(companyProfile.vendorType) },
+    { label: "Vendor Maturity", value: formatValue(companyProfile.vendorMaturity) },
+    { label: "Company Website", value: formatValue(companyProfile.companyWebsite) },
+    { label: "Company Description", value: formatValue(companyProfile.companyDescription) },
+    { label: "Employee Count", value: formatValue(companyProfile.employeeCount) },
+    { label: "Year Founded", value: formatValue(companyProfile.yearFounded) },
+    { label: "Headquarters", value: formatValue(companyProfile.headquartersLocation) },
+    { label: "Operating Regions", value: formatValue(companyProfile.operatingRegions) },
+  ];
+
   return (
-    <div className="vendor-attestation-preview">
-      <h2 className="preview-main-title">Vendor Self Attestation – Preview</h2>
+    <div className="vendor_preview vendor-attestation-preview">
+      <p className="vendor_preview_intro">
+        Review your attestation below.
+      </p>
+      <div className="vendor_preview_sections">
+        {/* Company Profile */}
+        <section className="vendor_preview_card">
+          <h3 className="vendor_preview_card_title">Company Profile</h3>
+          <dl className="vendor_preview_list">
+            {companyProfileRows.map((row) => (
+              <div key={row.label} className="vendor_preview_row">
+                <dt className="vendor_preview_label">{row.label}</dt>
+                <dd className="vendor_preview_value">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
 
-      {/* Company Profile */}
-      <section className="preview-section">
-        <h3 className="preview-title">Company Profile</h3>
-        <table className="preview-table">
-          <tbody>
-            <tr><td className="preview-label">Vendor Type</td><td className="preview-value">{formatValue(companyProfile.vendorType)}</td></tr>
-            <tr><td className="preview-label">Vendor Maturity</td><td className="preview-value">{formatValue(companyProfile.vendorMaturity)}</td></tr>
-            <tr><td className="preview-label">Company Website</td><td className="preview-value">{formatValue(companyProfile.companyWebsite)}</td></tr>
-            <tr><td className="preview-label">Company Description</td><td className="preview-value">{formatValue(companyProfile.companyDescription)}</td></tr>
-            <tr><td className="preview-label">Employee Count</td><td className="preview-value">{formatValue(companyProfile.employeeCount)}</td></tr>
-            <tr><td className="preview-label">Year Founded</td><td className="preview-value">{formatValue(companyProfile.yearFounded)}</td></tr>
-            <tr><td className="preview-label">Headquarters</td><td className="preview-value">{formatValue(companyProfile.headquartersLocation)}</td></tr>
-            <tr><td className="preview-label">Operating Regions</td><td className="preview-value">{formatValue(companyProfile.operatingRegions)}</td></tr>
-          </tbody>
-        </table>
-      </section>
-
-      {/* Document Uploads: slots 0, 1, 2 (2 = regulatory with categories) + Evidence Testing & Policy; View + edit per row */}
-      <section className="preview-section preview-section--documents">
-        <h3 className="preview-title">Document Uploads</h3>
+        {/* Document Uploads: slots 0, 1, 2 (2 = regulatory with categories) + Evidence Testing & Policy; View + edit per row */}
+        <section className="vendor_preview_card preview-section preview-section--documents">
+          <h3 className="vendor_preview_card_title">Document Uploads</h3>
         <table className="preview-table preview-table--documents">
           <tbody>
             <tr className="preview-doc-row">
@@ -145,38 +154,37 @@ const StepVendorSelfAttestationPrev = ({ formState, onNavigateToStep }: StepVend
         </table>
       </section>
 
-      {/* Attestation sections (dynamic fields) */}
-      {Object.entries(ATTESTATION_SECTION_FIELDS).map(([sectionKey, mappings]) => {
-        const sectionData = (VENDOR_SELF_ATTESTATION as Record<string, Record<string, { label: string }>>)[sectionKey];
-        if (!sectionData || !mappings.length) return null;
-        const title = sectionKey.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-        const entries = Object.entries(sectionData)
-          .filter(([k]) => k !== "length" && Object.prototype.hasOwnProperty.call(sectionData, k))
-          .sort((a, b) => Number(a[0]) - Number(b[0]));
-        return (
-          <section key={sectionKey} className="preview-section">
-            <h3 className="preview-title">{title}</h3>
-            <table className="preview-table">
-              <tbody>
+        {/* Attestation sections (dynamic fields) */}
+        {Object.entries(ATTESTATION_SECTION_FIELDS).map(([sectionKey, mappings]) => {
+          const sectionData = (VENDOR_SELF_ATTESTATION as Record<string, Record<string, { label: string }>>)[sectionKey];
+          if (!sectionData || !mappings.length) return null;
+          const title = sectionKey.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+          const entries = Object.entries(sectionData)
+            .filter(([k]) => k !== "length" && Object.prototype.hasOwnProperty.call(sectionData, k))
+            .sort((a, b) => Number(a[0]) - Number(b[0]));
+          return (
+            <section key={sectionKey} className="vendor_preview_card">
+              <h3 className="vendor_preview_card_title">{title}</h3>
+              <dl className="vendor_preview_list">
                 {entries.map(([dataIndexStr, fieldConfig]) => {
                   const dataIndex = Number(dataIndexStr);
                   const mapping = mappings[dataIndex];
                   if (!mapping) return null;
                   const val = attestation[mapping.key];
                   return (
-                    <tr key={mapping.key}>
-                      <td className="preview-label">{fieldConfig.label}</td>
-                      <td className="preview-value">{formatValue(val)}</td>
-                    </tr>
+                    <div key={mapping.key} className="vendor_preview_row">
+                      <dt className="vendor_preview_label">{fieldConfig.label}</dt>
+                      <dd className="vendor_preview_value">{formatValue(val)}</dd>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
-          </section>
-        );
-      })}
+              </dl>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
-};
+}
 
 export default StepVendorSelfAttestationPrev;

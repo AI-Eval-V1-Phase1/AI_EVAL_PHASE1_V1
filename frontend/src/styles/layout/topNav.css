@@ -1,8 +1,11 @@
 .top_nav_content {
   display: flex;
   justify-content: space-between;
-  padding: 0.1em 1.5em;
-  /* height: 3em; */
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  min-height: inherit;
+  box-sizing: border-box;
 }
 .nav_left_content {
   display: flex;
@@ -61,9 +64,31 @@
     font-size: 1em;
   
 } */
+.name_email {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .userName {
   font-size: 0.9em;
+  font-weight: 600;
+  color: var(--main-dark-color);
+  margin: 0;
 }
+
+.user_role_badge {
+  display: inline-block;
+  font-size: 0.7em;
+  font-weight: 500;
+  color: var(--main-dark-color);
+  background: rgba(30, 58, 138, 0.1);
+  padding: 2px 8px;
+  border-radius: 999px;
+  max-width: fit-content;
+  letter-spacing: 0.02em;
+}
+
 .initials {
   width: 35px;
   height: 35px;
@@ -79,12 +104,14 @@
 }
 
 .notification_icon {
-  fill: var(--main-dark-color);
-  stroke: var(--main-dark-color);
+  /* fill: var(--main-dark-color); */
+  /* stroke: var(--main-dark-color); */
+  stroke: grey;
   cursor: pointer;
 }
 
 .email_id {
-  font-size: 0.9em;
+  font-size: 0.8em;
   color: var(--grey-color);
+  margin: 0;
 }

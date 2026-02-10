@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import type { z } from "zod";
 import "./vendor_onboarding.css";
 import Button from "../../UI/Button";
 import StepCompanyProfile from "./StepCompanyProfile";
@@ -11,7 +12,37 @@ import { useNavigate } from "react-router-dom";
 import CardOnBoarding from "../../UI/CardOnBoarding";
 import CardContainerOnBoarding from "../../UI/CardContainerOnBoarding";
 import CardConfirmation from "../../UI/CardConfirmation";
+import MultiStepTabs from "../../UI/MultiStepTabs";
+import { VENDOR_ONBOARDING_TAB_STEPS } from "./vendorOnboardingTabs";
 import type { VendorDataInterface } from "../../../types/formDataVendor";
+import { vendorStep1CompanyProfileSchema } from "../../../schemas/onboarding/vendor.schema";
+import { vendorStep2ContactSchema } from "../../../schemas/onboarding/vendorStep2.schema";
+import { vendorStep3CompanyScaleSchema } from "../../../schemas/onboarding/vendorStep3.schema";
+import { vendorStep4GeographySchema } from "../../../schemas/onboarding/vendorStep4.schema";
+
+/** Flatten Zod error into a list of user-facing messages */
+function getValidationMessages(error: z.ZodError): string[] {
+  const flat = error.flatten()
+  const form: string[] = flat.formErrors ?? []
+  const field: string[] = (flat.fieldErrors && Object.values(flat.fieldErrors).flat()) as string[]
+  return [...form, ...field].filter(Boolean)
+}
+
+/** Per-field errors for inline display. Step 0: assign formErrors (e.g. sector refine) to "sector". */
+function getFieldErrorsFromZod(error: z.ZodError, stepIndex: number): Record<string, string> {
+  const flat = error.flatten()
+  const result: Record<string, string> = {}
+  const fieldErrors = flat.fieldErrors as Record<string, string[] | undefined> | undefined
+  if (fieldErrors) {
+    for (const [key, messages] of Object.entries(fieldErrors)) {
+      if (Array.isArray(messages) && messages[0]) result[key] = messages[0]
+    }
+  }
+  const formErrors = flat.formErrors ?? []
+  if (stepIndex === 0 && formErrors.length > 0) result.sector = formErrors[0]
+  return result
+}
+
 
 /** Default empty form state for vendor onboarding */
 const getDefaultVendorFormState = (
@@ -119,6 +150,7 @@ const VendorMainForm = ({ type }: { type: string }) => {
   const [formVendorData, setFormVendorData] =
     useState<VendorDataInterface>(allDataVendor);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<z.ZodError | null>(null);
   // Path to vendor self attestation (set after successful onboarding submit; includes token when available)
   const [attestationPath, setAttestationPath] = useState<string>("");
 
@@ -176,9 +208,219 @@ const VendorMainForm = ({ type }: { type: string }) => {
     };
   }, [BASE_URL]);
 
-  const handleContinue = () => setCurrentStep((prev) => prev + 1);
-  const handleBack = () => setCurrentStep((prev) => prev - 1);
+  const handleContinue = () => {
+    if (currentStep >= 4) return
+
+    const stepSchemas = [
+      vendorStep1CompanyProfileSchema,
+      vendorStep2ContactSchema,
+      vendorStep3CompanyScaleSchema,
+      vendorStep4GeographySchema,
+    ]
+    const schema = stepSchemas[currentStep]
+    const stepData = [
+      {
+        vendorType: formVendorData.vendorType,
+        sector: formVendorData.sector,
+        vendorMaturity: formVendorData.vendorMaturity,
+        companyWebsite: formVendorData.companyWebsite,
+        companyDescription: formVendorData.companyDescription,
+      },
+      {
+        primaryContactName: formVendorData.primaryContactName,
+        primaryContactEmail: formVendorData.primaryContactEmail,
+        primaryContactRole: formVendorData.primaryContactRole,
+      },
+      {
+        employeeCount: formVendorData.employeeCount,
+        yearFounded: formVendorData.yearFounded,
+      },
+      {
+        headquartersLocation: formVendorData.headquartersLocation,
+        operatingRegions: formVendorData.operatingRegions ?? [],
+      },
+    ][currentStep]
+
+    const result = schema.safeParse(stepData)
+    if (!result.success) {
+      setValidationError(result.error)
+      return
+    }
+    setValidationError(null)
+    setCurrentStep((prev) => prev + 1)
+  }
+
+  const handleBack = () => {
+    setValidationError(null)
+    setCurrentStep((prev) => prev - 1)
+  }
+
+  // Re-validate current step when form data changes so field errors disappear as user fixes them
+  const vendorStepSchemas = [
+    vendorStep1CompanyProfileSchema,
+    vendorStep2ContactSchema,
+    vendorStep3CompanyScaleSchema,
+    vendorStep4GeographySchema,
+  ]
+  useEffect(() => {
+    if (validationError == null || currentStep > 3) return
+    const schema = vendorStepSchemas[currentStep]
+    const stepData = [
+      {
+        vendorType: formVendorData.vendorType,
+        sector: formVendorData.sector,
+        vendorMaturity: formVendorData.vendorMaturity,
+        companyWebsite: formVendorData.companyWebsite,
+        companyDescription: formVendorData.companyDescription,
+      },
+      {
+        primaryContactName: formVendorData.primaryContactName,
+        primaryContactEmail: formVendorData.primaryContactEmail,
+        primaryContactRole: formVendorData.primaryContactRole,
+      },
+      {
+        employeeCount: formVendorData.employeeCount,
+        yearFounded: formVendorData.yearFounded,
+      },
+      {
+        headquartersLocation: formVendorData.headquartersLocation,
+        operatingRegions: formVendorData.operatingRegions ?? [],
+      },
+    ][currentStep]
+    const result = schema.safeParse(stepData)
+    if (result.success) setValidationError(null)
+    else setValidationError(result.error)
+  }, [formVendorData, currentStep, validationError])
+
   const Onboardingtoken = sessionStorage.getItem("onboardingToken");
+
+  // Step-specific field errors for inline display (only when validation failed on that step)
+  const stepFieldErrors = useMemo(() => {
+    if (!validationError || currentStep > 3) return {}
+    return getFieldErrorsFromZod(validationError, currentStep)
+  }, [validationError, currentStep])
+
+  // Steps with content for MultiStepTabs; clicking a tab navigates to that step
+  const tabStepsWithContent = useMemo(
+    () => [
+      {
+        ...VENDOR_ONBOARDING_TAB_STEPS[0],
+        content: (
+          <StepCompanyProfile
+            formVendorData={formVendorData}
+            setFormVendorData={setFormVendorData}
+            fieldErrors={currentStep === 0 ? stepFieldErrors : undefined}
+          />
+        ),
+      },
+      {
+        ...VENDOR_ONBOARDING_TAB_STEPS[1],
+        content: (
+          <StepContactInformation
+            formVendorData={formVendorData}
+            setFormVendorData={setFormVendorData}
+            fieldErrors={currentStep === 1 ? stepFieldErrors : undefined}
+          />
+        ),
+      },
+      {
+        ...VENDOR_ONBOARDING_TAB_STEPS[2],
+        content: (
+          <StepCompanyScale
+            formVendorData={formVendorData}
+            setFormVendorData={setFormVendorData}
+            fieldErrors={currentStep === 2 ? stepFieldErrors : undefined}
+          />
+        ),
+      },
+      {
+        ...VENDOR_ONBOARDING_TAB_STEPS[3],
+        content: (
+          <StepGeopgraphy
+            formVendorData={formVendorData}
+            setFormVendorData={setFormVendorData}
+            fieldErrors={currentStep === 3 ? stepFieldErrors : undefined}
+          />
+        ),
+      },
+      {
+        ...VENDOR_ONBOARDING_TAB_STEPS[4],
+        content: allStepsFilled ? (
+          <CardConfirmation
+            pageNavigateLink="Proceed to Vendor Self Attestation"
+            navigateTo={
+              attestationPath ||
+              (Onboardingtoken
+                ? `/vendorSelfAttestation/${Onboardingtoken}`
+                : "/vendorSelfAttestation")
+            }
+            // signinLinkText="Sign in"
+            // signinLinkTo="/login"
+            // redirectTo="/login"
+            // redirectAfterMs={5000}
+          />
+        ) : (
+          <StepVendorOnboardingPreview formVendorData={formVendorData} />
+        ),
+      },
+    ],
+    [
+      formVendorData,
+      setFormVendorData,
+      allStepsFilled,
+      attestationPath,
+      Onboardingtoken,
+      currentStep,
+      stepFieldErrors,
+    ]
+  );
+
+  // Completed steps for progress: steps before current (user has visited them)
+  const completedStepsForProgress = Array.from(
+    { length: currentStep },
+    (_, i) => i
+  );
+
+  // Disable tabs until previous steps are valid (required fields completed)
+  const disabledSteps = useMemo(() => {
+    const disabled: number[] = [];
+    const step1Result = vendorStep1CompanyProfileSchema.safeParse({
+      vendorType: formVendorData.vendorType,
+      sector: formVendorData.sector,
+      vendorMaturity: formVendorData.vendorMaturity,
+      companyWebsite: formVendorData.companyWebsite,
+      companyDescription: formVendorData.companyDescription,
+    });
+    if (!step1Result.success) {
+      disabled.push(1, 2, 3, 4);
+      return disabled;
+    }
+    const step2Result = vendorStep2ContactSchema.safeParse({
+      primaryContactName: formVendorData.primaryContactName,
+      primaryContactEmail: formVendorData.primaryContactEmail,
+      primaryContactRole: formVendorData.primaryContactRole,
+    });
+    if (!step2Result.success) {
+      disabled.push(2, 3, 4);
+      return disabled;
+    }
+    const step3Result = vendorStep3CompanyScaleSchema.safeParse({
+      employeeCount: formVendorData.employeeCount,
+      yearFounded: formVendorData.yearFounded,
+    });
+    if (!step3Result.success) {
+      disabled.push(3, 4);
+      return disabled;
+    }
+    const step4Result = vendorStep4GeographySchema.safeParse({
+      headquartersLocation: formVendorData.headquartersLocation,
+      operatingRegions: formVendorData.operatingRegions ?? [],
+    });
+    if (!step4Result.success) {
+      disabled.push(4);
+    }
+    return disabled;
+  }, [formVendorData]);
 
   const handleBackToSelection = () =>
     navigate(`/onboarding/${Onboardingtoken}`);
@@ -208,9 +450,60 @@ const VendorMainForm = ({ type }: { type: string }) => {
       const result = await response.json();
       console.log(result);
       if (response.ok) {
-        setAllStepsFilled(true); // mark form completed
-        // Navigate to vendor self attestation; include token in path so the link goes to the right route
-        setAttestationPath(`/vendorSelfAttestation/${onboardingToken}`);
+        setAllStepsFilled(true);
+        const bearerToken = result.token;
+        const userDetails = result.userDetails?.[0];
+        if (bearerToken && userDetails) {
+          sessionStorage.setItem("bearerToken", bearerToken);
+          sessionStorage.setItem("userEmail", String(userDetails.email ?? ""));
+          sessionStorage.setItem(
+            "userRole",
+            userDetails.role != null ? String(userDetails.role).trim() : "",
+          );
+          sessionStorage.setItem("userId", String(userDetails.id ?? ""));
+          sessionStorage.setItem(
+            "organizationName",
+            String(userDetails.organization_name ?? "").trim(),
+          );
+          sessionStorage.setItem(
+            "organizationId",
+            String(userDetails.organization_name ?? "").trim(),
+          );
+          sessionStorage.setItem(
+            "userName",
+            String(userDetails.user_name ?? "").trim(),
+          );
+          sessionStorage.setItem(
+            "userFirstName",
+            String(userDetails.user_first_name ?? "").trim(),
+          );
+          sessionStorage.setItem(
+            "userLastName",
+            String(userDetails.user_last_name ?? "").trim(),
+          );
+          const platformRole = userDetails.user_platform_role;
+          sessionStorage.setItem(
+            "systemRole",
+            platformRole != null && platformRole !== ""
+              ? String(platformRole).trim()
+              : "vendor",
+          );
+          sessionStorage.setItem(
+            "user_signup_completed",
+            String(userDetails.user_signup_completed ?? "false"),
+          );
+          sessionStorage.setItem(
+            "user_onboarding_completed",
+            String(userDetails.user_onboarding_completed ?? "true"),
+          );
+          setAttestationPath("/vendorSelfAttestation");
+        } else {
+          setAttestationPath(
+            onboardingToken
+              ? `/vendorSelfAttestation/${onboardingToken}`
+              : "/vendorSelfAttestation",
+          );
+        }
       }
     } catch (error) {
       console.log(error);
@@ -218,56 +511,42 @@ const VendorMainForm = ({ type }: { type: string }) => {
   };
 
   return (
-    <CardContainerOnBoarding>
-      {fetchError && (
-        <p className="orgError" style={{ marginBottom: "0.5rem" }}>
-          {fetchError}
-        </p>
-      )}
-      <form onSubmit={handleSubmitPreview}>
+    <div className="form_card_centered">
+      <CardContainerOnBoarding>
+        {fetchError && (
+          <p className="orgError" style={{ marginBottom: "0.5rem" }}>
+            {fetchError}
+          </p>
+        )}
+        <form onSubmit={handleSubmitPreview} className="stepsForm">
+         <MultiStepTabs
+            steps={tabStepsWithContent}
+            currentStep={currentStep}
+            onStepChange={(step) => {
+              setValidationError(null)
+              setCurrentStep(step)
+            }}
+            completedSteps={completedStepsForProgress}
+            disabledSteps={disabledSteps}
+            className="vendor_onboarding_tabs"
+          />
+
         <CardOnBoarding className="card_vendor">
-          {/* Render current step */}
-          {currentStep === 0 && (
-            <StepCompanyProfile
-              formVendorData={formVendorData}
-              setFormVendorData={setFormVendorData}
-            />
-          )}
-          {currentStep === 1 && (
-            <StepContactInformation
-              formVendorData={formVendorData}
-              setFormVendorData={setFormVendorData}
-            />
-          )}
-          {currentStep === 2 && (
-            <StepCompanyScale
-              formVendorData={formVendorData}
-              setFormVendorData={setFormVendorData}
-            />
-          )}
-          {currentStep === 3 && (
-            <StepGeopgraphy
-              formVendorData={formVendorData}
-              setFormVendorData={setFormVendorData}
-            />
-          )}
+         
+          {/* {validationError && currentStep < 4 && (
+            <div className="vendor_step_validation_errors" role="alert">
+              <p className="vendor_step_validation_errors_title">
+                Please fix the following before continuing:
+              </p>
+              <ul className="vendor_step_validation_errors_list">
+                {getValidationMessages(validationError).map((msg, i) => (
+                  <li key={i}>{msg}</li>
+                ))}
+              </ul>
+            </div>
+          )} */}
 
-          {/* Step 4: Preview or Confirmation */}
-          {currentStep === 4 && !allStepsFilled && (
-            <StepVendorOnboardingPreview formVendorData={formVendorData} />
-          )}
-          {currentStep === 4 && allStepsFilled && (
-            <CardConfirmation
-              pageNavigateLink="Proceed to Vendor Self Attestation"
-              navigateTo={
-                attestationPath ||
-                (Onboardingtoken ? `/vendorSelfAttestation/${Onboardingtoken}` : "/vendorSelfAttestation")
-              }
-            />
-          )}
-        </CardOnBoarding>
-
-        {/* Navigation buttons */}
+          {/* Navigation buttons */}
         <div className="vendor_action_btns">
           {/* Show back button only if confirmation is NOT shown */}
           {!allStepsFilled && (
@@ -311,8 +590,10 @@ const VendorMainForm = ({ type }: { type: string }) => {
             </div>
           )}
         </div>
-      </form>
-    </CardContainerOnBoarding>
+        </CardOnBoarding>
+        </form>
+      </CardContainerOnBoarding>
+    </div>
   );
 };
 

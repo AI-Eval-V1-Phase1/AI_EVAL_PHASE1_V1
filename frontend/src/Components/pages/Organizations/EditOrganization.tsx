@@ -4,7 +4,7 @@ import { useDispatch } from "react-redux";
 import { getOrganizations } from "../../../Context/OrganizationsData";
 import { toast } from "react-toastify";
 
-const EditOrganization = ({ setIsEdit, id, orgData }) => {
+const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const [isError, setIsError] = useState("");
@@ -42,10 +42,19 @@ const EditOrganization = ({ setIsEdit, id, orgData }) => {
       return;
     }
 
+    const trimmedName = isOrganizationName.trim();
+    const nameAlreadyExists = (allOrganizations ?? []).some(
+      (org) => String(org.id) !== String(id) && (org.organizationName ?? "").trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (nameAlreadyExists) {
+      setIsError("Organization already present");
+      return;
+    }
+
     if (
       orgData &&
-      isOrganizationName.trim() === orgData.organizationName &&
-      isStatus.trim() === orgData.organizationStatus 
+      trimmedName === (orgData.organizationName ?? "").trim() &&
+      isStatus.trim() === orgData.organizationStatus
     ) {
       setIsError("Nothing is Updated");
       return;
@@ -108,9 +117,11 @@ const EditOrganization = ({ setIsEdit, id, orgData }) => {
               <input
                 type="text"
                 value={isOrganizationName}
-                onChange={(e) => setIsOrganizationName(e.target.value)}
+                onChange={(e) => {
+                  setIsOrganizationName(e.target.value);
+                  if (isError) setIsError("");
+                }}
               />
-              {/* {isError && <p className="orgError">{isError}</p>} */}
             </div>
             <div className="orgName">
               <label htmlFor="orgname">
@@ -124,6 +135,7 @@ const EditOrganization = ({ setIsEdit, id, orgData }) => {
                 id=""
                 value={isStatus}
                 onChange={(e) => setIsStatus(e.target.value)}
+                className={`select_input ${!isStatus || isStatus === "select" ? "select_input--placeholder" : ""}`}
               >
                 <option value="select" disabled>
                   SELECT

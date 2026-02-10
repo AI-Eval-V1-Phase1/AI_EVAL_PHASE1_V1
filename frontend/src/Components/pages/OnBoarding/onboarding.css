@@ -4,7 +4,6 @@
   box-sizing: border-box;
 }
 
-
 .radio-wrapper-22 .radio-input {
   clip: rect(0 0 0 0);
   -webkit-clip-path: inset(100%);
@@ -135,71 +134,3 @@
   cursor: not-allowed;
 }
 
-.sub_title_card {
-color: #4b5563;
-  font-size: 0.7em;
-  font-weight: 500;
-}
-
-.card_list ul{
-  margin: 1em;
-}
-.card_list ul li {
-  list-style-type: none;
-  display: flex;
-  justify-content: flex-start;
-  gap: 0.5em;
-  padding: 0.2em 0;
-  font-size: 0.95em;
-}
-
-.card_list ul li span{
-  font-weight: normal;
-}
-
-.title_card {
-font-size: 1.1em;
-  color: black;
-  font-weight: 600;
-  /* margin: 0.5em; */
-  padding: 0.4em 0;
-}
-
-.card_para {
-  color: #4b5563;
-  font-size: 0.95em;
-  line-height: 1.4;
-  text-align: justify;
-  margin: 1em;
-}
-
-.card_continue_btn{
-  width: 100%;
-  margin: 1em 0 0 0;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 4px;
-  display: flex;
-  justify-content: center;
-  align-content: center;
-  align-items: center;
-  gap: 5px;
-  border: 1px solid var(--main-auth-button-color);
-  padding: 10px;
-  background-color: var(--main-auth-button-color);
-  color: white;
-}
-.card_continue_btn span{
-  display: flex;
-  justify-content: center;
-  align-content: center;
-  align-items: center;
-  gap: 0.5em;
-}
-
-.card_onboarding{
-  display: flex;
-  gap: 5em;
-  margin: 1em 0;
-}

@@ -2,6 +2,7 @@ import React from "react";
 import HeaderForBuyer from "./HeaderForBuyer";
 import Select from "../../UI/Select";
 import ClickTooltip from "../../UI/ClickTooltip";
+import FieldError from "../../UI/FieldError";
 import { Info } from "lucide-react";
 import {
   BUYER_AI_GOVERNANCE_MATURITY,
@@ -11,11 +12,17 @@ import {
   BUYER_EXISTING_AI_INITIATIVES,
   BUYER_HELPTEXT,
 } from "../../../constants/buyerOnboardingData";
+import type { StepPropsBuyerrData } from "../../../types/formDataBuyer";
 
-const CurrentAiMaturity = ({ formBuyerData, setFormBuyerData }) => {
-  const title_vendor = "Current AI Maturity";
-
-  const handleChange = (e) => {
+const CurrentAiMaturity = ({
+  formBuyerData,
+  setFormBuyerData,
+  fieldErrors,
+  title,
+  subTitle,
+  icon,
+}: StepPropsBuyerrData) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormBuyerData({ ...formBuyerData, [name]: value });
   };
@@ -24,7 +31,9 @@ const CurrentAiMaturity = ({ formBuyerData, setFormBuyerData }) => {
     <>
       <HeaderForBuyer
         className="header_for_vendor"
-        title_vendor={title_vendor}
+        title_vendor={title ?? "Current AI Maturity"}
+        sub_title_vendor={subTitle}
+        icon={icon}
       />
 
       <div>
@@ -45,13 +54,16 @@ const CurrentAiMaturity = ({ formBuyerData, setFormBuyerData }) => {
             value={formBuyerData.existingAIInitiatives || ""}
             onChange={handleChange}
           />
+          {fieldErrors?.existingAIInitiatives && (
+            <FieldError message={fieldErrors.existingAIInitiatives} />
+          )}
         </div>
 
         <div className="form_fields_vendor">
           <Select
             labelName={
               <div className="labelSection">
-                <span className="mandatory">*</span>
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                 <span>AI Governance Maturity</span>
                 <ClickTooltip content={BUYER_HELPTEXT.aiGovernanceMaturity}>
                   <Info size={14} color="#6B7280" />
@@ -66,13 +78,16 @@ const CurrentAiMaturity = ({ formBuyerData, setFormBuyerData }) => {
             onChange={handleChange}
             required
           />
+          {fieldErrors?.aiGovernanceMaturity && (
+            <FieldError message={fieldErrors.aiGovernanceMaturity} />
+          )}
         </div>
 
         <div className="form_fields_vendor">
           <Select
             labelName={
               <div className="labelSection">
-                <span className="mandatory">*</span>
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                 <span>Data Governance Maturity</span>
                 <ClickTooltip content={BUYER_HELPTEXT.dataGovernanceMaturity}>
                   <Info size={14} color="#6B7280" />
@@ -87,13 +102,16 @@ const CurrentAiMaturity = ({ formBuyerData, setFormBuyerData }) => {
             onChange={handleChange}
             required
           />
+          {fieldErrors?.dataGovernanceMaturity && (
+            <FieldError message={fieldErrors.dataGovernanceMaturity} />
+          )}
         </div>
 
         <div className="form_fields_vendor">
           <Select
             labelName={
               <div className="labelSection">
-                <span className="mandatory">*</span>
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                 <span>AI Skills Availability</span>
                 <ClickTooltip content={BUYER_HELPTEXT.aiSkillsAvailability}>
                   <Info size={14} color="#6B7280" />
@@ -108,13 +126,16 @@ const CurrentAiMaturity = ({ formBuyerData, setFormBuyerData }) => {
             onChange={handleChange}
             required
           />
+          {fieldErrors?.aiSkillsAvailability && (
+            <FieldError message={fieldErrors.aiSkillsAvailability} />
+          )}
         </div>
 
         <div className="form_fields_vendor">
           <Select
             labelName={
               <div className="labelSection">
-                <span className="mandatory">*</span>
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                 <span>Change Management Capability</span>
                 <ClickTooltip
                   content={BUYER_HELPTEXT.changeManagementCapability}
@@ -131,6 +152,9 @@ const CurrentAiMaturity = ({ formBuyerData, setFormBuyerData }) => {
             onChange={handleChange}
             required
           />
+          {fieldErrors?.changeManagementCapability && (
+            <FieldError message={fieldErrors.changeManagementCapability} />
+          )}
         </div>
       </div>
     </>

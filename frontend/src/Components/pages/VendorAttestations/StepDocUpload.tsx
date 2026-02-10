@@ -2,11 +2,13 @@
  * Document Upload step: sections 0 and 1 are fixed file uploads (Marketing, Technical);
  * section 2 (Regulatory and Compliance Certification Material) uses multi-select dropdown
  * with per-category file uploads. Helper text for formats and size on all sections.
+ * Heading, subheading, and icon follow Vendor Onboarding UI pattern.
  */
+import type { ReactNode } from "react";
 import HeaderForVendor from "../VendorOnboarding/HeaderForVendor";
 import FormField from "../../UI/FormField";
 import FileUpload from "../../UI/FileUpload";
-import MultiSelectDropDown from "../../UI/MultiSelectDropDown";
+import ChipMultiSelect from "../../UI/ChipMultiSelect";
 import {
   DOCUMENT_CATEGORIES,
   DOCUMENT_UPLOAD_HELPER_TEXT,
@@ -18,9 +20,19 @@ interface StepDocUploadProps {
   data: Record<string, { label: string; placeholder?: string; required?: boolean }>;
   documentUpload: DocumentUploadState;
   setDocumentUpload: React.Dispatch<React.SetStateAction<DocumentUploadState>>;
+  title?: string;
+  subTitle?: string;
+  icon?: ReactNode;
 }
 
-const StepDocUpload = ({ data, documentUpload, setDocumentUpload }: StepDocUploadProps) => {
+const StepDocUpload = ({
+  data,
+  documentUpload,
+  setDocumentUpload,
+  title = "Document Upload",
+  subTitle,
+  icon,
+}: StepDocUploadProps) => {
   const slot0 = documentUpload["0"] ?? [];
   const slot1 = documentUpload["1"] ?? [];
   const regulatory = documentUpload["2"] ?? { categories: [], byCategory: {} };
@@ -66,7 +78,12 @@ const StepDocUpload = ({ data, documentUpload, setDocumentUpload }: StepDocUploa
 
   return (
     <>
-      <HeaderForVendor title_vendor="Document Upload" className="header_for_vendor" />
+      <HeaderForVendor
+        title_vendor={title}
+        sub_title_vendor={subTitle}
+        icon={icon}
+        className="header_for_vendor"
+      />
       <p className="document-upload-helper" style={{ marginBottom: "1rem", fontSize: "0.875rem", color: "#6b7280" }}>
         {DOCUMENT_UPLOAD_HELPER_TEXT}
       </p>
@@ -95,22 +112,21 @@ const StepDocUpload = ({ data, documentUpload, setDocumentUpload }: StepDocUploa
         </FormField>
       </div>
 
-      {/* Section 2: Regulatory and Compliance Certification Material — multi-select + per-category upload */}
+      {/* Section 2: Regulatory and Compliance Certification Material — checkbox/chip multi-select + per-category upload */}
       <div className="form_fields_vendor" style={{ marginBottom: "1.5rem" }}>
         <FormField
           label={label2}
-          mandatory={data["2"]?.required ?? false}
+          mandatory={true}
           tooltipText={data["2"]?.placeholder}
         >
           <p style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "0.5rem" }}>
             Select certification types and upload files for each. Accepted: PDF, DOCX, PPT. Max 10MB per file.
           </p>
-          <MultiSelectDropDown
+          <ChipMultiSelect
             id="regulatory-document-categories"
             labelName=""
-            options={DOCUMENT_CATEGORIES}
+            options={DOCUMENT_CATEGORIES.map((c) => ({ label: c.label, value: c.value }))}
             value={categories}
-            default_option="Select document categories"
             onChange={setRegulatoryCategories}
           />
         </FormField>

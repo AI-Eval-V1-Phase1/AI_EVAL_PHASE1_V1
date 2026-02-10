@@ -1,0 +1,279 @@
+/* Assessments page - Buy AI Product (COTS) */
+.ai_assessments_page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 0;
+}
+
+.ai_assessments_heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ai_assessments_heading .headers h1 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.ai_assessments_heading .sub_title {
+  color: var(--light-gray-color, #64748b);
+  margin: 0;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.ai_assessments_two_col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 900px) {
+  .ai_assessments_two_col {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ai_assessments_section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.ai_assessments_section h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: #0f172a;
+}
+
+.ai_assessments_section .section_desc {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0 0 1rem 0;
+  line-height: 1.45;
+}
+
+.ai_assessments_checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem 0;
+}
+
+.ai_assessments_checklist li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #475569;
+  margin-bottom: 0.35rem;
+}
+
+.ai_assessments_checklist li svg {
+  flex-shrink: 0;
+  color: #22c55e;
+}
+
+.your_assessments_title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 0.75rem 0;
+}
+
+/* Assessment cards – same design as vendor attestation cards */
+.assessment_cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.assessment_card {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.assessment_card_title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0;
+}
+
+.assessment_card_meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--grey-color, #4b5563);
+}
+
+.assessment_card_meta_row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.assessment_card_meta_label {
+  font-weight: 500;
+  min-width: 6rem;
+}
+
+.assessment_status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.assessment_status_draft {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.assessment_status_completed {
+  background-color: var(--active-status-background, #d8f3dc);
+  color: #166534;
+}
+
+.assessment_card_actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.assessment_card_btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  background-color: transparent;
+  color: inherit;
+  font-family: inherit;
+}
+
+.assessment_card_btn_primary {
+  background-color: var(--main-auth-button-color, #1e3a8a);
+  color: white;
+  border-color: var(--main-auth-button-color, #1e3a8a);
+}
+
+.assessment_card_btn_primary:hover {
+  opacity: 0.9;
+}
+
+.assessment_card_btn_secondary {
+  background-color: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #374151;
+}
+
+.assessment_card_btn_secondary:hover {
+  background-color: #e5e7eb;
+}
+
+.assessment_card_btn_danger {
+  background-color: #dc2626;
+  border-color: #dc2626;
+  color: white;
+}
+
+.assessment_card_btn_danger:hover {
+  opacity: 0.9;
+}
+
+.assessment_card_progress {
+  margin: 0;
+}
+
+.assessment_card_progress_label {
+  font-size: 0.875rem;
+  color: var(--grey-color, #4b5563);
+  margin: 0 0 0.25rem 0;
+}
+
+.assessment_card_progress_bar {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.assessment_card_progress_fill {
+  height: 100%;
+  background: var(--main-auth-button-color, #1e3a8a);
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+
+.btn_start_assessment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.btn_start_assessment:hover {
+  background: #1d4ed8;
+}
+
+/* Tabs for system users (Vendor | Buyer) */
+.assessment_tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}.assessment_tab {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.assessment_tab:hover {
+  color: #334155;
+}
+
+.assessment_tab.active {
+  color: var(--main-auth-button-color, #1e3a8a);
+  border-bottom-color: var(--main-auth-button-color, #1e3a8a);
+}

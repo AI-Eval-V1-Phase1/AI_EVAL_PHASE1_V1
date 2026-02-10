@@ -2,6 +2,7 @@ import HeaderForVendor from "../VendorOnboarding/HeaderForVendor";
 import FormField from "../../UI/FormField";
 import Select from "../../UI/Select";
 import Input from "../../UI/Input";
+import { FlaskConical } from "lucide-react";
 
 const StepAiSafetyAndTesting = ({data}) => {
    const dummy_Data = ["A"]; // just for now to UI wokring
@@ -9,8 +10,8 @@ const StepAiSafetyAndTesting = ({data}) => {
     <>
       <HeaderForVendor
         title_vendor="AI Safety & Testing"
-
         className="header_for_vendor"
+        icon={<FlaskConical size={18} />}
       />
 
       <div>

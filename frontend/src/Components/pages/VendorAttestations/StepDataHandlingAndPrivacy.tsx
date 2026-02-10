@@ -2,6 +2,7 @@ import HeaderForVendor from "../VendorOnboarding/HeaderForVendor";
 import FormField from "../../UI/FormField";
 import Select from "../../UI/Select";
 import Input from "../../UI/Input";
+import { Database } from "lucide-react";
 
 const StepDataHandlingAndPrivacy = ({data}) => {
     const dummy_Data = ["A"]; // just for now to UI wokring
@@ -11,6 +12,7 @@ const StepDataHandlingAndPrivacy = ({data}) => {
       <HeaderForVendor
         title_vendor="Data Handling & Privacy "
         className="header_for_vendor"
+        icon={<Database size={18} />}
       />
 
       <div>

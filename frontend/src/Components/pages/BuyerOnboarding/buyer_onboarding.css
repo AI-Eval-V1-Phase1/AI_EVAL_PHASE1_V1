@@ -56,14 +56,14 @@
   margin: 1em 0 3em 0;
 }
 
-/* Only inputs get fixed width */
+/* Match Vendor Onboarding: full-width inputs and selects */
 .buyer_form_fields input,
 .form_fields input {
-  width: 20em;
+  width: 100%;
 }
 .buyer_form_fields select,
 .form_fields select {
-  width: 20em;
+  width: 100%;
 }
 
 /* Buttons size naturally */
@@ -114,7 +114,8 @@
   align-content: center;
   align-items: center;
   gap: 5px;
-  width: 20em;
+  width: 120px;
+  /* width: 20em; */
 }
 .submit_btn_vendor{
   font-size: 16px;
@@ -126,7 +127,8 @@
   align-content: center;
   /* align-items: center; */
   gap: 5px;
-  width: 20em;
+  width: 120px;
+  /* width: 20em; */
 }
 
 .back_btn {

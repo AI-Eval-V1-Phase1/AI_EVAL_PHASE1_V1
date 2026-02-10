@@ -1,6 +1,7 @@
 import HeaderForVendor from "../VendorOnboarding/HeaderForVendor";
 import FormField from "../../UI/FormField";
 import Select from "../../UI/Select";
+import { Server } from "lucide-react";
 // import Input from "../../UI/Input";
 
 const StepDeploymentAndArchitecture = ({data}) => {
@@ -10,6 +11,7 @@ const StepDeploymentAndArchitecture = ({data}) => {
       <HeaderForVendor
         title_vendor="Deployment Architecture"
         className="header_for_vendor"
+        icon={<Server size={18} />}
       />
 
       <div>

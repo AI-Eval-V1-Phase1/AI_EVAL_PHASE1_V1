@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { PreviewField, PreviewValue } from "../../types/preview";
+import { formatPreviewValueAsString } from "../../utils/formatPreviewValue";
 import "./preview_table.css";
 
 interface PreviewTableProps<T> {
@@ -22,12 +23,16 @@ const renderValue = (value: PreviewValue, fieldLabel?: string): React.ReactNode 
     return "N/A";
   }
 
-  const clickableLinks = ["email", "website"]; // lowercase for easy matching
+  const clickableLinks = ["email", "website"];
 
+  // Multi-select/array/object: user-friendly format, never raw JSON or array
+  const str = typeof value === "string" ? value.trim() : "";
+  if (typeof value === "string" && (str.startsWith("[") || str.startsWith("{"))) {
+    return formatPreviewValueAsString(value);
+  }
   if (Array.isArray(value)) {
     return value.length ? value.join(", ") : "N/A";
   }
-
   if (typeof value === "object") {
     return (
       <table className="preview-nested-table">
@@ -45,7 +50,7 @@ const renderValue = (value: PreviewValue, fieldLabel?: string): React.ReactNode 
     );
   }
 
-if (
+  if (
     fieldLabel &&
     clickableLinks.some((link) => fieldLabel.toLowerCase().includes(link))
   ) {

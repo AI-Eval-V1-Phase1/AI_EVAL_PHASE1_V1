@@ -1,7 +1,0 @@
-export { assessments } from "./assessments.js";
-export { assessmentDocuments } from "./assessmentDocuments.js";
-export { assessmentRisks } from "./assessmentRisks.js";
-export { cotsBuyerAssessments } from "./cotsBuyerAssessments.js";
-export { cotsVendorAssessments } from "./cotsVendorAssessments.js";
-export { customAiAssessments } from "./customAiAssessments.js";
-export { vendorSelfAttestations } from "./vendorSelfAttestations.js";

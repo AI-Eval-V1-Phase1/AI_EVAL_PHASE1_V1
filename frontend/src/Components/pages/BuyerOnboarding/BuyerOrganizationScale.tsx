@@ -1,23 +1,27 @@
-// import React, { useState } from "react";
 import {
   BUYER_ANNUAL_REVENUE,
   BUYER_EMPLOYEE_COUNTS,
   BUYER_HELPTEXT,
 } from "../../../constants/buyerOnboardingData";
-// import Input from "../../UI/Input";
 import Select from "../../UI/Select";
 import YearPicker from "../../UI/YearPicker";
 import HeaderForBuyer from "./HeaderForBuyer";
 import ClickTooltip from "../../UI/ClickTooltip";
+import FieldError from "../../UI/FieldError";
 import { Info } from "lucide-react";
+import type { StepPropsBuyerrData } from "../../../types/formDataBuyer";
 
-const BuyerOrganizationScale = ({formBuyerData, setFormBuyerData}) => {
-  const title_vendor = "Organization Scale";
+const BuyerOrganizationScale = ({
+  formBuyerData,
+  setFormBuyerData,
+  fieldErrors,
+  title,
+  subTitle,
+  icon,
+}: StepPropsBuyerrData) => {
   const startYear = 1950;
 
-
-
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormBuyerData((prev) => ({
       ...prev,
@@ -29,7 +33,9 @@ const BuyerOrganizationScale = ({formBuyerData, setFormBuyerData}) => {
     <>
       <HeaderForBuyer
         className="header_for_vendor"
-        title_vendor={title_vendor}
+        title_vendor={title ?? "Organization Scale"}
+        sub_title_vendor={subTitle}
+        icon={icon}
       />
       <div>
         <div>
@@ -37,7 +43,7 @@ const BuyerOrganizationScale = ({formBuyerData, setFormBuyerData}) => {
             <Select
               labelName={
                 <div className="labelSection">
-                  <span className="mandatory">*</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                   <span>Organization Size</span>
                   <ClickTooltip content={BUYER_HELPTEXT.organizationSize}>
                     <Info size={14} color="#6B7280" />
@@ -52,6 +58,9 @@ const BuyerOrganizationScale = ({formBuyerData, setFormBuyerData}) => {
               onChange={handleChange}
               required
             />
+            {fieldErrors?.employeeCount && (
+              <FieldError message={fieldErrors.employeeCount} />
+            )}
           </div>
 
           <div className="form_fields_vendor">
@@ -71,6 +80,9 @@ const BuyerOrganizationScale = ({formBuyerData, setFormBuyerData}) => {
               options={BUYER_ANNUAL_REVENUE}
               onChange={handleChange}
             />
+            {fieldErrors?.annualRevenue && (
+              <FieldError message={fieldErrors.annualRevenue} />
+            )}
           </div>
         </div>
 
@@ -90,6 +102,9 @@ const BuyerOrganizationScale = ({formBuyerData, setFormBuyerData}) => {
             value={formBuyerData.yearFounded}
             onChange={handleChange}
           />
+          {fieldErrors?.yearFounded && (
+            <FieldError message={fieldErrors.yearFounded} />
+          )}
         </div>
       </div>
     </>

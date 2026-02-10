@@ -41,9 +41,20 @@ export interface BuyerDataInterface {
 }
 
 
+/** Field-level validation errors (field name -> message) from Zod */
+export interface StepFieldErrors {
+  [field: string]: string;
+}
+
 export interface StepPropsBuyerrData {
   formBuyerData: BuyerDataInterface;
   setFormBuyerData: React.Dispatch<React.SetStateAction<BuyerDataInterface>>;
+  /** When Continue fails, parent passes Zod field errors for this step */
+  fieldErrors?: StepFieldErrors;
+  /** Optional header (from tab config) */
+  title?: string;
+  subTitle?: string;
+  icon?: React.ReactNode;
 }
 
 export type FormElement =

@@ -2,6 +2,27 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+---
+
+## Vendor COTS Assessment – Multistep Form (changelog)
+
+Documentation for the Vendor COTS multistep form (schema-driven, validation, constants) is maintained with **folder paths and line numbers** in:
+
+- **`frontend/src/Components/pages/Assessments/VendorCOTS/README.md`**
+
+Summary of changes:
+
+| Folder path | File | Lines | Description |
+|-------------|------|-------|-------------|
+| `frontend/src/constants/` | `vendorCotsFormSchema.ts` | 1–190 | Form schema: sections, labels, input type, options key, required. |
+| `frontend/src/constants/` | `vendorCotsOptions.ts` | 1–139 | Options/validation constants for select and multiselect fields. |
+| `frontend/src/Components/pages/Assessments/VendorCOTS/` | `VendorCotsDynamicStep.tsx` | 1–169 | Dynamic step component (text, textarea, select, multiselect). |
+| `frontend/src/Components/pages/Assessments/VendorCOTS/` | `VendorCOTSMain.tsx` | 1–422 | Main form: tabs, step validation, submit/save-draft. |
+
+See the VendorCOTS README for detailed line ranges and section descriptions.
+
+---
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh

@@ -2,6 +2,7 @@ import React from "react";
 import PreviewTable from "../../../preview/PreviewTable";
 import type { PreviewField } from "../../../../types/preview";
 import { BUYER_COTS_FIELD_KEYS } from "../../../../constants/buyerCotsAssessmentKeys";
+import HeaderForBuyer from "../../BuyerOnboarding/HeaderForBuyer";
 
 const MULTISELECT_KEYS = [
   "integrationSystems",
@@ -95,9 +96,25 @@ const PREVIEW_SECTIONS: { title: string; fields: PreviewField<FormData>[] }[] = 
   },
 ];
 
-const StepBuyerCotsPreview = ({ formData }: { formData: Record<string, string> }) => {
+const StepBuyerCotsPreview = ({
+  formData,
+  title,
+  subTitle,
+  icon,
+}: {
+  formData: Record<string, string>;
+  title?: string;
+  subTitle?: string;
+  icon?: React.ReactNode;
+}) => {
   return (
     <div>
+      <HeaderForBuyer
+        className="header_for_vendor"
+        title_vendor={title ?? "Review"}
+        sub_title_vendor={subTitle}
+        icon={icon}
+      />
       {PREVIEW_SECTIONS.map((section) => (
         <div key={section.title} style={{ marginBottom: 24 }}>
           <PreviewTable<FormData>

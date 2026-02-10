@@ -19,6 +19,7 @@ export interface AttestationCompanyProfile {
  * Snake_case to align with backend; frontend can use camelCase and map on submit.
  */
 export interface VendorSelfAttestationPayload {
+  product_name?: string | null;
   purchase_decision_makers?: string[] | null;
   pain_points_solved?: string | null;
   alternatives_considered?: string | null;

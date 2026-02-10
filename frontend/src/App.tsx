@@ -29,7 +29,9 @@ import Authorization from "./utils/Authorization";
 import OnboardingAccess from "./utils/OnboardingVerify";
 import VendorAttestationsMainForm from "./Components/pages/VendorAttestations/VendorAttestationsMainForm";
 import VendorCOTSMain from "./Components/pages/Assessments/VendorCOTS/VendorCOTSMain";
+import VendorAttestationDetails from "./Components/pages/VendorAttestationDetails/VendorAttestationDetails";
 import BuyerAssessment from "./Components/pages/Assessments/BuyerAssessment/BuyerAssessment";
+import VendorSelfAttestationLayout from "./Components/layout/VendorSelfAttestationLayout";
 
 function App() {
   return (
@@ -41,6 +43,10 @@ function App() {
           <Route path="/forgotPassword" element={<ForgotPassword />} />
           <Route path="/resetPassword" element={<ResetPassword />} />
           <Route path="/signup/:token" element={<SignUp />} />
+          <Route path="/vendorSelfAttestation" element={<VendorSelfAttestationLayout />}>
+            <Route index element={<VendorAttestationsMainForm />} />
+            <Route path=":token" element={<VendorAttestationsMainForm />} />
+          </Route>
           <Route element={<Authorization />}>
             <Route element={<RouteAccess />}>
               <Route element={<MainLayout />}>
@@ -48,6 +54,10 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/organizations" element={<Organizations />} />
                 <Route path="/assessments" element={<Assessments />} />
+                <Route path="/vendorcots/:assessmentId" element={<VendorCOTSMain />} />
+                <Route path="/vendorcots" element={<VendorCOTSMain />} />
+                <Route path="/buyerAssessment/:id" element={<BuyerAssessment />} />
+                <Route path="/buyerAssessment" element={<BuyerAssessment />} />
                 <Route path="/vendor-directory" element={<VendorDirectory />} />
                 <Route path="/my-vendor" element={<MyVendors />} />
                 <Route path="/compilance" element={<Compilance />} />
@@ -55,10 +65,14 @@ function App() {
                 <Route path="/sales-enablement" element={<SalesEnablement />} />
                 <Route path="/evidence-library" element={<EvidenceLibrary />} />
                 <Route
-                  path="/directory-listing"
+                  path="/product_profile"
                   element={<DirectoryListing />}
                 />
                 <Route path="/reports" element={<Reports />} />
+                <Route
+                  path="/attestation_details"
+                  element={<VendorAttestationDetails />}
+                />
 
                 <Route path="/user-management" element={<UserManagement />} />
               </Route>
@@ -76,14 +90,6 @@ function App() {
             <Route
               path="/onBoarding/buyerOnboarding/:token"
               element={<BuyerMainForm type="buyer" />}
-            />
-            <Route
-              path="/vendorSelfAttestation"
-              element={<VendorAttestationsMainForm />}
-            />
-            <Route
-              path="/vendorSelfAttestation/:token"
-              element={<VendorAttestationsMainForm />}
             />
             <Route path="/vendorcots" element={<VendorCOTSMain />} />
             <Route element={<Authorization />}>

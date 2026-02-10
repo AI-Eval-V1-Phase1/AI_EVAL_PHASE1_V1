@@ -1,0 +1,311 @@
+/* Vendor Overview Dashboard */
+.vendor_overview_page {
+  padding: 0;
+  max-width: 100%;
+}
+
+/* Header alignment matches multi-step form (card.css: page_header_align, page_header_row, page_header_title_block) */
+.vendor_overview_heading.page_header_align {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.vendor_overview_headers.page_header_row .page_header_title_block .page_header_title,
+.vendor_overview_headers.page_header_row .page_header_title_block .vendor_overview_subtitle {
+  color: inherit;
+}
+
+.vendor_overview_actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.vendor_overview_toggle_error {
+  width: 100%;
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
+  color: #dc2626;
+}
+
+.vendor_overview_toggle_wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.vendor_overview_toggle {
+  width: 2.75rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background-color: #2563eb;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.vendor_overview_toggle::after {
+  content: "";
+  position: absolute;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  right: 2px;
+  transition: transform 0.2s;
+}
+
+.vendor_overview_toggle[aria-pressed="false"] {
+  background-color: #d1d5db;
+}
+
+.vendor_overview_toggle[aria-pressed="false"]::after {
+  transform: translateX(-1.25rem);
+  right: auto;
+  left: 2px;
+}
+
+.vendor_overview_upload_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: #2563eb;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.vendor_overview_upload_btn:hover {
+  opacity: 0.9;
+}
+
+/* Metrics row */
+.vendor_overview_metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .vendor_overview_metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vendor_overview_metric_card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.vendor_overview_metric_card_icon {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  color: #9ca3af;
+}
+
+.vendor_overview_metric_title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin: 0 0 0.5rem 0;
+}
+
+.vendor_overview_metric_value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.vendor_overview_metric_value_grade {
+  color: #16a34a;
+}
+
+.vendor_overview_metric_desc {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.vendor_overview_progress_bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.vendor_overview_progress_fill {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 4px;
+  transition: width 0.2s;
+}
+
+/* Section: My Attestations / Recent Self-Attestations */
+.vendor_overview_section {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.vendor_overview_section_title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.vendor_overview_section_subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+}
+
+.vendor_overview_attestation_row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.vendor_overview_attestation_row:last-child {
+  margin-bottom: 0;
+}
+
+.vendor_overview_attestation_icon {
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+
+.vendor_overview_attestation_icon_check {
+  color: #16a34a;
+}
+
+.vendor_overview_attestation_content {
+  flex: 1;
+  min-width: 0;
+}
+
+.vendor_overview_attestation_name {
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.15rem 0;
+}
+
+.vendor_overview_attestation_date {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.vendor_overview_attestation_actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.vendor_overview_badge_verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.vendor_overview_btn_update {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.vendor_overview_btn_update:hover {
+  background: #f9fafb;
+}
+
+.vendor_overview_btn_view {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.vendor_overview_btn_view:hover {
+  background: #f9fafb;
+}
+
+.vendor_overview_empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9375rem;
+  background: white;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+}
+
+.vendor_overview_loading,
+.vendor_overview_error {
+  padding: 1rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.vendor_overview_error {
+  color: #dc2626;
+}
+
+/* Default dashboard (non-vendor) */
+.dashboard_placeholder {
+  padding: 2rem;
+  font-size: 1.125rem;
+  color: #6b7280;
+}

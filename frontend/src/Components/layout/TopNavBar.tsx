@@ -1,13 +1,108 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "../../styles/layout/topNav.css";
 import { Bell, Shield } from "lucide-react";
 import UserProfile from "../pages/UserProfile/UserProfile";
 
+interface MeUser {
+  email?: string | null;
+  user_name?: string | null;
+  user_first_name?: string | null;
+  user_last_name?: string | null;
+}
+
+function getInitials(firstName: string, lastName: string, userName: string, email: string): string {
+  const first = (firstName ?? "").trim();
+  const last = (lastName ?? "").trim();
+  if (first && last) return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
+  if (first) return first.slice(0, 2).toUpperCase();
+  const un = (userName ?? "").trim();
+  if (un.length >= 2) return un.slice(0, 2).toUpperCase();
+  if (un.length === 1) return un.toUpperCase();
+  const em = (email ?? "").trim();
+  if (em) return em.slice(0, 2).toUpperCase();
+  return "UN";
+}
+
+/** Format stored role for UI display (e.g. "system admin" → "System Admin") */
+function formatRoleForDisplay(role: string | null | undefined): string {
+  if (role == null || typeof role !== "string" || !role.trim()) return "User";
+  return role
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 const TopNavBar = () => {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [user, setUser] = useState<MeUser | null>(null);
 
   const userRef = useRef(null);
   const popupRef = useRef(null);
+
+  const fetchMe = useCallback(async () => {
+    const token = sessionStorage.getItem("bearerToken");
+    if (!token) return;
+    const baseUrl = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
+    try {
+      const res = await fetch(`${baseUrl}/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data: MeUser = await res.json();
+        setUser(data);
+      } else {
+        setUserFromSessionStorage();
+      }
+    } catch {
+      setUserFromSessionStorage();
+    }
+  }, []);
+
+  const setUserFromSessionStorage = useCallback(() => {
+    const email = sessionStorage.getItem("userEmail") ?? "";
+    const userName = sessionStorage.getItem("userName") ?? "";
+    const firstName = sessionStorage.getItem("userFirstName") ?? "";
+    const lastName = sessionStorage.getItem("userLastName") ?? "";
+    if (email || userName || firstName || lastName) {
+      setUser({
+        email: email || null,
+        user_name: userName || null,
+        user_first_name: firstName || null,
+        user_last_name: lastName || null,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    setUserFromSessionStorage();
+    fetchMe();
+  }, [fetchMe, setUserFromSessionStorage]);
+
+  const initials = user
+    ? getInitials(
+        user.user_first_name ?? "",
+        user.user_last_name ?? "",
+        user.user_name ?? "",
+        user.email ?? ""
+      )
+    : "UN";
+  const displayName = user
+    ? (user.user_name ?? "").trim() || `${(user.user_first_name ?? "").trim()} ${(user.user_last_name ?? "").trim()}`.trim() || (user.email ?? "").trim() || "User"
+    : (sessionStorage.getItem("userName") ?? "").trim() ||
+      [sessionStorage.getItem("userFirstName"), sessionStorage.getItem("userLastName")].filter(Boolean).join(" ").trim() ||
+      (sessionStorage.getItem("userEmail") ?? "").trim() ||
+      "User Name";
+  const emailDisplay = (user?.email ?? "").trim() || (sessionStorage.getItem("userEmail") ?? "").trim() || "user@gmail.com";
+  const systemRole = sessionStorage.getItem("systemRole");
+  const userRole = sessionStorage.getItem("userRole");
+  // For vendor/buyer show org role (e.g. Admin, Analyst) instead of user_platform_role (Vendor/Buyer)
+  const isVendorOrBuyer =
+    systemRole && ["vendor", "buyer"].includes(systemRole.trim().toLowerCase());
+  const roleLabel = isVendorOrBuyer && userRole?.trim()
+    ? formatRoleForDisplay(userRole)
+    : formatRoleForDisplay(systemRole ?? undefined);
 
   const handleUserPopup = () => {
     setIsPopupVisible((prev) => !prev);
@@ -15,12 +110,12 @@ const TopNavBar = () => {
 
   // Close popup on outside click
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (
         popupRef.current &&
-        !popupRef.current.contains(event.target) &&
+        !popupRef.current.contains(event.target as Node) &&
         userRef.current &&
-        !userRef.current.contains(event.target)
+        !userRef.current.contains(event.target as Node)
       ) {
         setIsPopupVisible(false);
       }
@@ -57,10 +152,15 @@ const TopNavBar = () => {
             onClick={handleUserPopup}
             ref={userRef}
           >
-            <div className="initials">UN</div>
+            <div className="initials">{initials}</div>
             <div className="name_email">
-              <p className="userName">User Name</p>
-              <p className="email_id">user@gmail.com</p>
+              <p className="userName">{displayName}</p>
+              {/* {roleLabel && (
+                <span className="user_role_badge" title={`Role: ${roleLabel}`}>
+                  {roleLabel}
+                </span>
+              )} */}
+              <p className="email_id">{emailDisplay}</p>
             </div>
           </div>
         </div>

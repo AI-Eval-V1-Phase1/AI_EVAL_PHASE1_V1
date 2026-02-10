@@ -1,6 +1,7 @@
 import HeaderForVendor from "../VendorOnboarding/HeaderForVendor";
 import FormField from "../../UI/FormField";
 import Select from "../../UI/Select";
+import { ShieldCheck } from "lucide-react";
 
 const StepComplianceAndCertifications = ({data}) => {
     const dummy_Data = ["A"]; // just for now to UI wokring
@@ -10,6 +11,7 @@ const StepComplianceAndCertifications = ({data}) => {
       <HeaderForVendor
         title_vendor="Compliance & Certifications "
         className="header_for_vendor"
+        icon={<ShieldCheck size={18} />}
       />
 
       <div>

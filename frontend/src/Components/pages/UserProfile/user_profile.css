@@ -17,14 +17,93 @@
     sans-serif;
 }
 
-/* Title */
-.user_popup h5 {
-  margin: 0;
+/* Account header: icon + title, same spacing as list items for consistency */
+.user_popup_account_header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 10px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.user_popup_account_icon {
+  color: var(--main-dark-color, #2463eb);
+  flex-shrink: 0;
+}
+
+.user_popup_account_title {
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
   color: #333;
-  border-bottom: 1px solid #eee;
+}
+
+/* Role row - same style as profile/list items in user_popup */
+/* .user_popup_role {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #444;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafbfc;
+}
+
+.user_popup_role svg {
+  color: var(--main-dark-color, #2463eb);
+  flex-shrink: 0;
+}
+
+.user_popup_role_label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.user_popup_role_value {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--main-dark-color, #2463eb);
+} */
+
+/* Same as .user_popup ul li (Profile row) */
+.user_popup_role {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 0px 16px;
+  cursor: default;
+  color: #444;
+  font-size: 14px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.user_popup_role:hover {
+  background-color: #f5f7fa;
+}
+
+.user_popup_role span:first-of-type {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user_popup_role svg {
+  width: 18px;
+  height: 18px;
+  color: #555;
+}
+
+.user_popup_role_label {
+  color: #444;
+}
+
+.user_popup_role_value {
+  margin-left: auto;
+  font-weight: 500;
+  color: #444;
 }
 
 /* List reset */
@@ -71,13 +150,13 @@
 .logout_btn {
   color: white;
   background-color: #d00000;
-  width:91%;
+  width: 91%;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   border-radius: 4px;
   display: flex;
-  justify-content: center;
+  /* justify-content: center; */
   align-content: center;
   align-items: center;
   gap: 5px;
@@ -85,8 +164,24 @@
   padding: 8px;
   color: white;
   margin: 0px 9px 10px 9px;
-  border:  none;
+  border: none;
 }
+
+.logout_btn:disabled {
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.logout_btn.auth_btn_loading .auth_spinner {
+  animation: auth-spin 0.8s linear infinite;
+}
+
 /* Logout emphasis */
 /* .user_popup ul li:last-child {
   color: #d9534f;

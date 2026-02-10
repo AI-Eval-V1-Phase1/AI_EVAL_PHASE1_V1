@@ -1,37 +1,55 @@
-import Input from "../../../UI/Input";
 import HeaderForVendor from "../../VendorOnboarding/HeaderForVendor";
 import FormField from "../../../UI/FormField";
+import { BarChart2 } from "lucide-react";
+import { VENDOR_COTS_FIELD_KEYS } from "../../../../constants/vendorCotsAssessmentKeys";
 
-const StepCompetitiveAnalysis = ({ data }) => {
+const KEYS = VENDOR_COTS_FIELD_KEYS.competitiveAnalysis;
+
+interface StepCompetitiveAnalysisProps {
+  data: Record<number, { label: string; placeholder: string; required: boolean }>;
+  formData: Record<string, string>;
+  setFormData: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+}
+
+const StepCompetitiveAnalysis = ({
+  data,
+  formData,
+  setFormData,
+}: StepCompetitiveAnalysisProps) => {
   return (
     <>
-      <HeaderForVendor
-        title_vendor="Customer Discovery"
-        className="header_for_vendor"
-      />
-
-      <div>
-        <div className="form_fields_vendor">
-          {/* VendorType */}
-          <FormField
-            label={data[0].label}
-            mandatory={data[0].required}
-            tooltipText={data[0].placeholder}
-            // errorText={errors.companyWebsite}
-          >
-            <Input type="textarea" />
-          </FormField>
-        </div>
-        <div className="form_fields_vendor">
-          {/* Onboarding - Indsutry Selector */}
-          <FormField
-            label={data[1].label}
-            mandatory={data[1].required}
-            tooltipText={data[1].placeholder}
-            // errorText={errors.companyWebsite}
-          >
-            <Input type="textarea" />
-          </FormField>
+      <div className="step_form_body">
+        <HeaderForVendor
+          title_vendor="Competitive Analysis"
+          className="header_for_vendor"
+          icon={<BarChart2 size={18} />}
+        />
+        <div className="step_form_right">
+          <div className="form_fields_vendor">
+            {KEYS.map((key, i) => {
+              const config = data[i];
+              if (!config) return null;
+              return (
+                <FormField
+                  key={key}
+                  label={config.label}
+                  mandatory={config.required}
+                  tooltipText={config.placeholder}
+                >
+                  <textarea
+                    id={key}
+                    name={key}
+                    value={formData[key] ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, [key]: e.target.value }))
+                    }
+                    rows={3}
+                    className="textarea_field"
+                  />
+                </FormField>
+              );
+            })}
+          </div>
         </div>
       </div>
     </>

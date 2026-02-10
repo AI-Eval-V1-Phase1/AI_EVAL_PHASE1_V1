@@ -3,6 +3,7 @@ import FormField from "../../UI/FormField";
 import Select from "../../UI/Select";
 import Input from "../../UI/Input";
 import FileUpload from "../../UI/FileUpload";
+import { FileText } from "lucide-react";
 
 const StepEvidenceAndSupoortDoc = ({ data }) => {
   const dummy_Data = ["A"]; // just for now to UI wokring
@@ -11,6 +12,7 @@ const StepEvidenceAndSupoortDoc = ({ data }) => {
       <HeaderForVendor
         title_vendor="Evidence & Supporting Documentation"
         className="header_for_vendor"
+        icon={<FileText size={18} />}
       />
 
       <div>

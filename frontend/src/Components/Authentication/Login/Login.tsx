@@ -1,26 +1,44 @@
 import { useState } from "react";
 import "./login.css";
 import { toast } from "react-toastify";
-import { LockKeyhole, Mail, ArrowRight, Eye, EyeOff, CheckCircle, CircleAlert } from "lucide-react";
+import {
+  LockKeyhole,
+  Mail,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  CircleAlert,
+  Loader2,
+} from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-
+import { Shield } from "lucide-react";
+import HeaderForAuth from "../../UI/HeaderForAuth";
 const Login = () => {
   document.title = "AI Eval Platform | Sign in";
 
-  const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
+  const BASE_URL =
+    import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
   const navigate = useNavigate();
   const location = useLocation();
-  const resetSuccess = (location.state as { resetSuccess?: boolean } | null)?.resetSuccess;
+  const resetSuccess = (location.state as { resetSuccess?: boolean } | null)
+    ?.resetSuccess;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [isUser, setIsUser] = useState({});
   const [isError, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const getUser = async (e: any) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-    const data = { email, password };
+    const data = {
+      email: email.trim().toLowerCase(),
+      password,
+    };
     // console.log(data);
 
     try {
@@ -32,42 +50,86 @@ const Login = () => {
         body: JSON.stringify(data),
       });
       const text = await response.text();
-      let result: { token?: string; userDetails?: unknown[]; message?: string } = {};
+      let result: {
+        token?: string;
+        userDetails?: unknown[];
+        message?: string;
+      } = {};
       try {
         result = text ? JSON.parse(text) : {};
       } catch {
-        setError(response.ok ? "Invalid response from server" : "Server error. Check that the API is running.");
+        setError(
+          response.ok
+            ? "Invalid response from server"
+            : "Server error. Check that the API is running.",
+        );
+        setIsLoading(false);
         return;
       }
       if (response.ok) {
-        // console.log(result.userDetails[0]);
         const bearerToken = result.token;
-        const userDetails = result.userDetails[0];
+        const userDetails = result.userDetails?.[0];
+        if (!userDetails || !bearerToken) {
+          setError("Invalid response from server");
+          setIsLoading(false);
+          return;
+        }
         setIsUser(userDetails);
-        console.log(userDetails);
         sessionStorage.setItem("bearerToken", bearerToken);
-        sessionStorage.setItem("userEmail", userDetails.email);
-        sessionStorage.setItem("userRole", userDetails.role);
-        sessionStorage.setItem("userId", userDetails.id);
-        sessionStorage.setItem("systemRole", userDetails.user_platform_role);
+        sessionStorage.setItem("userEmail", userDetails.email ?? "");
+        sessionStorage.setItem(
+          "userRole",
+          userDetails.role != null ? String(userDetails.role).trim() : "",
+        );
+        sessionStorage.setItem("userId", String(userDetails.id ?? ""));
+        sessionStorage.setItem(
+          "organizationName",
+          String(userDetails.organization_name ?? "").trim(),
+        );
+        sessionStorage.setItem(
+          "userName",
+          String(userDetails.user_name ?? "").trim(),
+        );
+        sessionStorage.setItem(
+          "userFirstName",
+          String(userDetails.user_first_name ?? "").trim(),
+        );
+        sessionStorage.setItem(
+          "userLastName",
+          String(userDetails.user_last_name ?? "").trim(),
+        );
+        const platformRole = userDetails.user_platform_role;
+        sessionStorage.setItem(
+          "systemRole",
+          platformRole != null && platformRole !== ""
+            ? String(platformRole).trim()
+            : "",
+        );
         sessionStorage.setItem(
           "user_signup_completed",
-          userDetails.user_signup_completed,
+          String(userDetails.user_signup_completed ?? "false"),
         );
         sessionStorage.setItem(
           "user_onboarding_completed",
-          userDetails.user_onboarding_completed,
+          String(userDetails.user_onboarding_completed ?? "false"),
         );
-        // console.log(userDetails.email);
-        // navigate("/");
         toast.success("Login successful!", { autoClose: 2000 });
-        const nextPath = userDetails.user_onboarding_completed ? "/" : "/onBoarding";
+        const nextPath =
+          userDetails.user_onboarding_completed === true ||
+          userDetails.user_onboarding_completed === "true"
+            ? "/"
+            : "/onBoarding";
         setTimeout(() => navigate(nextPath), 2000);
       } else {
-        setError(result.message)
+        setError(
+          result.message || "Login failed. Check your email and password.",
+        );
       }
     } catch (error) {
       console.log(error);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -75,15 +137,18 @@ const Login = () => {
     setIsVisible((prev) => !prev);
   };
 
+  const isDisabledBtn = !email.trim() || !password.trim() || isLoading;
+
   return (
     <>
       <div className="authPage">
         <div className="authContent">
           <div className="loginData">
             <div className="loginCred">
+              <HeaderForAuth/>
               <div className="loginForm">
-                <p className="authPlatformTitle">AI Eval Platform</p>
-                <h1 className="loginHeading">Sign in</h1>
+                <p className="loginHeading">Welcome</p>
+                <p className="loginCaption">Sign in to your AI EVAL account</p>
                 <form action="" autoComplete="off" onSubmit={getUser}>
                   <div className="emailData">
                     <label htmlFor="loginEmail">
@@ -95,7 +160,12 @@ const Login = () => {
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (isError) setError("");
+                      }}
+                      placeholder="johndoe@domain.com"
+                      aria-invalid={!!isError}
                     />
                   </div>
                   <div className="passwordData">
@@ -108,7 +178,12 @@ const Login = () => {
                     <input
                       type={isVisible ? "text" : "password"}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (isError) setError("");
+                      }}
+                      placeholder="......."
+                      aria-invalid={!!isError}
                     />
                     <span onClick={passwordVisible} className="passwordVisible">
                       {isVisible ? (
@@ -120,24 +195,54 @@ const Login = () => {
                   </div>
                   {resetSuccess && (
                     <div className="authMessage authMessage--success">
-                      <CheckCircle className="authMessage__icon" size={16} aria-hidden />
+                      <CheckCircle
+                        className="authMessage__icon"
+                        size={16}
+                        aria-hidden
+                      />
                       <p className="loginSuccess">
-                        Password reset successfully. You can sign in with your new password.
+                        Password reset successfully. You can sign in with your
+                        new password.
                       </p>
                     </div>
                   )}
                   {isError && (
-                    <div className="authMessage authMessage--error">
-                      <CircleAlert className="authMessage__icon" size={16} aria-hidden />
+                    <div
+                      className="authMessage authMessage--error"
+                      style={{ marginTop: "0.5em", marginBottom: 0 }}
+                    >
+                      <CircleAlert
+                        className="authMessage__icon"
+                        size={16}
+                        aria-hidden
+                      />
                       <p className="orgError">{isError}</p>
                     </div>
                   )}
                   <div className="loginBtn">
-                    <button type="submit" className="login-btn">
-                      Signin{" "}
-                      <span>
-                        <ArrowRight width={20} />
-                      </span>
+                    <button
+                      type="submit"
+                      className={`login-btn ${isDisabledBtn ? "disabled_css" : ""} ${isLoading ? "auth_btn_loading" : ""}`}
+                      disabled={isDisabledBtn}
+                      aria-busy={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          Signing in…
+                          <Loader2
+                            className="auth_spinner"
+                            size={20}
+                            aria-hidden
+                          />
+                        </>
+                      ) : (
+                        <>
+                          Sign in
+                          <span>
+                            <ArrowRight width={20} />
+                          </span>
+                        </>
+                      )}
                     </button>
                   </div>
                   <div>

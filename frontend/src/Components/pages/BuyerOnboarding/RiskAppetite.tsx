@@ -2,17 +2,24 @@ import React from "react";
 import HeaderForBuyer from "./HeaderForBuyer";
 import Select from "../../UI/Select";
 import ClickTooltip from "../../UI/ClickTooltip";
+import FieldError from "../../UI/FieldError";
 import { Info } from "lucide-react";
 import {
   BUYER_ACCEPTABLE_RISK_LEVEL,
   BUYER_AI_RISK_APPETITE,
   BUYER_HELPTEXT,
 } from "../../../constants/buyerOnboardingData";
+import type { StepPropsBuyerrData } from "../../../types/formDataBuyer";
 
-const RiskAppetite = ({ formBuyerData, setFormBuyerData }) => {
-  const title_vendor = "Risk Appetite";
-
-  const handleChange = (e) => {
+const RiskAppetite = ({
+  formBuyerData,
+  setFormBuyerData,
+  fieldErrors,
+  title,
+  subTitle,
+  icon,
+}: StepPropsBuyerrData) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormBuyerData({ ...formBuyerData, [name]: value });
   };
@@ -20,7 +27,9 @@ const RiskAppetite = ({ formBuyerData, setFormBuyerData }) => {
     <>
       <HeaderForBuyer
         className="header_for_vendor"
-        title_vendor={title_vendor}
+        title_vendor={title ?? "Risk Appetite"}
+        sub_title_vendor={subTitle}
+        icon={icon}
       />
 
       <div>
@@ -28,7 +37,7 @@ const RiskAppetite = ({ formBuyerData, setFormBuyerData }) => {
           <Select
             labelName={
               <div className="labelSection">
-                <span className="mandatory">*</span>
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                 <span>AI Risk Appetite</span>
                 <ClickTooltip content={BUYER_HELPTEXT.aiRiskAppetite}>
                   <Info size={14} color="#6B7280" />
@@ -43,13 +52,16 @@ const RiskAppetite = ({ formBuyerData, setFormBuyerData }) => {
             onChange={handleChange}
             required
           />
+          {fieldErrors?.aiRiskAppetite && (
+            <FieldError message={fieldErrors.aiRiskAppetite} />
+          )}
         </div>
 
         <div className="form_fields_vendor">
           <Select
             labelName={
               <div className="labelSection">
-                <span className="mandatory">*</span>
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                 <span>Acceptable Risk Level</span>
                 <ClickTooltip content={BUYER_HELPTEXT.acceptableRiskLevel}>
                   <Info size={14} color="#6B7280" />
@@ -64,6 +76,9 @@ const RiskAppetite = ({ formBuyerData, setFormBuyerData }) => {
             onChange={handleChange}
             required
           />
+          {fieldErrors?.acceptableRiskLevel && (
+            <FieldError message={fieldErrors.acceptableRiskLevel} />
+          )}
         </div>
       </div>
     </>

@@ -1,15 +1,16 @@
-import { Ban, CircleX, Landmark, Plus, X } from "lucide-react";
+import { Ban, CircleX, Landmark, Plus } from "lucide-react";
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { getOrganizations } from "../../../Context/OrganizationsData";
-import { useDispatch } from "react-redux";
 
 const CreateOrganization = ({ setIsOrganization }) => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const [isOrganizationName, setIsOrganizationName] = useState("");
   const [isError, setIsError] = useState("");
-  const dispatch = useDispatch(getOrganizations);
+  const dispatch = useDispatch();
+  const { data: organizations } = useSelector((state) => state.organizations);
   const closeNewOrg = () => {
     setIsOrganization(false);
     setIsError("");
@@ -18,12 +19,22 @@ const CreateOrganization = ({ setIsOrganization }) => {
   const createOrg = async (e) => {
     e.preventDefault();
 
-    if (isOrganizationName == "") {
-      setIsError("Organization Feild is required");
+    const nameTrimmed = isOrganizationName?.trim() ?? "";
+    if (!nameTrimmed) {
+      setIsError("Organization field is required");
       return;
     }
 
-    const user = sessionStorage.getItem("userId")
+    const nameLower = nameTrimmed.toLowerCase();
+    const duplicate = (organizations ?? []).some(
+      (org) => (org.organizationName ?? "").trim().toLowerCase() === nameLower
+    );
+    if (duplicate) {
+      setIsError("An organization with this name already exists.");
+      return;
+    }
+
+    const user = sessionStorage.getItem("userId");
     // console.log(user)
     const orgData = { isOrganizationName,user };
 

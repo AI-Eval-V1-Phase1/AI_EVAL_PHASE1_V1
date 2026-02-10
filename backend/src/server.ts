@@ -1,28 +1,24 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { initDB } from "../database/db.js";
-import orgrouter from "../routes/organization.js";
-import userRoutes from "../routes/userRoutes.js";
-import authenticateToken from "../middlewares/routesProtection.js";
-import vendorRoutes from "../routes/vendorOnboarding.routes.js";
-import vendorSelfAttestationRoutes from "../routes/vendorSelfAttestation.routes.js";
-import buyerRoutes from "../routes/buyerOnboarding.routes.js";
-import assessmentRoutes from "../routes/assessment.routes.js";
+import { initDB } from "./database/db.js";
+import orgrouter from "./routes/organization.routes.js";
+import userRoutes from "./routes/userRoutes.routes.js";
+import authenticateToken from "./middlewares/routesProtection.js";
+import vendorRoutes from "./routes/vendorOnboarding.routes.js";
+import vendorSelfAttestationRoutes from "./routes/vendorSelfAttestation.routes.js";
+import attestationRoutes from "./routes/attestation.routes.js";
+import buyerRoutes from "./routes/buyerOnboarding.routes.js";
+import assessmentRoutes from "./routes/assessment.routes.js";
+import lookupRoutes from "./routes/lookup.routes.js";
+import healthRoute from "./routes/health.routes.js";
 
 dotenv.config({ path: ".env.local" });
 
 const PORT = process.env.PORT || 5003;
 const app = express();
 
-const allowedOrigins = [
-  process.env.BASE_URL,
-  process.env.FRONTEND_URL,
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:3000",
-].filter(Boolean);
+const allowedOrigins = [process.env.BASE_URL].filter(Boolean);
 
 // CORS first so preflight (OPTIONS) always gets correct headers
 app.use(
@@ -34,7 +30,7 @@ app.use(
         cb(null, true);
       }
     },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
     optionsSuccessStatus: 204,
@@ -45,37 +41,34 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-// Explicit preflight handler for vendorSelfAttestation so OPTIONS returns 204 with CORS headers
-app.options("/api/v1/vendorSelfAttestation", (_, res) => {
-  res.status(204).end();
+// Preflight: respond to OPTIONS for any /api/v1 path with 204 (CORS headers set by cors() above)
+app.use("/api/v1", (req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+  next();
 });
 
-app.use("/api/v1", userRoutes);
-app.use("/api/v1", orgrouter);
-app.use("/api/v1", vendorRoutes);
-app.use("/api/v1", vendorSelfAttestationRoutes);
-app.use("/api/v1", buyerRoutes);
-app.use("/api/v1", assessmentRoutes);
+app.use("/api/v1", [
+  userRoutes,
+  orgrouter,
+  vendorRoutes,
+  vendorSelfAttestationRoutes,
+  attestationRoutes,
+  buyerRoutes,
+  assessmentRoutes,
+  lookupRoutes,
+  healthRoute
+]);
 
 console.log("Starting server...");
 
-// Health check route
-app.get("/api/v1/health", authenticateToken, (req, res) => {
-  res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
-});
-
-async function startServer() {
-  try {
-    await initDB();
-
-    // ✅ Add leading slash here
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (err: any) {
-    console.error("Server failed:", err.message);
-  }
+try {
+  //** Calling database function
+  await initDB();
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+} catch (err: any) {
+  console.error("Server failed:", err.message);
 }
-
-startServer();

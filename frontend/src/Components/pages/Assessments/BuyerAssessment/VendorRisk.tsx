@@ -2,13 +2,23 @@ import HeaderForBuyer from "../../BuyerOnboarding/HeaderForBuyer";
 import { BUYER_COTS_FIELD_KEYS } from "../../../../constants/buyerCotsAssessmentKeys";
 import BuyerCotsField from "./BuyerCotsField";
 
-const VendoeRisk = ({ data, formData, setFormData }) => {
+const VendoeRisk = ({
+  data,
+  formData,
+  setFormData,
+  fieldErrors,
+  title,
+  subTitle,
+  icon,
+}) => {
   const keys = BUYER_COTS_FIELD_KEYS.vendorRisk;
   return (
     <>
       <HeaderForBuyer
         className="header_for_vendor"
-        title_vendor="Vendor Risk"
+        title_vendor={title ?? "Vendor Risk"}
+        sub_title_vendor={subTitle}
+        icon={icon}
       />
       <div>
         {keys.map((key, i) => {
@@ -24,6 +34,7 @@ const VendoeRisk = ({ data, formData, setFormData }) => {
                 multiselect={config.multiselect}
                 value={formData[key]}
                 onChange={(val) => setFormData((prev) => ({ ...prev, [key]: val }))}
+                errorMessage={fieldErrors?.[key]}
               />
             </div>
           );

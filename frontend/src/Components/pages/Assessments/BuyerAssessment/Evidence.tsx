@@ -2,13 +2,23 @@ import { BUYER_COTS_FIELD_KEYS } from "../../../../constants/buyerCotsAssessment
 import BuyerCotsField from "./BuyerCotsField";
 import HeaderForBuyer from "../../BuyerOnboarding/HeaderForBuyer";
 
-const Evidence = ({ data, formData, setFormData }) => {
+const Evidence = ({
+  data,
+  formData,
+  setFormData,
+  fieldErrors,
+  title,
+  subTitle,
+  icon,
+}) => {
   const keys = BUYER_COTS_FIELD_KEYS.evidence;
   return (
     <>
       <HeaderForBuyer
         className="header_for_vendor"
-        title_vendor="Evidence"
+        title_vendor={title ?? "Evidence"}
+        sub_title_vendor={subTitle}
+        icon={icon}
       />
       <div>
         {keys.map((key, i) => {
@@ -24,6 +34,7 @@ const Evidence = ({ data, formData, setFormData }) => {
                 multiselect={config.multiselect}
                 value={formData[key]}
                 onChange={(val) => setFormData((prev) => ({ ...prev, [key]: val }))}
+                errorMessage={fieldErrors?.[key]}
               />
             </div>
           );

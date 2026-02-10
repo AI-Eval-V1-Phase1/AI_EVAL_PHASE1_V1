@@ -1,15 +1,15 @@
 import type { ChangeEvent } from "react";
+import type { ReactNode } from "react";
 import HeaderForVendor from "../VendorOnboarding/HeaderForVendor";
 import FormField from "../../UI/FormField";
 import Select from "../../UI/Select";
 import Input from "../../UI/Input";
-import DropdownTreeSelect from "../../UI/DropdownTreeSelect";
-import MultiSelectDropDown from "../../UI/MultiSelectDropDown";
+import IndustrySectorDependency from "../../UI/IndustrySectorDependency";
+import ChipMultiSelect from "../../UI/ChipMultiSelect";
 import YearPicker from "../../UI/YearPicker";
 import {
   VENDOR_TYPES,
   VENDOR_MATURITY_LEVELS,
-  INDUSTRY_SECTORS,
   EMPLOYEE_COUNTS,
   HEADQUARTERS_LOCATION,
   OPERATING_REGIONS,
@@ -19,53 +19,44 @@ import type { AttestationCompanyProfile } from "../../../types/vendorSelfAttesta
 import { Info } from "lucide-react";
 import ClickTooltip from "../../UI/ClickTooltip";
 
-const SECTOR_KEY_MAP: Record<string, keyof Record<string, string[]>> = {
-  "Public Sector": "public_sector",
-  "Private Sector": "private_sector",
-  "Non-Profit": "non_profit_sector",
-};
-
 export interface StepCompanyProfileAttestationProps {
   companyProfile: AttestationCompanyProfile;
   setCompanyProfile: React.Dispatch<React.SetStateAction<AttestationCompanyProfile>>;
+  fieldErrors?: Record<string, string>;
+  title?: string;
+  subTitle?: string;
+  icon?: ReactNode;
 }
 
 const StepCompanyProfileAttestation = ({
   companyProfile,
   setCompanyProfile,
+  fieldErrors = {},
+  title = "Company Profile",
+  subTitle,
+  icon,
 }: StepCompanyProfileAttestationProps) => {
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setCompanyProfile((prev) => ({ ...prev, [name]: value }));
   };
 
-  const sector = (companyProfile.sector ?? {}) as Record<string, string[]>;
-  const handleSectorChange = (selectedValues: string[]) => {
-    const newSector: Record<string, string[]> = {
-      public_sector: [],
-      private_sector: [],
-      non_profit_sector: [],
-    };
-    INDUSTRY_SECTORS.forEach((sectorNode) => {
-      const key = SECTOR_KEY_MAP[sectorNode.label];
-      if (!key) return;
-      const allowed = sectorNode.options.map((o) => o.value);
-      newSector[key] = selectedValues.filter((v) => allowed.includes(v));
-    });
-    setCompanyProfile((prev) => ({ ...prev, sector: newSector }));
+  const sectorValue = {
+    public_sector: companyProfile.sector?.public_sector ?? [],
+    private_sector: companyProfile.sector?.private_sector ?? [],
+    non_profit_sector: companyProfile.sector?.non_profit_sector ?? [],
   };
-
-  const allSelectedSectors = [
-    ...(sector.public_sector || []),
-    ...(sector.private_sector || []),
-    ...(sector.non_profit_sector || []),
-  ];
 
   const currentYear = new Date().getFullYear();
 
   return (
     <>
-      <HeaderForVendor title_vendor="Company Profile" className="header_for_vendor" />
+      <HeaderForVendor
+        title_vendor={title}
+        sub_title_vendor={subTitle}
+        icon={icon}
+        className="header_for_vendor"
+      />
 
       <div className="step_form_body">
         <div className="step_form_right">
@@ -74,6 +65,7 @@ const StepCompanyProfileAttestation = ({
               label="What type of vendor are you?"
               mandatory={true}
               tooltipText={VENDOR_HELPTEXT.vendorType}
+              errorText={fieldErrors.vendorType}
             >
               <Select
                 labelName=""
@@ -92,14 +84,16 @@ const StepCompanyProfileAttestation = ({
               label="What is your Target Industries"
               mandatory={true}
               tooltipText={VENDOR_HELPTEXT.sector}
+              errorText={fieldErrors.sector}
             >
-              <DropdownTreeSelect
+              <IndustrySectorDependency
                 id="industry_sec"
-                default_option="Select industry sector"
-                options={INDUSTRY_SECTORS}
-                value={allSelectedSectors}
+                sector={sectorValue}
+                onChange={(sector) =>
+                  setCompanyProfile((prev) => ({ ...prev, sector }))
+                }
+                defaultCategoryOption="Select sector category"
                 required
-                onChange={handleSectorChange}
               />
             </FormField>
           </div>
@@ -108,6 +102,7 @@ const StepCompanyProfileAttestation = ({
               label="What stage is your company at?"
               mandatory={true}
               tooltipText={VENDOR_HELPTEXT.vendorMaturity}
+              errorText={fieldErrors.vendorMaturity}
             >
               <Select
                 labelName=""
@@ -129,6 +124,7 @@ const StepCompanyProfileAttestation = ({
               label="Company Website"
               mandatory={true}
               tooltipText={VENDOR_HELPTEXT.companyWebsite}
+              errorText={fieldErrors.companyWebsite}
             >
               <Input
                 labelName=""
@@ -145,6 +141,7 @@ const StepCompanyProfileAttestation = ({
               label="Brief Company Description"
               mandatory={true}
               tooltipText={VENDOR_HELPTEXT.companyDescription}
+              errorText={fieldErrors.companyDescription}
             >
               <Input
                 labelName=""
@@ -161,6 +158,7 @@ const StepCompanyProfileAttestation = ({
               label="Approximate Number of Employees"
               mandatory={true}
               tooltipText="Select the range that includes your total headcount"
+              errorText={fieldErrors.employeeCount}
             >
               <Select
                 labelName=""
@@ -179,6 +177,7 @@ const StepCompanyProfileAttestation = ({
               label="Year Company Founded"
               mandatory={true}
               tooltipText="Enter 4-digit year (e.g., 2018)"
+              errorText={fieldErrors.yearFounded}
             >
               <YearPicker
                 startYear={1950}
@@ -198,6 +197,7 @@ const StepCompanyProfileAttestation = ({
               label="Headquarters Location"
               mandatory={true}
               tooltipText={VENDOR_HELPTEXT.headquartersLocation}
+              errorText={fieldErrors.headquartersLocation}
             >
               <Select
                 labelName=""
@@ -216,13 +216,14 @@ const StepCompanyProfileAttestation = ({
               label="Geographic Regions Where You Operate"
               mandatory={true}
               tooltipText={VENDOR_HELPTEXT.operatingRegions}
+              errorText={fieldErrors.operatingRegions}
             >
-              <MultiSelectDropDown
+              <ChipMultiSelect
                 id="operatingRegions"
+                description="Select all geographic regions where you actively operate or serve customers"
                 options={OPERATING_REGIONS}
-                default_option="Select operating regions"
-                value={companyProfile.operatingRegions || []}
-                onChange={(selected: string[]) =>
+                value={companyProfile.operatingRegions ?? []}
+                onChange={(selected) =>
                   setCompanyProfile((prev) => ({ ...prev, operatingRegions: selected }))
                 }
               />

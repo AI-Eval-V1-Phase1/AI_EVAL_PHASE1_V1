@@ -1,6 +1,6 @@
 import HeaderForVendor from "./HeaderForVendor";
 import Select from "../../UI/Select";
-import MultiSelectDropDown from "../../UI/MultiSelectDropDown";
+import ChipMultiSelect from "../../UI/ChipMultiSelect";
 import Input from "../../UI/Input";
 import { useState } from "react";
 import {
@@ -9,12 +9,14 @@ import {
   VENDOR_HELPTEXT,
 } from "../../../constants/vendorOnboardingData";
 import type { StepPropsVendorData } from "../../../types/formDataVendor";
-import { Info } from "lucide-react";
+import { Globe, Info } from "lucide-react";
 import ClickTooltip from "../../UI/ClickTooltip";
+import FieldError from "../../UI/FieldError";
 
 const StepGeography = ({
   formVendorData,
   setFormVendorData,
+  fieldErrors,
 }: StepPropsVendorData) => {
   const [isVisibleInput, setIsVisibleInput] = useState(false);
   const [customHeadquarter, setCustomHeadquarter] = useState("");
@@ -35,14 +37,21 @@ const StepGeography = ({
 
   return (
     <>
-      <HeaderForVendor className="header_for_vendor" title_vendor="Geography" />
+    <div className="step_form_body">
+
+<HeaderForVendor
+        icon=<Globe/>
+        className="header_for_vendor"
+        title_vendor="Geography"
+        sub_title_vendor="Where do you operate?"
+      />
 
       {/* Headquarters Location */}
       <div className="form_fields_vendor">
         <Select
           labelName={
             <div className="labelSection">
-              <span className="mandatory">*</span>
+              <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
               <span>Headquarters Location</span>
               <ClickTooltip content={VENDOR_HELPTEXT.headquartersLocation}>
                 <Info size={14} color="#6B7280" />
@@ -56,6 +65,9 @@ const StepGeography = ({
           default_option="Select headquarter location"
           onChange={(e) => handleHeadquartersChange(e.target.value)}
         />
+        {fieldErrors?.headquartersLocation && (
+          <FieldError message={fieldErrors.headquartersLocation} />
+        )}
       </div>
 
       {isVisibleInput && (
@@ -63,7 +75,7 @@ const StepGeography = ({
           <Input
             labelName={
               <div className="labelSection">
-                <span className="mandatory">*</span>
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
                 <span>Specify Location</span>
                 {/* <ClickTooltip content={VENDOR_HELPTEXT.customHeadquarter}>
                   <Info size={14} color="#6B7280" />
@@ -86,25 +98,30 @@ const StepGeography = ({
 
       {/* Operating Regions */}
       <div className="form_fields_vendor">
-        <MultiSelectDropDown
+        <ChipMultiSelect
+          id="operatingRegions"
           labelName={
             <div className="labelSection">
-              <span className="mandatory">*</span>
+              <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
               <span>Operating Regions</span>
               <ClickTooltip content={VENDOR_HELPTEXT.operatingRegions}>
                 <Info size={14} color="#6B7280" />
               </ClickTooltip>
             </div>
           }
-          id="operatingRegions"
+          description="Select all geographic regions where you actively operate or serve customers"
           options={OPERATING_REGIONS}
-          default_option="Select operating regions"
-          value={formVendorData.operatingRegions}
-          onChange={(selected: string[]) =>
+          value={formVendorData.operatingRegions ?? []}
+          onChange={(selected) =>
             setFormVendorData({ ...formVendorData, operatingRegions: selected })
           }
         />
+        {fieldErrors?.operatingRegions && (
+          <FieldError message={fieldErrors.operatingRegions} />
+        )}
       </div>
+    </div>
+      
     </>
   );
 };

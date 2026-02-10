@@ -1,6 +1,9 @@
-import { z } from "zod";
+import { z } from "zod"
 
-
+/**
+ * Step 1: Company Profile
+ * Shared sector schema used by step 1 and full onboarding schema.
+ */
 export const industrySectorSchema = z
   .object({
     public_sector: z.array(z.string()).default([]),
@@ -17,10 +20,22 @@ export const industrySectorSchema = z
       message: "Please select at least one industry sector",
       path: [],
     }
-  );
+  )
 
+/** Step 1 – Company Profile schema (vendorType, sector, maturity, website, description) */
+export const vendorStep1CompanyProfileSchema = z.object({
+  vendorType: z.string().min(1, "Single selection required"),
+  sector: industrySectorSchema,
+  vendorMaturity: z.string().min(1, "Single selection required"),
+  companyWebsite: z.string().url("Must be valid URL format (https://...)"),
+  companyDescription: z
+    .string()
+    .min(1, "Company description is required")
+    .max(500, "Maximum 500 characters"),
+})
 
-export const emailSchema = z.string().min(1).email("Invalid email address");
+/** Re-export for backward compatibility: full vendor onboarding (all steps combined) */
+export const emailSchema = z.string().min(1).email("Invalid email address")
 export const vendorOnboardingSchema = z.object({
   vendorType: z.string().min(1, "Single selection required"),
   sector: industrySectorSchema,
@@ -37,14 +52,15 @@ export const vendorOnboardingSchema = z.object({
   primaryContactRole: z.string().min(1, "Single selection required"),
   primaryContactEmail: emailSchema,
   employeeCount: z.string().min(1, "Single selection required"),
-  yearFounded: z.string().min(1, "Year founded is required"),
+  yearFounded: z.union([z.string().min(1, "Year founded is required"), z.number()]),
   headquartersLocation: z
     .string()
     .min(
       1,
-      'Single selection required. If "Other" is selected, a text input will appear.',
+      'Single selection required. If "Other" is selected, a text input will appear.'
     ),
-  operatingRegions: z
-    .string()
-    .min(1, "Multiple selections allowed. At least 1 selection is required."),
-});
+  operatingRegions: z.union([
+    z.array(z.string()).min(1, "At least one operating region is required"),
+    z.string().min(1, "At least one operating region is required"),
+  ]),
+})

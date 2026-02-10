@@ -10,19 +10,23 @@
   gap: 2em;
   width: 100%;
   margin: 0 auto;
+  max-width: 640px;
 }
 
 .authPage .signupContent.authContent {
-  max-width: 520px;
+  max-width: 640px;
 }
+
 .sign_up_form_rows {
   display: flex;
   gap: 1em;
   justify-content: space-between;
+  flex-wrap: wrap;
 }
 
-.sign_up_form_rows div{
-    width: 32em;
+.sign_up_form_rows > div {
+  flex: 1 1 200px;
+  min-width: 0;
 }
 
 .readOnlyField {
