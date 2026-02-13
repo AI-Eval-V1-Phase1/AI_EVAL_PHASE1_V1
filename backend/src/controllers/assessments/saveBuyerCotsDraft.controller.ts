@@ -78,7 +78,11 @@ const saveBuyerCotsDraft = async (req: Request, res: Response) => {
 
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, Number(userId))).limit(1);
     if (!user) return res.status(404).json({ message: "User not found" });
+<<<<<<< HEAD
     const organizationId = String((user as Record<string, unknown>).organization_id ?? "").trim();
+=======
+    const organizationId = String((user as Record<string, unknown>).organization_name ?? "").trim();
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     if (!organizationId) {
       return res.status(400).json({ message: "User has no organization. Complete onboarding or contact admin." });
     }
@@ -91,7 +95,10 @@ const saveBuyerCotsDraft = async (req: Request, res: Response) => {
         : null;
     const payloadCots = buildPayloadCots(body);
     payloadCots.organization_id = organizationId;
+<<<<<<< HEAD
     payloadCots.user_id = Number(userId);
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
     if (assessmentId) {
       const [existing] = await db
@@ -108,6 +115,7 @@ const saveBuyerCotsDraft = async (req: Request, res: Response) => {
       }
       await db.transaction(async (tx) => {
         await tx.update(assessments).set({ status: "draft", updated_at: new Date() }).where(eq(assessments.id, assessmentId));
+<<<<<<< HEAD
         const [existingCots] = await tx
           .select({ id: cotsBuyerAssessments.id })
           .from(cotsBuyerAssessments)
@@ -121,6 +129,12 @@ const saveBuyerCotsDraft = async (req: Request, res: Response) => {
         } else {
           await tx.insert(cotsBuyerAssessments).values({ assessment_id: assessmentId, ...payloadCots });
         }
+=======
+        await tx
+          .update(cotsBuyerAssessments)
+          .set({ ...payloadCots, updated_at: new Date() })
+          .where(eq(cotsBuyerAssessments.assessment_id, assessmentId));
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       });
       return res.status(200).json({ message: "Draft saved", assessmentId: String(assessmentId) });
     }

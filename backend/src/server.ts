@@ -18,6 +18,7 @@ dotenv.config({ path: ".env.local" });
 const PORT = process.env.PORT || 5003;
 const app = express();
 
+<<<<<<< HEAD
 const baseUrl = process.env.BASE_URL?.trim();
 const allowedOrigins: string[] = [
   ...(baseUrl ? [baseUrl] : []),
@@ -39,6 +40,19 @@ app.use(
         return cb(null, true);
       }
       return cb(null, true);
+=======
+const allowedOrigins = [process.env.BASE_URL].filter(Boolean);
+
+// CORS first so preflight (OPTIONS) always gets correct headers
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        cb(null, true);
+      } else {
+        cb(null, true);
+      }
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -47,6 +61,7 @@ app.use(
   }),
 );
 
+<<<<<<< HEAD
 // Ensure CORS headers are on every response (even 4xx/5xx) so browser can read the body
 app.use((req, res, next) => {
   const origin = req.headers.origin;
@@ -57,6 +72,8 @@ app.use((req, res, next) => {
   next();
 });
 
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 // Allow larger request bodies (default is ~100kb; Buyer COTS and other forms can exceed this)
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));

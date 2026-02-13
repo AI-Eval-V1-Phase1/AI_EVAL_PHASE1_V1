@@ -2,7 +2,10 @@ import { useEffect, useState, useCallback } from "react";
 import ProductProfileView from "../ProductProfile/ProductProfileView";
 import { buildFormStateFromApi } from "../../../utils/vendorAttestationState";
 import type { VendorSelfAttestationFormState } from "../../../types/vendorSelfAttestation";
+<<<<<<< HEAD
 import "../ProductProfile/product_profile.css";
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
 const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
 

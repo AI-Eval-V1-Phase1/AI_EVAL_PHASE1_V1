@@ -32,7 +32,11 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
     const isSystemAdmin = platformRole === "system admin";
 
     const organizationIdFromQuery = typeof req.query?.organizationId === "string" ? req.query.organizationId.trim() || null : null;
+<<<<<<< HEAD
     const orgIdFromUser = user.organization_id;
+=======
+    const orgIdFromUser = (user as Record<string, unknown>).organization_name;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const orgIdStrFromUser = orgIdFromUser != null ? String(orgIdFromUser).trim() : "";
     const orgIdStr = isSystemAdmin && organizationIdFromQuery ? organizationIdFromQuery : orgIdStrFromUser;
     if (!isSystemAdmin && !orgIdStr) {
@@ -49,10 +53,13 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
         organizationId: assessments.organization_id,
         // cots_buyer_assessments (Excel buyer_cots column names) → same API shape for frontend
         organizationName: cotsBuyerAssessments.organization_name,
+<<<<<<< HEAD
         completedByUserEmail: usersTable.email,
         completedByUserFirstName: usersTable.user_first_name,
         completedByUserLastName: usersTable.user_last_name,
         completedByUserName: usersTable.user_name,
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         industrySector: cotsBuyerAssessments.industry_sector,
         businessPainPoint: cotsBuyerAssessments.pain_point,
         expectedOutcomes: cotsBuyerAssessments.business_outcomes,
@@ -124,7 +131,10 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
         cotsVendorAssessments,
         eq(assessments.id, cotsVendorAssessments.assessment_id)
       )
+<<<<<<< HEAD
       .leftJoin(usersTable, eq(cotsBuyerAssessments.user_id, usersTable.id))
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       .where(isSystemAdmin ? sql`1 = 1` : eq(assessments.organization_id, orgIdStr))
       .orderBy(desc(assessments.created_at));
 
@@ -136,10 +146,13 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       updatedAt: r.updatedAt,
       organizationId: r.organizationId,
       organizationName: r.organizationName ?? null,
+<<<<<<< HEAD
       completedByUserEmail: r.completedByUserEmail ?? null,
       completedByUserFirstName: r.completedByUserFirstName ?? null,
       completedByUserLastName: r.completedByUserLastName ?? null,
       completedByUserName: r.completedByUserName ?? null,
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       industrySector: r.industrySector ?? null,
       businessPainPoint: r.businessPainPoint ?? null,
       expectedOutcomes: r.expectedOutcomes ?? null,

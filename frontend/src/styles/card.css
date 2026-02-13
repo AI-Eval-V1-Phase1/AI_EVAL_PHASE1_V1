@@ -24,7 +24,11 @@
   flex-direction: column;
   /* padding: 1em 2em; */
   /* padding: 0 6em 3em 6em; */
+<<<<<<< HEAD
   /* background-color: white; */
+=======
+  background-color: white;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   /* border-radius: 10px; */
   /* justify-content: space-between; */
   /* align-content: center; */
@@ -39,8 +43,11 @@
   justify-content: flex-start;
   flex-direction: column;
   margin: 0.9em 0 0 0;
+<<<<<<< HEAD
   border-bottom: 1px solid #00000012;
   padding: 0 0 0.8em 0;
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 /* Reuse same alignment on any page header (Dashboard, Vendor Directory, Assessments, User Management) */
@@ -107,7 +114,11 @@
   display: flex;
   gap: 0.5em;
 }
+<<<<<<< HEAD
 .headers_icons {
+=======
+.headers_icons{
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   display: flex;
 }
 /* .sub_title_card {
@@ -156,6 +167,7 @@
   align-items: center;
   gap: 0.5em;
 }
+<<<<<<< HEAD
 
 .card_confirmation_link_btn {
   font-weight: 500;
@@ -177,6 +189,8 @@
   opacity: 0.9;
 }
 
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 .signup_success_note {
   background-color: #dcfce7;
 
@@ -193,7 +207,11 @@
 }
 
 .signup_confirmation_card {
+<<<<<<< HEAD
   /* background-color: #d4edda;
+=======
+  background-color: #d4edda;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   color: #155724;
   border-radius: 8px;
   width: 400px;
@@ -202,6 +220,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+<<<<<<< HEAD
   gap: 0.4em; */
 
   width: 100%;
@@ -216,6 +235,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+=======
+  gap: 0.4em;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .signup_confirmation_card {
@@ -237,6 +259,7 @@
 
 .signup_confirmation_card p {
   /* color: #4b5563; */
+<<<<<<< HEAD
   /* font-size: 0.9em; */
 }
 
@@ -270,6 +293,12 @@
   font-size: 13px;
   color: rgb(100, 116, 139);
 }
+=======
+  font-size: 0.9em;
+}
+
+
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 .sub_title_card {
   color: var(--light-gray-color);
   font-size: 0.9em;
@@ -339,5 +368,8 @@
   gap: 5em;
   margin: 1em 0;
 }
+<<<<<<< HEAD
 
 /* CSS FOR CARDCONFIRMATION FOR SIGNUP */
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8

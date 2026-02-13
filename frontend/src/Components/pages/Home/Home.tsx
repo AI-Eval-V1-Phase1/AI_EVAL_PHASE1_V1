@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useEffect } from "react";
 import "./home.css";
 
@@ -26,3 +27,15 @@ function Home() {
 }
 
 export default Home;
+=======
+import React from 'react'
+
+const Home = () => {
+  document.title = "AI EVAL";
+  return (
+    <div>Home</div>
+  )
+}
+
+export default Home
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8

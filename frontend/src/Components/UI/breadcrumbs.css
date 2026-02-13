@@ -3,7 +3,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 2px;
+<<<<<<< HEAD
   font-size: 1rem;
+=======
+  font-size: 0.875rem;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   color: var(--breadcrumb-color, #64748b);
   margin-bottom: 1rem;
 }
@@ -19,8 +23,12 @@
 .breadcrumb-link {
   color: var(--main-auth-button-color, #2563eb);
   text-decoration: none;
+<<<<<<< HEAD
   font-weight: 600;
   font-size: 1em;
+=======
+  font-weight: 500;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .breadcrumb-link:hover {
@@ -32,12 +40,19 @@
   border: none;
   cursor: pointer;
   padding: 0;
+<<<<<<< HEAD
   /* font: inherit; */
+=======
+  font: inherit;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .breadcrumb-item {
   color: inherit;
+<<<<<<< HEAD
   text-transform: capitalize;
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .breadcrumb-separator {

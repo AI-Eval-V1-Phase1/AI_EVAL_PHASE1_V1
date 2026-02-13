@@ -1,4 +1,5 @@
 import { BUYER_COTS_FIELD_KEYS } from "../../../../constants/buyerCotsAssessmentKeys";
+<<<<<<< HEAD
 import { MAX_FILE_SIZE_BYTES } from "../../../../constants/vendorAttestationDocumentConstants";
 import BuyerCotsField from "./BuyerCotsField";
 import FormField from "../../../UI/FormField";
@@ -21,6 +22,11 @@ function parseFileNames(value: string | undefined): string[] {
   }
 }
 
+=======
+import BuyerCotsField from "./BuyerCotsField";
+import HeaderForBuyer from "../../BuyerOnboarding/HeaderForBuyer";
+
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 const Evidence = ({
   data,
   formData,
@@ -42,6 +48,7 @@ const Evidence = ({
       <div>
         {keys.map((key, i) => {
           const config = data[i];
+<<<<<<< HEAD
           if (config && isUploadField(config)) {
             const fileNames = parseFileNames(formData[key]);
             return (
@@ -63,6 +70,8 @@ const Evidence = ({
               </div>
             );
           }
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           return (
             <div key={key} className="form_fields_vendor buyer_cots_field">
               <BuyerCotsField

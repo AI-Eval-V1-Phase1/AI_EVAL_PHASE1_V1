@@ -79,10 +79,24 @@ export const inviteUser = async (req: Request, res: Response) => {
         .json({ message: "User with this email already exists" });
     }
 
+<<<<<<< HEAD
     // Resolve organization to numeric id (AI EVAL = 1, else use provided id)
     const orgIdNum = organization === "AI EVAL" || organization === "1" ? 1 : Number(organization);
     if (!Number.isInteger(orgIdNum) || orgIdNum < 1) {
       return res.status(400).json({ message: "Invalid organization" });
+=======
+    // Resolve organization ID to organization name (for display and DB)
+    let organizationName: string;
+    if (organization === "AI EVAL") {
+      organizationName = "AI EVAL";
+    } else {
+      const orgRows = await db
+        .select({ organizationName: createOrganization.organizationName })
+        .from(createOrganization)
+        .where(eq(createOrganization.id, Number(organization)))
+        .limit(1);
+      organizationName = orgRows[0]?.organizationName ?? String(organization);
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     }
 
     // Each organization may have only one admin; reject inviting a second admin for the same org
@@ -92,7 +106,11 @@ export const inviteUser = async (req: Request, res: Response) => {
         .from(usersTable)
         .where(
           and(
+<<<<<<< HEAD
             eq(usersTable.organization_id, orgIdNum),
+=======
+            eq(usersTable.organization_name, organizationName),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             eq(usersTable.role, "admin"),
           ),
         )
@@ -112,15 +130,25 @@ export const inviteUser = async (req: Request, res: Response) => {
       "system manager",
       "system viewer",
     ];
+<<<<<<< HEAD
     const isAiEval = orgIdNum === 1;
     let platform_role: string;
     if (
       isAiEval &&
+=======
+    let platform_role: string;
+    if (
+      organization === "AI EVAL" &&
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       role &&
       systemRoles.includes(String(role).toLowerCase().trim())
     ) {
       platform_role = String(role).toLowerCase().trim();
+<<<<<<< HEAD
     } else if (isAiEval) {
+=======
+    } else if (organization === "AI EVAL") {
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       platform_role = "system admin";
     } else {
       platform_role = "";
@@ -128,7 +156,11 @@ export const inviteUser = async (req: Request, res: Response) => {
 
     await db.insert(usersTable).values({
       email,
+<<<<<<< HEAD
       organization_id: orgIdNum,
+=======
+      organization_name: organizationName,
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       role,
       invited_at: new Date(),
       account_status: "invited",
@@ -146,6 +178,7 @@ export const inviteUser = async (req: Request, res: Response) => {
 
     const transporter = emailConfig();
 
+<<<<<<< HEAD
     const orgRows = await db
       .select({ organizationName: createOrganization.organizationName })
       .from(createOrganization)
@@ -153,6 +186,9 @@ export const inviteUser = async (req: Request, res: Response) => {
       .limit(1);
     const organizationNameForEmail = orgRows[0]?.organizationName ?? "Organization";
     const organizationNameCapitalized = capitalizeFirstLetter(organizationNameForEmail);
+=======
+    const organizationNameCapitalized = capitalizeFirstLetter(organizationName);
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const roleCapitalized = capitalizeFirstLetter(role);
 
     await transporter.sendMail({

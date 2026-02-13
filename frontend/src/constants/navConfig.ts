@@ -15,7 +15,10 @@ import {
   Landmark,
   type LucideIcon,
   BotIcon,
+<<<<<<< HEAD
   Layers,
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 } from "lucide-react"
 
 export interface NavItemConfig {
@@ -58,7 +61,11 @@ export const NAVIGATION = {
     },
     {
       label: "Solutions Architect",
+<<<<<<< HEAD
       icon: Layers,
+=======
+      icon: FileArchive,
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       path: "/evidence-library",
       accessRoles: ["admin"],
       systemRoles: ["system admin", "vendor"],
@@ -88,7 +95,11 @@ export const NAVIGATION = {
     {
       label: "Security Center",
       icon: Shield,
+<<<<<<< HEAD
       path: "/security_center",
+=======
+      path: "/compilance",
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       accessRoles: ["admin"],
       systemRoles: ["system admin", "buyer"],
     },

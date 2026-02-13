@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import { ArrowRight, CheckCircle, Loader2 } from "lucide-react";
+=======
+import { useEffect } from "react";
+import { ArrowRight, CheckCircle } from "lucide-react";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import { Link, useNavigate } from "react-router-dom";
 import CardContainerOnBoarding from "./CardContainerOnBoarding";
 // css is in card.css
@@ -7,12 +12,17 @@ import CardContainerOnBoarding from "./CardContainerOnBoarding";
 interface CardConfirmationProps {
   /** Link text shown to the user */
   pageNavigateLink?: string;
+<<<<<<< HEAD
   /** Route path to navigate to when the link is clicked (e.g. /assessments). If omitted, uses "/" */
   navigateTo?: string;
   /** Use replace when navigating so the new page has main layout (e.g. after onboarding → assessments) */
   replace?: boolean;
   /** Optional: run before navigating (e.g. auto-login). If returns a Promise, we wait for it then navigate. */
   onProceed?: () => void | Promise<void>;
+=======
+  /** Route path to navigate to when the link is clicked (e.g. /vendorSelfAttestation/:token). If omitted, uses "/" */
+  navigateTo?: string;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   /** Optional sign-in link text (e.g. "Sign in") */
   signinLinkText?: string;
   /** Optional sign-in route (e.g. "/login") – shown when signinLinkText is set */
@@ -26,14 +36,18 @@ interface CardConfirmationProps {
 const CardConfirmation = ({
   pageNavigateLink,
   navigateTo,
+<<<<<<< HEAD
   replace = false,
   onProceed,
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   signinLinkText,
   signinLinkTo,
   redirectTo,
   redirectAfterMs = 5000,
 }: CardConfirmationProps) => {
   const navigate = useNavigate();
+<<<<<<< HEAD
   const [isProceeding, setIsProceeding] = useState(false);
   const [proceedError, setProceedError] = useState<string | null>(null);
   const linkTo = navigateTo && navigateTo.trim() !== "" ? navigateTo : "/";
@@ -56,6 +70,11 @@ const CardConfirmation = ({
     }
   };
 
+=======
+  const linkTo = navigateTo && navigateTo.trim() !== "" ? navigateTo : "/";
+  const linkText = pageNavigateLink ?? "Continue";
+
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   useEffect(() => {
     if (!redirectTo || redirectTo.trim() === "") return;
     const t = setTimeout(() => navigate(redirectTo, { replace: true }), redirectAfterMs);
@@ -72,6 +91,7 @@ const CardConfirmation = ({
           pre-fill assessment fields and personalize your experience on the
           platform.
         </p>
+<<<<<<< HEAD
         <button
           type="button"
           onClick={handleNavigate}
@@ -88,6 +108,11 @@ const CardConfirmation = ({
         {proceedError && (
           <p className="orgError" style={{ marginTop: "0.75rem" }}>{proceedError}</p>
         )}
+=======
+        <Link to={linkTo}>
+          {linkText} <ArrowRight />
+        </Link>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         {signinLinkText && signinLinkTo && signinLinkTo.trim() !== "" && (
           <p style={{ marginTop: "1rem" }}>
             <Link to={signinLinkTo}>{signinLinkText}</Link>

@@ -8,7 +8,11 @@ import Home from "./Components/pages/Home/Home";
 import Dashboard from "./Components/pages/Dashboard/Dashboard";
 import Assessments from "./Components/pages/Assessments/Assessments";
 import VendorDirectory from "./Components/pages/VendorDirectory/VendorDirectory";
+<<<<<<< HEAD
 import Compilance from "./Components/pages/SecurityCenter/Compilance";
+=======
+import Compilance from "./Components/pages/Compliance/Compilance";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import Goverance from "./Components/pages/Goverance/Goverance";
 import { SalesEnablement } from "./Components/pages/SalesEnablement/SalesEnablement";
 import EvidenceLibrary from "./Components/pages/EvidenceLibrary/EvidenceLibrary";
@@ -60,7 +64,11 @@ function App() {
                 <Route path="/buyerAssessment" element={<BuyerAssessment />} />
                 <Route path="/vendor-directory" element={<VendorDirectory />} />
                 <Route path="/my-vendor" element={<MyVendors />} />
+<<<<<<< HEAD
                 <Route path="/security_center" element={<Compilance />} />
+=======
+                <Route path="/compilance" element={<Compilance />} />
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 <Route path="/governance" element={<Goverance />} />
                 <Route path="/sales-enablement" element={<SalesEnablement />} />
                 <Route path="/evidence-library" element={<EvidenceLibrary />} />

@@ -50,8 +50,13 @@ const StepCompanyProfile = ({
             <Select
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Vendor Type</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Vendor Type</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip content={VENDOR_HELPTEXT.vendorType}>
                     <Info size={14} color="#6B7280" />
                   </ClickTooltip>
@@ -75,8 +80,13 @@ const StepCompanyProfile = ({
             <IndustrySectorDependency
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Industry Sector</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Industry Sector</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip content={VENDOR_HELPTEXT.sector}>
                     <Info size={14} color="#6B7280" />
                   </ClickTooltip>
@@ -98,8 +108,13 @@ const StepCompanyProfile = ({
             <Select
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Vendor Maturity Stage</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Vendor Maturity Stage</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip content={VENDOR_HELPTEXT.vendorMaturity}>
                     <Info size={14} color="#6B7280" />
                   </ClickTooltip>
@@ -125,8 +140,13 @@ const StepCompanyProfile = ({
             <Input
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Company Website</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Company Website</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip content={VENDOR_HELPTEXT.companyWebsite}>
                     <Info size={14} color="#6B7280" />
                   </ClickTooltip>
@@ -148,8 +168,13 @@ const StepCompanyProfile = ({
             <Input
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Company Description</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Company Description</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
                   <ClickTooltip content={VENDOR_HELPTEXT.companyDescription}>
                     <Info size={14} color="#6B7280" />

@@ -182,19 +182,32 @@
   /* align-items: flex-start; */
   gap: 0.4rem;
   margin: 0.5em 0;
+<<<<<<< HEAD
   /* align-content: center; */
   /* align-items: center; */
 }
 .authMessage__icon {
   flex-shrink: 0;
   margin-top: 2px;
+=======
+  align-content: center;
+  align-items: center;
+}
+.authMessage__icon {
+  flex-shrink: 0;
+  /* margin-top: 2px; */
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 .authMessage--success .authMessage__icon {
   color: #0f766e;
 
 }
 .authMessage--error .authMessage__icon {
+<<<<<<< HEAD
   color: #dc2626;
+=======
+  color: red;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   width: 14px;
   height: 14px;
 }
@@ -211,7 +224,11 @@
 
 .orgError {
   font-size: 0.8em;
+<<<<<<< HEAD
   color: #dc2626;
+=======
+  color: red;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   /* color: #b91c1c; */
 }
 

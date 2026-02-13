@@ -43,8 +43,13 @@ const RegulatoryContext = ({
               id="primaryRegulatoryFrameworks"
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Primary Regulatory Frameworks</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Primary Regulatory Frameworks</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip
                     content={BUYER_HELPTEXT.primaryRegulatoryFrameworks}
                   >
@@ -70,8 +75,13 @@ const RegulatoryContext = ({
             <Select
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Regulatory Penalty Exposure</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Regulatory Penalty Exposure</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip
                     content={BUYER_HELPTEXT.regulatoryPenaltyExposure}
                   >
@@ -99,8 +109,13 @@ const RegulatoryContext = ({
               id="dataClassificationHandled"
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Data Classification Levels Handled</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Data Classification Levels Handled</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip
                     content={BUYER_HELPTEXT.dataClassificationHandled}
                   >
@@ -126,8 +141,13 @@ const RegulatoryContext = ({
             <Select
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>PII/Sensitive Data Handling</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>PII/Sensitive Data Handling</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip content={BUYER_HELPTEXT.piiHandling}>
                     <Info size={14} color="#6B7280" />
                   </ClickTooltip>

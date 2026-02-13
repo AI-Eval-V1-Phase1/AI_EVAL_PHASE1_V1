@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+<<<<<<< HEAD
 import {
   Plus,
   ClipboardList,
@@ -13,6 +14,9 @@ import {
   CircleCheck,
   Target,
 } from "lucide-react";
+=======
+import { Plus, ClipboardList, Eye, CircleX, Check, Trash2, Pencil } from "lucide-react";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import DataTable from "react-data-table-component";
 import Button from "../../UI/Button";
 import Modal from "../../UI/Modal";
@@ -20,7 +24,10 @@ import LoadingMessage from "../../UI/LoadingMessage";
 import PreviewTable from "../../preview/PreviewTable";
 import type { PreviewField } from "../../../types/preview";
 import { BUYER_COTS_FIELD_KEYS } from "../../../constants/buyerCotsAssessmentKeys";
+<<<<<<< HEAD
 import { formatPreviewValue } from "../../../utils/formatPreviewValue";
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import "../Organizations/organization.css";
 import "../UserManagement/user_management.css";
 import "../../preview/preview_table.css";
@@ -30,6 +37,7 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 /** Keys from list API that count toward progress (cots_buyer fields) */
 const BUYER_COTS_PROGRESS_KEYS = [
+<<<<<<< HEAD
   "businessPainPoint",
   "expectedOutcomes",
   "owningDepartment",
@@ -64,6 +72,15 @@ const BUYER_COTS_PROGRESS_KEYS = [
   "riskDomainScores",
   "contextualMultipliers",
   "riskMitigation",
+=======
+  "businessPainPoint", "expectedOutcomes", "owningDepartment", "budgetRange", "targetTimeline", "criticality",
+  "vendorName", "productName", "requirementGaps", "integrationSystems", "techStack", "digitalMaturityLevel",
+  "dataGovernanceMaturity", "aiGovernanceBoard", "aiEthicsPolicy", "implementationTeamComposition",
+  "dataSensitivity", "regulatoryRequirements", "riskAppetite", "decisionStakes", "impactedStakeholders",
+  "vendorValidationApproach", "vendorSecurityPosture", "vendorCertifications", "pilotRolloutPlan",
+  "rollbackCapability", "changeManagementPlan", "monitoringDataAvailable", "auditLogsAvailable",
+  "testingResultsAvailable", "identifiedRisks", "riskDomainScores", "contextualMultipliers", "riskMitigation",
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 ];
 
 function getBuyerAssessmentProgress(row) {
@@ -83,11 +100,15 @@ function getBuyerAssessmentProgress(row) {
 const formatDate = (d) => {
   if (!d) return "—";
   const date = new Date(d);
+<<<<<<< HEAD
   if (Number.isNaN(date.getTime())) return "—";
   const day = date.getDate().toString().padStart(2, "0");
   const month = date.toLocaleDateString("en-GB", { month: "short" });
   const year = date.getFullYear();
   return `${day}-${month}-${year}`;
+=======
+  return Number.isNaN(date.getTime()) ? String(d) : date.toLocaleDateString(undefined, { dateStyle: "short" });
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 };
 
 const truncate = (str, max = 40) => {
@@ -96,6 +117,7 @@ const truncate = (str, max = 40) => {
   return s.length <= max ? s : `${s.slice(0, max)}…`;
 };
 
+<<<<<<< HEAD
 /** Display name of buyer who completed the assessment (from list API completedBy* fields). */
 function getCompletedByDisplay(row) {
   if (!row) return "";
@@ -110,6 +132,8 @@ function getCompletedByDisplay(row) {
   return "";
 }
 
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 /** Get display value from assessment row (API shape: camelCase, arrays for jsonb) */
 function getRowPreviewValue(row, key) {
   const v = row[key];
@@ -145,6 +169,7 @@ const ASSESSMENT_PREVIEW_SECTIONS = [
   {
     title: "Assessment",
     fields: [
+<<<<<<< HEAD
       {
         label: "Type",
         value: (r) =>
@@ -154,6 +179,9 @@ const ASSESSMENT_PREVIEW_SECTIONS = [
               ? "COTS Vendor"
               : (r.type ?? undefined),
       },
+=======
+      { label: "Type", value: (r) => (r.type === "cots_buyer" ? "COTS Assessment" : r.type === "cots_vendor" ? "COTS Vendor" : (r.type ?? undefined)) },
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       { label: "Status", value: (r) => r.status ?? undefined },
       { label: "Created", value: (r) => formatDate(r.createdAt) },
     ],
@@ -161,68 +189,104 @@ const ASSESSMENT_PREVIEW_SECTIONS = [
   {
     title: "Use Case",
     fields: BUYER_COTS_FIELD_KEYS.useCase.map((key) => ({
+<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
+=======
+      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Vendor Evaluation",
     fields: BUYER_COTS_FIELD_KEYS.vendorEvaluation.map((key) => ({
+<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
+=======
+      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Readiness",
     fields: BUYER_COTS_FIELD_KEYS.readiness.map((key) => ({
+<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
+=======
+      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Risk Profile",
     fields: BUYER_COTS_FIELD_KEYS.riskProfile.map((key) => ({
+<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
+=======
+      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Vendor Risk",
     fields: BUYER_COTS_FIELD_KEYS.vendorRisk.map((key) => ({
+<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
+=======
+      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Implementation",
     fields: BUYER_COTS_FIELD_KEYS.implementation.map((key) => ({
+<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
+=======
+      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Evidence",
     fields: BUYER_COTS_FIELD_KEYS.evidence.map((key) => ({
+<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
+=======
+      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
+      value: (r) => getRowPreviewValue(r, key),
+    })),
+  },
+  {
+    title: "Auto Generated",
+    fields: BUYER_COTS_FIELD_KEYS.autoGenerated.map((key) => ({
+      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
 ];
 
+<<<<<<< HEAD
 const SYSTEM_ROLES = [
   "system admin",
   "system manager",
@@ -246,6 +310,17 @@ const Assessments = () => {
   //    "system"
   //   }
   // ]
+=======
+const SYSTEM_ROLES = ["system admin", "system manager", "system viewer", "system user"];
+
+const Assessments = () => {
+  const navigate = useNavigate();
+  const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim();
+  const isBuyer = systemRole === "buyer";
+  const isVendor = systemRole === "vendor";
+  const isSystemUser = SYSTEM_ROLES.some((r) => r === systemRole);
+  const [activeTab, setActiveTab] = useState<"vendor" | "buyer">("vendor");
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
   useEffect(() => {
     document.title = "AI Eval | Assessments";
@@ -266,9 +341,13 @@ const Assessments = () => {
     }
     const startTime = Date.now();
     const organizationId = sessionStorage.getItem("organizationId");
+<<<<<<< HEAD
     const query = organizationId
       ? `?organizationId=${encodeURIComponent(organizationId)}`
       : "";
+=======
+    const query = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : "";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     fetch(`${BASE_URL}/assessments${query}`, {
       method: "GET",
       headers: {
@@ -299,6 +378,7 @@ const Assessments = () => {
     const token = sessionStorage.getItem("bearerToken");
     if (!token) return;
     const organizationId = sessionStorage.getItem("organizationId");
+<<<<<<< HEAD
     const query = organizationId
       ? `?organizationId=${encodeURIComponent(organizationId)}`
       : "";
@@ -313,6 +393,16 @@ const Assessments = () => {
       .then((result) => {
         if (result?.data?.assessments != null)
           setAssessmentsList(result.data.assessments);
+=======
+    const query = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : "";
+    fetch(`${BASE_URL}/assessments${query}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((result) => {
+        if (result?.data?.assessments != null) setAssessmentsList(result.data.assessments);
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         else setAssessmentsList([]);
       })
       .catch(() => setAssessmentsList([]));
@@ -323,8 +413,12 @@ const Assessments = () => {
       if (document.visibilityState === "visible") loadAssessments();
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
+<<<<<<< HEAD
     return () =>
       document.removeEventListener("visibilitychange", onVisibilityChange);
+=======
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   }, []);
 
   const handleNewAssessment = () => {
@@ -333,12 +427,16 @@ const Assessments = () => {
   };
 
   const handleDeleteDraft = async (assessmentId) => {
+<<<<<<< HEAD
     if (
       !window.confirm(
         "Permanently delete this draft assessment? This cannot be undone.",
       )
     )
       return;
+=======
+    if (!window.confirm("Permanently delete this draft assessment? This cannot be undone.")) return;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const token = sessionStorage.getItem("bearerToken");
     if (!token) return;
     try {
@@ -358,6 +456,7 @@ const Assessments = () => {
   };
 
   const showNewAssessment = isBuyer || isVendor;
+<<<<<<< HEAD
   const organizationId = sessionStorage.getItem("organizationId") ?? "";
   const orgScopedList =
     isBuyer && organizationId
@@ -375,6 +474,10 @@ const Assessments = () => {
         (a) => String(a.organizationId ?? "") === String(myOrgId),
       )
     : [];
+=======
+  const buyerAssessments = assessmentsList.filter((a) => a.type === "cots_buyer");
+  const vendorAssessments = assessmentsList.filter((a) => a.type === "cots_vendor");
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
   const customStyles = {
     table: {
@@ -402,23 +505,31 @@ const Assessments = () => {
     },
     {
       name: <div className="tableHeader">Type</div>,
+<<<<<<< HEAD
       selector: (row) =>
         row.type === "cots_buyer"
           ? "COTS Assessment"
           : row.type === "cots_vendor"
             ? "COTS Vendor"
             : (row.type ?? "—"),
+=======
+      selector: (row) => (row.type === "cots_buyer" ? "COTS Assessment" : row.type === "cots_vendor" ? "COTS Vendor" : (row.type ?? "—")),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       sortable: true,
     },
     {
       name: <div className="tableHeader">Status</div>,
       selector: (row) => {
         const s = (row.status ?? "").toLowerCase();
+<<<<<<< HEAD
         return s === "draft"
           ? "Draft"
           : s === "submitted" || s === "completed"
             ? "Completed"
             : (row.status ?? "—");
+=======
+        return s === "draft" ? "Draft" : s === "submitted" || s === "completed" ? "Completed" : row.status ?? "—";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       },
       sortable: true,
     },
@@ -483,14 +594,19 @@ const Assessments = () => {
 
   return (
     <div className="sec_user_page org_settings_page">
+<<<<<<< HEAD
       <div
         className={`page_header_align ${isBuyer || isVendor || isSystemUser ? "ai_assessments_heading" : "heading_user_page"}`}
       >
+=======
+      <div className={`page_header_align ${isBuyer || isVendor || isSystemUser ? "ai_assessments_heading" : "heading_user_page"}`}>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         <div className="headers page_header_row">
           <span className="icon_size_header" aria-hidden>
             <ClipboardList size={24} />
           </span>
           <div className="page_header_title_block">
+<<<<<<< HEAD
             <h1>
               {" "}
               {isBuyer
@@ -499,12 +615,20 @@ const Assessments = () => {
                   ? "Customer Assessments"
                   : "Assessments"}
             </h1>
+=======
+            <h1>Assessments</h1>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             <p className="sub_title sub_title_card">
               {isBuyer
                 ? "Evaluate third-party vendors and manage your assessments."
                 : isVendor || isSystemUser
+<<<<<<< HEAD
                   ? "Create customer-specific risk assessments for sales opportunities"
                   : "View and manage vendor and buyer assessments."}
+=======
+                  ? "View and manage vendor and buyer assessments."
+                  : "View and manage your assessments"}
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             </p>
           </div>
         </div>
@@ -512,6 +636,7 @@ const Assessments = () => {
           <div className="btn_user_page">
             <Button className="invite_user_btn" onClick={handleNewAssessment}>
               <Plus size={24} />
+<<<<<<< HEAD
               {isVendor ? "Customer Assessment" : "Assessment"}
             </Button>
           </div>
@@ -523,6 +648,8 @@ const Assessments = () => {
               onClick={() => navigate("/buyerAssessment")}
             >
               <Plus size={24} />
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               Assessment
             </Button>
           </div>
@@ -546,6 +673,7 @@ const Assessments = () => {
             >
               Buyer
             </button>
+<<<<<<< HEAD
             <button
               type="button"
               className={`assessment_tab ${activeTab === "my" ? "active" : ""}`}
@@ -553,10 +681,13 @@ const Assessments = () => {
             >
               My Assessments
             </button>
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           </div>
           {activeTab === "vendor" && (
             <div className="ai_assessments_section">
               <h2>Vendor COTS Assessment</h2>
+<<<<<<< HEAD
               <p className="section_desc">
                 Assess your solution fit and customer context for buyers.
               </p>
@@ -636,6 +767,41 @@ const Assessments = () => {
                             </span>
                             <span>{completedBy}</span>
                           </div>
+=======
+              <p className="section_desc">Assess your solution fit and customer context for buyers.</p>
+              <ul className="ai_assessments_checklist">
+                <li><Check size={16} /> Customer discovery and pain points</li>
+                <li><Check size={16} /> Solution fit and implementation</li>
+                <li><Check size={16} /> Risk context and mitigation</li>
+              </ul>
+              <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+              {loading && <LoadingMessage message="Loading assessments…" />}
+              {fetchError && <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>{fetchError}</p>}
+              {!loading && !fetchError && (
+                <div className="assessment_cards">
+                  {vendorAssessments.length === 0 && (
+                    <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>No vendor assessments yet.</p>
+                  )}
+                  {vendorAssessments.map((row) => {
+                    const isDraft = (row.status || "").toLowerCase() === "draft";
+                    const customerSectorVal = row.customerSector != null && String(row.customerSector).trim() !== "" ? String(row.customerSector).trim() : null;
+                    const title = customerSectorVal ?? "Draft";
+                    const statusLabel = isDraft ? "Draft" : "Completed";
+                    const statusClass = isDraft ? "assessment_status_draft" : "assessment_status_completed";
+                    const submittedDisplay = isDraft ? "—" : formatDate(row.vendorCotsUpdatedAt ?? row.updatedAt);
+                    return (
+                      <div key={row.assessmentId} className="assessment_card">
+                        <h2 className="assessment_card_title">{truncate(title, 60)}</h2>
+                        <div className="assessment_card_meta">
+                          <div className="assessment_card_meta_row">
+                            <span className="assessment_card_meta_label">Status</span>
+                            <span className={`assessment_status ${statusClass}`}>{statusLabel}</span>
+                          </div>
+                          <div className="assessment_card_meta_row">
+                            <span className="assessment_card_meta_label">Updated</span>
+                            <span>{submittedDisplay}</span>
+                          </div>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                         </div>
                         <div className="assessment_card_actions">
                           {isDraft && (
@@ -643,9 +809,13 @@ const Assessments = () => {
                               <button
                                 type="button"
                                 className="assessment_card_btn assessment_card_btn_primary"
+<<<<<<< HEAD
                                 onClick={() =>
                                   navigate(`/vendorcots/${row.assessmentId}`)
                                 }
+=======
+                                onClick={() => navigate(`/vendorcots/${row.assessmentId}`)}
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                               >
                                 <Pencil size={14} />
                                 Edit
@@ -653,9 +823,13 @@ const Assessments = () => {
                               <button
                                 type="button"
                                 className="assessment_card_btn assessment_card_btn_danger"
+<<<<<<< HEAD
                                 onClick={() =>
                                   handleDeleteDraft(row.assessmentId)
                                 }
+=======
+                                onClick={() => handleDeleteDraft(row.assessmentId)}
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                                 aria-label="Delete draft"
                               >
                                 <Trash2 size={14} />
@@ -684,6 +858,7 @@ const Assessments = () => {
           {activeTab === "buyer" && (
             <div className="ai_assessments_section">
               <h2>Buy AI Product (COTS)</h2>
+<<<<<<< HEAD
               <p className="section_desc">
                 Assess a third-party vendor tool for your organization.
               </p>
@@ -769,6 +944,42 @@ const Assessments = () => {
                             </span>
                             <span>{completedBy}</span>
                           </div>
+=======
+              <p className="section_desc">Assess a third-party vendor tool for your organization.</p>
+              <ul className="ai_assessments_checklist">
+                <li><Check size={16} /> Vendor security and compliance evaluation</li>
+                <li><Check size={16} /> Data handling and privacy assessment</li>
+                <li><Check size={16} /> Implementation readiness scoring</li>
+                <li><Check size={16} /> Risk mitigation recommendations</li>
+              </ul>
+              <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+              {loading && <LoadingMessage message="Loading assessments…" />}
+              {fetchError && <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>{fetchError}</p>}
+              {!loading && !fetchError && (
+                <div className="assessment_cards">
+                  {buyerAssessments.length === 0 && (
+                    <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>No assessments yet.</p>
+                  )}
+                  {buyerAssessments.map((row) => {
+                    const isDraft = (row.status || "").toLowerCase() === "draft";
+                    const industrySectorVal = row.industrySector != null && String(row.industrySector).trim() !== "" ? String(row.industrySector).trim() : null;
+                    const title = industrySectorVal ?? "Draft";
+                    const statusLabel = isDraft ? "Draft" : "Completed";
+                    const statusClass = isDraft ? "assessment_status_draft" : "assessment_status_completed";
+                    const submittedDisplay = isDraft ? "—" : formatDate(row.submittedDate ?? row.updatedAt);
+                    return (
+                      <div key={row.assessmentId} className="assessment_card">
+                        <h2 className="assessment_card_title">{truncate(title, 60)}</h2>
+                        <div className="assessment_card_meta">
+                          <div className="assessment_card_meta_row">
+                            <span className="assessment_card_meta_label">Status</span>
+                            <span className={`assessment_status ${statusClass}`}>{statusLabel}</span>
+                          </div>
+                          <div className="assessment_card_meta_row">
+                            <span className="assessment_card_meta_label">Submitted</span>
+                            <span>{submittedDisplay}</span>
+                          </div>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                         </div>
                         <div className="assessment_card_actions">
                           {isDraft && (
@@ -776,11 +987,15 @@ const Assessments = () => {
                               <button
                                 type="button"
                                 className="assessment_card_btn assessment_card_btn_primary"
+<<<<<<< HEAD
                                 onClick={() =>
                                   navigate(
                                     `/buyerAssessment/${row.assessmentId}`,
                                   )
                                 }
+=======
+                                onClick={() => navigate(`/buyerAssessment/${row.assessmentId}`)}
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                               >
                                 <Pencil size={14} />
                                 Edit
@@ -788,6 +1003,7 @@ const Assessments = () => {
                               <button
                                 type="button"
                                 className="assessment_card_btn assessment_card_btn_danger"
+<<<<<<< HEAD
                                 onClick={() =>
                                   handleDeleteDraft(row.assessmentId)
                                 }
@@ -918,6 +1134,9 @@ const Assessments = () => {
                                 onClick={() =>
                                   handleDeleteDraft(row.assessmentId)
                                 }
+=======
+                                onClick={() => handleDeleteDraft(row.assessmentId)}
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                                 aria-label="Delete draft"
                               >
                                 <Trash2 size={14} />
@@ -949,6 +1168,7 @@ const Assessments = () => {
       {isBuyer && (
         <div className="ai_assessments_page">
           <div className="ai_assessments_section">
+<<<<<<< HEAD
             <h2>Buy AI Product (COTS)</h2>
             <p className="section_desc">
               Assess a third-party vendor tool for your organization.
@@ -1075,6 +1295,82 @@ const Assessments = () => {
                 })}
               </div>
             )}
+=======
+              <h2>Buy AI Product (COTS)</h2>
+              <p className="section_desc">Assess a third-party vendor tool for your organization.</p>
+              <ul className="ai_assessments_checklist">
+                <li><Check size={16} /> Vendor security and compliance evaluation</li>
+                <li><Check size={16} /> Data handling and privacy assessment</li>
+                <li><Check size={16} /> Implementation readiness scoring</li>
+                <li><Check size={16} /> Risk mitigation recommendations</li>
+              </ul>
+              <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+              {loading && <LoadingMessage message="Loading assessments…" />}
+              {fetchError && <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>{fetchError}</p>}
+              {!loading && !fetchError && (
+                <div className="assessment_cards">
+                  {buyerAssessments.length === 0 && (
+                    <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>No assessments yet.</p>
+                  )}
+                  {buyerAssessments.map((row) => {
+                    const isDraft = (row.status || "").toLowerCase() === "draft";
+                    const industrySectorVal = row.industrySector != null && String(row.industrySector).trim() !== "" ? String(row.industrySector).trim() : null;
+                    const title = industrySectorVal ?? "Draft";
+                    const statusLabel = isDraft ? "Draft" : "Completed";
+                    const statusClass = isDraft ? "assessment_status_draft" : "assessment_status_completed";
+                    const submittedDisplay = isDraft ? "—" : formatDate(row.submittedDate ?? row.updatedAt);
+                    return (
+                      <div key={row.assessmentId} className="assessment_card">
+                        <h2 className="assessment_card_title">{truncate(title, 60)}</h2>
+                        <div className="assessment_card_meta">
+                          <div className="assessment_card_meta_row">
+                            <span className="assessment_card_meta_label">Status</span>
+                            <span className={`assessment_status ${statusClass}`}>{statusLabel}</span>
+                          </div>
+                          <div className="assessment_card_meta_row">
+                            <span className="assessment_card_meta_label">Submitted</span>
+                            <span>{submittedDisplay}</span>
+                          </div>
+                        </div>
+                        <div className="assessment_card_actions">
+                          {isDraft && (
+                            <>
+                              <button
+                                type="button"
+                                className="assessment_card_btn assessment_card_btn_primary"
+                                onClick={() => navigate(`/buyerAssessment/${row.assessmentId}`)}
+                              >
+                                <Pencil size={14} />
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="assessment_card_btn assessment_card_btn_danger"
+                                onClick={() => handleDeleteDraft(row.assessmentId)}
+                                aria-label="Delete draft"
+                              >
+                                <Trash2 size={14} />
+                                Delete
+                              </button>
+                            </>
+                          )}
+                          {!isDraft && (
+                            <button
+                              type="button"
+                              className="assessment_card_btn assessment_card_btn_secondary"
+                              onClick={() => setPreviewRow(row)}
+                            >
+                              <Eye size={14} />
+                              View
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           </div>
         </div>
       )}
@@ -1082,6 +1378,7 @@ const Assessments = () => {
       {isVendor && (
         <div className="ai_assessments_page">
           <div className="ai_assessments_section">
+<<<<<<< HEAD
             <div className="header_cots">
               <div>
                 <span>
@@ -1192,6 +1489,42 @@ const Assessments = () => {
                           </span>
                           <span>{completedBy}</span>
                         </div>
+=======
+            <h2>Vendor COTS Assessment</h2>
+            <p className="section_desc">Assess your solution fit and customer context for buyers.</p>
+            <ul className="ai_assessments_checklist">
+              <li><Check size={16} /> Customer discovery and pain points</li>
+              <li><Check size={16} /> Solution fit and implementation</li>
+              <li><Check size={16} /> Risk context and mitigation</li>
+            </ul>
+            <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+            {loading && <LoadingMessage message="Loading assessments…" />}
+            {fetchError && <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>{fetchError}</p>}
+            {!loading && !fetchError && (
+              <div className="assessment_cards">
+                {vendorAssessments.length === 0 && (
+                  <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>No vendor assessments yet.</p>
+                )}
+                {vendorAssessments.map((row) => {
+                  const isDraft = (row.status || "").toLowerCase() === "draft";
+                  const customerSectorVal = row.customerSector != null && String(row.customerSector).trim() !== "" ? String(row.customerSector).trim() : null;
+                  const title = customerSectorVal ?? "Draft";
+                  const statusLabel = isDraft ? "Draft" : "Completed";
+                  const statusClass = isDraft ? "assessment_status_draft" : "assessment_status_completed";
+                  const submittedDisplay = isDraft ? "—" : formatDate(row.vendorCotsUpdatedAt ?? row.updatedAt);
+                  return (
+                    <div key={row.assessmentId} className="assessment_card">
+                      <h2 className="assessment_card_title">{truncate(title, 60)}</h2>
+                      <div className="assessment_card_meta">
+                        <div className="assessment_card_meta_row">
+                          <span className="assessment_card_meta_label">Status</span>
+                          <span className={`assessment_status ${statusClass}`}>{statusLabel}</span>
+                        </div>
+                        <div className="assessment_card_meta_row">
+                          <span className="assessment_card_meta_label">Updated</span>
+                          <span>{submittedDisplay}</span>
+                        </div>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                       </div>
                       <div className="assessment_card_actions">
                         {isDraft && (
@@ -1199,9 +1532,13 @@ const Assessments = () => {
                             <button
                               type="button"
                               className="assessment_card_btn assessment_card_btn_primary"
+<<<<<<< HEAD
                               onClick={() =>
                                 navigate(`/vendorcots/${row.assessmentId}`)
                               }
+=======
+                              onClick={() => navigate(`/vendorcots/${row.assessmentId}`)}
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                             >
                               <Pencil size={14} />
                               Edit
@@ -1209,9 +1546,13 @@ const Assessments = () => {
                             <button
                               type="button"
                               className="assessment_card_btn assessment_card_btn_danger"
+<<<<<<< HEAD
                               onClick={() =>
                                 handleDeleteDraft(row.assessmentId)
                               }
+=======
+                              onClick={() => handleDeleteDraft(row.assessmentId)}
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                               aria-label="Delete draft"
                             >
                               <Trash2 size={14} />
@@ -1243,6 +1584,7 @@ const Assessments = () => {
         <div className="table_user_page">
           <div className="orgDataTable">
             {loading && <LoadingMessage message="Loading assessments…" />}
+<<<<<<< HEAD
             {fetchError && (
               <p style={{ color: "#dc2626", padding: "1rem 0" }}>
                 {fetchError}
@@ -1252,6 +1594,11 @@ const Assessments = () => {
               <p style={{ color: "#64748b", padding: "1rem 0" }}>
                 No assessments yet. Create one using the button above.
               </p>
+=======
+            {fetchError && <p style={{ color: "#dc2626", padding: "1rem 0" }}>{fetchError}</p>}
+            {!loading && !fetchError && assessmentsList.length === 0 && (
+              <p style={{ color: "#64748b", padding: "1rem 0" }}>No assessments yet. Create one using the button above.</p>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             )}
             {!loading && assessmentsList.length > 0 && (
               <DataTable
@@ -1266,6 +1613,7 @@ const Assessments = () => {
         </div>
       )}
 
+<<<<<<< HEAD
       {previewRow && (
         <div
           className="vendor_attestation_preview_modal_overlay"
@@ -1435,6 +1783,71 @@ const Assessments = () => {
           </div>
         </div>
       )}
+=======
+      <Modal isOpen={!!previewRow}>
+        <div className="header_modal" style={{ maxWidth: "56em" }}>
+          <div>
+            <h2 className="modal_popup_title">Assessment details</h2>
+            <p className="modal_sub_title">Preview of submitted assessment (same as COTS)</p>
+          </div>
+          <div className="cancel">
+            <Button
+              className="user_cancel_btn"
+              onClick={() => setPreviewRow(null)}
+            >
+              <span>
+                <CircleX />
+              </span>
+            </Button>
+          </div>
+        </div>
+        {previewRow && (
+          <div className="popup_fields assessment_preview_modal_body" style={{ maxHeight: "70vh", overflowY: "auto", maxWidth: "56em" }}>
+            {previewRow.type === "cots_vendor" ? (
+              <>
+                <div style={{ marginBottom: 24 }}>
+                  <PreviewTable
+                    dataForPreview={previewRow}
+                    previewFields={[
+                      { label: "Type", value: () => "COTS Vendor" },
+                      { label: "Status", value: (r) => r.status ?? undefined },
+                      { label: "Created", value: (r) => formatDate(r.createdAt) },
+                    ]}
+                    previewTitle="Assessment"
+                  />
+                </div>
+                <div style={{ marginBottom: 24 }}>
+                  <PreviewTable
+                    dataForPreview={previewRow}
+                    previewFields={[
+                      { label: "Customer organization", value: (r) => getRowPreviewValue(r, "customerOrganizationName") },
+                      { label: "Customer sector", value: (r) => formatSectorForPreview(getRowPreviewValue(r, "customerSector")) },
+                      { label: "Primary pain point", value: (r) => getRowPreviewValue(r, "primaryPainPoint") },
+                      { label: "Expected outcomes", value: (r) => getRowPreviewValue(r, "vendorExpectedOutcomes") },
+                      { label: "Budget range", value: (r) => getRowPreviewValue(r, "customerBudgetRange") },
+                      { label: "Timeline", value: (r) => getRowPreviewValue(r, "implementationTimeline") },
+                      { label: "Alternatives considered", value: (r) => getRowPreviewValue(r, "alternativesConsidered") },
+                      { label: "Key advantages", value: (r) => getRowPreviewValue(r, "keyAdvantages") },
+                    ]}
+                    previewTitle="Vendor COTS"
+                  />
+                </div>
+              </>
+            ) : (
+              ASSESSMENT_PREVIEW_SECTIONS.map((section) => (
+                <div key={section.title} style={{ marginBottom: 24 }}>
+                  <PreviewTable
+                    dataForPreview={previewRow}
+                    previewFields={section.fields}
+                    previewTitle={section.title}
+                  />
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </Modal>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     </div>
   );
 };

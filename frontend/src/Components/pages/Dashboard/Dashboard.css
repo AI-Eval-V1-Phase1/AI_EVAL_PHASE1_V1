@@ -99,6 +99,7 @@
   margin-bottom: 2rem;
 }
 
+<<<<<<< HEAD
 .vendor_overview_metrics.vendor_overview_metrics_four {
   grid-template-columns: repeat(4, 1fr);
 }
@@ -109,13 +110,18 @@
   }
 }
 
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 @media (max-width: 768px) {
   .vendor_overview_metrics {
     grid-template-columns: 1fr;
   }
+<<<<<<< HEAD
   .vendor_overview_metrics.vendor_overview_metrics_four {
     grid-template-columns: 1fr;
   }
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .vendor_overview_metric_card {
@@ -322,6 +328,7 @@
   font-size: 1.125rem;
   color: #6b7280;
 }
+<<<<<<< HEAD
 
 .vendor_overview_metric_title {
   display: flex;
@@ -638,3 +645,5 @@
   }
 }
 
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8

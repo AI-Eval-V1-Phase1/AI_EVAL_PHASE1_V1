@@ -1,9 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "../../styles/layout/topNav.css";
+<<<<<<< HEAD
 import { Bell, Link, Shield } from "lucide-react";
 import UserProfile from "../pages/UserProfile/UserProfile";
 import NotificationsPopover from "../UI/NotificationsPopover";
 import { NavLink } from "react-router-dom";
+=======
+import { Bell, Shield } from "lucide-react";
+import UserProfile from "../pages/UserProfile/UserProfile";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
 interface MeUser {
   email?: string | null;
@@ -12,12 +17,16 @@ interface MeUser {
   user_last_name?: string | null;
 }
 
+<<<<<<< HEAD
 function getInitials(
   firstName: string,
   lastName: string,
   userName: string,
   email: string,
 ): string {
+=======
+function getInitials(firstName: string, lastName: string, userName: string, email: string): string {
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const first = (firstName ?? "").trim();
   const last = (lastName ?? "").trim();
   if (first && last) return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
@@ -43,6 +52,7 @@ function formatRoleForDisplay(role: string | null | undefined): string {
 
 const TopNavBar = () => {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
+<<<<<<< HEAD
   const [isNotificationsVisible, setIsNotificationsVisible] = useState(false);
   const [user, setUser] = useState<MeUser | null>(null);
 
@@ -50,12 +60,22 @@ const TopNavBar = () => {
   const popupRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const notifPopoverRef = useRef<HTMLDivElement>(null);
+=======
+  const [user, setUser] = useState<MeUser | null>(null);
+
+  const userRef = useRef(null);
+  const popupRef = useRef(null);
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
   const fetchMe = useCallback(async () => {
     const token = sessionStorage.getItem("bearerToken");
     if (!token) return;
+<<<<<<< HEAD
     const baseUrl =
       import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
+=======
+    const baseUrl = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     try {
       const res = await fetch(`${baseUrl}/me`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -96,6 +116,7 @@ const TopNavBar = () => {
         user.user_first_name ?? "",
         user.user_last_name ?? "",
         user.user_name ?? "",
+<<<<<<< HEAD
         user.email ?? "",
       )
     : "UN";
@@ -118,11 +139,24 @@ const TopNavBar = () => {
     (user?.email ?? "").trim() ||
     (sessionStorage.getItem("userEmail") ?? "").trim() ||
     "user@gmail.com";
+=======
+        user.email ?? ""
+      )
+    : "UN";
+  const displayName = user
+    ? (user.user_name ?? "").trim() || `${(user.user_first_name ?? "").trim()} ${(user.user_last_name ?? "").trim()}`.trim() || (user.email ?? "").trim() || "User"
+    : (sessionStorage.getItem("userName") ?? "").trim() ||
+      [sessionStorage.getItem("userFirstName"), sessionStorage.getItem("userLastName")].filter(Boolean).join(" ").trim() ||
+      (sessionStorage.getItem("userEmail") ?? "").trim() ||
+      "User Name";
+  const emailDisplay = (user?.email ?? "").trim() || (sessionStorage.getItem("userEmail") ?? "").trim() || "user@gmail.com";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const systemRole = sessionStorage.getItem("systemRole");
   const userRole = sessionStorage.getItem("userRole");
   // For vendor/buyer show org role (e.g. Admin, Analyst) instead of user_platform_role (Vendor/Buyer)
   const isVendorOrBuyer =
     systemRole && ["vendor", "buyer"].includes(systemRole.trim().toLowerCase());
+<<<<<<< HEAD
   const roleLabel =
     isVendorOrBuyer && userRole?.trim()
       ? formatRoleForDisplay(userRole)
@@ -136,11 +170,20 @@ const TopNavBar = () => {
   const handleNotificationsToggle = () => {
     setIsNotificationsVisible((prev) => !prev);
     if (isPopupVisible) setIsPopupVisible(false);
+=======
+  const roleLabel = isVendorOrBuyer && userRole?.trim()
+    ? formatRoleForDisplay(userRole)
+    : formatRoleForDisplay(systemRole ?? undefined);
+
+  const handleUserPopup = () => {
+    setIsPopupVisible((prev) => !prev);
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   };
 
   // Close popup on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+<<<<<<< HEAD
       const target = event.target as Node;
       if (
         popupRef.current &&
@@ -158,6 +201,16 @@ const TopNavBar = () => {
       ) {
         setIsNotificationsVisible(false);
       }
+=======
+      if (
+        popupRef.current &&
+        !popupRef.current.contains(event.target as Node) &&
+        userRef.current &&
+        !userRef.current.contains(event.target as Node)
+      ) {
+        setIsPopupVisible(false);
+      }
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -170,6 +223,7 @@ const TopNavBar = () => {
   return (
     <>
       <div className="top_nav_content">
+<<<<<<< HEAD
           <NavLink to="/">
         <div className="nav_left_content">
             <div className="logo_sec">
@@ -200,6 +254,21 @@ const TopNavBar = () => {
                 <NotificationsPopover emptyMessage="No notifications" />
               </div>
             )}
+=======
+        <div className="nav_left_content">
+          <div className="logo_sec">
+            <Shield className="logo_img" size={40} />
+          </div>
+          <div className="logo_name">
+            <h3>AI EVAL</h3>
+            <p>Enterprise AI Governance Platform</p>
+          </div>
+        </div>
+
+        <div className="nav_right_content">
+          <div className="notifications_icon_sec">
+            <Bell size={24} className="notification_icon" />
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           </div>
 
           {/* USER SECTION */}

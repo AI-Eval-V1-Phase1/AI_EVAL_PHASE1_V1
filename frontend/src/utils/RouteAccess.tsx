@@ -17,7 +17,11 @@ const RouteAccess = () => {
       "/attestation_details",
       "/vendor-directory",
       "/my-vendor",
+<<<<<<< HEAD
       "/security_center",
+=======
+      "/compilance",
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       "/governance",
       "/sales-enablement",
       "/evidence-library",
@@ -46,7 +50,11 @@ const RouteAccess = () => {
       "/buyerAssessment",
       "/vendor-directory",
       "/my-vendor",
+<<<<<<< HEAD
       "/security_center",
+=======
+      "/compilance",
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       "/governance",
       "/reports",
       "/user-management",

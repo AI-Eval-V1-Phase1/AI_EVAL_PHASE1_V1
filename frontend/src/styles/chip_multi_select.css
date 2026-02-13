@@ -20,7 +20,11 @@
 
 .chip-multi-select-grid {
   display: grid;
+<<<<<<< HEAD
   grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+=======
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   gap: 0.5rem;
 }
 

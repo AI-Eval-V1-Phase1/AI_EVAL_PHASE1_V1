@@ -9,7 +9,10 @@ const CreateOrganization = ({ setIsOrganization }) => {
 
   const [isOrganizationName, setIsOrganizationName] = useState("");
   const [isError, setIsError] = useState("");
+<<<<<<< HEAD
   const [isCreateLoading, setIsCreateLoading] = useState(false);
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const dispatch = useDispatch();
   const { data: organizations } = useSelector((state) => state.organizations);
   const closeNewOrg = () => {
@@ -36,14 +39,24 @@ const CreateOrganization = ({ setIsOrganization }) => {
     }
 
     const user = sessionStorage.getItem("userId");
+<<<<<<< HEAD
     const orgData = { isOrganizationName, user };
     const token = sessionStorage.getItem("bearerToken");
 
     setIsCreateLoading(true);
+=======
+    // console.log(user)
+    const orgData = { isOrganizationName,user };
+
+    // console.log(orgData);
+    const token = sessionStorage.getItem("bearerToken");
+
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     try {
       const response = await fetch(`${BASE_URL}/newOrganization`, {
         method: "POST",
         headers: {
+<<<<<<< HEAD
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
@@ -51,12 +64,26 @@ const CreateOrganization = ({ setIsOrganization }) => {
       });
       const result = await response.json();
       if (response.ok) {
+=======
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+        body: JSON.stringify(orgData),
+      });
+      // console.log("response", response);
+      const result = await response.json();
+      // console.log(result)
+      if (response.ok) {
+        // console.log(result);
+        // setIsContact(false);
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         closeNewOrg();
         setIsOrganizationName("");
         toast.success("Organization created successfully");
         dispatch(getOrganizations());
         setIsError("");
       } else {
+<<<<<<< HEAD
         setIsError(result.message ?? "Failed to create organization");
       }
     } catch (error) {
@@ -64,6 +91,14 @@ const CreateOrganization = ({ setIsOrganization }) => {
       toast.error("Network or server error. Please try again.");
     } finally {
       setIsCreateLoading(false);
+=======
+        // setIsEmail(result.message)
+        console.log("response", result.message);
+        setIsError(result.message);
+      }
+    } catch (error) {
+      console.log(error);
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     }
   };
 
@@ -99,6 +134,7 @@ const CreateOrganization = ({ setIsOrganization }) => {
                 </span>
                 Cancel
               </button>
+<<<<<<< HEAD
               <button
                 type="submit"
                 className={`orgCreateBtn ${isCreateLoading ? "disabled_css" : ""}`}
@@ -109,6 +145,13 @@ const CreateOrganization = ({ setIsOrganization }) => {
                   <Plus width={18} />
                 </span>
                 {isCreateLoading ? "Creating…" : "Create"}
+=======
+              <button type="submit" className="orgCreateBtn">
+                <span>
+                  <Plus width={18} />
+                </span>
+                Create
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               </button>
             </div>
           </form>

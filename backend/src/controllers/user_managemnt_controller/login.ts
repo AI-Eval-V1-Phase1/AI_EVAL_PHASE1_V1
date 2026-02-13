@@ -1,6 +1,10 @@
 import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
+<<<<<<< HEAD
 import { createOrganization, usersTable } from "../../schema/schema.js";
+=======
+import { usersTable } from "../../schema/schema.js";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import  jwt  from "jsonwebtoken";
@@ -17,6 +21,7 @@ const userLogin = async (req: Request, res: Response) => {
   }
 
   try {
+<<<<<<< HEAD
     const rows = await db
       .select({
         user: usersTable,
@@ -37,10 +42,14 @@ const userLogin = async (req: Request, res: Response) => {
     }
 
         const user = await db
+=======
+    const user = await db
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       .select()
       .from(usersTable)
       .where(eq(usersTable.email, email))
       .limit(1);
+<<<<<<< HEAD
     const usertable = user[0];
     if (!usertable) {
       return res.status(401).json({ message: "User not found" });
@@ -56,6 +65,15 @@ const userLogin = async (req: Request, res: Response) => {
 
     if (!usertable.user_password || usertable.user_password.trim() === "") {
       return res.status(401).json({ message: "User has been invited.", code: "invited" });
+=======
+    const user_table = user[0];
+    if (!user_table) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    if (!user_table.user_password || user_table.user_password.trim() === "") {
+      return res.status(401).json({ message: "User not found" });
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     }
 
     const passwordMatch = await bcrypt.compare(
@@ -90,11 +108,18 @@ const userLogin = async (req: Request, res: Response) => {
       { expiresIn: "24h" },
     );
 
+<<<<<<< HEAD
     const userDetails = [{ ...user_table, organization_name: row.organizationName ?? "", organization_id: user_table.organization_id }];
     return res.status(200).json({
       message: "User Login Successful",
       token,
       userDetails,
+=======
+    return res.status(200).json({
+      message: "User Login Successful",
+      token,
+      userDetails: user,
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     });
   } catch (error) {
     console.error("Login error:", error);

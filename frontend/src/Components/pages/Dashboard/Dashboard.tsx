@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+<<<<<<< HEAD
 import { Link, useNavigate } from "react-router-dom";
 import {
   FileText,
@@ -20,10 +21,15 @@ import {
 } from "lucide-react";
 import { MetricCard, KPICard, RiskCard } from "../../UI/Card";
 import Button from "../../UI/Button";
+=======
+import { Link } from "react-router-dom";
+import { FileText, CheckCircle2, LayoutDashboard } from "lucide-react";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import "./Dashboard.css";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
 
+<<<<<<< HEAD
 interface AssessmentRow {
   assessmentId: number;
   type: string;
@@ -146,6 +152,8 @@ const SystemAdminOverview = () => {
   );
 };
 
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 interface AttestationItem {
   id: string;
   status: string;
@@ -154,6 +162,7 @@ interface AttestationItem {
 }
 
 const formatUpdatedDate = (dateStr: string | null | undefined): string => {
+<<<<<<< HEAD
   const formatted = formatGovDate(dateStr);
   return formatted === "—" ? "—" : `Updated: ${formatted}`;
 };
@@ -161,6 +170,33 @@ const formatUpdatedDate = (dateStr: string | null | undefined): string => {
 const formatCompletedDate = (dateStr: string | null | undefined): string => {
   const formatted = formatGovDate(dateStr);
   return formatted === "—" ? "—" : `Completed: ${formatted}`;
+=======
+  if (!dateStr) return "—";
+  try {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return "—";
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    const year = d.getFullYear();
+    return `Updated: ${day}/${month}/${year}`;
+  } catch {
+    return "—";
+  }
+};
+
+const formatCompletedDate = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return "—";
+  try {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return "—";
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    const year = d.getFullYear();
+    return `Completed: ${day}/${month}/${year}`;
+  } catch {
+    return "—";
+  }
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 };
 
 const VendorOverview = () => {
@@ -358,6 +394,7 @@ const VendorOverview = () => {
   );
 };
 
+<<<<<<< HEAD
 const RISK_BREAKDOWN = [
   { category: "Security", level: "Very Low", variant: "very_low" as const },
   { category: "Privacy", level: "Low", variant: "low" as const },
@@ -607,11 +644,24 @@ const Dashboard = () => {
   if (systemRole === "system admin") {
     return <SystemAdminOverview />;
   }
+=======
+const Dashboard = () => {
+  const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase();
+
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   if (systemRole === "vendor") {
     return <VendorOverview />;
   }
 
+<<<<<<< HEAD
   return <BuyerOverview />;
+=======
+  return (
+    <div className="sec_user_page">
+      <div className="dashboard_placeholder">Dashboard</div>
+    </div>
+  );
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 };
 
 export default Dashboard;

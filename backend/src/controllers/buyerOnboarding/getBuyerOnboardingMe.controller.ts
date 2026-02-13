@@ -23,7 +23,11 @@ const getBuyerOnboardingMe = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+<<<<<<< HEAD
     const orgId = user.organization_id;
+=======
+    const orgId = (user as Record<string, unknown>).organization_name;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const orgIdStr = orgId != null ? String(orgId).trim() : "";
     if (!orgIdStr) {
       return res.status(400).json({ message: "User has no organization" });

@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS public.organizations (
   created_by varchar NOT NULL
 );
 
+<<<<<<< HEAD
 -- Seed AI EVAL organization at id 1 (for dropdown and user management)
 INSERT INTO public.organizations (id, "organizationName", "organizationStatus", created_at, created_by)
 VALUES (1, 'ai eval', 'active', now(), 'system')
@@ -59,6 +60,12 @@ CREATE TABLE IF NOT EXISTS public.users (
   id serial PRIMARY KEY NOT NULL,
   email varchar(255) NOT NULL,
   organization_id integer NOT NULL REFERENCES public.organizations(id),
+=======
+CREATE TABLE IF NOT EXISTS public.users (
+  id serial PRIMARY KEY NOT NULL,
+  email varchar(255) NOT NULL,
+  organization_name varchar NOT NULL,
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   role varchar(255) NOT NULL,
   invited_at timestamp DEFAULT now() NOT NULL,
   invited_by varchar NOT NULL,

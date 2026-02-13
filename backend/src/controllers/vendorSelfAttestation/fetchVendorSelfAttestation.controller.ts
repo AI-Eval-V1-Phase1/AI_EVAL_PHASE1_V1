@@ -3,6 +3,7 @@ import { db } from "../../database/db.js";
 import { vendors, vendorSelfAttestations, usersTable } from "../../schema/schema.js";
 import { and, desc, eq } from "drizzle-orm";
 
+<<<<<<< HEAD
 function userDisplayName(u: { user_name?: string | null; user_first_name?: string | null; user_last_name?: string | null; email?: string | null }): string {
   const name = (u.user_name ?? "").trim();
   if (name) return name;
@@ -18,6 +19,13 @@ function mapAttestationRow(attestRow: Record<string, unknown>, completedByName?:
   const raw = String(attestRow.status ?? "").toUpperCase();
   const rowStatus = raw === "DRAFT" ? "DRAFT" : "COMPLETED";
   const base: Record<string, unknown> = {
+=======
+/** Map one attestation row to API shape (attestation section only) */
+function mapAttestationRow(attestRow: Record<string, unknown>): Record<string, unknown> {
+  const raw = String(attestRow.status ?? "").toUpperCase();
+  const rowStatus = raw === "DRAFT" ? "DRAFT" : "COMPLETED";
+  return {
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     id: attestRow.id,
     status: rowStatus,
     created_at: attestRow.created_at ?? undefined,
@@ -58,10 +66,13 @@ function mapAttestationRow(attestRow: Record<string, unknown>, completedByName?:
     testing_results_available: attestRow.test_results ?? undefined,
     document_uploads: attestRow.document_uploads ?? undefined,
   };
+<<<<<<< HEAD
   if (completedByName != null && completedByName !== "") {
     base.completedBy = { name: completedByName };
   }
   return base;
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 /** Build companyProfile from attestation row (saved draft company profile). Used when editing draft. */
@@ -138,6 +149,7 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       return;
     }
 
+<<<<<<< HEAD
     const [currentUserRow] = await db
       .select({
         user_platform_role: usersTable.user_platform_role,
@@ -157,6 +169,8 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       platformRole === "systemadmin" ||
       (Number(orgId) === 1 && role === "admin");
 
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const organizationId = typeof req.query?.organizationId === "string" ? req.query.organizationId.trim() : null;
     const attestationId = typeof req.query?.id === "string" ? req.query.id.trim() || null : null;
 
@@ -182,6 +196,7 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       : await db.select(vendorSelect).from(vendors).where(eq(vendors.userId, userId)).limit(1);
     const vendorRow = vendorRows[0] ?? null;
 
+<<<<<<< HEAD
     /** Explicit select for attestation + user display fields (Drizzle does not accept ...table in select). */
     const attestationWithUserSelect = {
       id: vendorSelfAttestations.id,
@@ -246,6 +261,8 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       user_email: usersTable.email,
     };
 
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     let companyProfile: Record<string, unknown> = {};
     if (vendorRow) {
       const r = vendorRow as Record<string, unknown>;
@@ -284,6 +301,7 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
     }
 
     if (attestationId) {
+<<<<<<< HEAD
       // System admin: do not expose vendor attestations (require own user_id, so they never match)
       const whereSingle = and(
         eq(vendorSelfAttestations.id, attestationId),
@@ -294,6 +312,17 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
         .from(vendorSelfAttestations)
         .leftJoin(usersTable, eq(vendorSelfAttestations.user_id, usersTable.id))
         .where(whereSingle)
+=======
+      const [one] = await db
+        .select()
+        .from(vendorSelfAttestations)
+        .where(
+          and(
+            eq(vendorSelfAttestations.id, attestationId),
+            eq(vendorSelfAttestations.user_id, userId)
+          )
+        )
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         .limit(1);
       if (!one) {
         res.status(200).json({
@@ -306,6 +335,7 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
         return;
       }
       const oneRow = one as Record<string, unknown>;
+<<<<<<< HEAD
       const completedByName = userDisplayName({
         user_name: one.user_name ?? null,
         user_first_name: one.user_first_name ?? null,
@@ -313,13 +343,21 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
         email: one.user_email ?? null,
       });
       const attestation = mapAttestationRow(oneRow, completedByName);
+=======
+      const attestation = mapAttestationRow(oneRow);
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       // When editing a draft: use company profile saved in the attestation (draft data), not onboarding.
       let resolvedCompanyProfile = companyProfile;
       if (attestationHasCompanyProfile(oneRow)) {
         resolvedCompanyProfile = {
           ...companyProfileFromAttestationRow(oneRow),
+<<<<<<< HEAD
           userId: companyProfile?.userId ?? vendorRow ? (vendorRow as Record<string, unknown>).userId : oneRow.user_id,
           organizationId: companyProfile?.organizationId ?? vendorRow ? (vendorRow as Record<string, unknown>).organizationId : oneRow.organization_id,
+=======
+          userId: companyProfile?.userId ?? vendorRow ? (vendorRow as Record<string, unknown>).userId : undefined,
+          organizationId: companyProfile?.organizationId ?? vendorRow ? (vendorRow as Record<string, unknown>).organizationId : undefined,
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         };
       }
       res.status(200).json({
@@ -332,6 +370,7 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       return;
     }
 
+<<<<<<< HEAD
     // System admin: do not display vendor attestations on this page (return empty list)
     const attestRows = isSystemAdmin
       ? []
@@ -350,6 +389,14 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       });
       return mapAttestationRow(row as Record<string, unknown>, completedByName);
     });
+=======
+    const attestRows = await db
+      .select()
+      .from(vendorSelfAttestations)
+      .where(eq(vendorSelfAttestations.user_id, userId))
+      .orderBy(desc(vendorSelfAttestations.created_at));
+    const attestations = attestRows.map((row) => mapAttestationRow(row as Record<string, unknown>));
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const attestation = attestations[0] ?? {};
 
     res.status(200).json({

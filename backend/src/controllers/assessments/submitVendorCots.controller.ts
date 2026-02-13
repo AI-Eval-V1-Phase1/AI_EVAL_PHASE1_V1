@@ -20,7 +20,11 @@ const submitVendorCotsAssessment = async (req: Request, res: Response) => {
       .where(eq(usersTable.id, Number(userId)))
       .limit(1);
     if (!user) return res.status(404).json({ message: "User not found" });
+<<<<<<< HEAD
     const orgIdFromUser = (user as Record<string, unknown>).organization_id;
+=======
+    const orgIdFromUser = (user as Record<string, unknown>).organization_name;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const orgIdStr = orgIdFromUser != null ? String(orgIdFromUser).trim() : "";
     if (!orgIdStr) {
       return res.status(400).json({ message: "User has no organization. Complete onboarding or contact admin." });

@@ -42,8 +42,13 @@ const BuyerContactInformation = ({
             <Input
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Primary Contact Name</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Primary Contact Name</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip content={BUYER_HELPTEXT.primaryContactName}>
                     <Info size={14} color="#6B7280" />
                   </ClickTooltip>
@@ -65,8 +70,13 @@ const BuyerContactInformation = ({
             <Input
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Primary Contact Email</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Primary Contact Email</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip content={BUYER_HELPTEXT.primaryContactEmail}>
                     <Info size={14} color="#6B7280" />
                   </ClickTooltip>
@@ -90,8 +100,13 @@ const BuyerContactInformation = ({
             <Select
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Primary Contact Role</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Primary Contact Role</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip content={BUYER_HELPTEXT.primaryContactRole}>
                     <Info size={14} color="#6B7280" />
                   </ClickTooltip>
@@ -114,8 +129,13 @@ const BuyerContactInformation = ({
             <Select
               labelName={
                 <div className="labelSection">
+<<<<<<< HEAD
                   <span>Department/Business Unit</span>
                   <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Department/Business Unit</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip content={BUYER_HELPTEXT.departmentOwner}>
                     <Info size={14} color="#6B7280" />
                   </ClickTooltip>

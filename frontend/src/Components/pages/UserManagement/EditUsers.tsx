@@ -36,7 +36,11 @@ const EditUsers = ({ isUserId, setIsEdit, isEdit, isSelectedUser }) => {
     setIsModalOpen(isEdit);
     if (isSelectedUser) {
       setEmail(isSelectedUser.email || "");
+<<<<<<< HEAD
       setOrganization(String(isSelectedUser.organization_id ?? isSelectedUser.organization_name ?? ""));
+=======
+      setOrganization(isSelectedUser.organization_name || "");
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       setRole(isSelectedUser.role || "");
       setIsStatus(isSelectedUser.userStatus || "");
       setIsReason("");
@@ -64,10 +68,24 @@ const EditUsers = ({ isUserId, setIsEdit, isEdit, isSelectedUser }) => {
     { value: "system user", label: "system user" },
   ];
 
+<<<<<<< HEAD
   const orgOptions = data?.map((org) => ({
     label: org.organizationName,
     value: org.id,
   })) ?? [];
+=======
+  const systemOrg = "AI EVAL";
+
+  const orgOptions = data?.map((orgOptions) => ({
+    label: orgOptions.organizationName,
+    value: orgOptions.id,
+  }));
+
+  orgOptions?.push({
+    label: systemOrg,
+    value: systemOrg,
+  });
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
   const updateUser = async (e) => {
     e.preventDefault();
@@ -171,7 +189,11 @@ const EditUsers = ({ isUserId, setIsEdit, isEdit, isSelectedUser }) => {
               name="user_role"
               // options={roleOptions}
               options={
+<<<<<<< HEAD
                 organization === "1" || organization === 1 ? systemRoleOptions : roleOptions
+=======
+                organization === systemOrg ? systemRoleOptions : roleOptions
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               }
               value={role}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>

@@ -7,9 +7,14 @@ import getBuyerOnboardingMe from "../controllers/buyerOnboarding/getBuyerOnboard
 
 const buyerRoutes = express.Router();
 
+<<<<<<< HEAD
 buyerRoutes
 .get("/buyerOnboarding/me", authenticateToken, getBuyerOnboardingMe)
 .post("/buyerOnboarding", onboardingAccess, insertBuyerOnboarding);
+=======
+buyerRoutes.post("/buyerOnboarding", onboardingAccess, insertBuyerOnboarding);
+buyerRoutes.get("/buyerOnboarding/me", authenticateToken, getBuyerOnboardingMe);
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
  
 
 export default buyerRoutes;

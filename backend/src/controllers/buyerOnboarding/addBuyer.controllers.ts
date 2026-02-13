@@ -50,6 +50,7 @@ const insertBuyerOnboarding = async (req: Request, res: Response) => {
       user = byId[0] ?? undefined;
     }
 
+<<<<<<< HEAD
     if (!user && (bodyOrgId ?? bodyOrgIdCamel) != null) {
       const orgIdNum = Number(bodyOrgId ?? bodyOrgIdCamel);
       if (!Number.isNaN(orgIdNum)) {
@@ -57,11 +58,21 @@ const insertBuyerOnboarding = async (req: Request, res: Response) => {
           .select()
           .from(usersTable)
           .where(eq(usersTable.organization_id, orgIdNum))
+=======
+    if (!user && (bodyOrgId ?? bodyOrgIdCamel)) {
+      const orgStr = String(bodyOrgId ?? bodyOrgIdCamel ?? "").trim();
+      if (orgStr) {
+        const byOrg = await db
+          .select()
+          .from(usersTable)
+          .where(eq(usersTable.organization_name, orgStr))
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           .limit(1);
         user = byOrg[0] ?? undefined;
       }
     }
 
+<<<<<<< HEAD
     if (!user && bodyBuyerId != null && (bodyOrgId ?? bodyOrgIdCamel) != null) {
       const orgIdNum = Number(bodyOrgId ?? bodyOrgIdCamel);
       if (!Number.isNaN(orgIdNum)) {
@@ -77,6 +88,20 @@ const insertBuyerOnboarding = async (req: Request, res: Response) => {
           .limit(1);
         user = byBoth[0] ?? undefined;
       }
+=======
+    if (!user && bodyBuyerId != null && (bodyOrgId ?? bodyOrgIdCamel)) {
+      const byBoth = await db
+        .select()
+        .from(usersTable)
+        .where(
+          and(
+            eq(usersTable.id, Number(bodyBuyerId)),
+            eq(usersTable.organization_name, String(bodyOrgId ?? bodyOrgIdCamel ?? "")),
+          ),
+        )
+        .limit(1);
+      user = byBoth[0] ?? undefined;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     }
 
     if (!user) {
@@ -89,7 +114,11 @@ const insertBuyerOnboarding = async (req: Request, res: Response) => {
         .json({ message: "Onboarding already completed" });
     }
 
+<<<<<<< HEAD
     const organizationId = bodyOrgId ?? bodyOrgIdCamel ?? user.organization_id;
+=======
+    const organizationId = bodyOrgId ?? bodyOrgIdCamel ?? user.organization_name;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const sectorValue =
       sector != null && typeof sector === "object"
         ? JSON.stringify(sector)
@@ -127,7 +156,11 @@ const insertBuyerOnboarding = async (req: Request, res: Response) => {
 
     const buyerValues = {
       userId: user.id,
+<<<<<<< HEAD
       organizationId: String(organizationId ?? user.organization_id),
+=======
+      organizationId: String(organizationId ?? user.organization_name),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       organizationName: String(organizationName ?? ""),
       organizationType: organizationType != null ? String(organizationType) : null,
       sector: sectorValue,

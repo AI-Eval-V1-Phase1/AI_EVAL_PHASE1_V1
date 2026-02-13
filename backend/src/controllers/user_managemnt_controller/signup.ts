@@ -91,8 +91,14 @@ const userSignup = async (req: Request, res: Response) => {
       return res.status(409).json({ message: "Signup already completed" });
     }
 
+<<<<<<< HEAD
     const orgId = existingRow.organization_id;
     const isAiEvalOrg = orgId === 1;
+=======
+    const orgName = existingRow.organization_name;
+    const orgNameNormalized = String(orgName ?? "").trim().toLowerCase();
+    const isAiEvalOrg = orgNameNormalized === "ai eval";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
     // Get org's platform role: use invited user's role if set (system admin/user/manager/viewer), else fall back to org role
     const systemRoles = ["system admin", "system user", "system manager", "system viewer"];
@@ -105,7 +111,11 @@ const userSignup = async (req: Request, res: Response) => {
       .from(usersTable)
       .where(
         and(
+<<<<<<< HEAD
           eq(usersTable.organization_id, orgId),
+=======
+          eq(usersTable.organization_name, orgName),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           isNotNull(usersTable.user_platform_role),
           ne(usersTable.user_platform_role, ""),
         ),
@@ -156,7 +166,11 @@ const userSignup = async (req: Request, res: Response) => {
       return res.status(500).json({ message: "User not found after update" });
     }
     const userId = dbUser.id;
+<<<<<<< HEAD
     const organizationId = dbUser.organization_id;
+=======
+    const organizationId = dbUser.organization_name;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
     // Only admin users can complete onboarding: org role "admin" (for regular orgs) or "system admin" (for AI Eval). Non-admins never receive onboarding emails and are marked onboarded so they skip it.
     const userOrgRole = String(dbUser.role ?? "").trim().toLowerCase();
@@ -169,7 +183,11 @@ const userSignup = async (req: Request, res: Response) => {
       .from(usersTable)
       .where(
         and(
+<<<<<<< HEAD
           eq(usersTable.organization_id, dbUser.organization_id),
+=======
+          eq(usersTable.organization_name, dbUser.organization_name),
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           eq(usersTable.user_onboarding_completed, "true"),
         ),
       )
@@ -184,6 +202,7 @@ const userSignup = async (req: Request, res: Response) => {
 
     const onboardingLink = `${BASE_URL}/onBoarding/${token}`;
 
+<<<<<<< HEAD
     // Resolve organization display name for email
     let orgDisplayName = "";
     const orgRows = await db
@@ -193,6 +212,21 @@ const userSignup = async (req: Request, res: Response) => {
       .limit(1);
     if (orgRows.length > 0 && orgRows[0]?.organizationName) {
       orgDisplayName = orgRows[0].organizationName;
+=======
+    // Resolve organization display name for email (org name, not org id)
+    const orgIdFromUser = dbUser.organization_name;
+    const numericOrgId = Number(orgIdFromUser);
+    let orgDisplayName = String(orgIdFromUser ?? "").trim();
+    if (String(numericOrgId) === String(orgIdFromUser).trim() && !Number.isNaN(numericOrgId)) {
+      const orgRows = await db
+        .select({ organizationName: createOrganization.organizationName })
+        .from(createOrganization)
+        .where(eq(createOrganization.id, numericOrgId))
+        .limit(1);
+      if (orgRows.length > 0 && orgRows[0]?.organizationName) {
+        orgDisplayName = orgRows[0].organizationName;
+      }
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     }
 
     let onboardingEmailSent = false;

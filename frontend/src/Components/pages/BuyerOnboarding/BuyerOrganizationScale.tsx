@@ -42,9 +42,15 @@ const BuyerOrganizationScale = ({
           <div className="form_fields_vendor">
             <Select
               labelName={
+<<<<<<< HEAD
 <div className="labelSection">
                 <span>Organization Size</span>
                 <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                <div className="labelSection">
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <span>Organization Size</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                   <ClickTooltip content={BUYER_HELPTEXT.organizationSize}>
                     <Info size={14} color="#6B7280" />
                   </ClickTooltip>

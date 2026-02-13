@@ -63,8 +63,13 @@ const CurrentAiMaturity = ({
           <Select
             labelName={
               <div className="labelSection">
+<<<<<<< HEAD
                 <span>AI Governance Maturity</span>
                 <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                <span>AI Governance Maturity</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 <ClickTooltip content={BUYER_HELPTEXT.aiGovernanceMaturity}>
                   <Info size={14} color="#6B7280" />
                 </ClickTooltip>
@@ -87,8 +92,13 @@ const CurrentAiMaturity = ({
           <Select
             labelName={
               <div className="labelSection">
+<<<<<<< HEAD
                 <span>Data Governance Maturity</span>
                 <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                <span>Data Governance Maturity</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 <ClickTooltip content={BUYER_HELPTEXT.dataGovernanceMaturity}>
                   <Info size={14} color="#6B7280" />
                 </ClickTooltip>
@@ -111,8 +121,13 @@ const CurrentAiMaturity = ({
           <Select
             labelName={
               <div className="labelSection">
+<<<<<<< HEAD
                 <span>AI Skills Availability</span>
                 <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                <span>AI Skills Availability</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 <ClickTooltip content={BUYER_HELPTEXT.aiSkillsAvailability}>
                   <Info size={14} color="#6B7280" />
                 </ClickTooltip>
@@ -135,8 +150,13 @@ const CurrentAiMaturity = ({
           <Select
             labelName={
               <div className="labelSection">
+<<<<<<< HEAD
                 <span>Change Management Capability</span>
                 <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+=======
+                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                <span>Change Management Capability</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 <ClickTooltip
                   content={BUYER_HELPTEXT.changeManagementCapability}
                 >

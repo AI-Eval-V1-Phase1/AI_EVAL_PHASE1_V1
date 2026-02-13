@@ -1,6 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+<<<<<<< HEAD
 import { FileCheck, Eye, Plus, Pencil, X, Shield, AlertTriangle, Check, CircleCheck } from "lucide-react";
+=======
+import { FileCheck, Eye, Plus, Pencil, X, Shield, AlertTriangle, Check } from "lucide-react";
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import Button from "../../UI/Button";
 import StepVendorSelfAttestationPrev from "../VendorAttestations/StepVendorSelfAttestationPrev";
 import type {
@@ -22,7 +26,10 @@ interface AttestationCardItem {
   submittedDate: string | null;
   expiryDate: string | null;
   recordId?: string | null;
+<<<<<<< HEAD
   completedBy?: string | null;
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
@@ -96,11 +103,15 @@ const formatDate = (dateStr: string | null | undefined): string => {
   if (!dateStr) return "—";
   try {
     const d = new Date(dateStr);
+<<<<<<< HEAD
     if (Number.isNaN(d.getTime())) return "—";
     const day = d.getDate().toString().padStart(2, "0");
     const month = d.toLocaleDateString("en-GB", { month: "short" });
     const year = d.getFullYear();
     return `${day}-${month}-${year}`;
+=======
+    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   } catch {
     return "—";
   }
@@ -168,7 +179,10 @@ const VendorAttestationDetails = () => {
             const apiStatus = (attestation.status ?? "").toUpperCase();
             const statusLabel = apiStatus === "COMPLETED" ? "Completed" : "Draft";
             const productName = (attestation.product_name ?? "").trim();
+<<<<<<< HEAD
             const completedByName = (attestation as { completedBy?: { name?: string } }).completedBy?.name ?? null;
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             list.push({
               id: attestation.id,
               title: productName || "Draft",
@@ -176,7 +190,10 @@ const VendorAttestationDetails = () => {
               submittedDate: attestation.updated_at ?? attestation.created_at ?? null,
               expiryDate: null,
               recordId: attestation.id,
+<<<<<<< HEAD
               completedBy: completedByName ?? null,
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             });
           }
         }
@@ -202,6 +219,7 @@ const VendorAttestationDetails = () => {
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, [fetchAttestations]);
 
+<<<<<<< HEAD
   const [previewAttestationId, setPreviewAttestationId] = useState<string | null>(null);
 
   const handleOpenDocument = useCallback(async (fileName: string) => {
@@ -225,6 +243,11 @@ const VendorAttestationDetails = () => {
     const token = sessionStorage.getItem("bearerToken");
     if (!token) return;
     setPreviewAttestationId(recordId ?? null);
+=======
+  const handleViewPreview = useCallback(async (recordId: string | null | undefined) => {
+    const token = sessionStorage.getItem("bearerToken");
+    if (!token) return;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     setPreviewOpen(true);
     setPreviewLoading(true);
     setPreviewFormState(null);
@@ -318,10 +341,14 @@ const VendorAttestationDetails = () => {
       {/* Trust Profile Attestation */}
       <div className="attestation_section attestation_trust_profile">
         <div className="attestation_section_header">
+<<<<<<< HEAD
           <span>
           <Shield className="attestation_section_icon attestation_section_icon_primary" size={24} />
 
           </span>
+=======
+          <Shield className="attestation_section_icon attestation_section_icon_primary" size={24} />
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           <div>
             <h2 className="attestation_section_title">Trust Profile Attestation</h2>
             <p className="attestation_section_subtitle">Complete this to appear in the approved vendor directory.</p>
@@ -331,6 +358,7 @@ const VendorAttestationDetails = () => {
         <p className="attestation_covers_heading">Your self-attestation covers:</p>
         <div className="attestation_covers_grid">
           <ul className="attestation_covers_list">
+<<<<<<< HEAD
             <li><CircleCheck size={16} className="attestation_check" /> Product profile and capabilities</li>
             <li><CircleCheck size={16} className="attestation_check" /> AI safety and testing practices</li>
             <li><CircleCheck size={16} className="attestation_check" /> Compliance certifications</li>
@@ -341,6 +369,18 @@ const VendorAttestationDetails = () => {
             <li><CircleCheck size={16} className="attestation_check" /> Deployment options</li>
             <li><CircleCheck size={16} className="attestation_check" /> Risk mitigations</li>
             <li><CircleCheck size={16} className="attestation_check" /> Evidence documentation</li>
+=======
+            <li><Check size={16} className="attestation_check" /> Product profile and capabilities</li>
+            <li><Check size={16} className="attestation_check" /> AI safety and testing practices</li>
+            <li><Check size={16} className="attestation_check" /> Compliance certifications</li>
+            <li><Check size={16} className="attestation_check" /> Data handling policies</li>
+          </ul>
+          <ul className="attestation_covers_list">
+            <li><Check size={16} className="attestation_check" /> Operational reliability</li>
+            <li><Check size={16} className="attestation_check" /> Deployment options</li>
+            <li><Check size={16} className="attestation_check" /> Risk mitigations</li>
+            <li><Check size={16} className="attestation_check" /> Evidence documentation</li>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           </ul>
         </div>
 
@@ -359,17 +399,24 @@ const VendorAttestationDetails = () => {
                 <h2 className="vendor_attestation_card_title">{item.title}</h2>
                 <div className="vendor_attestation_card_meta">
                   <div className="vendor_attestation_card_meta_row">
+<<<<<<< HEAD
                     <span className="vendor_attestation_card_meta_label">{item.status === "Draft" ? "Updated by" : "Completed by"}</span>
                     <span>{item.completedBy?.trim() || "—"}</span>
                   </div>
                   <div className="vendor_attestation_card_meta_row">
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                     <span className="vendor_attestation_card_meta_label">Status</span>
                     <span className={`vendor_attestation_status vendor_attestation_status_${item.status.toLowerCase()}`}>
                       {item.status}
                     </span>
                   </div>
                   <div className="vendor_attestation_card_meta_row">
+<<<<<<< HEAD
                     <span className="vendor_attestation_card_meta_label">{item.status === "Draft" ? "Updated at" : "Submitted"}</span>
+=======
+                    <span className="vendor_attestation_card_meta_label">Submitted</span>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                     <span>{formatDate(item.submittedDate)}</span>
                   </div>
                 </div>
@@ -444,11 +491,15 @@ const VendorAttestationDetails = () => {
             <div className="vendor_attestation_preview_modal_body">
               {previewLoading && <div className="vendor_attestation_loading">Loading preview…</div>}
               {!previewLoading && previewFormState && (
+<<<<<<< HEAD
                 <StepVendorSelfAttestationPrev
                   formState={previewFormState}
                   attestationId={previewAttestationId}
                   onOpenDocument={handleOpenDocument}
                 />
+=======
+                <StepVendorSelfAttestationPrev formState={previewFormState} />
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               )}
             </div>
           </div>

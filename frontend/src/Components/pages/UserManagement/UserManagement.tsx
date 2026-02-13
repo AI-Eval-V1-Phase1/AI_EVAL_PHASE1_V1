@@ -64,7 +64,10 @@ const UserManagement = () => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
   const [activeTab, setActiveTab] = useState<"users" | "general">("users");
   const [isModalOpen, setIsModalOpen] = useState(false);
+<<<<<<< HEAD
   const [isInviteLoading, setIsInviteLoading] = useState(false);
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const [email, setEmail] = useState("");
   const [organization, setOrganization] = useState("");
   const [role, setRole] = useState("");
@@ -76,7 +79,10 @@ const UserManagement = () => {
     event.preventDefault();
     const user = sessionStorage.getItem("userId");
     const userFormData = { email, organization, role, user };
+<<<<<<< HEAD
     setIsInviteLoading(true);
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     try {
       const token = sessionStorage.getItem("bearerToken");
       const response = await fetch(`${BASE_URL}/invite_user`, {
@@ -96,6 +102,7 @@ const UserManagement = () => {
         setRole("");
         setUserListRefreshKey((k) => k + 1);
       } else {
+<<<<<<< HEAD
         toast.error(result.message ?? "Failed to invite user");
       }
     } catch (err) {
@@ -103,6 +110,12 @@ const UserManagement = () => {
       toast.error("Network or server error. Please try again.");
     } finally {
       setIsInviteLoading(false);
+=======
+        toast.error(result.message);
+      }
+    } catch (err) {
+      console.error("Failed to invite:", err);
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     }
   };
 
@@ -117,24 +130,43 @@ const UserManagement = () => {
     setRole("");
   };
 
+<<<<<<< HEAD
   const systemRole = (sessionStorage.getItem("systemRole") ?? "")
     .toLowerCase()
     .trim();
+=======
+  const systemOrg = "AI EVAL";
+  const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim();
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const isVendorOrBuyer = systemRole === "vendor" || systemRole === "buyer";
   const userOrgName = (sessionStorage.getItem("organizationName") ?? "").trim();
 
   const baseOrgs = data ?? [];
+<<<<<<< HEAD
   const orgsForDropdown =
     isVendorOrBuyer && userOrgName
       ? baseOrgs.filter(
           (org) => (org.organizationName ?? "").trim() === userOrgName,
         )
       : baseOrgs;
+=======
+  const orgsForDropdown = isVendorOrBuyer && userOrgName
+    ? baseOrgs.filter(
+        (org) => (org.organizationName ?? "").trim() === userOrgName
+      )
+    : baseOrgs;
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
   const orgOptions = orgsForDropdown.map((org) => ({
     label: org.organizationName,
     value: org.id,
   }));
+<<<<<<< HEAD
+=======
+  if (!isVendorOrBuyer) {
+    orgOptions.push({ label: systemOrg, value: systemOrg });
+  }
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
   const allRoleOptions = [
     { value: "admin", label: "Org Admin" },
@@ -148,7 +180,10 @@ const UserManagement = () => {
     selectedOrg?.hasAdmin === true
       ? allRoleOptions.filter((r) => r.value !== "admin")
       : allRoleOptions;
+<<<<<<< HEAD
   const isSystemOrgSelected = organization === "1" || organization === 1;
+=======
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
   const systemRoleOptions = [
     { value: "system admin", label: "System Admin" },
@@ -166,9 +201,13 @@ const UserManagement = () => {
           </span>
           <div className="page_header_title_block">
             <h1 className="org_settings_title">User Management Settings</h1>
+<<<<<<< HEAD
             <p className="org_settings_subtitle sub_title_card">
               Manage users and roles.
             </p>
+=======
+            <p className="org_settings_subtitle sub_title_card">Manage users and roles.</p>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           </div>
         </div>
       </div>
@@ -198,9 +237,13 @@ const UserManagement = () => {
             <div className="team_members_card_header">
               <div>
                 <h2 className="org_settings_card_title">Team Members</h2>
+<<<<<<< HEAD
                 <p className="org_settings_card_subtitle">
                   Manage access and permissions for your organization.
                 </p>
+=======
+                <p className="org_settings_card_subtitle">Manage access and permissions for your organization.</p>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               </div>
               <Button
                 className="invite_user_btn org_invite_btn"
@@ -214,12 +257,17 @@ const UserManagement = () => {
               <UserDataTable refreshKey={userListRefreshKey} />
             </div>
           </div>
+<<<<<<< HEAD
+=======
+
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         </>
       )}
 
       {activeTab === "general" && (
         <div className="org_settings_card">
           <h2 className="org_settings_card_title">General</h2>
+<<<<<<< HEAD
           <p className="org_settings_card_subtitle">
             Organization name and general preferences.
           </p>
@@ -240,6 +288,12 @@ const UserManagement = () => {
             >
               Permissions matrix for available roles.
             </p>
+=======
+          <p className="org_settings_card_subtitle">Organization name and general preferences.</p>
+          <div className="role_definitions_section">
+            <h3 className="org_settings_card_title" style={{ fontSize: "1rem", marginTop: "1.25rem", marginBottom: "0.5rem" }}>Role Definitions</h3>
+            <p className="org_settings_card_subtitle" style={{ marginBottom: "1rem" }}>Permissions matrix for available roles.</p>
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             <div className="role_definitions_grid">
               {ROLE_DEFINITIONS.map((r) => {
                 const Icon = r.icon;
@@ -311,7 +365,13 @@ const UserManagement = () => {
               default_option="Select Role"
               icon={<UserStar width={20} height={24} />}
               name="user_role"
+<<<<<<< HEAD
               options={isSystemOrgSelected ? systemRoleOptions : roleOptions}
+=======
+              options={
+                organization === systemOrg ? systemRoleOptions : roleOptions
+              }
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               value={role}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                 setRole(e.target.value)
@@ -330,6 +390,7 @@ const UserManagement = () => {
               </span>
               Cancel
             </Button>
+<<<<<<< HEAD
             <Button
               type="submit"
               className="orgCreateBtn"
@@ -340,6 +401,14 @@ const UserManagement = () => {
                 <Send size={16} />
               </span>
               {isInviteLoading ? "Inviting…" : "Invite"}
+=======
+            <Button type="submit" className="orgCreateBtn">
+              {" "}
+              <span>
+                <Send size={16} />
+              </span>{" "}
+              Invite
+>>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             </Button>
           </div>
         </form>
