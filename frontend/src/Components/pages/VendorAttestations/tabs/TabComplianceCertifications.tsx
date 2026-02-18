@@ -1,10 +1,21 @@
 /**
  * Vendor Self Attestation – Compliance & Certifications tab content.
+ * Includes Regulatory and Compliance Certification Material upload (moved from Document Upload).
  * Heading, subheading, and icon from step config (Vendor Onboarding UI pattern).
  */
 import type { ReactNode } from "react";
 import AttestationDynamicStep from "../AttestationDynamicStep";
-import type { VendorSelfAttestationPayload } from "../../../../types/vendorSelfAttestation";
+import FormField from "../../../UI/FormField";
+import FileUpload from "../../../UI/FileUpload";
+import ChipMultiSelect from "../../../UI/ChipMultiSelect";
+import {
+  DOCUMENT_CATEGORIES,
+  MAX_FILE_SIZE_BYTES,
+} from "../../../../constants/vendorAttestationDocumentConstants";
+import type {
+  VendorSelfAttestationPayload,
+  DocumentUploadState,
+} from "../../../../types/vendorSelfAttestation";
 
 export interface TabComplianceCertificationsProps {
   attestation: VendorSelfAttestationPayload;
@@ -14,7 +25,13 @@ export interface TabComplianceCertificationsProps {
   title?: string;
   subTitle?: string;
   icon?: ReactNode;
+  documentUpload?: DocumentUploadState;
+  setDocumentUpload?: React.Dispatch<React.SetStateAction<DocumentUploadState>>;
 }
+
+const REGULATORY_LABEL = "Regulatory and Compliance Certification Material";
+const REGULATORY_PLACEHOLDER =
+  "Ability to upload the documents and be parsed to pull necessary information for aspects of the assessment";
 
 function TabComplianceCertifications({
   attestation,
@@ -24,18 +41,102 @@ function TabComplianceCertifications({
   title = "Compliance & Certifications",
   subTitle,
   icon,
+  documentUpload,
+  setDocumentUpload,
 }: TabComplianceCertificationsProps) {
+  const regulatory = documentUpload?.["2"] ?? { categories: [], byCategory: {} };
+  const categories = regulatory.categories ?? [];
+  const byCategory = regulatory.byCategory ?? {};
+
+  const setRegulatoryCategories = (selected: string[]) => {
+    setDocumentUpload?.((prev) => {
+      const prev2 = prev["2"] ?? { categories: [], byCategory: {} };
+      return {
+        ...prev,
+        "2": {
+          categories: selected,
+          byCategory: selected.reduce(
+            (acc, cat) => ({ ...acc, [cat]: prev2.byCategory?.[cat] ?? [] }),
+            {} as Record<string, string[]>
+          ),
+        },
+      };
+    });
+  };
+
+  const setFilesForCategory = (category: string, fileNames: string[]) => {
+    setDocumentUpload?.((prev) => {
+      const prev2 = prev["2"] ?? { categories: [], byCategory: {} };
+      return {
+        ...prev,
+        "2": {
+          ...prev2,
+          byCategory: { ...(prev2.byCategory ?? {}), [category]: fileNames },
+        },
+      };
+    });
+  };
+
   return (
-    <AttestationDynamicStep
-      title={title}
-      subTitle={subTitle}
-      icon={icon}
-      sectionKey="compliance_certifications"
-      data={data}
-      attestation={attestation}
-      setAttestation={setAttestation}
-      fieldErrors={fieldErrors}
-    />
+    <>
+      <AttestationDynamicStep
+        title={title}
+        subTitle={subTitle}
+        icon={icon}
+        sectionKey="compliance_certifications"
+        data={data}
+        attestation={attestation}
+        setAttestation={setAttestation}
+        fieldErrors={fieldErrors}
+      />
+
+      {/* Regulatory and Compliance Certification Material (moved from Document Upload) */}
+      {documentUpload != null && setDocumentUpload != null && (
+        <div className="form_fields_vendor" style={{ marginTop: "1.5rem" }}>
+          {fieldErrors?.regulatoryCertificationMaterial && (
+            <p className="orgError" style={{ marginBottom: "0.5rem" }} role="alert">
+              {fieldErrors.regulatoryCertificationMaterial}
+            </p>
+          )}
+          <FormField
+            label={REGULATORY_LABEL}
+            mandatory={true}
+            tooltipText={REGULATORY_PLACEHOLDER}
+          >
+            <p style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "0.5rem" }}>
+              Select certification types and upload files for each. Accepted: PDF, DOCX, PPT. Max 10MB per file.
+            </p>
+            <ChipMultiSelect
+              id="regulatory-document-categories-compliance"
+              labelName=""
+              options={DOCUMENT_CATEGORIES.map((c) => ({ label: c.label, value: c.value }))}
+              value={categories}
+              onChange={setRegulatoryCategories}
+            />
+          </FormField>
+          {categories.length > 0 && (
+            <div style={{ marginTop: "1rem" }}>
+              {categories.map((category) => (
+                <div key={category} className="form_fields_vendor" style={{ marginBottom: "1rem" }}>
+                  <FormField
+                    label={category}
+                    mandatory={false}
+                    tooltipText={`Upload files for ${category}. Accepted: PDF, DOCX, PPT. Max 10MB per file.`}
+                  >
+                    <FileUpload
+                      accept=".pdf,.doc,.docx,.ppt,.pptx"
+                      maxSizeBytes={MAX_FILE_SIZE_BYTES}
+                      value={byCategory[category] ?? []}
+                      onFilesChange={(fileNames) => setFilesForCategory(category, fileNames)}
+                    />
+                  </FormField>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 

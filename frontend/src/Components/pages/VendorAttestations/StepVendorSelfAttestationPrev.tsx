@@ -11,8 +11,9 @@ import { formatPreviewValueAsString } from "../../../utils/formatPreviewValue";
 import "../VendorOnboarding/StepVendorOnboardingPreview.css";
 import "./vendor_attestation_preview.css";
 
-/** Step index for Document Upload section; step for Evidence & Supporting Documentation (Testing and Policy upload). */
+/** Step index for Document Upload section; Compliance & Certifications (Regulatory upload); Evidence & Supporting Documentation (Testing and Policy upload). */
 const STEP_DOCUMENT_UPLOAD = 1;
+const STEP_COMPLIANCE_CERTIFICATIONS = 4;
 const STEP_EVIDENCE = 9;
 
 interface StepVendorSelfAttestationPrevProps {
@@ -188,7 +189,7 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
                 </div>
               );
             })()}
-            {/* Regulatory (2): only categories where user uploaded at least one doc – show checkbox label, documents, Verified, View, Update */}
+            {/* Regulatory (2): in Compliance & Certifications step; only categories where user uploaded at least one doc */}
             {documentUpload?.["2"]?.categories
               ?.filter((category) => (documentUpload["2"]?.byCategory?.[category] ?? []).length > 0)
               ?.map((category) => {
@@ -198,17 +199,17 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
                   <div key={category} className="vendor_preview_row vendor_preview_row_regulatory">
                     <dt className="vendor_preview_label">
                       <span className="vendor_preview_doc_label">
-                        <span>{VENDOR_SELF_ATTESTATION.document_upload["2"]?.label ?? "Regulatory and Compliance Certification Material"} — {category}</span>
+                        <span>Regulatory and Compliance Certification Material — {category}</span>
                         <span className="preview-regulatory-verified" title="Document uploaded and verified">
                           <ShieldCheck size={14} aria-hidden />
                           <span>Verified</span>
                         </span>
                         <DocumentRowActions
-                          step={STEP_DOCUMENT_UPLOAD}
+                          step={STEP_COMPLIANCE_CERTIFICATIONS}
                           show={!regDoc.isNa}
                           documentNames={names}
                           showUpdate={true}
-                          onUpdate={() => onNavigateToStep?.(STEP_DOCUMENT_UPLOAD)}
+                          onUpdate={() => onNavigateToStep?.(STEP_COMPLIANCE_CERTIFICATIONS)}
                         />
                       </span>
                     </dt>
@@ -223,8 +224,8 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
               <div className="vendor_preview_row">
                 <dt className="vendor_preview_label">
                   <span className="vendor_preview_doc_label">
-                    <span>{VENDOR_SELF_ATTESTATION.document_upload["2"]?.label ?? "Regulatory and Compliance Certification Material"}</span>
-                    <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} show={false} documentNames={[]} />
+                    <span>Regulatory and Compliance Certification Material</span>
+                    <DocumentRowActions step={STEP_COMPLIANCE_CERTIFICATIONS} show={false} documentNames={[]} />
                   </span>
                 </dt>
                 <dd className="vendor_preview_value">N/A</dd>

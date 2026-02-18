@@ -57,13 +57,14 @@ export const NAVIGATION = {
       accessRoles: ["admin"],
       systemRoles: ["system admin", "vendor"],
     },
-    {
-      label: "Solutions Architect",
-      icon: Layers,
-      path: "/evidence-library",
-      accessRoles: ["admin"],
-      systemRoles: ["system admin", "vendor"],
-    },
+    // ** Not needed for the Phase-1
+    // {
+    //   label: "Solutions Architect",
+    //   icon: Layers,
+    //   path: "/evidence-library",
+    //   accessRoles: ["admin"],
+    //   systemRoles: ["system admin", "vendor"],
+    // },
     {
       label: "Vendor Portal",
       icon: Building2,

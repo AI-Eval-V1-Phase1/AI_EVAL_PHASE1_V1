@@ -214,11 +214,17 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       data: { assessments: list, organizationId: isSystemAdmin ? undefined : orgIdStr },
     });
   } catch (error) {
-    console.error(
-      "listAssessmentsByOrganization:",
-      error instanceof Error ? error.message : String(error)
-    );
-    return res.status(500).json({ message: "Internal server error" });
+    const err = error as Error & { code?: string; detail?: string };
+    console.error("listAssessmentsByOrganization: Failed query:", err.message);
+    if (err.detail) console.error("listAssessmentsByOrganization: Detail:", err.detail);
+    if (err.code) console.error("listAssessmentsByOrganization: Code:", err.code);
+    return res.status(500).json({
+      message: "Internal server error",
+      hint:
+        err.message?.includes("does not exist") || err.code === "42703"
+          ? "A table column may be missing. From backend folder run: node migrations/run-migration-0024.js then node migrations/run-migration-0026.js"
+          : undefined,
+    });
   }
 };
 

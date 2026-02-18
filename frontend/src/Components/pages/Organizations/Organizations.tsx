@@ -101,7 +101,7 @@ const TAB_ONBOARDING = "onboarding";
 const TAB_ATTESTATION = "attestation";
 
 const Organizations = () => {
-  document.title = "AI EVAL | Organizations";
+  document.title = "AI Eval | Organizations";
   const [isOrganization, setIsOrganization] = useState(false);
   const [isPreview, setIsPreview] = useState(true);
   const [previewOrg, setPreviewOrg] = useState(null);

@@ -64,12 +64,6 @@ export const VENDOR_SELF_ATTESTATION = {
         "Ability to upload the documents and be parsed to pull necessary information for aspects of the assessment",
       required: false
     },
-    2: {
-      label: "Regulatory and Compliance Certification Material",
-      placeholder:
-        "Ability to upload the documents and be parsed to pull necessary information for aspects of the assessment",
-      required: true,
-    },
   },
 
   product_profile: {
@@ -134,11 +128,11 @@ export const VENDOR_SELF_ATTESTATION = {
     },
   },
   compliance_certifications: {
-    0: {
-      label: "What security/compliance certifications do you hold?",
-      placeholder: "Select all current, valid certifications (not in progress)",
-      required: true,
-    },
+    // 0: {
+    //   label: "What security/compliance certifications do you hold?",
+    //   placeholder: "Select all current, valid certifications (not in progress)",
+    //   required: true,
+    // },
     1: {
       label: "How was this assessment completed?",
       placeholder: "Select the validation level for this assessment",

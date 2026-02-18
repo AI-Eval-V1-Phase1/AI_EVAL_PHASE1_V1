@@ -45,7 +45,7 @@ const SystemAdminOverview = () => {
             <LayoutDashboard size={24} className="header_icon_svg" />
           </span>
           <div className="page_header_title_block">
-            <h1 className="page_header_title">System Admin Overview</h1>
+            <h1 className="page_header_title">System Admin Dashboard</h1>
             <p className="vendor_overview_subtitle page_header_subtitle">
               Platform-wide metrics and activity summary.
             </p>

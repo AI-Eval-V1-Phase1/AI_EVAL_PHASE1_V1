@@ -29,7 +29,7 @@ export const ATTESTATION_SECTION_FIELDS: Record<string, (AttestationFieldMapping
     { key: "decision_autonomy", type: "string" },
   ],
   compliance_certifications: [
-    { key: "security_certifications", type: "array" },
+    null, // security_certifications — section commented out
     { key: "assessment_completion_level", type: "string" },
   ],
   data_handling_privacy: [

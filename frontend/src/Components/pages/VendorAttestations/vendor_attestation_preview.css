@@ -125,9 +125,11 @@
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  background-color: var(--main-auth-button-color, #2463eb);
+  background-color: white;
+  /* background-color: var(--main-auth-button-color, #2463eb); */
   border: 1px solid var(--main-auth-button-color, #2463eb);
-  color: white;
+  color: var(--main-auth-button-color, #2463eb);
+  /* color: white; */
 }
 .vendor_attestation_save_draft_btn_form:hover {
   opacity: 0.9;
@@ -140,4 +142,8 @@
 .last_two_btns{
   display: flex;
   gap: 1em;
+}
+
+.document-upload-helper {
+  margin-top: 1rem;
 }

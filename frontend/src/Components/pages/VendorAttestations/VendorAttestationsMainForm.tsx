@@ -153,6 +153,11 @@ function isVendorAttestationStepValid(
     >
   )[sectionKey];
   if (!sectionData) return true;
+  // Compliance & Certifications: also require at least one Regulatory/Compliance certification category selected
+  if (sectionKey === "compliance_certifications") {
+    const regulatoryCategories = formState.documentUpload?.["2"]?.categories ?? [];
+    if (regulatoryCategories.length === 0) return false;
+  }
   return isAttestationStepValid(
     stepIndex,
     formState.attestation,
@@ -210,6 +215,13 @@ function getStepFieldErrors(
   )[sectionKey];
   const mappings = ATTESTATION_SECTION_FIELDS[sectionKey];
   if (!sectionData || !mappings) return {};
+  // Compliance: require at least one Regulatory/Compliance certification category
+  if (sectionKey === "compliance_certifications") {
+    const regulatoryCategories = formState.documentUpload?.["2"]?.categories ?? [];
+    if (regulatoryCategories.length === 0) {
+      errors.regulatoryCertificationMaterial = "Select at least one certification type and upload materials";
+    }
+  }
   const dataEntries = Object.entries(sectionData).filter(
     ([k]) =>
       k !== "length" && Object.prototype.hasOwnProperty.call(sectionData, k),
@@ -737,6 +749,8 @@ const VendorAttestationsMainForm = () => {
                   title={stepHeaderProps.title}
                   subTitle={stepHeaderProps.subTitle}
                   icon={stepHeaderProps.icon}
+                  documentUpload={formState.documentUpload ?? defaultDocumentUpload}
+                  setDocumentUpload={setDocumentUpload}
                 />
               );
             }
@@ -946,7 +960,10 @@ const VendorAttestationsMainForm = () => {
     e.preventDefault();
     // Full submit only: is_draft: false → backend sets status "submitted" → details page shows "Completed"
     const ok = await saveDraftOrSubmit(false);
-    if (ok) setAllStepsFilled(true);
+    if (ok) {
+      setAllStepsFilled(true);
+      navigate("/reports");
+    }
   };
 
   return (

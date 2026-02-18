@@ -7,12 +7,12 @@ import { Pool } from "pg";
 
 // Create the postgresql client
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // Connection String
-  // user: process.env.DATABASE_USER,
-  // password: process.env.DATABASE_PASSWORD,
-  // host: process.env.DATABASE_HOST,
-  // port: Number(process.env.DATABASE_PORT),
-  // database: process.env.DATABASE_NAME,
+  // connectionString: process.env.DATABASE_URL, // Connection String
+  user: process.env.DATABASE_USER,
+  password: process.env.DATABASE_PASSWORD,
+  host: process.env.DATABASE_HOST,
+  port: Number(process.env.DATABASE_PORT),
+  database: process.env.DATABASE_NAME,
 
 });
 

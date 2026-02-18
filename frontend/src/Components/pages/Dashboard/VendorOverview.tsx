@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import DashboardMetricCard from "../../UI/DashboardMetricCard";
+import Select from "../../UI/Select";
 import type { AttestationItem } from "./types";
 import { BASE_URL, formatUpdatedDate, formatCompletedDate, formatDisplayDate } from "./utils";
 import "./dashboard.css";
@@ -17,6 +18,7 @@ const VendorOverview = () => {
   const [attestations, setAttestations] = useState<AttestationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCompletedId, setSelectedCompletedId] = useState<string>("");
 
   const fetchAttestations = useCallback(async () => {
     const token = sessionStorage.getItem("bearerToken");
@@ -99,6 +101,10 @@ const VendorOverview = () => {
   const certificateList = completedAttestations.flatMap((a) =>
     (a.certificates ?? []).map((c) => ({ ...c, attestationId: a.id }))
   );
+  /** When an attestation is selected in the dropdown, show only that attestation's documents; otherwise show all */
+  const certificateListToShow = selectedCompletedId
+    ? certificateList.filter((c) => c.attestationId === selectedCompletedId)
+    : certificateList;
 
   const profileCompleteness = completedAttestations.length > 0 ? 100 : draftAttestations.length > 0 ? 50 : 0;
   const profileCompleteLabel = profileCompleteness >= 100 ? "Profile complete!" : "Complete your attestation to improve.";
@@ -117,7 +123,23 @@ const VendorOverview = () => {
               Manage your security profile and compliance attestations.
             </p>
           </div>
+         
         </div>
+         {!loading && completedAttestations.length > 0 && (
+            <div className="vendor_overview_dropdown_top_right">
+              <Select
+                // labelName="Completed attestations"
+                name="completed_attestations"
+                value={selectedCompletedId}
+                default_option="All completed attestations"
+                options={completedAttestations.map((item) => ({
+                  value: item.id,
+                  label: `Vendor Self-Attestation – ${formatDisplayDate(item.updatedAt ?? item.createdAt)}`,
+                }))}
+                onChange={(e) => setSelectedCompletedId(e.target.value)}
+              />
+            </div>
+          )}
       </div>
 
       <div className="vendor_overview_metrics">
@@ -128,17 +150,18 @@ const VendorOverview = () => {
           description={profileCompleteLabel}
           progress={profileCompleteness}
         />
-        <DashboardMetricCard
+        {/* Active Request is not needed since there is no buyer to request */}
+        {/* <DashboardMetricCard
           title="Active Requests"
           icon={<Info size={22} />}
           value={activeRequests}
           description="Customers requesting assessment"
-        />
+        /> */}
         <DashboardMetricCard
           title="Trust Score"
           icon={<CheckCircle2 size={22} className="vendor_overview_metric_card_icon_green" />}
           value="A+"
-          description="Top tier AI vendor"
+          description="92% - Top tier AI vendor"
           valueVariant="grade"
         />
       </div>
@@ -146,7 +169,8 @@ const VendorOverview = () => {
       <div className="vendor_overview_section">
         <h2 className="vendor_overview_section_title">My Attestations</h2>
         <p className="vendor_overview_section_subtitle">
-Security documents and compliance evidence.        </p>
+          Security documents and compliance evidence.
+        </p>
         {loading && (
           <div className="vendor_overview_loading">Loading attestations…</div>
         )}
@@ -185,9 +209,9 @@ Security documents and compliance evidence.        </p>
             ))}
           </>
         )}
-        {!loading && !error && certificateList.length > 0 && (
+        {!loading && !error && certificateListToShow.length > 0 && (
           <>
-            {certificateList.map((cert, idx) => (
+            {certificateListToShow.map((cert, idx) => (
               <div
                 key={`${cert.attestationId}-${cert.name}-${idx}`}
                 className="vendor_overview_attestation_row"
@@ -204,7 +228,7 @@ Security documents and compliance evidence.        </p>
                 </div>
                 <div className="vendor_overview_attestation_actions">
                   <Link
-                    to="/attestation_details"
+                    to="/reports"
                     state={{ attestationId: cert.attestationId }}
                     className="vendor_overview_btn_view"
                   >
@@ -215,9 +239,11 @@ Security documents and compliance evidence.        </p>
             ))}
           </>
         )}
-        {!loading && !error && draftAttestations.length === 0 && certificateList.length === 0 && (
+        {!loading && !error && draftAttestations.length === 0 && certificateListToShow.length === 0 && (
           <div className="vendor_overview_empty">
-            No draft attestations. Complete an attestation to see certificates here.
+            {selectedCompletedId
+              ? "No documents for this attestation."
+              : "No draft attestations. Complete an attestation to see certificates here."}
           </div>
         )}
       </div>
@@ -262,7 +288,7 @@ Security documents and compliance evidence.        </p>
                 </div>
                 <div className="vendor_overview_attestation_actions">
                   <Link
-                    to="/attestation_details"
+                    to="/reports"
                     state={{ attestationId: item.id }}
                     className="vendor_overview_btn_view"
                   >
