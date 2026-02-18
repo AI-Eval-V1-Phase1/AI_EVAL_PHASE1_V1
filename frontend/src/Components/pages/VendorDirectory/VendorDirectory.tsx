@@ -5,10 +5,7 @@ import {
   Database,
   FileCheck,
   FlaskConical,
-<<<<<<< HEAD
   Search,
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   ShieldCheck,
   X,
   ChevronRight,
@@ -21,13 +18,10 @@ const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1"
 interface PublicVendor {
   id: string;
   organizationId: string;
-<<<<<<< HEAD
   /** Organization name from org id (when provided by API). */
   organizationName?: string | null;
   /** Product names (completed, visible to buyer) from API. */
   productNames?: string[];
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   vendorType: string;
   companyWebsite: string;
   companyDescription: string;
@@ -60,7 +54,6 @@ function productInitials(name: string): string {
   return s ? s.toUpperCase() : "Pr";
 }
 
-<<<<<<< HEAD
 type VendorTab = "all" | "listed" | "my";
 
 const VendorDirectory = () => {
@@ -69,14 +62,6 @@ const VendorDirectory = () => {
   });
   const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim();
   const isBuyer = systemRole === "buyer";
-=======
-type VendorTab = "all" | "my";
-
-const VendorDirectory = () => {
-  useEffect(() => {
-    document.title = "AI Eval | Vendor Portal"
-  });
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const [vendorTab, setVendorTab] = useState<VendorTab>("all");
   const [vendors, setVendors] = useState<PublicVendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,7 +82,6 @@ const VendorDirectory = () => {
     modelRisk: boolean;
   } | null>(null);
   const [productDetailLoading, setProductDetailLoading] = useState(false);
-<<<<<<< HEAD
   const [searchQuery, setSearchQuery] = useState("");
 
   /** All Vendors: all vendors even if directory listing is off (backend returns all for system admin). */
@@ -131,10 +115,6 @@ const VendorDirectory = () => {
 
   /** Listed Vendors: only vendors who have turned on Public Directory Listing. */
   const fetchListedVendors = useCallback(async () => {
-=======
-
-  const fetchPublicVendors = useCallback(async () => {
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const token = sessionStorage.getItem("bearerToken");
     if (!token) {
       setError("Please log in to view the vendor directory.");
@@ -179,11 +159,7 @@ const VendorDirectory = () => {
       }
       setMyVendors(data?.vendors ?? []);
     } catch {
-<<<<<<< HEAD
       setMyVendorsError(null);
-=======
-      setMyVendorsError("Network or server error");
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       setMyVendors([]);
     } finally {
       setMyVendorsLoading(false);
@@ -293,7 +269,6 @@ const VendorDirectory = () => {
   });
 
   useEffect(() => {
-<<<<<<< HEAD
     if (vendorTab === "all") {
       if (isBuyer) fetchListedVendors();
       else fetchAllVendors();
@@ -303,16 +278,6 @@ const VendorDirectory = () => {
 
   const displayName = (v: PublicVendor) => {
     if (v.organizationName && String(v.organizationName).trim()) return String(v.organizationName).trim();
-=======
-    fetchPublicVendors();
-  }, [fetchPublicVendors]);
-
-  useEffect(() => {
-    if (vendorTab === "my") fetchMyVendors();
-  }, [vendorTab, fetchMyVendors]);
-
-  const displayName = (v: PublicVendor) => {
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     if (v.organizationId && v.organizationId !== v.companyWebsite) return v.organizationId;
     try {
       if (v.companyWebsite) {
@@ -325,7 +290,6 @@ const VendorDirectory = () => {
     return v.organizationId || "Vendor";
   };
 
-<<<<<<< HEAD
   const matchesSearch = (v: PublicVendor, q: string): boolean => {
     if (!q.trim()) return true;
     const lower = q.trim().toLowerCase();
@@ -343,8 +307,6 @@ const VendorDirectory = () => {
 
   const vendorsToShow = vendorTab === "my" ? filteredVendors(myVendors) : filteredVendors(vendors);
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const initials = (v: PublicVendor) => {
     const name = displayName(v);
     const parts = name.split(/[\s.-]+/).filter(Boolean);
@@ -357,7 +319,7 @@ const VendorDirectory = () => {
       <div className="vendor_directory_header page_header_align">
         <div className="page_header_row">
           <span className="icon_size_header" aria-hidden>
-            <Building2 size={24} />
+            <Building2 size={24} className="header_icon_svg"/>
           </span>
           <div className="page_header_title_block">
             <h1 className="page_header_title">AI Vendor Directory</h1>
@@ -380,7 +342,6 @@ const VendorDirectory = () => {
         >
           All Vendors
         </button>
-<<<<<<< HEAD
         {!isBuyer && (
           <button
             type="button"
@@ -394,8 +355,6 @@ const VendorDirectory = () => {
             Listed Vendors
           </button>
         )}
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         <button
           type="button"
           role="tab"
@@ -409,7 +368,6 @@ const VendorDirectory = () => {
         </button>
       </div>
 
-<<<<<<< HEAD
       {(vendorTab === "all" || vendorTab === "listed") && (
         <>
           {!loading && !error && vendors.length > 0 && (
@@ -425,10 +383,6 @@ const VendorDirectory = () => {
               />
             </div>
           )}
-=======
-      {vendorTab === "all" && (
-        <>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           {loading && (
             <div className="vendor_directory_loading">Loading vendors…</div>
           )}
@@ -437,7 +391,6 @@ const VendorDirectory = () => {
           )}
           {!loading && !error && vendors.length === 0 && (
             <div className="vendor_directory_empty">
-<<<<<<< HEAD
               {vendorTab === "listed" || (vendorTab === "all" && isBuyer)
                 ? "No vendors have enabled Public Directory Listing yet."
                 : "No vendors have completed onboarding yet."}
@@ -456,14 +409,6 @@ const VendorDirectory = () => {
               aria-labelledby={vendorTab === "all" ? "vendor-tab-all" : "vendor-tab-listed"}
             >
               {vendorsToShow.map((v) => (
-=======
-              No vendors have enabled Public Directory Listing yet.
-            </div>
-          )}
-          {!loading && !error && vendors.length > 0 && (
-            <div className="vendor_directory_grid" id="vendor-directory-panel-all" role="tabpanel" aria-labelledby="vendor-tab-all">
-              {vendors.map((v) => (
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             <article
               key={v.id}
               className="vendor_directory_card vendor_directory_card_clickable"
@@ -478,14 +423,11 @@ const VendorDirectory = () => {
               </div>
               <div className="vendor_directory_card_body">
                 <h2 className="vendor_directory_card_name">{displayName(v)}</h2>
-<<<<<<< HEAD
                 {(v.productNames?.length ?? 0) > 0 && (
                   <p className="vendor_directory_card_products">
                     {v.productNames!.join(", ")}
                   </p>
                 )}
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 {v.vendorType && (
                   <p className="vendor_directory_card_type">{v.vendorType}</p>
                 )}
@@ -511,7 +453,6 @@ const VendorDirectory = () => {
 
       {vendorTab === "my" && (
         <>
-<<<<<<< HEAD
           {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && (
             <div className="vendor_directory_search_wrap">
               <Search size={18} className="vendor_directory_search_icon" aria-hidden />
@@ -525,8 +466,6 @@ const VendorDirectory = () => {
               />
             </div>
           )}
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           {myVendorsLoading && (
             <div className="vendor_directory_loading">Loading my vendors…</div>
           )}
@@ -538,7 +477,6 @@ const VendorDirectory = () => {
               NO vendor
             </div>
           )}
-<<<<<<< HEAD
           {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && vendorsToShow.length === 0 && (
             <div className="vendor_directory_empty">
               No vendors match your search.
@@ -547,11 +485,6 @@ const VendorDirectory = () => {
           {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && vendorsToShow.length > 0 && (
             <div className="vendor_directory_grid" id="vendor-directory-panel-my" role="tabpanel" aria-labelledby="vendor-tab-my">
               {vendorsToShow.map((v) => (
-=======
-          {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && (
-            <div className="vendor_directory_grid" id="vendor-directory-panel-my" role="tabpanel" aria-labelledby="vendor-tab-my">
-              {myVendors.map((v) => (
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             <article
               key={v.id}
               className="vendor_directory_card vendor_directory_card_clickable"
@@ -566,14 +499,11 @@ const VendorDirectory = () => {
               </div>
               <div className="vendor_directory_card_body">
                 <h2 className="vendor_directory_card_name">{displayName(v)}</h2>
-<<<<<<< HEAD
                 {(v.productNames?.length ?? 0) > 0 && (
                   <p className="vendor_directory_card_products">
                     {v.productNames!.join(", ")}
                   </p>
                 )}
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 {v.vendorType && (
                   <p className="vendor_directory_card_type">{v.vendorType}</p>
                 )}

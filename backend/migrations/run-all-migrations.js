@@ -1,5 +1,5 @@
 /**
- * Run all migrations in order (0000 through 0019).
+ * Run all migrations in order (0000 through 0027).
  * Use this if you have an existing DB that was created with older migrations and need to bring it up to date.
  * For a completely fresh DB, prefer: node migrations/run-bootstrap.js
  *
@@ -44,6 +44,11 @@ const MIGRATIONS = [
   "0020_product_name_vendor_self_attestation.sql",
   "0021_visible_to_buyer_vendor_self_attestation.sql",
   "0022_section_visibility_vendor_self_attestation.sql",
+  "0023_ai_eval_org_and_users_organization_id.sql",
+  "0024_integrate_system_other_buyer_cots.sql",
+  "0025_integrate_system_other_next_to_integrate_system.sql",
+  "0026_vendor_cots_other_columns.sql",
+  "0027_vendor_cots_other_columns_reorder.sql",
 ];
 
 const client = new pg.Client({ connectionString });

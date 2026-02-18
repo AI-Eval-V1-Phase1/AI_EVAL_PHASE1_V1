@@ -42,12 +42,16 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
+
+  padding: 0.8em 1em;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+
+  font-size: 0.875rem;
+  font-weight: 600;
   color: #374151;
-<<<<<<< HEAD
-  padding: 0.5em;
   /* background-color: ; */
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .product_profile_toggle {
@@ -74,12 +78,8 @@
 }
 
 .product_profile_toggle[aria-pressed="false"] {
-<<<<<<< HEAD
   background-color: white;
-=======
-  background-color: #d1d5db;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
-  border: 1px solid crimson;
+  border: 1px solid var(--main-auth-button-color);
 }
 
 .product_profile_toggle[aria-pressed="false"]::after {
@@ -87,13 +87,13 @@
   right: auto;
  left: 22px;
   top: 1.5px;
-  background: crimson;
+  background:  var(--main-auth-button-color);
 }
 
 .product_profile_toggle_error {
   margin: 0;
   font-size: 0.875rem;
-  color: #dc2626;
+  color:  var(--main-auth-button-color);
 }
 
 /* Summary cards row – same section spacing as attestation */
@@ -375,19 +375,13 @@
 .product_profile_product_card_status_draft {
   background: #fef3c7;
   color: #92400e;
-<<<<<<< HEAD
   margin-left: 3.5em;
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .product_profile_product_card_status_completed {
   background: #d8f3dc;
   color: #166534;
-<<<<<<< HEAD
   margin-left: 3.5em;
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 /* Toggle used in modal (and elsewhere if needed) */

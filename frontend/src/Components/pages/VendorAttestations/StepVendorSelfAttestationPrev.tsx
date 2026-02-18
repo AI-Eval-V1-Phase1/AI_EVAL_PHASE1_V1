@@ -3,7 +3,7 @@
  * Uses the same UI as Vendor Onboarding preview (vendor_preview cards). Document rows keep View/Edit actions.
  */
 import React from "react";
-import { Eye, Pencil } from "lucide-react";
+import { Eye, ShieldCheck, Pencil } from "lucide-react";
 import type { VendorSelfAttestationFormState } from "../../../types/vendorSelfAttestation";
 import { VENDOR_SELF_ATTESTATION } from "../../../constants/vendorAttestionData";
 import { ATTESTATION_SECTION_FIELDS } from "../../../constants/vendorAttestationFields";
@@ -19,13 +19,10 @@ interface StepVendorSelfAttestationPrevProps {
   formState: VendorSelfAttestationFormState;
   /** When provided, edit icon navigates to the given step (Document Upload = 1, Evidence = 9). */
   onNavigateToStep?: (step: number) => void;
-<<<<<<< HEAD
   /** When provided, document names in Document Uploads are clickable and open the document. */
   attestationId?: string | null;
   /** Called when user clicks a document name; receives file name. Use to fetch with auth and open in new tab. */
   onOpenDocument?: (fileName: string) => void;
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 /** User-friendly preview: multi-select/industry/dependent dropdown as readable text, never raw array or JSON. */
@@ -33,63 +30,96 @@ function formatValue(val: unknown): string {
   return formatPreviewValueAsString(val);
 }
 
-<<<<<<< HEAD
 function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestationId, onOpenDocument }: StepVendorSelfAttestationPrevProps) {
   const { companyProfile, attestation, documentUpload } = formState;
 
   const canOpenDocument = Boolean(attestationId && onOpenDocument);
 
+  /** Returns display value and whether this row has documents (not N/A). */
   const renderDocumentValue = (names: string[]) => {
-    if (!names?.length) return "N/A";
+    if (!names?.length) return { content: "N/A", isNa: true };
     if (canOpenDocument) {
-      return (
-        <>
-          {names.map((name, idx) => (
-            <span key={`${name}-${idx}`}>
-              {idx > 0 && ", "}
-              <button
-                type="button"
-                className="preview-doc-link"
-                onClick={() => onOpenDocument?.(name)}
-              >
-                {name}
-              </button>
-            </span>
-          ))}
-        </>
-      );
+      return {
+        isNa: false,
+        content: (
+          <>
+            <span className="vendor_preview_doc_uploaded_label">Document uploaded: </span>
+            {names.map((name, idx) => (
+              <span key={`${name}-${idx}`}>
+                {idx > 0 && ", "}
+                <button
+                  type="button"
+                  className="preview-doc-link"
+                  onClick={() => onOpenDocument?.(name)}
+                >
+                  {name}
+                </button>
+              </span>
+            ))}
+          </>
+        ),
+      };
     }
-    return names.join(", ");
+    return {
+      isNa: false,
+      content: (
+        <>
+          <span className="vendor_preview_doc_uploaded_label">Document uploaded: </span>
+          {names.join(", ")}
+        </>
+      ),
+    };
   };
 
-=======
-function StepVendorSelfAttestationPrev({ formState, onNavigateToStep }: StepVendorSelfAttestationPrevProps) {
-  const { companyProfile, attestation, documentUpload } = formState;
-
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
-  /** Actions for a document row: View (navigate to section) and Edit (navigate to section). */
-  const DocumentRowActions = ({ step }: { step: number }) => {
-    if (!onNavigateToStep) return null;
+  /** Actions for a document row: View opens document(s) when onOpenDocument is provided (no navigation); otherwise navigates to section. */
+  const DocumentRowActions = ({
+    step,
+    show,
+    documentNames = [],
+    showUpdate = false,
+    onUpdate,
+  }: {
+    step: number;
+    show: boolean;
+    documentNames?: string[];
+    showUpdate?: boolean;
+    onUpdate?: () => void;
+  }) => {
+    const canOpenDocs = documentNames.length > 0 && Boolean(attestationId && onOpenDocument);
+    const showView = show && (canOpenDocs || onNavigateToStep);
+    const showUpdateBtn = showUpdate && onUpdate;
+    if (!showView && !showUpdateBtn) return null;
+    const handleViewClick = () => {
+      if (canOpenDocs) {
+        documentNames.forEach((name) => onOpenDocument?.(name));
+      } else if (onNavigateToStep) {
+        onNavigateToStep(step);
+      }
+    };
     return (
       <span className="preview-doc-actions">
-        <button
-          type="button"
-          className="preview-view-btn"
-          onClick={() => onNavigateToStep(step)}
-          title="View section"
-        >
-          <Eye size={14} aria-hidden />
-          <span style={{ marginLeft: "0.25rem" }}>View</span>
-        </button>
-        <button
-          type="button"
-          className="preview-edit-icon"
-          onClick={() => onNavigateToStep(step)}
-          title="Edit this section"
-          aria-label="Edit this section"
-        >
-          <Pencil size={14} aria-hidden />
-        </button>
+        {showView && (
+          <button
+            type="button"
+            className="preview-view-btn"
+            onClick={handleViewClick}
+            title={canOpenDocs ? "Open document" : "View section"}
+          >
+            <Eye size={14} aria-hidden />
+            <span style={{ marginLeft: "0.25rem" }}>View</span>
+          </button>
+        )}
+        {showUpdateBtn && (
+          <button
+            type="button"
+            className="preview-update-btn"
+            onClick={onUpdate}
+            title="Replace document"
+          >
+            <Pencil size={14} aria-hidden />
+            <span style={{ marginLeft: "0.25rem" }}>Update</span>
+          </button>
+        )}
       </span>
     );
   };
@@ -124,135 +154,99 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep }: StepVend
           </dl>
         </section>
 
-<<<<<<< HEAD
         {/* Document Uploads: same UI as Company Profile (dl list) */}
         <section className="vendor_preview_card">
           <h3 className="vendor_preview_card_title">Document Uploads</h3>
           <dl className="vendor_preview_list">
-            <div className="vendor_preview_row">
-              <dt className="vendor_preview_label">
-                <span className="vendor_preview_doc_label">
-                  <span>{VENDOR_SELF_ATTESTATION.document_upload["0"]?.label ?? "Marketing and Product Material"}</span>
-                  <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} />
-                </span>
-              </dt>
-              <dd className="vendor_preview_value">{renderDocumentValue(documentUpload?.["0"] ?? [])}</dd>
-            </div>
-            <div className="vendor_preview_row">
-              <dt className="vendor_preview_label">
-                <span className="vendor_preview_doc_label">
-                  <span>{VENDOR_SELF_ATTESTATION.document_upload["1"]?.label ?? "Technical Product Specifications Material"}</span>
-                  <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} />
-                </span>
-              </dt>
-              <dd className="vendor_preview_value">{renderDocumentValue(documentUpload?.["1"] ?? [])}</dd>
-            </div>
-            {/* Regulatory (2): each category as its own row */}
-            {documentUpload?.["2"]?.categories?.map((category) => {
-              const names = documentUpload["2"]?.byCategory?.[category] ?? [];
+            {(() => {
+              const names0 = documentUpload?.["0"] ?? [];
+              const doc0 = renderDocumentValue(names0);
               return (
-                <div key={category} className="vendor_preview_row">
+                <div key="doc0" className="vendor_preview_row">
                   <dt className="vendor_preview_label">
                     <span className="vendor_preview_doc_label">
-                      <span>{VENDOR_SELF_ATTESTATION.document_upload["2"]?.label ?? "Regulatory and Compliance Certification Material"} — {category}</span>
-                      <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} />
+                      <span>{VENDOR_SELF_ATTESTATION.document_upload["0"]?.label ?? "Marketing and Product Material"}</span>
+                      <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} show={!doc0.isNa} documentNames={names0} />
                     </span>
                   </dt>
-                  <dd className="vendor_preview_value">{renderDocumentValue(names)}</dd>
+                  <dd className="vendor_preview_value">{doc0.content}</dd>
                 </div>
               );
-            })}
-            {(!documentUpload?.["2"]?.categories?.length) && (
+            })()}
+            {(() => {
+              const names1 = documentUpload?.["1"] ?? [];
+              const doc1 = renderDocumentValue(names1);
+              return (
+                <div key="doc1" className="vendor_preview_row">
+                  <dt className="vendor_preview_label">
+                    <span className="vendor_preview_doc_label">
+                      <span>{VENDOR_SELF_ATTESTATION.document_upload["1"]?.label ?? "Technical Product Specifications Material"}</span>
+                      <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} show={!doc1.isNa} documentNames={names1} />
+                    </span>
+                  </dt>
+                  <dd className="vendor_preview_value">{doc1.content}</dd>
+                </div>
+              );
+            })()}
+            {/* Regulatory (2): only categories where user uploaded at least one doc – show checkbox label, documents, Verified, View, Update */}
+            {documentUpload?.["2"]?.categories
+              ?.filter((category) => (documentUpload["2"]?.byCategory?.[category] ?? []).length > 0)
+              ?.map((category) => {
+                const names = documentUpload["2"]?.byCategory?.[category] ?? [];
+                const regDoc = renderDocumentValue(names);
+                return (
+                  <div key={category} className="vendor_preview_row vendor_preview_row_regulatory">
+                    <dt className="vendor_preview_label">
+                      <span className="vendor_preview_doc_label">
+                        <span>{VENDOR_SELF_ATTESTATION.document_upload["2"]?.label ?? "Regulatory and Compliance Certification Material"} — {category}</span>
+                        <span className="preview-regulatory-verified" title="Document uploaded and verified">
+                          <ShieldCheck size={14} aria-hidden />
+                          <span>Verified</span>
+                        </span>
+                        <DocumentRowActions
+                          step={STEP_DOCUMENT_UPLOAD}
+                          show={!regDoc.isNa}
+                          documentNames={names}
+                          showUpdate={true}
+                          onUpdate={() => onNavigateToStep?.(STEP_DOCUMENT_UPLOAD)}
+                        />
+                      </span>
+                    </dt>
+                    <dd className="vendor_preview_value">{regDoc.content}</dd>
+                  </div>
+                );
+              })}
+            {(!documentUpload?.["2"]?.categories?.length ||
+              documentUpload["2"]?.categories?.every(
+                (cat) => (documentUpload["2"]?.byCategory?.[cat] ?? []).length === 0
+              )) && (
               <div className="vendor_preview_row">
                 <dt className="vendor_preview_label">
                   <span className="vendor_preview_doc_label">
                     <span>{VENDOR_SELF_ATTESTATION.document_upload["2"]?.label ?? "Regulatory and Compliance Certification Material"}</span>
-                    <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} />
+                    <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} show={false} documentNames={[]} />
                   </span>
                 </dt>
                 <dd className="vendor_preview_value">N/A</dd>
               </div>
             )}
-            <div className="vendor_preview_row">
-              <dt className="vendor_preview_label">
-                <span className="vendor_preview_doc_label">
-                  <span>Testing and Policy Documentation</span>
-                  <DocumentRowActions step={STEP_EVIDENCE} />
-                </span>
-              </dt>
-              <dd className="vendor_preview_value">{renderDocumentValue(documentUpload?.evidenceTestingPolicy ?? [])}</dd>
-            </div>
+            {(() => {
+              const evidenceNames = documentUpload?.evidenceTestingPolicy ?? [];
+              const evidenceDoc = renderDocumentValue(evidenceNames);
+              return (
+                <div key="evidence" className="vendor_preview_row">
+                  <dt className="vendor_preview_label">
+                    <span className="vendor_preview_doc_label">
+                      <span>Testing and Policy Documentation</span>
+                      <DocumentRowActions step={STEP_EVIDENCE} show={!evidenceDoc.isNa} documentNames={evidenceNames} />
+                    </span>
+                  </dt>
+                  <dd className="vendor_preview_value">{evidenceDoc.content}</dd>
+                </div>
+              );
+            })()}
           </dl>
         </section>
-=======
-        {/* Document Uploads: slots 0, 1, 2 (2 = regulatory with categories) + Evidence Testing & Policy; View + edit per row */}
-        <section className="vendor_preview_card preview-section preview-section--documents">
-          <h3 className="vendor_preview_card_title">Document Uploads</h3>
-        <table className="preview-table preview-table--documents">
-          <tbody>
-            <tr className="preview-doc-row">
-              <td className="preview-label">
-                <span className="preview-doc-label-text">
-                  {VENDOR_SELF_ATTESTATION.document_upload["0"]?.label ?? "Marketing and Product Material"}
-                </span>
-                <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} />
-              </td>
-              <td className="preview-value preview-value--doc">
-                {documentUpload?.["0"]?.length ? documentUpload["0"].join(", ") : "N/A"}
-              </td>
-            </tr>
-            <tr className="preview-doc-row">
-              <td className="preview-label">
-                <span className="preview-doc-label-text">
-                  {VENDOR_SELF_ATTESTATION.document_upload["1"]?.label ?? "Technical Product Specifications Material"}
-                </span>
-                <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} />
-              </td>
-              <td className="preview-value preview-value--doc">
-                {documentUpload?.["1"]?.length ? documentUpload["1"].join(", ") : "N/A"}
-              </td>
-            </tr>
-            {/* Regulatory (2): show each selected category with its files */}
-            {documentUpload?.["2"]?.categories?.map((category) => {
-              const names = documentUpload["2"]?.byCategory?.[category] ?? [];
-              return (
-                <tr key={category} className="preview-doc-row">
-                  <td className="preview-label">
-                    <span className="preview-doc-label-text">
-                      {VENDOR_SELF_ATTESTATION.document_upload["2"]?.label ?? "Regulatory and Compliance Certification Material"} — {category}
-                    </span>
-                    <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} />
-                  </td>
-                  <td className="preview-value preview-value--doc">{names.length ? names.join(", ") : "N/A"}</td>
-                </tr>
-              );
-            })}
-            {(!documentUpload?.["2"]?.categories?.length) && (
-              <tr className="preview-doc-row">
-                <td className="preview-label">
-                  <span className="preview-doc-label-text">
-                    {VENDOR_SELF_ATTESTATION.document_upload["2"]?.label ?? "Regulatory and Compliance Certification Material"}
-                  </span>
-                  <DocumentRowActions step={STEP_DOCUMENT_UPLOAD} />
-                </td>
-                <td className="preview-value preview-value--doc">N/A</td>
-              </tr>
-            )}
-            <tr className="preview-doc-row">
-              <td className="preview-label">
-                <span className="preview-doc-label-text">Testing and Policy Documentation</span>
-                <DocumentRowActions step={STEP_EVIDENCE} />
-              </td>
-              <td className="preview-value preview-value--doc">
-                {(documentUpload?.evidenceTestingPolicy?.length ?? 0) > 0
-                  ? (documentUpload?.evidenceTestingPolicy ?? []).join(", ")
-                  : "N/A"}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
         {/* Attestation sections (dynamic fields) */}
         {Object.entries(ATTESTATION_SECTION_FIELDS).map(([sectionKey, mappings]) => {

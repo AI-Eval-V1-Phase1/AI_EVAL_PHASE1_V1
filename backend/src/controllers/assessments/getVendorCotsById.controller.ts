@@ -21,11 +21,7 @@ const getVendorCotsById = async (req: Request, res: Response) => {
 
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, Number(userId))).limit(1);
     if (!user) return res.status(404).json({ message: "User not found" });
-<<<<<<< HEAD
     const orgId = String((user as Record<string, unknown>).organization_id ?? "").trim();
-=======
-    const orgId = String((user as Record<string, unknown>).organization_name ?? "").trim();
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     if (!orgId) return res.status(400).json({ message: "User has no organization" });
 
     const rows = await db
@@ -45,11 +41,13 @@ const getVendorCotsById = async (req: Request, res: Response) => {
         customization_level: cotsVendorAssessments.customization_level,
         integration_complexity: cotsVendorAssessments.integration_complexity,
         regulatory_requirements: cotsVendorAssessments.regulatory_requirements,
+        regulatory_requirements_other: cotsVendorAssessments.regulatory_requirements_other,
         data_sensitivity: cotsVendorAssessments.data_sensitivity,
         customer_risk_tolerance: cotsVendorAssessments.customer_risk_tolerance,
         alternatives_considered: cotsVendorAssessments.alternatives_considered,
         key_advantages: cotsVendorAssessments.key_advantages,
         customer_specific_risks: cotsVendorAssessments.customer_specific_risks,
+        customer_specific_risks_other: cotsVendorAssessments.customer_specific_risks_other,
         identified_risks: cotsVendorAssessments.identified_risks,
         risk_domain_scores: cotsVendorAssessments.risk_domain_scores,
         contextual_multipliers: cotsVendorAssessments.contextual_multipliers,
@@ -91,6 +89,7 @@ const getVendorCotsById = async (req: Request, res: Response) => {
             ? r.regulatory_requirements
             : toJson(r.regulatory_requirements)
           : "",
+      regulatoryRequirementsOther: r.regulatory_requirements_other ?? "",
       dataSensitivity: r.data_sensitivity ?? "",
       customerRiskTolerance: r.customer_risk_tolerance ?? "",
       alternativesConsidered: r.alternatives_considered ?? "",
@@ -101,6 +100,7 @@ const getVendorCotsById = async (req: Request, res: Response) => {
             ? r.customer_specific_risks
             : toJson(r.customer_specific_risks)
           : "",
+      customerSpecificRisksOther: r.customer_specific_risks_other ?? "",
       identifiedRisks: r.identified_risks ?? "",
       riskDomainScores: r.risk_domain_scores ?? "",
       contextualMultipliers: r.contextual_multipliers ?? "",

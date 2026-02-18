@@ -32,12 +32,6 @@ function ChipMultiSelect({
   return (
     <div className="chip-multi-select" id={id}>
       {labelName != null && <label>{labelName}</label>}
-<<<<<<< HEAD
-=======
-      {description != null && (
-        <p className="chip-multi-select-description">{description}</p>
-      )}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       <div className="chip-multi-select-grid" role="group">
         {options.map((opt) => {
           const selected = value.includes(opt.value);

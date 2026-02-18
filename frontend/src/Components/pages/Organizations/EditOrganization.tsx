@@ -8,10 +8,7 @@ const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => 
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const [isError, setIsError] = useState("");
-<<<<<<< HEAD
   const [isUpdateLoading, setIsUpdateLoading] = useState(false);
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const dispatch = useDispatch();
   const [isOrganizationName, setIsOrganizationName] = useState("");
   const [isStatus, setIsStatus] = useState("");
@@ -72,10 +69,7 @@ const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => 
 
     const token = sessionStorage.getItem("bearerToken");
 
-<<<<<<< HEAD
     setIsUpdateLoading(true);
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     try {
       const response = await fetch(`${BASE_URL}/updateOrganizations/${id}`, {
         method: "PUT",
@@ -85,13 +79,7 @@ const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => 
         },
         body: JSON.stringify(data),
       });
-<<<<<<< HEAD
       const result = await response.json();
-=======
-      // console.log("response", response);
-      const result = await response.json();
-      // console.log(result)
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       if (response.ok) {
         closeUpdateOrg();
         setIsOrganizationName("");
@@ -99,7 +87,6 @@ const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => 
         dispatch(getOrganizations());
         setIsError("");
       } else {
-<<<<<<< HEAD
         setIsError(result.message ?? "Failed to update organization");
       }
     } catch (error) {
@@ -107,14 +94,6 @@ const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => 
       toast.error("Network or server error. Please try again.");
     } finally {
       setIsUpdateLoading(false);
-=======
-        // setIsEmail(result.message)
-        console.log("response", result.message);
-        setIsError(result.message);
-      }
-    } catch (error) {
-      console.log(error);
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     }
   };
 
@@ -189,7 +168,6 @@ const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => 
                 </span>
                 Cancel
               </button>
-<<<<<<< HEAD
               <button
                 type="submit"
                 className={`orgCreateBtn ${isUpdateLoading ? "disabled_css" : ""}`}
@@ -200,13 +178,6 @@ const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => 
                   <Plus width={18} />
                 </span>
                 {isUpdateLoading ? "Saving…" : "Update"}
-=======
-              <button type="submit" className="orgCreateBtn">
-                <span>
-                  <Plus width={18} />
-                </span>
-                Upadate
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               </button>
             </div>
           </form>

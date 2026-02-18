@@ -402,16 +402,11 @@ const VendorCOTSMain = () => {
               // After step 5 go to preview (Auto-Generated step commented out)
               <>
                 <StepVendorCotsPreview formData={formData} />
-                {submitError && (
-                  <p className="vendor_form_block_error" role="alert">
-                    {submitError}
-                  </p>
-                )}
               </>
             ),
         };
       }),
-    [formData, submitError, effectiveFieldErrors],
+    [formData, effectiveFieldErrors],
   );
 
   const completedStepsForProgress = Array.from(
@@ -444,65 +439,78 @@ const VendorCOTSMain = () => {
             {allStepsFilled ? (
               <div className="vendor_success_step">
                 <h2>Assessment submitted</h2>
-                <p>Redirecting to assessments...</p>
+                <p>Redirecting to reports...</p>
               </div>
             ) : (
-              <div className="vendor_action_btns">
-                <div className="action_back">
-                  <Button
-                    type="button"
-                    onClick={currentStep > 0 ? handleBack : undefined}
-                    disabled={currentStep === 0}
-                    className="back_btn"
+              <>
+                {submitError && (
+                  <p
+                    className="vendor_form_block_error"
+                    role="alert"
+                    style={{ marginBottom: 8 }}
                   >
-                    <span>
-                      <ChevronLeftCircle size={16} />
-                      Back
-                    </span>
-                  </Button>
-                </div>
-                <div className="last_two_btns">
-                  <div className="vendor_attestation_save_draft_wrapper">
+                    {submitError}
+                  </p>
+                )}
+                <div className="vendor_action_btns">
+                  <div className="action_back">
                     <Button
                       type="button"
-                      onClick={handleSaveDraft}
-                      disabled={savingDraft}
-                      className="vendor_attestation_save_draft_btn_form"
+                      onClick={currentStep > 0 ? handleBack : undefined}
+                      disabled={currentStep === 0}
+                      className="back_btn"
                     >
                       <span>
-                        <Save size={16} />
-                        {savingDraft ? " Saving…" : " Save Draft"}
+                        <ChevronLeftCircle size={16} />
+                        Back
                       </span>
                     </Button>
                   </div>
-
-                  {currentStep < TOTAL_STEPS - 1 ? (
-                    <div className="action_continue_btn">
+                  <div className="last_two_btns">
+                    <div className="vendor_attestation_save_draft_wrapper">
                       <Button
                         type="button"
-                        onClick={handleContinue}
-                        className="continue_btn"
+                        onClick={handleSaveDraft}
+                        disabled={savingDraft}
+                        className="vendor_attestation_save_draft_btn_form"
                       >
                         <span>
-                          Continue <ChevronRightCircle size={16} />
+                          <Save size={16} />
+                          {savingDraft ? " Saving…" : " Save Draft"}
                         </span>
                       </Button>
                     </div>
-                  ) : (
-                    <div className="action_submit_btn">
-                      <Button
-                        type="submit"
-                        className="submit_btn_vendor"
-                        disabled={submitting}
-                      >
-                        <span>
-                          Submit <Send size={16} />
-                        </span>
-                      </Button>
-                    </div>
-                  )}
+
+                    {currentStep < TOTAL_STEPS - 1 && (
+                      <div className="action_continue_btn">
+                        <Button
+                          type="button"
+                          onClick={handleContinue}
+                          className="continue_btn"
+                        >
+                          <span>
+                            Continue <ChevronRightCircle size={16} />
+                          </span>
+                        </Button>
+                      </div>
+                    )}
+
+                    {currentStep === TOTAL_STEPS - 1 && (
+                      <div className="action_submit_btn">
+                        <Button
+                          type="submit"
+                          className="submit_btn_vendor"
+                          disabled={submitting}
+                        >
+                          <span>
+                            Submit <Send size={16} />
+                          </span>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </CardOnBoarding>
         </form>

@@ -1,10 +1,6 @@
 import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
-<<<<<<< HEAD
 import { vendors, vendorSelfAttestations, usersTable } from "../../schema/schema.js";
-=======
-import { vendors, vendorSelfAttestations } from "../../schema/schema.js";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import { and, eq } from "drizzle-orm";
 
 function mapAttestationRow(attestRow: Record<string, unknown>): Record<string, unknown> {
@@ -55,10 +51,7 @@ function mapAttestationRow(attestRow: Record<string, unknown>): Record<string, u
  * GET /vendorDirectory/:vendorId/products/:productId
  * Returns full attestation detail for one product. Only if vendor has public listing
  * and this product is COMPLETED and visible_to_buyer = true.
-<<<<<<< HEAD
  * Query ?all=true (system admin only): returns product regardless of status/visibility.
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
  */
 const getVendorProductDetail = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -69,7 +62,6 @@ const getVendorProductDetail = async (req: Request, res: Response): Promise<void
       return;
     }
 
-<<<<<<< HEAD
     const allParam = typeof req.query?.all === "string" && req.query.all.trim().toLowerCase() === "true";
     let isSystemAdmin = false;
     if (allParam) {
@@ -94,8 +86,6 @@ const getVendorProductDetail = async (req: Request, res: Response): Promise<void
       }
     }
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const [vendor] = await db
       .select({
         id: vendors.id,
@@ -106,16 +96,12 @@ const getVendorProductDetail = async (req: Request, res: Response): Promise<void
       .where(eq(vendors.id, vendorId))
       .limit(1);
 
-<<<<<<< HEAD
     if (!vendor) {
       res.status(404).json({ success: false, message: "Vendor or product not found" });
       return;
     }
 
     if (!allParam && !vendor.publicDirectoryListing) {
-=======
-    if (!vendor || !vendor.publicDirectoryListing) {
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       res.status(404).json({ success: false, message: "Vendor or product not found" });
       return;
     }
@@ -126,7 +112,6 @@ const getVendorProductDetail = async (req: Request, res: Response): Promise<void
       return;
     }
 
-<<<<<<< HEAD
     const whereClause =
       allParam && isSystemAdmin
         ? and(eq(vendorSelfAttestations.id, productId), eq(vendorSelfAttestations.user_id, vendorUserId))
@@ -137,20 +122,6 @@ const getVendorProductDetail = async (req: Request, res: Response): Promise<void
             eq(vendorSelfAttestations.visible_to_buyer, true)
           );
     const [row] = await db.select().from(vendorSelfAttestations).where(whereClause).limit(1);
-=======
-    const [row] = await db
-      .select()
-      .from(vendorSelfAttestations)
-      .where(
-        and(
-          eq(vendorSelfAttestations.id, productId),
-          eq(vendorSelfAttestations.user_id, vendorUserId),
-          eq(vendorSelfAttestations.status, "COMPLETED"),
-          eq(vendorSelfAttestations.visible_to_buyer, true)
-        )
-      )
-      .limit(1);
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
     if (!row) {
       res.status(404).json({ success: false, message: "Product not found" });

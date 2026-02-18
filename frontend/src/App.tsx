@@ -15,6 +15,7 @@ import EvidenceLibrary from "./Components/pages/EvidenceLibrary/EvidenceLibrary"
 import UserManagement from "./Components/pages/UserManagement/UserManagement";
 import { DirectoryListing } from "./Components/pages/DirectoryListing/DirectoryListing";
 import Reports from "./Components/pages/Reports/Reports";
+import ReportDetail from "./Components/pages/Reports/ReportDetail";
 import MyVendors from "./Components/pages/MyVendors/MyVendors";
 import Organizations from "./Components/pages/Organizations/Organizations";
 import Toaster from "./Components/Toaster/Toaster";
@@ -61,8 +62,6 @@ function App() {
                 <Route path="/vendor-directory" element={<VendorDirectory />} />
                 <Route path="/my-vendor" element={<MyVendors />} />
                 <Route path="/security_center" element={<Compilance />} />
-                <Route path="/compilance" element={<Compilance />} />
-
                 <Route path="/governance" element={<Goverance />} />
                 <Route path="/sales-enablement" element={<SalesEnablement />} />
                 <Route path="/evidence-library" element={<EvidenceLibrary />} />
@@ -71,6 +70,7 @@ function App() {
                   element={<DirectoryListing />}
                 />
                 <Route path="/reports" element={<Reports />} />
+                <Route path="/reports/:reportId" element={<ReportDetail />} />
                 <Route
                   path="/attestation_details"
                   element={<VendorAttestationDetails />}

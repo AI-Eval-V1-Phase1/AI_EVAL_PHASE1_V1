@@ -151,15 +151,15 @@
   color: white;
   background-color: #d00000;
   width: 91%;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  /* font-weight: 600; */
   cursor: pointer;
   border-radius: 4px;
   display: flex;
   /* justify-content: center; */
   align-content: center;
-  align-items: center;
-  gap: 5px;
+  /* align-items: center;  */
+  gap: 11px;
   /* border: 1px solid var(--main-auth-button-color); */
   padding: 8px;
   color: white;

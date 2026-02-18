@@ -37,13 +37,8 @@ const RiskAppetite = ({
           <Select
             labelName={
               <div className="labelSection">
-<<<<<<< HEAD
                 <span>AI Risk Appetite</span>
                 <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-=======
-                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-                <span>AI Risk Appetite</span>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 <ClickTooltip content={BUYER_HELPTEXT.aiRiskAppetite}>
                   <Info size={14} color="#6B7280" />
                 </ClickTooltip>
@@ -66,13 +61,8 @@ const RiskAppetite = ({
           <Select
             labelName={
               <div className="labelSection">
-<<<<<<< HEAD
                 <span>Acceptable Risk Level</span>
                 <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-=======
-                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-                <span>Acceptable Risk Level</span>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 <ClickTooltip content={BUYER_HELPTEXT.acceptableRiskLevel}>
                   <Info size={14} color="#6B7280" />
                 </ClickTooltip>

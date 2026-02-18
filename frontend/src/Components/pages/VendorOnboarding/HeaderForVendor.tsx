@@ -10,17 +10,17 @@ type HeaderProps = {
 
 const DEFAULT_HEADER_ICON = <FileText size={18} aria-hidden />;
 
-const ICON_WRAPPER_STYLE: React.CSSProperties = {
-  width: 18,
-  height: 18,
-  minWidth: 18,
-  minHeight: 18,
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
-  color: "inherit",
-};
+// const ICON_WRAPPER_STYLE: React.CSSProperties = {
+//   width: 18,
+//   height: 18,
+//   minWidth: 18,
+//   minHeight: 18,
+//   display: "inline-flex",
+//   alignItems: "center",
+//   justifyContent: "center",
+//   flexShrink: 0,
+//   color: "inherit",
+// };
 
 const HeaderForVendor = ({
   title_vendor,
@@ -35,7 +35,7 @@ const HeaderForVendor = ({
           <span
             className="icon_size_header"
             aria-hidden="true"
-            style={ICON_WRAPPER_STYLE}
+        
           >
             {icon ?? DEFAULT_HEADER_ICON}
           </span>

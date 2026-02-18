@@ -87,13 +87,10 @@ const Login = () => {
           String(userDetails.organization_name ?? "").trim(),
         );
         sessionStorage.setItem(
-<<<<<<< HEAD
           "organizationId",
           String(userDetails.organization_id ?? userDetails.organization_name ?? "").trim(),
         );
         sessionStorage.setItem(
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           "userName",
           String(userDetails.user_name ?? "").trim(),
         );
@@ -128,7 +125,6 @@ const Login = () => {
             : "/onBoarding";
         setTimeout(() => navigate(nextPath), 2000);
       } else {
-<<<<<<< HEAD
         const msg = (result.message ?? "").toLowerCase();
         const isInvited =
           msg.includes("invited") ||
@@ -151,11 +147,6 @@ const Login = () => {
             result.message || "Login failed. Check your email and password.",
           );
         }
-=======
-        setError(
-          result.message || "Login failed. Check your email and password.",
-        );
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       }
     } catch (error) {
       console.log(error);

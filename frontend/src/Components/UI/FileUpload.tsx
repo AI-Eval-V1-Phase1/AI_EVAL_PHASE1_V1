@@ -18,26 +18,20 @@ interface FileUploadProps {
   onFilesChange?: (fileNames: string[]) => void;
   /** Called when validation fails (e.g. file too large or wrong type). */
   onValidationError?: (message: string) => void;
-<<<<<<< HEAD
   /** Preview/read-only: show file names and size only; no upload, replace, or delete. */
   readOnly?: boolean;
   /** Optional file sizes in bytes for read-only display (parallel to value). */
   fileSizes?: (number | undefined)[];
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 const DEFAULT_ACCEPT = ".pdf,.doc,.docx,.ppt,.pptx";
 
-<<<<<<< HEAD
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 const FileUpload = ({
   maxFiles = 5,
   accept = DEFAULT_ACCEPT,
@@ -45,11 +39,8 @@ const FileUpload = ({
   value = [],
   onFilesChange,
   onValidationError,
-<<<<<<< HEAD
   readOnly = false,
   fileSizes = [],
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }: FileUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
@@ -110,7 +101,6 @@ const FileUpload = ({
   };
 
   return (
-<<<<<<< HEAD
     <div className={`upload-container${readOnly ? " upload-container--readonly" : ""}`}>
       {!readOnly && (
         <>
@@ -135,33 +125,10 @@ const FileUpload = ({
             </p>
           )}
         </>
-=======
-    <div className="upload-container">
-      <div
-        className="custom-file-button"
-        onClick={() => fileInputRef.current?.click()}
-        role="button"
-      >
-        <UploadIcon size={16} className="upload_icon" /> Upload Files
-      </div>
-      <input
-        type="file"
-        multiple
-        accept={accept}
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        style={{ display: "none" }}
-      />
-      {validationMessage && (
-        <p className="upload-validation-error" style={{ color: "#b91c1c", fontSize: "0.875rem", marginTop: 4 }}>
-          {validationMessage}
-        </p>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       )}
       <ul className="file-list">
         {value.map((name, index) => (
           <li key={`${name}-${index}`}>
-<<<<<<< HEAD
             <span className="file-list-name">{name}</span>
             {readOnly ? (
               fileSizes[index] != null ? (
@@ -176,16 +143,6 @@ const FileUpload = ({
                 ×
               </span>
             )}
-=======
-            {name}
-            <span
-              className="remove-btn"
-              onClick={() => removeFile(index)}
-              role="button"
-            >
-              ×
-            </span>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           </li>
         ))}
       </ul>

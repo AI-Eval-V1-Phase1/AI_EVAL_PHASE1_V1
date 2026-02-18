@@ -3,11 +3,7 @@
   margin: 20px auto;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
-<<<<<<< HEAD
   /* border: 1px solid #e5e5e5; */
-=======
-  border: 1px solid #e5e5e5;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 
@@ -35,11 +31,7 @@
 .preview-label {
   padding: 10px;
   font-weight: 500;
-<<<<<<< HEAD
   /* background: #f3f3f3; */
-=======
-  background: #f3f3f3;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   width: 35%;
   vertical-align: top;
 }

@@ -12,7 +12,6 @@ import forgotPassword from "../controllers/user_managemnt_controller/forgotPassw
 import resetPassword from "../controllers/user_managemnt_controller/resetPassword.js";
 const router = express.Router();
 
-<<<<<<< HEAD
 router
 .get("/me", authenticateToken, getMe)
 .get("/allUsers",authenticateToken, fetchAllUsers)
@@ -24,17 +23,6 @@ router
 .put("/updateUser/:id",authenticateToken,updatesUsers)
 
 .post("/logout", authenticateToken, (req, res) => {
-=======
-router.get("/me", authenticateToken, getMe);
-router.post("/invite_user", authenticateToken,inviteUser);
-router.post("/signupData/:token", userTokenVerify, signupAccess, userSignup);
-router.post("/login", userLogin);
-router.get("/allUsers",authenticateToken, fetchAllUsers);
-router.put("/updateUser/:id",authenticateToken,updatesUsers)
-router.post("/forgotPassword", forgotPassword);
-router.post("/resetPassword", resetPassword);
-router.post("/logout", authenticateToken, (req, res) => {
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     // console.log("eeee", res);
   return res.json({ Logout: true });
 });

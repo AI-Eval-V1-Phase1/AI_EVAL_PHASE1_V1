@@ -1,20 +1,13 @@
 import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
-<<<<<<< HEAD
 import { vendors, vendorSelfAttestations, usersTable } from "../../schema/schema.js";
-=======
-import { vendors, vendorSelfAttestations } from "../../schema/schema.js";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import { and, desc, eq } from "drizzle-orm";
 
 /**
  * GET /vendorDirectory/:vendorId/products
  * Returns only products (attestations) that are COMPLETED and visible_to_buyer = true
  * for the given vendor. Vendor must have publicDirectoryListing = true.
-<<<<<<< HEAD
  * Query ?all=true (system admin only): returns all attestations for this vendor (any status).
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
  */
 const listVendorVisibleProducts = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -24,7 +17,6 @@ const listVendorVisibleProducts = async (req: Request, res: Response): Promise<v
       return;
     }
 
-<<<<<<< HEAD
     const allProducts = typeof req.query?.all === "string" && req.query.all.trim().toLowerCase() === "true";
     let isSystemAdmin = false;
     if (allProducts) {
@@ -49,8 +41,6 @@ const listVendorVisibleProducts = async (req: Request, res: Response): Promise<v
       }
     }
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const [vendor] = await db
       .select({
         id: vendors.id,
@@ -66,11 +56,7 @@ const listVendorVisibleProducts = async (req: Request, res: Response): Promise<v
       return;
     }
 
-<<<<<<< HEAD
     if (!allProducts && !vendor.publicDirectoryListing) {
-=======
-    if (!vendor.publicDirectoryListing) {
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       res.status(200).json({ success: true, products: [] });
       return;
     }
@@ -81,7 +67,6 @@ const listVendorVisibleProducts = async (req: Request, res: Response): Promise<v
       return;
     }
 
-<<<<<<< HEAD
     const rows =
       allProducts && isSystemAdmin
         ? await db
@@ -123,32 +108,6 @@ const listVendorVisibleProducts = async (req: Request, res: Response): Promise<v
         updated_at: r.updated_at ?? null,
       };
     });
-=======
-    const rows = await db
-      .select({
-        id: vendorSelfAttestations.id,
-        product_name: vendorSelfAttestations.product_name,
-        status: vendorSelfAttestations.status,
-        updated_at: vendorSelfAttestations.updated_at,
-        visible_to_buyer: vendorSelfAttestations.visible_to_buyer,
-      })
-      .from(vendorSelfAttestations)
-      .where(
-        and(
-          eq(vendorSelfAttestations.user_id, vendorUserId),
-          eq(vendorSelfAttestations.status, "COMPLETED"),
-          eq(vendorSelfAttestations.visible_to_buyer, true)
-        )
-      )
-      .orderBy(desc(vendorSelfAttestations.updated_at));
-
-    const products = rows.map((r) => ({
-      id: r.id,
-      productName: (r.product_name ?? "").trim() || "Product",
-      status: "Completed",
-      updated_at: r.updated_at ?? null,
-    }));
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
     res.status(200).json({
       success: true,

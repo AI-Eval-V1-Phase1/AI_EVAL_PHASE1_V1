@@ -23,6 +23,10 @@ import {
   ROLLBACK_OPTIONS,
   CHANGE_MANAGEMENT_OPTIONS,
   MONITORING_AVAILABILITY_OPTIONS,
+  DIGITAL_MATURITY_LEVEL_OPTIONS,
+  AI_GOVERANCE_YES_NO_OPTIONS,
+  AUDIT_LOGS_AVAILABLE,
+  VENDOR_TESTING_RESULTS,
 } from "./buyerCotsOptions";
 
 export const BUYER_COTS_ASSESSMENT = {
@@ -132,7 +136,7 @@ export const BUYER_COTS_ASSESSMENT = {
       label: "What is your organization's digital maturity level?",
       placeholder: "Select the level that best describes your organization",
       required: "true",
-      options: MATURITY_LEVEL_OPTIONS,
+      options: DIGITAL_MATURITY_LEVEL_OPTIONS,
     },
     1: {
       label: "What is your data governance maturity level?",
@@ -144,7 +148,7 @@ export const BUYER_COTS_ASSESSMENT = {
       label: "Does your organization have an AI Governance Board or Committee?",
       placeholder: "Indicate if you have AI governance oversight",
       required: "true",
-      options: YES_NO_OPTIONS,
+      options: AI_GOVERANCE_YES_NO_OPTIONS,
     },
     3: {
       label: "Does your organization have an AI Ethics Policy?",
@@ -256,14 +260,14 @@ export const BUYER_COTS_ASSESSMENT = {
       label: "Are audit logs available for AI decisions and system access?",
       placeholder: "Indicate audit logging capabilities",
       required: "true",
-      options: MONITORING_AVAILABILITY_OPTIONS,
+      options: AUDIT_LOGS_AVAILABLE,
     },
     3: {
       label:
         "Has the vendor provided testing results (bias, security, performance)?",
       placeholder: "Indicate availability of testing documentation",
       required: "true",
-      options: MONITORING_AVAILABILITY_OPTIONS,
+      options: VENDOR_TESTING_RESULTS,
     },
   },
   /** Auto-Generated section: helptext/placeholder and Notes from AI EVAL Database Fields Reference - Buyer Side CSV */

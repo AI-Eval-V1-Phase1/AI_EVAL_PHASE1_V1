@@ -3,11 +3,12 @@
   flex-direction: column;
   gap: 0.5rem;
   width: 100%;
+  margin: 0.5em 0 0 0;
 }
 
 .chip-multi-select label {
   display: block;
-  font-weight: 600;
+  /* font-weight: 600; */
   color: var(--text-primary, #1f2937);
 }
 
@@ -20,11 +21,7 @@
 
 .chip-multi-select-grid {
   display: grid;
-<<<<<<< HEAD
   grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-=======
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   gap: 0.5rem;
 }
 
@@ -33,12 +30,17 @@
   padding: 0.5rem 0.875rem;
   font-size: 0.9375rem;
   font-weight: 500;
-  color: var(--chip-text, #1f2937);
+  /* color: var(--chip-text, #1f2937); */
+  color: var(--light-gray-color);
   background-color: var(--chip-bg, #ffffff);
-  border: 1px solid var(--chip-border, #d1d5db);
+  /* border: 1px solid var(--chip-border, #d1d5db); */
+  border: 1px solid var(--light-gray-color);
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
   text-align: center;
 }
 

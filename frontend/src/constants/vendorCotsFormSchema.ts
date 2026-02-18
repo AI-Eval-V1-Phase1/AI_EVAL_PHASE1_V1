@@ -134,6 +134,13 @@ export const VENDOR_COTS_FORM_SECTIONS: VendorCotsSectionConfig[] = [
         required: true,
       },
       {
+        key: "regulatoryRequirementsOther",
+        label: "Please specify other regulatory requirements",
+        placeholder: "Enter other regulatory requirements (max 300 characters)",
+        inputType: "text",
+        required: false,
+      },
+      {
         key: "dataSensitivity",
         label: "What is the sensitivity level of data this customer will process?",
         placeholder: "Select the highest sensitivity level of data involved",
@@ -184,6 +191,13 @@ export const VENDOR_COTS_FORM_SECTIONS: VendorCotsSectionConfig[] = [
         inputType: "multiselect",
         optionsKey: "customerSpecificRisks",
         required: true,
+      },
+      {
+        key: "customerSpecificRisksOther",
+        label: "Please specify other customer-specific risks",
+        placeholder: "Enter other risks (max 300 characters)",
+        inputType: "text",
+        required: false,
       },
     ],
   },

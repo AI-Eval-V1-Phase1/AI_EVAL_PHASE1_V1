@@ -9,7 +9,7 @@
 .industry-sector-dependency label {
   display: block;
   font-weight: 500;
-  color: var(--text-primary, #1f2937);
+  color: var(--light-gray-color);
 }
 
 /* Center options (select + chips/checkboxes) and equal spacing */

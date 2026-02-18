@@ -1,18 +1,12 @@
 import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
-<<<<<<< HEAD
 import { vendors, usersTable, createOrganization, vendorSelfAttestations } from "../../schema/schema.js";
 import { and, eq, inArray, sql } from "drizzle-orm";
-=======
-import { vendors } from "../../schema/schema.js";
-import { eq } from "drizzle-orm";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
 /**
  * GET /vendorDirectory
  * Returns only vendors who have turned on Public Directory Listing (for buyer-facing directory).
  * When DB has public_directory_listing column, filter by it; when column is missing, returns [].
-<<<<<<< HEAD
  * Query ?scope=all (system admin only): returns all vendors, no filter.
  */
 const listPublicVendors = async (req: Request, res: Response): Promise<void> => {
@@ -41,11 +35,6 @@ const listPublicVendors = async (req: Request, res: Response): Promise<void> => 
       }
     }
 
-=======
- */
-const listPublicVendors = async (req: Request, res: Response): Promise<void> => {
-  try {
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const selectFields = {
       id: vendors.id,
       userId: vendors.userId,
@@ -57,7 +46,6 @@ const listPublicVendors = async (req: Request, res: Response): Promise<void> => 
       vendorMaturity: vendors.vendorMaturity,
       sector: vendors.sector,
       publicDirectoryListing: vendors.publicDirectoryListing,
-<<<<<<< HEAD
       organizationName: createOrganization.organizationName,
     };
     const joinCondition = sql`${createOrganization.id} = (${vendors.organizationId})::int`;
@@ -99,31 +87,18 @@ const listPublicVendors = async (req: Request, res: Response): Promise<void> => 
       if (!productNamesByUserId[uid].includes(name)) productNamesByUserId[uid].push(name);
     }
 
-=======
-    };
-    const rows = await db
-      .select(selectFields)
-      .from(vendors)
-      .where(eq(vendors.publicDirectoryListing, true));
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const list = rows.map((r) => ({
       id: r.id,
       userId: r.userId,
       organizationId: r.organizationId,
-<<<<<<< HEAD
       organizationName: r.organizationName ?? null,
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       vendorType: r.vendorType ?? "",
       companyWebsite: r.companyWebsite ?? "",
       companyDescription: r.companyDescription ?? "",
       headquartersLocation: r.headquartersLocation ?? "",
       vendorMaturity: r.vendorMaturity ?? "",
       sector: r.sector ?? null,
-<<<<<<< HEAD
       productNames: (r.userId != null && productNamesByUserId[r.userId]) ? productNamesByUserId[r.userId] : [],
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     }));
 
     res.status(200).json({

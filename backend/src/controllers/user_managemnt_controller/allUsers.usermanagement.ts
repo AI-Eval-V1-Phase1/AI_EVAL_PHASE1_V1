@@ -1,10 +1,6 @@
 import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
-<<<<<<< HEAD
 import { createOrganization, usersTable } from "../../schema/schema.js";
-=======
-import { usersTable } from "../../schema/schema.js";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import { eq } from "drizzle-orm";
 
 interface JwtPayload {
@@ -29,11 +25,7 @@ const fetchAllUsers = async (req: Request, res: Response) => {
 
     const currentUserRows = await db
       .select({
-<<<<<<< HEAD
         organization_id: usersTable.organization_id,
-=======
-        organization_name: usersTable.organization_name,
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         user_platform_role: usersTable.user_platform_role,
       })
       .from(usersTable)
@@ -47,7 +39,6 @@ const fetchAllUsers = async (req: Request, res: Response) => {
 
     const platformRole = (currentUser.user_platform_role ?? "").trim().toLowerCase();
 
-<<<<<<< HEAD
     let userRows: { user: typeof usersTable.$inferSelect; organizationName: string | null }[];
     if (platformRole === "vendor" || platformRole === "buyer") {
       const orgId = currentUser.organization_id;
@@ -82,26 +73,6 @@ const fetchAllUsers = async (req: Request, res: Response) => {
     res.status(200).json({
       message: "Users fetched successfully",
       data,
-=======
-    let users: unknown[];
-    if (platformRole === "vendor" || platformRole === "buyer") {
-      const orgName = currentUser.organization_name;
-      if (!orgName) {
-        users = [];
-      } else {
-        users = await db
-          .select()
-          .from(usersTable)
-          .where(eq(usersTable.organization_name, orgName));
-      }
-    } else {
-      users = await db.select().from(usersTable);
-    }
-
-    res.status(200).json({
-      message: "Users fetched successfully",
-      data: users,
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     });
   } catch (error) {
     console.error(

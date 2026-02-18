@@ -29,6 +29,7 @@ export const cotsBuyerAssessments = pgTable("cots_buyer_assessments", {
   specific_product: varchar("specific_product", { length: 200 }),
   gap_requirement_product: text("gap_requirement_product"),
   integrate_system: jsonb("integrate_system"),
+  integrate_system_other: varchar("integrate_system_other", { length: 300 }),
   current_tech_stack: jsonb("current_tech_stack"),
   digital_maturity: varchar("digital_maturity", { length: 100 }),
   governance_maturity: varchar("governance_maturity", { length: 100 }),

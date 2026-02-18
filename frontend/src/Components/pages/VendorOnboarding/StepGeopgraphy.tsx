@@ -51,13 +51,8 @@ const StepGeography = ({
         <Select
           labelName={
             <div className="labelSection">
-<<<<<<< HEAD
               <span>Headquarters Location</span>
               <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-=======
-              <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-              <span>Headquarters Location</span>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               <ClickTooltip content={VENDOR_HELPTEXT.headquartersLocation}>
                 <Info size={14} color="#6B7280" />
               </ClickTooltip>
@@ -80,13 +75,8 @@ const StepGeography = ({
           <Input
             labelName={
               <div className="labelSection">
-<<<<<<< HEAD
                 <span>Specify Location</span>
                 <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-=======
-                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-                <span>Specify Location</span>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 {/* <ClickTooltip content={VENDOR_HELPTEXT.customHeadquarter}>
                   <Info size={14} color="#6B7280" />
                 </ClickTooltip> */}
@@ -112,13 +102,8 @@ const StepGeography = ({
           id="operatingRegions"
           labelName={
             <div className="labelSection">
-<<<<<<< HEAD
               <span>Operating Regions</span>
               <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-=======
-              <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-              <span>Operating Regions</span>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               <ClickTooltip content={VENDOR_HELPTEXT.operatingRegions}>
                 <Info size={14} color="#6B7280" />
               </ClickTooltip>

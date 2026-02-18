@@ -1,9 +1,10 @@
 .top_nav_content {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   width: 100%;
-  padding: 0.75rem 1.5rem;
+  /* padding: 0.75rem 1.5rem; */
+padding: 0.75em 1.5em 0 1.5em;
   min-height: inherit;
   box-sizing: border-box;
 }
@@ -13,24 +14,20 @@
   align-items: center;
   gap: 1em;
 }
-<<<<<<< HEAD
 
 .top_nav_content a {
   text-decoration: none;
 }
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 .nav_right_content {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 1em;
-  padding: 0 1em 0 0;
+  /* padding: 0 1em 0 0; */
 }
 
 .notifications_icon_sec {
   margin: 3px 0 0 0;
-<<<<<<< HEAD
   position: relative;
 }
 
@@ -40,8 +37,6 @@
   right: 0;
   margin-top: 6px;
   z-index: 10001;
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .logo_name h3 {
@@ -133,4 +128,8 @@
   font-size: 0.8em;
   color: var(--grey-color);
   margin: 0;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

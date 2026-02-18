@@ -124,6 +124,10 @@ function VendorCotsDynamicStep({
       )
     }
 
+    const maxLength =
+      key === "regulatoryRequirementsOther" || key === "customerSpecificRisksOther"
+        ? 300
+        : undefined
     return (
       <div key={key} className="form_fields_vendor">
         <FormField
@@ -138,9 +142,14 @@ function VendorCotsDynamicStep({
             name={key}
             value={value}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setFormData((prev) => ({ ...prev, [key]: e.target.value }))
+              setFormData((prev) => ({
+                ...prev,
+                [key]: maxLength ? e.target.value.slice(0, maxLength) : e.target.value,
+              }))
             }
+            maxLength={maxLength}
             className="input_field"
+            style={{ width: "100%" }}
           />
         </FormField>
       </div>

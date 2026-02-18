@@ -3,7 +3,6 @@ import { db } from "../../database/db.js";
 import { createOrganization } from "../../schema/organizations/createOrganization.js";
 import { buyerOnboarding } from "../../schema/buyer/addBuyer.schema.js";
 import { vendorOnboarding } from "../../schema/vendor/addVendor.schema.js";
-<<<<<<< HEAD
 import { usersTable } from "../../schema/schema.js";
 import { eq, or } from "drizzle-orm";
 
@@ -21,13 +20,6 @@ function userDisplayName(u: { user_name?: string | null; user_first_name?: strin
  *  :id is the organization's numeric id from the organizations table.
  *  Onboarding tables may store organization_id as either this id or the org name, so we match both.
  *  Includes completedBy (user name) and completedAt (updated_at) for each.
-=======
-import { eq, or } from "drizzle-orm";
-
-/** GET /orgOnboarding/:id - returns buyer and vendor onboarding data for the organization.
- *  :id is the organization's numeric id from the organizations table.
- *  Onboarding tables may store organization_id as either this id or the org name, so we match both.
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
  */
 const fetchOrgOnboarding = async (req: Request, res: Response) => {
   try {
@@ -54,11 +46,7 @@ const fetchOrgOnboarding = async (req: Request, res: Response) => {
         )
       : eq(buyerOnboarding.organizationId, orgIdParam);
 
-<<<<<<< HEAD
     const [buyerRow] = await db
-=======
-    const [buyer] = await db
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       .select()
       .from(buyerOnboarding)
       .where(buyerWhere)
@@ -71,17 +59,12 @@ const fetchOrgOnboarding = async (req: Request, res: Response) => {
         )
       : eq(vendorOnboarding.organizationId, orgIdParam);
 
-<<<<<<< HEAD
     const [vendorRow] = await db
-=======
-    const [vendor] = await db
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       .select()
       .from(vendorOnboarding)
       .where(vendorWhere)
       .limit(1);
 
-<<<<<<< HEAD
     let buyer: Record<string, unknown> | null = buyerRow ? { ...buyerRow } as Record<string, unknown> : null;
     let vendor: Record<string, unknown> | null = vendorRow ? { ...vendorRow } as Record<string, unknown> : null;
 
@@ -126,13 +109,6 @@ const fetchOrgOnboarding = async (req: Request, res: Response) => {
       data: {
         buyer,
         vendor,
-=======
-    return res.status(200).json({
-      message: "Onboarding data fetched successfully",
-      data: {
-        buyer: buyer ?? null,
-        vendor: vendor ?? null,
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       },
     });
   } catch (error) {

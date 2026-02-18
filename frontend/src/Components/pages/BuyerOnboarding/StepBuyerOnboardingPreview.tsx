@@ -1,10 +1,6 @@
 import React from "react";
 import type { BuyerDataInterface } from "../../../types/formDataBuyer";
 import { BUYER_PREVIEW_SECTIONS } from "../../../constants/buyerOnboardingData";
-<<<<<<< HEAD
-=======
-import HeaderForBuyer from "./HeaderForBuyer";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import { formatPreviewValue } from "../../../utils/formatPreviewValue";
 import "../VendorOnboarding/StepVendorOnboardingPreview.css";
 
@@ -17,24 +13,9 @@ interface StepBuyerOnboardingPreviewProps {
 
 const StepBuyerOnboardingPreview: React.FC<StepBuyerOnboardingPreviewProps> = ({
   formBuyerData,
-<<<<<<< HEAD
 }) => {
   return (
     <div className="vendor_preview">
-=======
-  title,
-  subTitle,
-  icon,
-}) => {
-  return (
-    <div className="vendor_preview">
-      <HeaderForBuyer
-        className="header_for_vendor"
-        title_vendor={title ?? "Review"}
-        sub_title_vendor={subTitle}
-        icon={icon}
-      />
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       <p className="vendor_preview_intro">
         Review your information below. Submit when everything looks correct.
       </p>

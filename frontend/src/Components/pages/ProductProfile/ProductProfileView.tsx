@@ -109,15 +109,11 @@ function ProductProfileView({
     if (!dateStr || String(dateStr).trim() === "") return "—";
     try {
       const d = new Date(dateStr);
-<<<<<<< HEAD
       if (Number.isNaN(d.getTime())) return "—";
       const day = d.getDate().toString().padStart(2, "0");
       const month = d.toLocaleDateString("en-GB", { month: "short" });
       const year = d.getFullYear();
       return `${day}-${month}-${year}`;
-=======
-      return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     } catch {
       return "—";
     }
@@ -233,7 +229,7 @@ function ProductProfileView({
       <div className="heading_user_page page_header_align">
         <div className="headers page_header_row">
           <span className="icon_size_header" aria-hidden>
-            <FileText size={24} />
+            <FileText size={24} className="header_icon_svg"/>
           </span>
           <div className="page_header_title_block">
             <h1 className="page_header_title">Product Profile</h1>

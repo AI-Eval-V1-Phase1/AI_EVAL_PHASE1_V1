@@ -16,14 +16,11 @@ const SECTOR_KEY_MAP: Record<string, keyof SectorValue> = {
   "Non-Profit": "non_profit_sector",
 };
 
-<<<<<<< HEAD
 export type SectorOptionNode = {
   label: string;
   options: { label: string; value: string }[];
 };
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 interface IndustrySectorDependencyProps {
   labelName?: React.ReactNode;
   id?: string;
@@ -31,11 +28,8 @@ interface IndustrySectorDependencyProps {
   onChange: (sector: SectorValue) => void;
   defaultCategoryOption?: string;
   required?: boolean;
-<<<<<<< HEAD
   /** When provided (e.g. BUYER_INDUSTRY_SECTORS), use instead of default vendor INDUSTRY_SECTORS */
   sectorOptions?: SectorOptionNode[];
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 function IndustrySectorDependency({
@@ -45,19 +39,13 @@ function IndustrySectorDependency({
   onChange,
   defaultCategoryOption = "Select sector category",
   required,
-<<<<<<< HEAD
   sectorOptions,
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }: IndustrySectorDependencyProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const hasInitializedFromSector = useRef(false);
 
-<<<<<<< HEAD
   const sectorsSource = sectorOptions ?? INDUSTRY_SECTORS;
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   // When sector is prefilled from DB (e.g. Vendor Self Attestation), show first category that has data so user sees selected industries
   useEffect(() => {
     if (hasInitializedFromSector.current) return;
@@ -77,13 +65,8 @@ function IndustrySectorDependency({
     }
   }, [sector]);
 
-<<<<<<< HEAD
   const categoryOptions = sectorsSource.map((s) => s.label);
   const activeSectorNode = sectorsSource.find((s) => s.label === selectedCategory);
-=======
-  const categoryOptions = INDUSTRY_SECTORS.map((s) => s.label);
-  const activeSectorNode = INDUSTRY_SECTORS.find((s) => s.label === selectedCategory);
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const sectorKey = selectedCategory ? SECTOR_KEY_MAP[selectedCategory] : null;
   const selectedValues = sectorKey ? sector[sectorKey] ?? [] : [];
 

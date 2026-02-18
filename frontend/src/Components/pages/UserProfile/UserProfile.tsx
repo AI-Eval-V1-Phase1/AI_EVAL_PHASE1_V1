@@ -5,29 +5,21 @@ import {
   Shield,
   Loader2,
   UserCircle,
-<<<<<<< HEAD
   X,
 } from "lucide-react";
 import UserPopup from "../../UI/UserPopup";
 import "../../../styles/popovers.css";
 import "../VendorOnboarding/StepVendorOnboardingPreview.css";
-=======
-} from "lucide-react";
-import UserPopup from "../../UI/UserPopup";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import "./user_profile.css";
 import Button from "../../UI/Button";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-<<<<<<< HEAD
 function getSession(key: string): string {
   const v = sessionStorage.getItem(key);
   return v != null ? String(v).trim() : "";
 }
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 function formatRoleForDisplay(role: string | null): string {
   if (!role || typeof role !== "string") return "—";
   return role
@@ -41,15 +33,9 @@ function formatRoleForDisplay(role: string | null): string {
 const UserProfile = () => {
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-<<<<<<< HEAD
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const systemRole = sessionStorage.getItem("systemRole");
   const userRole = sessionStorage.getItem("userRole");
-=======
-  const systemRole = sessionStorage.getItem("systemRole");
-  const userRole = sessionStorage.getItem("userRole");
-  // For vendor/buyer show org role (e.g. Admin, Analyst) instead of user_platform_role (Vendor/Buyer)
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const isVendorOrBuyer =
     systemRole && ["vendor", "buyer"].includes(systemRole.trim().toLowerCase());
   const roleLabel =
@@ -57,7 +43,6 @@ const UserProfile = () => {
       ? formatRoleForDisplay(userRole)
       : formatRoleForDisplay(systemRole);
 
-<<<<<<< HEAD
   const userName = getSession("userName");
   const firstName = getSession("userFirstName");
   const lastName = getSession("userLastName");
@@ -66,8 +51,6 @@ const UserProfile = () => {
   const displayName =
     userName || [firstName, lastName].filter(Boolean).join(" ") || email || "—";
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const LOGOUT_SPINNER_MIN_MS = 2500; // 2.5 seconds so spinner is visible 2–3s
@@ -128,23 +111,13 @@ const UserProfile = () => {
           />
           <h5 className="user_popup_account_title">Account</h5>
         </div>
-<<<<<<< HEAD
 
-=======
-       
-        {/* <div className="user_popup_role">
-          <Shield size={14} aria-hidden />
-          <span className="user_popup_role_label">Role</span>
-          <span className="user_popup_role_value">{roleLabel}</span>
-        </div> */}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         <ul>
           <li className="user_popup_role">
             <Shield size={14} aria-hidden />
             <span className="user_popup_role_label">Role</span>
             <span className="user_popup_role_value">{roleLabel}</span>
           </li>
-<<<<<<< HEAD
           <li
             role="button"
             tabIndex={0}
@@ -161,24 +134,10 @@ const UserProfile = () => {
             </span>
             <span>Profile</span>
           </li>
-=======
-          <li>
-            <span>
-              <User />
-            </span>
-
-            <span>Profile</span>
-          </li>
-
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           <li>
             <span>
               <Settings />
             </span>
-<<<<<<< HEAD
-=======
-
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             <span>Settings</span>
           </li>
         </ul>
@@ -209,7 +168,6 @@ const UserProfile = () => {
           )}
         </Button>
       </UserPopup>
-<<<<<<< HEAD
 
       {showProfilePopup && (
         <div
@@ -288,8 +246,6 @@ const UserProfile = () => {
           </div>
         </div>
       )}
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     </>
   );
 };

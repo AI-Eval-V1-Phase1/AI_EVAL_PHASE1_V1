@@ -4,8 +4,4 @@ node_modules
 .env.prod
 .env.preprod
 
-<<<<<<< HEAD
 dist
-=======
-# dist
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8

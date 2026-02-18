@@ -81,11 +81,7 @@ select:focus {
   align-content: center;
   align-items: center;
   gap: 5px;
-<<<<<<< HEAD
   width: 100%;
-=======
-  width: 10em;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .error_icon {
@@ -163,7 +159,7 @@ select option {
   /* height: 50px; */
   background-color: var(--main-dark-color);
   color: white;
-  border-radius: 34%;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-content: center;

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { useEffect, useState, useMemo, useCallback } from "react";
-=======
-import { useEffect, useState, useMemo } from "react";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import type { z } from "zod";
 import "./vendor_onboarding.css";
 import Button from "../../UI/Button";
@@ -17,10 +13,7 @@ import CardOnBoarding from "../../UI/CardOnBoarding";
 import CardContainerOnBoarding from "../../UI/CardContainerOnBoarding";
 import CardConfirmation from "../../UI/CardConfirmation";
 import MultiStepTabs from "../../UI/MultiStepTabs";
-<<<<<<< HEAD
 import { toast } from "react-toastify";
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import { VENDOR_ONBOARDING_TAB_STEPS } from "./vendorOnboardingTabs";
 import type { VendorDataInterface } from "../../../types/formDataVendor";
 import { vendorStep1CompanyProfileSchema } from "../../../schemas/onboarding/vendor.schema";
@@ -162,9 +155,11 @@ const VendorMainForm = ({ type }: { type: string }) => {
   // Path to vendor self attestation (set after successful onboarding submit; includes token when available)
   const [attestationPath, setAttestationPath] = useState<string>("");
 
-<<<<<<< HEAD
-  /** Auto-login with signup email/password when user clicks "Proceed to Vendor Self Attestation". Clears signup credentials after use. */
+  /** When user clicks "Proceed to Vendor Self Attestation": already auto-logged in from submit, or login with signup credentials. Then CardConfirmation navigates to self attestation (which fetches vendor onboarding data). */
   const handleProceedToAttestation = useCallback(async () => {
+    if (sessionStorage.getItem("bearerToken")) {
+      return;
+    }
     const signupEmail = sessionStorage.getItem("signupEmail")?.trim();
     const signupPassword = sessionStorage.getItem("signupPassword");
     if (!signupEmail || !signupPassword) {
@@ -189,7 +184,7 @@ const VendorMainForm = ({ type }: { type: string }) => {
     sessionStorage.setItem("userRole", userDetails.role != null ? String(userDetails.role).trim() : "");
     sessionStorage.setItem("userId", String(userDetails.id ?? ""));
     sessionStorage.setItem("organizationName", String(userDetails.organization_name ?? "").trim());
-    sessionStorage.setItem("organizationId", String(userDetails.organization_id ?? userDetails.organization_name ?? "").trim());
+    sessionStorage.setItem("organizationId", String(userDetails.organization_id ?? userDetails.organizationId ?? "").trim());
     sessionStorage.setItem("userName", String(userDetails.user_name ?? "").trim());
     sessionStorage.setItem("userFirstName", String(userDetails.user_first_name ?? "").trim());
     sessionStorage.setItem("userLastName", String(userDetails.user_last_name ?? "").trim());
@@ -202,8 +197,6 @@ const VendorMainForm = ({ type }: { type: string }) => {
     toast.success("Signed in successfully.");
   }, [BASE_URL]);
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   // Fetch existing vendor onboarding data for the logged-in user and map into form state
   useEffect(() => {
     const token = sessionStorage.getItem("bearerToken");
@@ -398,22 +391,9 @@ const VendorMainForm = ({ type }: { type: string }) => {
         content: allStepsFilled ? (
           <CardConfirmation
             pageNavigateLink="Proceed to Vendor Self Attestation"
-<<<<<<< HEAD
             navigateTo={attestationPath || "/vendorSelfAttestation"}
             replace
             onProceed={handleProceedToAttestation}
-=======
-            navigateTo={
-              attestationPath ||
-              (Onboardingtoken
-                ? `/vendorSelfAttestation/${Onboardingtoken}`
-                : "/vendorSelfAttestation")
-            }
-            // signinLinkText="Sign in"
-            // signinLinkTo="/login"
-            // redirectTo="/login"
-            // redirectAfterMs={5000}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           />
         ) : (
           <StepVendorOnboardingPreview formVendorData={formVendorData} />
@@ -506,10 +486,6 @@ const VendorMainForm = ({ type }: { type: string }) => {
       const result = await response.json();
       console.log(result);
       if (response.ok) {
-<<<<<<< HEAD
-=======
-        setAllStepsFilled(true);
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         const bearerToken = result.token;
         const userDetails = result.userDetails?.[0];
         if (bearerToken && userDetails) {
@@ -526,7 +502,7 @@ const VendorMainForm = ({ type }: { type: string }) => {
           );
           sessionStorage.setItem(
             "organizationId",
-            String(userDetails.organization_name ?? "").trim(),
+            String(userDetails.organization_id ?? userDetails.organizationId ?? "").trim(),
           );
           sessionStorage.setItem(
             "userName",
@@ -555,22 +531,9 @@ const VendorMainForm = ({ type }: { type: string }) => {
             "user_onboarding_completed",
             String(userDetails.user_onboarding_completed ?? "true"),
           );
-          setAttestationPath("/vendorSelfAttestation");
-<<<<<<< HEAD
-          navigate("/vendorSelfAttestation", { replace: true });
-        } else {
-          setAllStepsFilled(true);
-          setAttestationPath("/vendorSelfAttestation");
-          navigate("/vendorSelfAttestation", { replace: true });
-=======
-        } else {
-          setAttestationPath(
-            onboardingToken
-              ? `/vendorSelfAttestation/${onboardingToken}`
-              : "/vendorSelfAttestation",
-          );
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         }
+        setAttestationPath("/vendorSelfAttestation");
+        setAllStepsFilled(true);
       }
     } catch (error) {
       console.log(error);

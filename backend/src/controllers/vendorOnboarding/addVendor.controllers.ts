@@ -1,12 +1,7 @@
 import type { Request, Response } from "express";
-<<<<<<< HEAD
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { db } from "../../database/db.js";
 import { createOrganization, usersTable, vendors } from "../../schema/schema.js";
-=======
-import { db } from "../../database/db.js";
-import { usersTable, vendors } from "../../schema/schema.js";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import { and, eq, sql } from "drizzle-orm";
 
 const insertVendorOnboarding = async (req: Request, res: Response) => {
@@ -42,7 +37,6 @@ const insertVendorOnboarding = async (req: Request, res: Response) => {
       user = byId[0] ?? undefined;
     }
 
-<<<<<<< HEAD
     if (!user && (bodyOrgId ?? bodyOrgIdCamel) != null) {
       const orgIdNum = Number(bodyOrgId ?? bodyOrgIdCamel);
       if (!Number.isNaN(orgIdNum)) {
@@ -50,21 +44,11 @@ const insertVendorOnboarding = async (req: Request, res: Response) => {
           .select()
           .from(usersTable)
           .where(eq(usersTable.organization_id, orgIdNum))
-=======
-    if (!user && (bodyOrgId ?? bodyOrgIdCamel)) {
-      const orgStr = String(bodyOrgId ?? bodyOrgIdCamel ?? "").trim();
-      if (orgStr) {
-        const byOrg = await db
-          .select()
-          .from(usersTable)
-          .where(eq(usersTable.organization_name, orgStr))
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           .limit(1);
         user = byOrg[0] ?? undefined;
       }
     }
 
-<<<<<<< HEAD
     if (!user && bodyVendorId != null && (bodyOrgId ?? bodyOrgIdCamel) != null) {
       const orgIdNum = Number(bodyOrgId ?? bodyOrgIdCamel);
       if (!Number.isNaN(orgIdNum)) {
@@ -80,20 +64,6 @@ const insertVendorOnboarding = async (req: Request, res: Response) => {
           .limit(1);
         user = byBoth[0] ?? undefined;
       }
-=======
-    if (!user && bodyVendorId != null && (bodyOrgId ?? bodyOrgIdCamel)) {
-      const byBoth = await db
-        .select()
-        .from(usersTable)
-        .where(
-          and(
-            eq(usersTable.id, Number(bodyVendorId)),
-            eq(usersTable.organization_name, String(bodyOrgId ?? bodyOrgIdCamel ?? "")),
-          ),
-        )
-        .limit(1);
-      user = byBoth[0] ?? undefined;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     }
 
     if (!user) {
@@ -104,20 +74,12 @@ const insertVendorOnboarding = async (req: Request, res: Response) => {
       return res.status(200).json({ message: "Onboarding already completed" });
     }
 
-<<<<<<< HEAD
     const organizationIdRaw = bodyOrgId ?? bodyOrgIdCamel ?? user.organization_id;
-=======
-    const organizationIdRaw = bodyOrgId ?? bodyOrgIdCamel ?? user.organization_name;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const organizationId = String(organizationIdRaw ?? "").trim();
     if (!organizationId) {
       return res.status(400).json({
         error: "Organization ID is required",
-<<<<<<< HEAD
         details: "organization_Id, organizationId, or user organization_id is missing or empty",
-=======
-        details: "organization_Id, organizationId, or user organization_name is missing or empty",
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       });
     }
 
@@ -180,11 +142,7 @@ const insertVendorOnboarding = async (req: Request, res: Response) => {
         },
       });
 
-<<<<<<< HEAD
     await db
-=======
-    const updatedUser = await db
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       .update(usersTable)
       .set({
         user_platform_role: "vendor",
@@ -192,7 +150,6 @@ const insertVendorOnboarding = async (req: Request, res: Response) => {
       })
       .where(eq(usersTable.id, user.id));
 
-<<<<<<< HEAD
     const [updatedRow] = await db
       .select({
         user: usersTable,
@@ -228,9 +185,6 @@ const insertVendorOnboarding = async (req: Request, res: Response) => {
       token,
       userDetails,
     });
-=======
-    res.status(201).json({ success: true, data: addVendor });
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const code = error && typeof (error as { code?: string }).code === "string" ? (error as { code: string }).code : undefined;

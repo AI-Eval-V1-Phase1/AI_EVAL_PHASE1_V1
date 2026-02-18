@@ -6,7 +6,7 @@ type Option = {
 };
 
 type SelectProps = {
-  labelName: string | React.ReactNode;
+  labelName ?: string | React.ReactNode;
   id?: string;
   icon?: React.ReactNode;
   name: string;

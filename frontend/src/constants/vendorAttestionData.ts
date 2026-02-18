@@ -147,18 +147,18 @@ export const VENDOR_SELF_ATTESTATION = {
   },
   data_handling_privacy: {
     0: {
-      label: "Data Handling & Privacy",
+      label: "Does your product handle personal information (PII)?",
       placeholder:
         "Select based on the MOST sensitive PII your product handles",
       required: true,
     },
     1: {
-      label: "Data Residency Options",
+      label: "What data residency options do you offer?",
       placeholder: "Select all data residency options available to customers",
       required: true,
     },
     2: {
-      label: "Data Retention & Deletion",
+      label: "What is your data retention policy?",
       placeholder: "Select Yes or No",
       required: true,
     },

@@ -99,7 +99,6 @@
   margin-bottom: 2rem;
 }
 
-<<<<<<< HEAD
 .vendor_overview_metrics.vendor_overview_metrics_four {
   grid-template-columns: repeat(4, 1fr);
 }
@@ -110,18 +109,13 @@
   }
 }
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 @media (max-width: 768px) {
   .vendor_overview_metrics {
     grid-template-columns: 1fr;
   }
-<<<<<<< HEAD
   .vendor_overview_metrics.vendor_overview_metrics_four {
     grid-template-columns: 1fr;
   }
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .vendor_overview_metric_card {
@@ -140,11 +134,15 @@
   color: #9ca3af;
 }
 
+.vendor_overview_metric_card_icon_green {
+  color: #16a34a;
+}
+
 .vendor_overview_metric_title {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #6b7280;
-  margin: 0 0 0.5rem 0;
+  color: black;
+  margin: 0 0 1em 0;
 }
 
 .vendor_overview_metric_value {
@@ -161,7 +159,7 @@
 .vendor_overview_metric_desc {
   font-size: 0.8125rem;
   color: #6b7280;
-  margin: 0;
+  margin: 0.3em 0 0 0;
 }
 
 .vendor_overview_progress_bar {
@@ -181,8 +179,9 @@
 
 /* Section: My Attestations / Recent Self-Attestations */
 .vendor_overview_section {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  /* background: #f9fafb; */
+  /* border: 1px solid #e5e7eb; */
+  background-color: white;
   border-radius: 10px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -227,6 +226,10 @@
   color: #16a34a;
 }
 
+.vendor_overview_attestation_icon_draft {
+  color: #6b7280;
+}
+
 .vendor_overview_attestation_content {
   flex: 1;
   min-width: 0;
@@ -235,13 +238,37 @@
 .vendor_overview_attestation_name {
   font-weight: 600;
   color: #111827;
-  margin: 0 0 0.15rem 0;
+  margin: 0 0 0.25rem 0;
+}
+
+.vendor_overview_attestation_status_label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #16a34a;
+  margin: 0 0 0.25rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.vendor_overview_attestation_status_label_draft {
+  color: #6b7280;
 }
 
 .vendor_overview_attestation_date {
   font-size: 0.8125rem;
   color: #6b7280;
   margin: 0;
+}
+
+.vendor_overview_attestation_date_with_icon .vendor_overview_attestation_date_icon_wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.vendor_overview_attestation_date_icon_inline {
+  flex-shrink: 0;
+  color: #6b7280;
 }
 
 .vendor_overview_attestation_actions {
@@ -301,6 +328,92 @@
   background: #f9fafb;
 }
 
+/* Verified certificates – same card design as vendor attestation cards */
+.vendor_overview_certificates_wrap {
+  margin-top: 1.25rem;
+}
+
+.vendor_overview_certificates_heading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.75rem 0;
+}
+
+.vendor_overview_certificate_cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.vendor_overview_certificate_card {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.15s ease;
+}
+
+.vendor_overview_certificate_card_header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.vendor_overview_certificate_badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.vendor_overview_certificate_badge_icon {
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.vendor_overview_certificate_card_center {
+  margin-bottom: 0.5rem;
+}
+
+.vendor_overview_certificate_name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  word-break: break-word;
+}
+
+.vendor_overview_certificate_card_footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.vendor_overview_certificate_expiry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--grey-color, #4b5563);
+}
+
+.vendor_overview_certificate_date_icon {
+  flex-shrink: 0;
+  color: var(--grey-color, #4b5563);
+}
+
 .vendor_overview_empty {
   padding: 1.5rem;
   text-align: center;
@@ -328,7 +441,6 @@
   font-size: 1.125rem;
   color: #6b7280;
 }
-<<<<<<< HEAD
 
 .vendor_overview_metric_title {
   display: flex;
@@ -423,13 +535,18 @@
   margin-bottom: 1.5rem;
 }
 
-/* Evaluation summary card */
+/* Evaluation summary card – light blue highlight for selected assessment */
 .governance_evaluation_card {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.governance_evaluation_card_highlight {
+  background: #eff6ff;
+  border-color: #bfdbfe;
 }
 
 .governance_evaluation_header {
@@ -645,5 +762,230 @@
   }
 }
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
+/* Top metric cards – white background for buyer dashboard */
+.governance_overview_top_cards .card--metric {
+  background: white;
+}
+
+/* ========== Bottom row: Risks by Intent, Risk Domains, Recent Assessments ========== */
+.governance_bottom_row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .governance_bottom_row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.governance_bottom_card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.governance_bottom_card_title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.governance_bottom_card_subtitle {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+}
+
+/* Google Charts wrapper – consistent height, donut stays circular in square container */
+.governance_chart_wrapper {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.governance_chart_bar {
+  width: 100%;
+}
+
+.governance_chart_donut {
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+.governance_chart_donut > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.governance_chart_donut svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Recent assessments list */
+.governance_recent_list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.governance_recent_item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.governance_recent_item:last-child {
+  border-bottom: none;
+}
+
+.governance_recent_icon {
+  flex-shrink: 0;
+  color: #6b7280;
+}
+
+.governance_recent_content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.governance_recent_title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.governance_recent_date {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.governance_recent_status {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.governance_recent_status_completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.governance_recent_status_draft {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.governance_recent_empty {
+  font-size: 0.875rem;
+  color: #6b7280;
+  padding: 0.5rem 0;
+}
+
+/* ========== AI Risk Search ========== */
+.governance_risk_search {
+  margin-top: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.governance_risk_search_title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.governance_risk_search_subtitle {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+}
+
+.governance_risk_search_suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.governance_risk_search_pill {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #374151;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.governance_risk_search_pill:hover {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+.governance_risk_search_input_row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.governance_risk_search_input {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  font-size: 0.9375rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.governance_risk_search_input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.governance_risk_search_send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+.governance_risk_search_send:hover {
+  background: #1d4ed8;
+}

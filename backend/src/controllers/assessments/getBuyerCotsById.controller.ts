@@ -20,11 +20,7 @@ const getBuyerCotsById = async (req: Request, res: Response) => {
 
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, Number(userId))).limit(1);
     if (!user) return res.status(404).json({ message: "User not found" });
-<<<<<<< HEAD
     const orgId = String((user as Record<string, unknown>).organization_id ?? "").trim();
-=======
-    const orgId = String((user as Record<string, unknown>).organization_name ?? "").trim();
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     if (!orgId) return res.status(400).json({ message: "User has no organization" });
 
     const rows = await db
@@ -47,6 +43,7 @@ const getBuyerCotsById = async (req: Request, res: Response) => {
         specific_product: cotsBuyerAssessments.specific_product,
         gap_requirement_product: cotsBuyerAssessments.gap_requirement_product,
         integrate_system: cotsBuyerAssessments.integrate_system,
+        integrate_system_other: cotsBuyerAssessments.integrate_system_other,
         current_tech_stack: cotsBuyerAssessments.current_tech_stack,
         digital_maturity: cotsBuyerAssessments.digital_maturity,
         governance_maturity: cotsBuyerAssessments.governance_maturity,
@@ -109,6 +106,7 @@ const getBuyerCotsById = async (req: Request, res: Response) => {
       productName: r.specific_product ?? "",
       requirementGaps: r.gap_requirement_product ?? "",
       integrationSystems: r.integrate_system != null ? (Array.isArray(r.integrate_system) ? r.integrate_system : toJson(r.integrate_system)) : "",
+      integrationSystemsOther: r.integrate_system_other ?? "",
       techStack: r.current_tech_stack != null ? (Array.isArray(r.current_tech_stack) ? r.current_tech_stack : toJson(r.current_tech_stack)) : "",
       digitalMaturityLevel: r.digital_maturity ?? "",
       dataGovernanceMaturity: r.governance_maturity ?? "",

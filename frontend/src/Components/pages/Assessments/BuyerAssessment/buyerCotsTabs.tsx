@@ -7,11 +7,7 @@ import {
   AlertTriangle,
   Settings,
   FileCheck,
-<<<<<<< HEAD
   // Sparkles,
-=======
-  Sparkles,
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   FileText,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -32,10 +28,6 @@ export const BUYER_COTS_TAB_STEPS: BuyerCotsTabStep[] = [
   { id: "vendor-risk", label: "Vendor Risk", subTitle: "Vendor validation and security", icon: AlertTriangle },
   { id: "implementation", label: "Implementation", subTitle: "Rollout and change management", icon: Settings },
   { id: "evidence", label: "Evidence", subTitle: "Monitoring and audit availability", icon: FileCheck },
-<<<<<<< HEAD
   // { id: "auto-generated", label: "Auto-Generated", subTitle: "System-generated risk analysis", icon: Sparkles },
-=======
-  { id: "auto-generated", label: "Auto-Generated", subTitle: "System-generated risk analysis", icon: Sparkles },
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   { id: "review", label: "Review", subTitle: "Review and submit", icon: FileText },
 ];

@@ -24,7 +24,7 @@ const StepProductProfile = ({ data }) => {
             // errorText={errors.companyWebsite}
           >
 
-            <select></select>
+            {/* <select></select> */}
             {/* <Select
               // id="companyWebsite"
               // name="companyWebsite"

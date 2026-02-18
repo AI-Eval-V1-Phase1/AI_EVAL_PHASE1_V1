@@ -6,7 +6,7 @@ const HeaderEachPage = ({icon, main_text, sub_text}) => {
       <div className="vendor_overview_page sec_user_page org_settings_page">
         <div className="vendor_directory_header page_header_align">
           <div className="page_header_row">
-            <span>
+            <span className="header_icon_svg">
             {icon}
             </span>
             <div className="page_header_title_block">

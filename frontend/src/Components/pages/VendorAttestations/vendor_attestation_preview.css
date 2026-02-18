@@ -17,90 +17,18 @@
   align-items: center;
 }
 
-.vendor-attestation-preview {
-  padding: 0 0 1.5rem 0;
-}
-.vendor-attestation-preview .preview-main-title {
-  margin-bottom: 1.5rem;
-  font-size: 1.25rem;
-}
-.vendor-attestation-preview .preview-section {
-  margin-bottom: 1.75rem;
-}
-.vendor-attestation-preview .preview-title {
-  font-size: 1rem;
-  margin-bottom: 0.6rem;
-  font-weight: 600;
-}
-<<<<<<< HEAD
-/* Document Uploads: same list UI as Company Profile – label + actions inline */
-.vendor-attestation-preview .vendor_preview_doc_label {
-=======
-.vendor-attestation-preview .preview-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.vendor-attestation-preview .preview-label {
-  padding: 0.5rem 0.5rem 0.5rem 0;
-  vertical-align: top;
-  font-weight: 500;
-  width: 40%;
-  line-height: 1.4;
-}
-.vendor-attestation-preview .preview-value {
-  padding: 0.5rem 0;
-  line-height: 1.5;
-  word-break: break-word;
-}
+/* Vendor Self Attestation preview uses same UI as Vendor Onboarding preview (StepVendorOnboardingPreview.css).
+   Only document-specific styles below; cards, sections, intro come from StepVendorOnboardingPreview.css. */
 
-/* Document Uploads section: clearer spacing and layout */
-.vendor-attestation-preview .preview-section--documents {
-  margin-bottom: 2rem;
-}
-.vendor-attestation-preview .preview-section--documents .preview-title {
-  margin-bottom: 0.75rem;
-}
-.vendor-attestation-preview .preview-table--documents {
-  border-spacing: 0;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  overflow: hidden;
-}
-.vendor-attestation-preview .preview-table--documents .preview-doc-row {
-  border-bottom: 1px solid #e5e7eb;
-}
-.vendor-attestation-preview .preview-table--documents .preview-doc-row:last-child {
-  border-bottom: none;
-}
-.vendor-attestation-preview .preview-table--documents .preview-label {
-  padding: 0.75rem 1rem;
-  vertical-align: middle;
-  background: #f9fafb;
-  width: 42%;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
+/* Document Uploads: label + View action inline */
+.vendor-attestation-preview .vendor_preview_doc_label {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 0.75rem;
 }
-<<<<<<< HEAD
 .vendor-attestation-preview .vendor_preview_doc_label > span:first-child {
   min-width: 0;
-=======
-.vendor-attestation-preview .preview-doc-label-text {
-  flex: 1 1 auto;
-  min-width: 0;
-  line-height: 1.4;
-}
-.vendor-attestation-preview .preview-table--documents .preview-value--doc {
-  padding: 0.75rem 1rem;
-  vertical-align: middle;
-  line-height: 1.5;
-  word-break: break-word;
-}
-.vendor-attestation-preview .preview-table--documents .preview-doc-actions {
-  flex-shrink: 0;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 /* View button and edit icon for document rows */
@@ -123,16 +51,48 @@
   border-radius: 4px;
   cursor: pointer;
 }
-.vendor-attestation-preview .preview-view-btn:hover,
-.vendor-attestation-preview .preview-edit-icon:hover {
+.vendor-attestation-preview .preview-view-btn:hover {
   text-decoration: underline;
   background: rgba(0, 0, 0, 0.04);
 }
-.vendor-attestation-preview .preview-edit-icon {
-  padding: 0.2rem;
+
+/* Update button (replace document) – same style as View */
+.vendor-attestation-preview .preview-update-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.75rem;
+  color: var(--color-link, #2563eb);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.vendor-attestation-preview .preview-update-btn:hover {
+  text-decoration: underline;
+  background: rgba(0, 0, 0, 0.04);
 }
 
-<<<<<<< HEAD
+/* Verified status for Regulatory and Compliance Certification Material rows */
+.vendor-attestation-preview .preview-regulatory-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #16a34a;
+  margin-left: 0.25rem;
+}
+.vendor-attestation-preview .vendor_preview_row_regulatory .vendor_preview_doc_label {
+  flex-wrap: wrap;
+}
+
+.vendor-attestation-preview .vendor_preview_doc_uploaded_label {
+  color: #6b7280;
+  font-weight: 500;
+  margin-right: 0.25rem;
+}
+
 /* Clickable document name in preview – opens document */
 .vendor-attestation-preview .preview-doc-link {
   display: inline;
@@ -151,9 +111,7 @@
   opacity: 0.85;
 }
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
-/* Save draft button on attestation form */
+/* Save draft button on attestation form – solid primary style */
 .vendor_attestation_save_draft_wrapper {
   display: flex;
   align-items: center;
@@ -162,19 +120,17 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  /* width: 120px; */
-  padding: 10px;
-  /* padding: 8px 16px; */
+  padding: 10px 16px;
   border-radius: 4px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  background-color: transparent;
+  background-color: var(--main-auth-button-color, #2463eb);
   border: 1px solid var(--main-auth-button-color, #2463eb);
-  color: var(--main-auth-button-color, #2463eb);
+  color: white;
 }
 .vendor_attestation_save_draft_btn_form:hover {
-  background-color: rgba(30, 58, 138, 0.08);
+  opacity: 0.9;
 }
 .vendor_attestation_save_draft_btn_form span {
   display: inline-flex;

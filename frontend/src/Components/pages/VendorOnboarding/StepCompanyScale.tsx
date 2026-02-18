@@ -48,13 +48,8 @@ const StepCompanyScale = ({
           <Select
             labelName={
               <div className="labelSection">
-<<<<<<< HEAD
                 <span>Employee Count</span>
                 <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-=======
-                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-                <span>Employee Count</span>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 <ClickTooltip content={VENDOR_HELPTEXT.employeeCount}>
                   <Info size={14} color="#6B7280" />
                 </ClickTooltip>
@@ -80,13 +75,8 @@ const StepCompanyScale = ({
             endYear={currentYear}
             label={
               <div className="labelSection">
-<<<<<<< HEAD
                 <span>Year Founded</span>
                 <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-=======
-                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-                <span>Year Founded</span>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 <ClickTooltip content={VENDOR_HELPTEXT.yearFounded}>
                   <Info size={14} color="#6B7280" />
                 </ClickTooltip>

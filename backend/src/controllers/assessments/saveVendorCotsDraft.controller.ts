@@ -32,11 +32,13 @@ function buildPayloadVendorCots(body: Record<string, unknown>) {
     customization_level: get("customizationLevel") != null ? String(get("customizationLevel")).slice(0, 100) : null,
     integration_complexity: get("integrationComplexity") != null ? String(get("integrationComplexity")).slice(0, 100) : null,
     regulatory_requirements: parseJson(get("regulatoryRequirements") ?? get("regulatory_requirements")),
+    regulatory_requirements_other: get("regulatoryRequirementsOther") != null ? String(get("regulatoryRequirementsOther")).slice(0, 300) : null,
     data_sensitivity: get("dataSensitivity") != null ? String(get("dataSensitivity")).slice(0, 100) : null,
     customer_risk_tolerance: get("customerRiskTolerance") != null ? String(get("customerRiskTolerance")).slice(0, 100) : null,
     alternatives_considered: get("alternativesConsidered") != null ? String(get("alternativesConsidered")) : null,
     key_advantages: get("keyAdvantages") != null ? String(get("keyAdvantages")) : null,
     customer_specific_risks: parseJson(get("customerSpecificRisks") ?? get("customer_specific_risks")),
+    customer_specific_risks_other: get("customerSpecificRisksOther") != null ? String(get("customerSpecificRisksOther")).slice(0, 300) : null,
     identified_risks: get("identifiedRisks") != null ? String(get("identifiedRisks")) : null,
     risk_domain_scores: get("riskDomainScores") != null ? String(get("riskDomainScores")) : null,
     contextual_multipliers: get("contextualMultipliers") != null ? String(get("contextualMultipliers")) : null,
@@ -56,11 +58,7 @@ const saveVendorCotsDraft = async (req: Request, res: Response) => {
 
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, Number(userId))).limit(1);
     if (!user) return res.status(404).json({ message: "User not found" });
-<<<<<<< HEAD
     const orgIdStr = String((user as Record<string, unknown>).organization_id ?? "").trim();
-=======
-    const orgIdStr = String((user as Record<string, unknown>).organization_name ?? "").trim();
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     if (!orgIdStr) {
       return res.status(400).json({ message: "User has no organization. Complete onboarding or contact admin." });
     }

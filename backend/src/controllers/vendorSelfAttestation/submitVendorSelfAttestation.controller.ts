@@ -105,7 +105,6 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
       return;
     }
 
-<<<<<<< HEAD
     // --- 1b. Resolve user's organization_id for storing with attestation ---
     const [userRow] = await db
       .select({ organization_id: usersTable.organization_id })
@@ -114,8 +113,6 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
       .limit(1);
     const organizationIdStr = userRow?.organization_id != null ? String(userRow.organization_id) : null;
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     // --- 2. Normalize request body: accept current API names (snake_case); map to DB columns (Excel sheet names) ---
     const b = req.body ?? {};
     const get = (key: string) => b[key] ?? b[key.replace(/_([a-z])/g, (_, c) => c.toUpperCase())];
@@ -191,10 +188,7 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
 
     const values = {
       user_id: userId,
-<<<<<<< HEAD
       organization_id: organizationIdStr,
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       status,
       ...companyProfileValues,
       product_name,

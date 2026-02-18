@@ -92,6 +92,7 @@
 
 .form_fields_vendor textarea {
   resize: vertical;
+  padding: 5px;
 }
 
 /* .form_fields_vendor label {
@@ -292,14 +293,11 @@
   border-bottom-right-radius: 8px;
 }
 
-<<<<<<< HEAD
 /* When only Continue is visible (e.g. all details completed, Back hidden), align it to the right */
 .vendor_action_btns > .action_continue_btn:only-child {
   margin-left: auto;
 }
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 .input_wrapper {
   display: flex;
   flex-direction: column;

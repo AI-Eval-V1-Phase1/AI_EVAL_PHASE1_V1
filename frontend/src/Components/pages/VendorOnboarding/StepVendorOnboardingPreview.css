@@ -4,16 +4,10 @@
 
 .vendor_preview_intro {
   margin: 0 0 1.25rem;
-<<<<<<< HEAD
   font-size: 0.95;
   color: #64748b;
   line-height: 1.5;
   text-transform: capitalize;
-=======
-  font-size: 0.875rem;
-  color: #64748b;
-  line-height: 1.5;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .vendor_preview_sections {
@@ -63,10 +57,7 @@
   font-size: 0.875rem;
   color: #1e293b;
   line-height: 1.4;
-<<<<<<< HEAD
   text-transform: capitalize;
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .vendor_preview_na {
@@ -77,10 +68,7 @@
 .vendor_preview_link {
   color: var(--main-dark-color, #2463eb);
   text-decoration: none;
-<<<<<<< HEAD
   text-transform: lowercase;
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .vendor_preview_link:hover {

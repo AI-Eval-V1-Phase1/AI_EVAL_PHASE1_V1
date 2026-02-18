@@ -5,17 +5,12 @@ const emailConfig = () => {
 
   let transporter;
   if (EMAIL_SERVICE === "gmail") {
-<<<<<<< HEAD
     console.log("here gmail")
     transporter = nodemailer.createTransport({
       service: "gmail",
       host: "smtp.gmail.com",
       port: 587,
       secure: false,
-=======
-    transporter = nodemailer.createTransport({
-      service: "gmail",
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       auth: {
         user: process.env["SENDER__GMAIL_EMAIL"],
         pass: process.env["SENDER_GMAIL_PASSWORD"],

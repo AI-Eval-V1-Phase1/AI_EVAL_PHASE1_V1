@@ -35,6 +35,7 @@ export const PUBLIC_SECTOR_OPTIONS = [
   "State Government (US)",
   "Local Government (US)",
   "International Governments",
+  "Educational Institutions (Public)",
   "Public Healthcare Systems",
   "Public Utilities",
   "Defense & Military",

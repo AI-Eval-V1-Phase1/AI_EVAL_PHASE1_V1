@@ -353,6 +353,29 @@ const VendorAttestationsMainForm = () => {
   const formStateRef = useRef(formState);
   formStateRef.current = formState;
 
+  const handleOpenDocument = useCallback(
+    async (fileName: string) => {
+      const token =
+        sessionStorage.getItem("bearerToken") ??
+        sessionStorage.getItem("onboardingToken") ??
+        (typeof urlToken === "string" ? urlToken : null);
+      if (!token || !attestationId) return;
+      const url = `${BASE_URL}/vendorSelfAttestation/document/${encodeURIComponent(attestationId)}/${encodeURIComponent(fileName)}`;
+      try {
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const w = window.open(blobUrl, "_blank", "noopener,noreferrer");
+        if (w) setTimeout(() => URL.revokeObjectURL(blobUrl), 3000);
+        else URL.revokeObjectURL(blobUrl);
+      } catch {
+        // ignore
+      }
+    },
+    [attestationId, BASE_URL, urlToken]
+  );
+
   // Load vendor self attestation from vendor_self_attestations (GET /vendorSelfAttestation).
   // With editId: load that draft; without editId: treat as new (empty attestation).
   const [fetchDone, setFetchDone] = useState(false);
@@ -423,11 +446,51 @@ const VendorAttestationsMainForm = () => {
               String(result.companyProfile.organizationId),
             );
           }
-          const companyProfile =
+          let companyProfile =
             result.companyProfile &&
             Object.keys(result.companyProfile).length > 0
               ? mapApiCompanyProfile(result.companyProfile)
               : defaultCompanyProfile;
+
+          const hasCompanyProfileData =
+            (companyProfile.vendorType ?? "").trim() !== "" ||
+            (companyProfile.companyWebsite ?? "").trim() !== "" ||
+            (companyProfile.companyDescription ?? "").trim() !== "";
+          if (!hasCompanyProfileData && token) {
+            try {
+              const onboardingRes = await fetch(`${BASE_URL}/vendorOnboarding`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+              const onboardingJson = await onboardingRes.json();
+              if (
+                !cancelled &&
+                onboardingRes.ok &&
+                onboardingJson?.success &&
+                onboardingJson?.data &&
+                typeof onboardingJson.data === "object" &&
+                Object.keys(onboardingJson.data).length > 0
+              ) {
+                companyProfile = mapApiCompanyProfile(
+                  onboardingJson.data as Record<string, unknown>,
+                );
+                if (
+                  onboardingJson.data.organizationId &&
+                  !sessionStorage.getItem("organizationId")
+                ) {
+                  sessionStorage.setItem(
+                    "organizationId",
+                    String(onboardingJson.data.organizationId),
+                  );
+                }
+              }
+            } catch {
+              // keep companyProfile from attestation response
+            }
+          }
           const attestationData = editId
             ? (result.attestation as Record<string, unknown> | undefined)
             : undefined;
@@ -754,6 +817,8 @@ const VendorAttestationsMainForm = () => {
             ) : (
               <StepVendorSelfAttestationPrev
                 formState={formState}
+                attestationId={attestationId}
+                onOpenDocument={handleOpenDocument}
                 onNavigateToStep={setCurrentStep}
               />
             );
@@ -769,6 +834,8 @@ const VendorAttestationsMainForm = () => {
       setAttestation,
       setDocumentUpload,
       allStepsFilled,
+      attestationId,
+      handleOpenDocument,
     ],
   );
 
@@ -887,7 +954,7 @@ const VendorAttestationsMainForm = () => {
       <div className="org_settings_header page_header_align">
         <div className="org_settings_headers page_header_row">
           <span className="icon_size_header" aria-hidden>
-            <FileCheck size={24} />
+            <FileCheck size={24} className="header_icon_svg" />
           </span>
           <div className="page_header_title_block">
             <h1 className="org_settings_title page_header_title">Vendor Self Attestation</h1>

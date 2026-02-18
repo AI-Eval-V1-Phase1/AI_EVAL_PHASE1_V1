@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
-<<<<<<< HEAD
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { db } from "../../database/db.js";
 import { eq } from "drizzle-orm";
 import { createOrganization, userEditLogs, usersTable } from "../../schema/schema.js";
@@ -29,11 +28,6 @@ function signupConfirmationEmailHtml(
 </body>
 </html>`;
 }
-=======
-import { db } from "../../database/db.js";
-import { eq } from "drizzle-orm";
-import { userEditLogs, usersTable } from "../../schema/schema.js";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
 const updatesUsers = async (req: Request, res: Response) => {
   const data = req.body;
@@ -47,7 +41,6 @@ const updatesUsers = async (req: Request, res: Response) => {
   }
 
   try {
-<<<<<<< HEAD
     const emailLower = data.email.toLowerCase();
     const organizationId = Number(data.organization);
     if (!Number.isInteger(organizationId) || organizationId < 1) {
@@ -56,9 +49,6 @@ const updatesUsers = async (req: Request, res: Response) => {
         message: "Invalid organization",
       });
     }
-=======
-    const emailLower = data.email.toLowerCase(); 
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
     const existingUser = await db
       .select()
@@ -73,7 +63,6 @@ const updatesUsers = async (req: Request, res: Response) => {
       });
     }
 
-<<<<<<< HEAD
      const currentUser = await db
       .select({ userStatus: usersTable.userStatus })
       .from(usersTable)
@@ -93,20 +82,11 @@ const updatesUsers = async (req: Request, res: Response) => {
       .set({
         email: emailLower,
         organization_id: organizationId,
-=======
- 
-    const updateOrg = await db
-      .update(usersTable)
-      .set({
-        email: emailLower,
-        organization_name: data.organization,
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         role: data.role,
         userStatus: data.isStatus,
       })
       .where(eq(usersTable.id, user_Id));
 
-<<<<<<< HEAD
     await db.insert(userEditLogs).values({
       userId: data.userId,
       email: emailLower,
@@ -144,18 +124,6 @@ const updatesUsers = async (req: Request, res: Response) => {
       }
     }
 
-=======
- 
-    const userLogs = await db.insert(userEditLogs).values({
-      userId: data.userId,           
-      email:emailLower,
-      organizationName: data.organization,
-      userStatus: data.isStatus,
-      updated_by: data.userId,    
-      reason: data.isReason,
-    });
-
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     return res.status(200).json({
       success: true,
       message: "User updated successfully",

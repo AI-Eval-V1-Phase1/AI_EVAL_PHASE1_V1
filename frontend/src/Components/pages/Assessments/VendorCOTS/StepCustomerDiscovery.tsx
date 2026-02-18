@@ -18,7 +18,7 @@ const StepCustomerDiscovery = ({ data, formData, setFormData }: StepCustomerDisc
         <HeaderForVendor
           title_vendor="Customer Discovery"
           className="header_for_vendor"
-          icon={<Search size={18} />}
+          icon={<Search size={24} />}
         />
         <div className="step_form_right">
           <div>

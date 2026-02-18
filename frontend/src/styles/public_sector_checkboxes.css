@@ -21,7 +21,8 @@
   font-weight: 500;
   color: #1f2937;
   background-color: #ffffff;
-  border: 1.5px solid #d1d5db;
+  /* border: 1.5px solid #d1d5db; */
+  border: 1.5px solid var(--light-gray-color);
   border-radius: 8px;
   cursor: pointer;
   user-select: none;

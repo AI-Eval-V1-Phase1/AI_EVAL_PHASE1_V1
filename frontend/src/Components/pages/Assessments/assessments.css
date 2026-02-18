@@ -1,11 +1,7 @@
 /* Assessments page - Buy AI Product (COTS) */
 .ai_assessments_page {
-  max-width: 1200px;
-<<<<<<< HEAD
+  /* max-width: 1200px; */
   /* margin: 0 auto; */
-=======
-  margin: 0 auto;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   padding: 1.5rem 0;
 }
 
@@ -46,20 +42,13 @@
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-<<<<<<< HEAD
   margin: 0 0 1em 0;
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .ai_assessments_section h2 {
   font-size: 1.15rem;
   font-weight: 600;
-<<<<<<< HEAD
   /* margin: 0 0 0.5rem 0; */
-=======
-  margin: 0 0 0.5rem 0;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   color: #0f172a;
 }
 
@@ -71,7 +60,6 @@
 }
 
 .ai_assessments_checklist {
-<<<<<<< HEAD
  
 
   list-style: none;
@@ -79,11 +67,6 @@
   margin: 0 0 1.5rem 0;
   display: flex;
   gap: 10em;
-=======
-  list-style: none;
-  padding: 0;
-  margin: 0 0 1.5rem 0;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .ai_assessments_checklist li {
@@ -93,16 +76,12 @@
   font-size: 0.875rem;
   color: #475569;
   margin-bottom: 0.35rem;
-<<<<<<< HEAD
   padding: 0 0 0.8em 0;
   
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .ai_assessments_checklist li svg {
   flex-shrink: 0;
-<<<<<<< HEAD
   /* color: #22c55e; */
   color: var(--main-auth-button-color);
 }
@@ -125,11 +104,6 @@
   /* width: 32px;
   height: 32px; */
 }
-=======
-  color: #22c55e;
-}
-
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 .your_assessments_title {
   font-size: 0.95rem;
   font-weight: 600;
@@ -147,21 +121,71 @@
 }
 
 .assessment_card {
-  background-color: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 1.25rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
+  transition: box-shadow 0.15s ease;
+}
+
+.assessment_card_header {
+  display: flex;
+  justify-content: flex-end;
   gap: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  margin-bottom: 0.75rem;
+}
+
+.assessment_card_center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--grey-color, #4b5563);
+  margin-bottom: 0.75rem;
+}
+
+.assessment_card_center .assessment_card_meta_label {
+  font-weight: 500;
+}
+
+.assessment_card_completed_details {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .assessment_card_title {
   font-size: 1.1rem;
-  font-weight: 700;
-  color: #374151;
+  font-weight: 600;
+  color: #111827;
   margin: 0;
+  text-align: center;
+}
+
+.assessment_card_footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.assessment_card_submitted {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--grey-color, #4b5563);
+}
+
+.assessment_date_icon {
+  flex-shrink: 0;
+  color: var(--grey-color, #4b5563);
 }
 
 .assessment_card_meta {
@@ -184,15 +208,26 @@
 }
 
 .assessment_status {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.8125rem;
   font-weight: 600;
 }
 
+.assessment_status_icon {
+  flex-shrink: 0;
+  color: inherit;
+}
+
 .assessment_status_draft {
   background-color: #fef3c7;
+  color: #92400e;
+}
+
+.assessment_status_draft .assessment_status_icon {
   color: #92400e;
 }
 
@@ -201,13 +236,15 @@
   color: #166534;
 }
 
+.assessment_status_completed .assessment_status_icon {
+  color: #166534;
+}
+
 .assessment_card_actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: auto;
-  padding-top: 0.5rem;
-  border-top: 1px solid #e5e7eb;
+  margin: 0;
 }
 
 .assessment_card_btn {
@@ -307,12 +344,8 @@
   gap: 0;
   margin-bottom: 1.5rem;
   border-bottom: 2px solid #e2e8f0;
-<<<<<<< HEAD
 }
 .assessment_tab {
-=======
-}.assessment_tab {
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
   font-weight: 500;
@@ -323,13 +356,9 @@
   margin-bottom: -2px;
   cursor: pointer;
   font-family: inherit;
-<<<<<<< HEAD
   transition:
     color 0.15s,
     border-color 0.15s;
-=======
-  transition: color 0.15s, border-color 0.15s;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 }
 
 .assessment_tab:hover {
@@ -339,8 +368,140 @@
 .assessment_tab.active {
   color: var(--main-auth-button-color, #1e3a8a);
   border-bottom-color: var(--main-auth-button-color, #1e3a8a);
-<<<<<<< HEAD
 }
-=======
+
+/* YOUR ASSESSMENTS header row: title + search */
+.assessment_list_header_row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  justify-content: space-between;
 }
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
+.assessment_list_header_row .your_assessments_title {
+  margin: 0;
+}
+.assessment_search_wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+}
+.assessment_search_icon {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+.assessment_search_input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #111827;
+}
+.assessment_search_input::placeholder {
+  color: #9ca3af;
+}
+.assessment_search_input:focus {
+  outline: none;
+  border-color: var(--main-auth-button-color, #1e3a8a);
+  box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.2);
+}
+.assessment_search_no_results {
+  padding: 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* YOUR ASSESSMENTS – row layout (same as vendor dashboard attestation rows) */
+.assessment_list_rows .vendor_overview_attestation_row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.assessment_list_rows .vendor_overview_attestation_row:last-child {
+  margin-bottom: 0;
+}
+.assessment_list_rows .vendor_overview_attestation_icon {
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+.assessment_list_rows .vendor_overview_attestation_icon_check {
+  color: #16a34a;
+}
+.assessment_list_rows .vendor_overview_attestation_icon_draft {
+  color: #6b7280;
+}
+.assessment_list_rows .vendor_overview_attestation_content {
+  flex: 1;
+  min-width: 0;
+}
+.assessment_list_rows .vendor_overview_attestation_name {
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+.assessment_list_rows .vendor_overview_attestation_status_label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #16a34a;
+  margin: 0 0 0.25rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.assessment_list_rows .vendor_overview_attestation_status_label_draft {
+  color: #6b7280;
+}
+.assessment_list_rows .vendor_overview_attestation_by {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0 0 0.15rem 0;
+}
+.assessment_list_rows .vendor_overview_attestation_date {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+}
+.assessment_list_rows .vendor_overview_attestation_actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+/* Edit and View – same colour and width */
+.assessment_list_rows .vendor_overview_btn_view,
+.assessment_list_rows .vendor_overview_btn_update {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  min-width: 5rem;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+background: var(--main-auth-button-color, #2463eb);
+  color: white;
+  border-color: var(--main-auth-button-color, #2463eb);
+  /* color: #374151; */
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+}
+.assessment_list_rows .vendor_overview_btn_view:hover,
+.assessment_list_rows .vendor_overview_btn_update:hover {
+  background: #f9fafb;
+  color: var(--main-auth-button-color);
+  border: 1px solid var(--main-auth-button-color);
+}

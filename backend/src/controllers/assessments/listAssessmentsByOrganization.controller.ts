@@ -32,11 +32,7 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
     const isSystemAdmin = platformRole === "system admin";
 
     const organizationIdFromQuery = typeof req.query?.organizationId === "string" ? req.query.organizationId.trim() || null : null;
-<<<<<<< HEAD
     const orgIdFromUser = user.organization_id;
-=======
-    const orgIdFromUser = (user as Record<string, unknown>).organization_name;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const orgIdStrFromUser = orgIdFromUser != null ? String(orgIdFromUser).trim() : "";
     const orgIdStr = isSystemAdmin && organizationIdFromQuery ? organizationIdFromQuery : orgIdStrFromUser;
     if (!isSystemAdmin && !orgIdStr) {
@@ -53,13 +49,10 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
         organizationId: assessments.organization_id,
         // cots_buyer_assessments (Excel buyer_cots column names) → same API shape for frontend
         organizationName: cotsBuyerAssessments.organization_name,
-<<<<<<< HEAD
         completedByUserEmail: usersTable.email,
         completedByUserFirstName: usersTable.user_first_name,
         completedByUserLastName: usersTable.user_last_name,
         completedByUserName: usersTable.user_name,
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         industrySector: cotsBuyerAssessments.industry_sector,
         businessPainPoint: cotsBuyerAssessments.pain_point,
         expectedOutcomes: cotsBuyerAssessments.business_outcomes,
@@ -71,6 +64,7 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
         productName: cotsBuyerAssessments.specific_product,
         requirementGaps: cotsBuyerAssessments.gap_requirement_product,
         integrationSystems: cotsBuyerAssessments.integrate_system,
+        integrationSystemsOther: cotsBuyerAssessments.integrate_system_other,
         techStack: cotsBuyerAssessments.current_tech_stack,
         digitalMaturityLevel: cotsBuyerAssessments.digital_maturity,
         dataGovernanceMaturity: cotsBuyerAssessments.governance_maturity,
@@ -110,11 +104,13 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
         customizationLevel: cotsVendorAssessments.customization_level,
         integrationComplexity: cotsVendorAssessments.integration_complexity,
         vendorRegulatoryRequirements: cotsVendorAssessments.regulatory_requirements,
+        regulatoryRequirementsOther: cotsVendorAssessments.regulatory_requirements_other,
         vendorDataSensitivity: cotsVendorAssessments.data_sensitivity,
         customerRiskTolerance: cotsVendorAssessments.customer_risk_tolerance,
         alternativesConsidered: cotsVendorAssessments.alternatives_considered,
         keyAdvantages: cotsVendorAssessments.key_advantages,
         customerSpecificRisks: cotsVendorAssessments.customer_specific_risks,
+        customerSpecificRisksOther: cotsVendorAssessments.customer_specific_risks_other,
         vendorIdentifiedRisks: cotsVendorAssessments.identified_risks,
         vendorRiskDomainScores: cotsVendorAssessments.risk_domain_scores,
         vendorContextualMultipliers: cotsVendorAssessments.contextual_multipliers,
@@ -131,10 +127,7 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
         cotsVendorAssessments,
         eq(assessments.id, cotsVendorAssessments.assessment_id)
       )
-<<<<<<< HEAD
       .leftJoin(usersTable, eq(cotsBuyerAssessments.user_id, usersTable.id))
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       .where(isSystemAdmin ? sql`1 = 1` : eq(assessments.organization_id, orgIdStr))
       .orderBy(desc(assessments.created_at));
 
@@ -146,13 +139,10 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       updatedAt: r.updatedAt,
       organizationId: r.organizationId,
       organizationName: r.organizationName ?? null,
-<<<<<<< HEAD
       completedByUserEmail: r.completedByUserEmail ?? null,
       completedByUserFirstName: r.completedByUserFirstName ?? null,
       completedByUserLastName: r.completedByUserLastName ?? null,
       completedByUserName: r.completedByUserName ?? null,
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       industrySector: r.industrySector ?? null,
       businessPainPoint: r.businessPainPoint ?? null,
       expectedOutcomes: r.expectedOutcomes ?? null,
@@ -164,6 +154,7 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       productName: r.productName ?? null,
       requirementGaps: r.requirementGaps ?? null,
       integrationSystems: r.integrationSystems ?? null,
+      integrationSystemsOther: r.integrationSystemsOther ?? null,
       techStack: r.techStack ?? null,
       digitalMaturityLevel: r.digitalMaturityLevel ?? null,
       dataGovernanceMaturity: r.dataGovernanceMaturity ?? null,
@@ -203,11 +194,13 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       customizationLevel: r.customizationLevel ?? null,
       integrationComplexity: r.integrationComplexity ?? null,
       vendorRegulatoryRequirements: r.vendorRegulatoryRequirements ?? null,
+      regulatoryRequirementsOther: r.regulatoryRequirementsOther ?? null,
       vendorDataSensitivity: r.vendorDataSensitivity ?? null,
       customerRiskTolerance: r.customerRiskTolerance ?? null,
       alternativesConsidered: r.alternativesConsidered ?? null,
       keyAdvantages: r.keyAdvantages ?? null,
       customerSpecificRisks: r.customerSpecificRisks ?? null,
+      customerSpecificRisksOther: r.customerSpecificRisksOther ?? null,
       vendorIdentifiedRisks: r.vendorIdentifiedRisks ?? null,
       vendorRiskDomainScores: r.vendorRiskDomainScores ?? null,
       vendorContextualMultipliers: r.vendorContextualMultipliers ?? null,

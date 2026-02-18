@@ -1,5 +1,6 @@
 import { NAVIGATION } from "../../constants/navConfig"; // the list of side navigation bar
 import { NavLink, useLocation } from "react-router-dom";
+import { Shield } from "lucide-react";
 import "../../styles/layout/sideNav.css";
 
 const ASSESSMENT_PATHS = ["/assessments", "/vendorcots", "/buyerAssessment"];
@@ -64,11 +65,50 @@ const SideNavBar = () => {
     systemRole === "vendor"
       ? "VENDOR PORTAL"
       : systemRole === "buyer"
-        ? "BUYER PORTAL"
+        ? "ORGANIZATION PORTAL"
         : null;
 
+  const footerLabel =
+    systemRole === "vendor"
+      ? "MY VENDOR"
+      : systemRole === "buyer"
+        ? "MY BUYER"
+        : "ACCOUNT";
+
+  const displayName =
+    [sessionStorage.getItem("userFirstName"), sessionStorage.getItem("userLastName")]
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    (sessionStorage.getItem("userName") ?? "").trim() ||
+    "User";
+  const email = (sessionStorage.getItem("userEmail") ?? "").trim() || "";
+  const initials = (() => {
+    const first = (sessionStorage.getItem("userFirstName") ?? "").trim();
+    const last = (sessionStorage.getItem("userLastName") ?? "").trim();
+    if (first && last) return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
+    if (first) return first.slice(0, 2).toUpperCase();
+    const un = (sessionStorage.getItem("userName") ?? "").trim();
+    if (un.length >= 2) return un.slice(0, 2).toUpperCase();
+    if (un.length === 1) return un.toUpperCase();
+    if (email) return email.slice(0, 2).toUpperCase();
+    return "UN";
+  })();
+
   return (
-    <div className="side_nav_content">
+    <>
+      <div className="side_nav_header">
+        <NavLink to="/">
+          <div className="side_nav_logo_icon">
+            <Shield size={24} />
+          </div>
+          <div>
+            <h3 className="side_nav_logo_text">AI EVAL</h3>
+            <p className="side_nav_logo_tagline">Enterprise AI Governance Platform</p>
+          </div>
+        </NavLink>
+      </div>
+      <div className="side_nav_content">
       {portalLabel && (
         <p
           className="side_nav_portal_label"
@@ -96,7 +136,7 @@ const SideNavBar = () => {
                 }
               >
                 <span className="side_nav_icon">
-                  <Icon size={16} />
+                  <Icon size={18} />
                 </span>
                 <span>{item.label}</span>
               </NavLink>
@@ -104,7 +144,22 @@ const SideNavBar = () => {
           );
         })}
       </ul>
-    </div>
+      {/* <div className="side_nav_footer">
+        <p className="side_nav_footer_label" aria-label={`Section: ${footerLabel}`}>
+          {footerLabel}
+        </p>
+        <div className="side_nav_user_card">
+          <div className="side_nav_user_avatar">{initials}</div>
+          <div className="side_nav_user_info">
+            <span className="side_nav_user_name">{displayName}</span>
+            {email && (
+              <span className="side_nav_user_email">{email}</span>
+            )}
+          </div>
+        </div>
+      </div> */}
+      </div>
+    </>
   );
 };
 

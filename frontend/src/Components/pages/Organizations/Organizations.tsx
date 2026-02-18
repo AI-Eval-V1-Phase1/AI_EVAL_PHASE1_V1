@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState, useEffect, useCallback } from "react";
 import "./organization.css";
 import "../UserManagement/user_management.css";
@@ -10,15 +9,6 @@ import StepVendorSelfAttestationPrev from "../VendorAttestations/StepVendorSelfA
 // import { buildFormStateFromApi } from "../../utils/vendorAttestationState";
 import { buildFormStateFromApi } from "../../../utils/vendorAttestationState";
 import { Landmark, Plus, User, FileCheck, ClipboardList, Eye, X } from "lucide-react";
-=======
-import React, { useState } from "react";
-import "./organization.css";
-import "../UserManagement/user_management.css";
-import "../VendorOnboarding/StepVendorOnboardingPreview.css";
-import CreateOrganization from "./CreateOrganization";
-import OrganizationDataTable from "./OrganizationDataTable";
-import { Landmark, Plus, User } from "lucide-react";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import Button from "../../UI/Button";
 import Breadcrumbs from "../../UI/Breadcrumbs";
 
@@ -98,35 +88,23 @@ function formatOnboardingDate(isoString) {
   try {
     const d = new Date(isoString);
     if (Number.isNaN(d.getTime())) return null;
-<<<<<<< HEAD
     const day = d.getDate().toString().padStart(2, "0");
     const month = d.toLocaleDateString("en-GB", { month: "short" });
     const year = d.getFullYear();
     return `${day}-${month}-${year}`;
-=======
-    return d.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   } catch {
     return null;
   }
 }
 
-<<<<<<< HEAD
 const TAB_ONBOARDING = "onboarding";
 const TAB_ATTESTATION = "attestation";
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 const Organizations = () => {
   document.title = "AI EVAL | Organizations";
   const [isOrganization, setIsOrganization] = useState(false);
   const [isPreview, setIsPreview] = useState(true);
   const [previewOrg, setPreviewOrg] = useState(null);
-<<<<<<< HEAD
   const [activeTab, setActiveTab] = useState(TAB_ONBOARDING);
   const [isOnboardingData, setIsOnboardingData] = useState({ buyer: null, vendor: null });
   const [onboardingLoading, setOnboardingLoading] = useState(false);
@@ -157,13 +135,6 @@ const Organizations = () => {
     }
   }, [previewAttestationId, BASE_URL]);
 
-=======
-  const [isOnboardingData, setIsOnboardingData] = useState({ buyer: null, vendor: null });
-  const [onboardingLoading, setOnboardingLoading] = useState(false);
-  const [onboardingError, setOnboardingError] = useState(null);
-  const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5003/api/v1";
-
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const createOrganization = () => {
     setIsOrganization(true);
   };
@@ -172,14 +143,10 @@ const Organizations = () => {
     if (!org) return;
     setPreviewOrg(org);
     setIsPreview(false);
-<<<<<<< HEAD
     setActiveTab(TAB_ONBOARDING);
     setOnboardingError(null);
     setAttestationsError(null);
     setAttestations([]);
-=======
-    setOnboardingError(null);
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     setOnboardingLoading(true);
     setIsOnboardingData({ buyer: null, vendor: null });
     const orgId = String(org.id ?? org.organizationId ?? "").trim();
@@ -224,7 +191,6 @@ const Organizations = () => {
     }
   };
 
-<<<<<<< HEAD
   const fetchAttestations = async (orgId) => {
     const token = sessionStorage.getItem("bearerToken");
     setAttestationsError(null);
@@ -252,8 +218,6 @@ const Organizations = () => {
     }
   };
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   const formatLabel = (key) =>
     key
       .replace(/([A-Z])/g, " $1")
@@ -281,7 +245,6 @@ const Organizations = () => {
       }));
   };
 
-<<<<<<< HEAD
   const orgIdForFetch = previewOrg ? String(previewOrg.id ?? previewOrg.organizationId ?? "").trim() : "";
   useEffect(() => {
     if (activeTab === TAB_ATTESTATION && orgIdForFetch) {
@@ -338,8 +301,6 @@ const Organizations = () => {
     }
   };
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   return (
     <>
       {isPreview ? (
@@ -347,7 +308,7 @@ const Organizations = () => {
           <div className="org_settings_header page_header_align">
             <div className="org_settings_headers page_header_row">
               <span className="icon_size_header" aria-hidden>
-                <Landmark size={24} />
+                <Landmark size={24} className="header_icon_svg"/>
               </span>
               <div className="page_header_title_block">
                 <h1 className="org_settings_title page_header_title">Organizations</h1>
@@ -380,22 +341,13 @@ const Organizations = () => {
           </div>
         </div>
       ) : (
-<<<<<<< HEAD
         <div className="organizationPreview org_settings_page org_settings_page">
           {/* <h1 className="screenHeading">
-=======
-        <div className="organizationPreview">
-          <h1 className="screenHeading">
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             <span>
               <Landmark width={26} height={26} />
             </span>
             Organizations
-<<<<<<< HEAD
           </h1> */}
-=======
-          </h1>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           <Breadcrumbs
             items={[
               { label: "Organizations", onClick: closePreview },
@@ -404,11 +356,7 @@ const Organizations = () => {
           />
 
           {onboardingLoading && (
-<<<<<<< HEAD
             <p className="organizationPreviewEmpty">Loading…</p>
-=======
-            <p className="organizationPreviewEmpty">Loading onboarding data…</p>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           )}
           {onboardingError && (
             <p className="organizationPreviewError">{onboardingError}</p>
@@ -417,11 +365,7 @@ const Organizations = () => {
           {!onboardingLoading && !onboardingError && (
             <div className="vendor_preview">
               <p className="vendor_preview_intro">
-<<<<<<< HEAD
                 Organization details for{" "}
-=======
-                Organization and onboarding details for{" "}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
                 <strong>{previewOrg?.organizationName ?? "this organization"}</strong>.
               </p>
               <div className="vendor_preview_sections">
@@ -454,7 +398,6 @@ const Organizations = () => {
                     </div>
                   </dl>
                 </section>
-<<<<<<< HEAD
               </div>
 
               {/* Tabs: Onboarding | Attestation */}
@@ -665,92 +608,6 @@ const Organizations = () => {
                     />
                   )}
                 </div>
-=======
-
-                {/* Buyer Onboarding card */}
-                <section className="vendor_preview_card">
-                  <h3 className="vendor_preview_card_title">Buyer Onboarding</h3>
-                  {isOnboardingData?.buyer ? (
-                    <>
-                      <div className="org_preview_completed_by">
-                        <User size={16} />
-                        <span>
-                          Completed by{" "}
-                          <strong>
-                            {isOnboardingData.buyer.completedBy?.name ||
-                              isOnboardingData.buyer.completedBy?.email ||
-                              "—"}
-                          </strong>
-                          {isOnboardingData.buyer.completedAt &&
-                            formatOnboardingDate(isOnboardingData.buyer.completedAt) && (
-                              <> on {formatOnboardingDate(isOnboardingData.buyer.completedAt)}</>
-                            )}
-                        </span>
-                      </div>
-                      <dl className="vendor_preview_list">
-                        {buildOnboardingFields(isOnboardingData.buyer).map((field) => (
-                          <div key={field.label} className="vendor_preview_row">
-                            <dt className="vendor_preview_label">{field.label}</dt>
-                            <dd className="vendor_preview_value">
-                              {formatPreviewValue(
-                                field.value(isOnboardingData.buyer),
-                                field.label,
-                              )}
-                            </dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </>
-                  ) : (
-                    <p className="vendor_preview_not_done">Not completed for this organization.</p>
-                  )}
-                </section>
-
-                {/* Vendor Onboarding card */}
-                <section className="vendor_preview_card">
-                  <h3 className="vendor_preview_card_title">Vendor Onboarding</h3>
-                  {isOnboardingData?.vendor ? (
-                    <>
-                      <div className="org_preview_completed_by">
-                        <User size={16} />
-                        <span>
-                          Completed by{" "}
-                          <strong>
-                            {isOnboardingData.vendor.completedBy?.name ||
-                              isOnboardingData.vendor.completedBy?.email ||
-                              "—"}
-                          </strong>
-                          {isOnboardingData.vendor.completedAt &&
-                            formatOnboardingDate(isOnboardingData.vendor.completedAt) && (
-                              <> on {formatOnboardingDate(isOnboardingData.vendor.completedAt)}</>
-                            )}
-                        </span>
-                      </div>
-                      <dl className="vendor_preview_list">
-                        {buildOnboardingFields(isOnboardingData.vendor).map((field) => (
-                          <div key={field.label} className="vendor_preview_row">
-                            <dt className="vendor_preview_label">{field.label}</dt>
-                            <dd className="vendor_preview_value">
-                              {formatPreviewValue(
-                                field.value(isOnboardingData.vendor),
-                                field.label,
-                              )}
-                            </dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </>
-                  ) : (
-                    <p className="vendor_preview_not_done">Not completed for this organization.</p>
-                  )}
-                </section>
-
-                {!isOnboardingData?.buyer && !isOnboardingData?.vendor && (
-                  <p className="organizationPreviewEmpty">
-                    No onboarding data for this organization yet.
-                  </p>
-                )}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               </div>
             </div>
           )}

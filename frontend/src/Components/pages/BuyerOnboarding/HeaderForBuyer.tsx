@@ -21,7 +21,7 @@ const HeaderForBuyer = ({
       <div className="header_title_vendor">
         <div className="headers_icons">
           <span
-            className="icon_size_header"
+            className="icon_size_header header_icon_svg"
             aria-hidden="true"
             // style={ICON_WRAPPER_STYLE}
           >

@@ -17,11 +17,7 @@ const RouteAccess = () => {
       "/attestation_details",
       "/vendor-directory",
       "/my-vendor",
-<<<<<<< HEAD
       "/security_center",
-=======
-      "/compilance",
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       "/governance",
       "/sales-enablement",
       "/evidence-library",
@@ -50,11 +46,7 @@ const RouteAccess = () => {
       "/buyerAssessment",
       "/vendor-directory",
       "/my-vendor",
-<<<<<<< HEAD
       "/security_center",
-=======
-      "/compilance",
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       "/governance",
       "/reports",
       "/user-management",
@@ -72,6 +64,7 @@ const RouteAccess = () => {
 
   const pathAllowed =
     routesForRole.includes(path) ||
+    (path.startsWith("/reports/") && path.length > "/reports/".length) ||
     (normalizedSystemRole === "vendor" && path.startsWith("/vendorSelfAttestation/")) ||
     (normalizedSystemRole === "vendor" && path.startsWith("/vendorcots/")) ||
     (normalizedSystemRole === "buyer" && path.startsWith("/buyerAssessment/"));

@@ -1,22 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-<<<<<<< HEAD
 import {
   Plus,
   ClipboardList,
   Eye,
   CircleX,
   Check,
-  Trash2,
   Pencil,
   X,
   CheckCircle,
   CircleCheck,
   Target,
+  Calendar,
+  FileText,
+  CheckCircle2,
+  Search,
 } from "lucide-react";
-=======
-import { Plus, ClipboardList, Eye, CircleX, Check, Trash2, Pencil } from "lucide-react";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import DataTable from "react-data-table-component";
 import Button from "../../UI/Button";
 import Modal from "../../UI/Modal";
@@ -24,10 +23,7 @@ import LoadingMessage from "../../UI/LoadingMessage";
 import PreviewTable from "../../preview/PreviewTable";
 import type { PreviewField } from "../../../types/preview";
 import { BUYER_COTS_FIELD_KEYS } from "../../../constants/buyerCotsAssessmentKeys";
-<<<<<<< HEAD
 import { formatPreviewValue } from "../../../utils/formatPreviewValue";
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 import "../Organizations/organization.css";
 import "../UserManagement/user_management.css";
 import "../../preview/preview_table.css";
@@ -37,7 +33,6 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 /** Keys from list API that count toward progress (cots_buyer fields) */
 const BUYER_COTS_PROGRESS_KEYS = [
-<<<<<<< HEAD
   "businessPainPoint",
   "expectedOutcomes",
   "owningDepartment",
@@ -72,15 +67,6 @@ const BUYER_COTS_PROGRESS_KEYS = [
   "riskDomainScores",
   "contextualMultipliers",
   "riskMitigation",
-=======
-  "businessPainPoint", "expectedOutcomes", "owningDepartment", "budgetRange", "targetTimeline", "criticality",
-  "vendorName", "productName", "requirementGaps", "integrationSystems", "techStack", "digitalMaturityLevel",
-  "dataGovernanceMaturity", "aiGovernanceBoard", "aiEthicsPolicy", "implementationTeamComposition",
-  "dataSensitivity", "regulatoryRequirements", "riskAppetite", "decisionStakes", "impactedStakeholders",
-  "vendorValidationApproach", "vendorSecurityPosture", "vendorCertifications", "pilotRolloutPlan",
-  "rollbackCapability", "changeManagementPlan", "monitoringDataAvailable", "auditLogsAvailable",
-  "testingResultsAvailable", "identifiedRisks", "riskDomainScores", "contextualMultipliers", "riskMitigation",
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 ];
 
 function getBuyerAssessmentProgress(row) {
@@ -100,15 +86,11 @@ function getBuyerAssessmentProgress(row) {
 const formatDate = (d) => {
   if (!d) return "—";
   const date = new Date(d);
-<<<<<<< HEAD
   if (Number.isNaN(date.getTime())) return "—";
   const day = date.getDate().toString().padStart(2, "0");
   const month = date.toLocaleDateString("en-GB", { month: "short" });
   const year = date.getFullYear();
   return `${day}-${month}-${year}`;
-=======
-  return Number.isNaN(date.getTime()) ? String(d) : date.toLocaleDateString(undefined, { dateStyle: "short" });
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 };
 
 const truncate = (str, max = 40) => {
@@ -117,7 +99,6 @@ const truncate = (str, max = 40) => {
   return s.length <= max ? s : `${s.slice(0, max)}…`;
 };
 
-<<<<<<< HEAD
 /** Display name of buyer who completed the assessment (from list API completedBy* fields). */
 function getCompletedByDisplay(row) {
   if (!row) return "";
@@ -132,10 +113,19 @@ function getCompletedByDisplay(row) {
   return "";
 }
 
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
+/** Title for assessment row (used for display and search filter). */
+function getAssessmentTitle(row, isBuyerRow) {
+  if (isBuyerRow) {
+    const v = row.owningDepartment != null && String(row.owningDepartment).trim() !== "" ? String(row.owningDepartment).trim() : null;
+    return v ?? "Draft";
+  }
+  const v = row.customerSector != null && String(row.customerSector).trim() !== "" ? String(row.customerSector).trim() : null;
+  return v ?? "Draft";
+}
+
 /** Get display value from assessment row (API shape: camelCase, arrays for jsonb) */
 function getRowPreviewValue(row, key) {
+  if (row == null) return undefined;
   const v = row[key];
   if (v == null || (typeof v === "string" && v.trim() === "")) return undefined;
   if (key === "createdAt" || key === "cotsUpdatedAt") return formatDate(v);
@@ -169,7 +159,6 @@ const ASSESSMENT_PREVIEW_SECTIONS = [
   {
     title: "Assessment",
     fields: [
-<<<<<<< HEAD
       {
         label: "Type",
         value: (r) =>
@@ -179,9 +168,6 @@ const ASSESSMENT_PREVIEW_SECTIONS = [
               ? "COTS Vendor"
               : (r.type ?? undefined),
       },
-=======
-      { label: "Type", value: (r) => (r.type === "cots_buyer" ? "COTS Assessment" : r.type === "cots_vendor" ? "COTS Vendor" : (r.type ?? undefined)) },
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       { label: "Status", value: (r) => r.status ?? undefined },
       { label: "Created", value: (r) => formatDate(r.createdAt) },
     ],
@@ -189,104 +175,68 @@ const ASSESSMENT_PREVIEW_SECTIONS = [
   {
     title: "Use Case",
     fields: BUYER_COTS_FIELD_KEYS.useCase.map((key) => ({
-<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
-=======
-      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Vendor Evaluation",
     fields: BUYER_COTS_FIELD_KEYS.vendorEvaluation.map((key) => ({
-<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
-=======
-      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Readiness",
     fields: BUYER_COTS_FIELD_KEYS.readiness.map((key) => ({
-<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
-=======
-      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Risk Profile",
     fields: BUYER_COTS_FIELD_KEYS.riskProfile.map((key) => ({
-<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
-=======
-      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Vendor Risk",
     fields: BUYER_COTS_FIELD_KEYS.vendorRisk.map((key) => ({
-<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
-=======
-      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Implementation",
     fields: BUYER_COTS_FIELD_KEYS.implementation.map((key) => ({
-<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
-=======
-      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
   {
     title: "Evidence",
     fields: BUYER_COTS_FIELD_KEYS.evidence.map((key) => ({
-<<<<<<< HEAD
       label: key
         .replace(/([A-Z])/g, " $1")
         .replace(/^./, (s) => s.toUpperCase()),
-=======
-      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
-      value: (r) => getRowPreviewValue(r, key),
-    })),
-  },
-  {
-    title: "Auto Generated",
-    fields: BUYER_COTS_FIELD_KEYS.autoGenerated.map((key) => ({
-      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()),
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       value: (r) => getRowPreviewValue(r, key),
     })),
   },
 ];
 
-<<<<<<< HEAD
 const SYSTEM_ROLES = [
   "system admin",
   "system manager",
@@ -310,17 +260,6 @@ const Assessments = () => {
   //    "system"
   //   }
   // ]
-=======
-const SYSTEM_ROLES = ["system admin", "system manager", "system viewer", "system user"];
-
-const Assessments = () => {
-  const navigate = useNavigate();
-  const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim();
-  const isBuyer = systemRole === "buyer";
-  const isVendor = systemRole === "vendor";
-  const isSystemUser = SYSTEM_ROLES.some((r) => r === systemRole);
-  const [activeTab, setActiveTab] = useState<"vendor" | "buyer">("vendor");
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
   useEffect(() => {
     document.title = "AI Eval | Assessments";
@@ -330,6 +269,9 @@ const Assessments = () => {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [previewRow, setPreviewRow] = useState(null);
+  const [vendorCotsPreviewDetail, setVendorCotsPreviewDetail] = useState(null);
+  const [vendorCotsPreviewLoading, setVendorCotsPreviewLoading] = useState(false);
+  const [assessmentSearch, setAssessmentSearch] = useState("");
 
   const LOADER_MIN_MS = 2500; // show loader at least 2–3 seconds
 
@@ -341,13 +283,9 @@ const Assessments = () => {
     }
     const startTime = Date.now();
     const organizationId = sessionStorage.getItem("organizationId");
-<<<<<<< HEAD
     const query = organizationId
       ? `?organizationId=${encodeURIComponent(organizationId)}`
       : "";
-=======
-    const query = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : "";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     fetch(`${BASE_URL}/assessments${query}`, {
       method: "GET",
       headers: {
@@ -378,7 +316,6 @@ const Assessments = () => {
     const token = sessionStorage.getItem("bearerToken");
     if (!token) return;
     const organizationId = sessionStorage.getItem("organizationId");
-<<<<<<< HEAD
     const query = organizationId
       ? `?organizationId=${encodeURIComponent(organizationId)}`
       : "";
@@ -393,16 +330,6 @@ const Assessments = () => {
       .then((result) => {
         if (result?.data?.assessments != null)
           setAssessmentsList(result.data.assessments);
-=======
-    const query = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : "";
-    fetch(`${BASE_URL}/assessments${query}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        if (result?.data?.assessments != null) setAssessmentsList(result.data.assessments);
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         else setAssessmentsList([]);
       })
       .catch(() => setAssessmentsList([]));
@@ -413,12 +340,8 @@ const Assessments = () => {
       if (document.visibilityState === "visible") loadAssessments();
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
-<<<<<<< HEAD
     return () =>
       document.removeEventListener("visibilitychange", onVisibilityChange);
-=======
-    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
   }, []);
 
   const handleNewAssessment = () => {
@@ -426,17 +349,42 @@ const Assessments = () => {
     else if (isVendor) navigate("/vendorcots");
   };
 
+  // When View is opened for a vendor COTS assessment, fetch full details by ID so modal shows all fields.
+  useEffect(() => {
+    if (!previewRow || previewRow.type !== "cots_vendor" || !previewRow.assessmentId) {
+      setVendorCotsPreviewDetail(null);
+      setVendorCotsPreviewLoading(false);
+      return;
+    }
+    setVendorCotsPreviewDetail(null);
+    setVendorCotsPreviewLoading(true);
+    const token = sessionStorage.getItem("bearerToken");
+    if (!token) {
+      setVendorCotsPreviewLoading(false);
+      return;
+    }
+    fetch(`${BASE_URL}/vendorCotsAssessment/${previewRow.assessmentId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((result) => {
+        if (result?.success && result?.data) setVendorCotsPreviewDetail(result.data);
+      })
+      .catch(() => {})
+      .finally(() => setVendorCotsPreviewLoading(false));
+  }, [previewRow?.assessmentId, previewRow?.type]);
+
   const handleDeleteDraft = async (assessmentId) => {
-<<<<<<< HEAD
     if (
       !window.confirm(
         "Permanently delete this draft assessment? This cannot be undone.",
       )
     )
       return;
-=======
-    if (!window.confirm("Permanently delete this draft assessment? This cannot be undone.")) return;
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     const token = sessionStorage.getItem("bearerToken");
     if (!token) return;
     try {
@@ -456,7 +404,6 @@ const Assessments = () => {
   };
 
   const showNewAssessment = isBuyer || isVendor;
-<<<<<<< HEAD
   const organizationId = sessionStorage.getItem("organizationId") ?? "";
   const orgScopedList =
     isBuyer && organizationId
@@ -474,10 +421,6 @@ const Assessments = () => {
         (a) => String(a.organizationId ?? "") === String(myOrgId),
       )
     : [];
-=======
-  const buyerAssessments = assessmentsList.filter((a) => a.type === "cots_buyer");
-  const vendorAssessments = assessmentsList.filter((a) => a.type === "cots_vendor");
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
   const customStyles = {
     table: {
@@ -505,31 +448,23 @@ const Assessments = () => {
     },
     {
       name: <div className="tableHeader">Type</div>,
-<<<<<<< HEAD
       selector: (row) =>
         row.type === "cots_buyer"
           ? "COTS Assessment"
           : row.type === "cots_vendor"
             ? "COTS Vendor"
             : (row.type ?? "—"),
-=======
-      selector: (row) => (row.type === "cots_buyer" ? "COTS Assessment" : row.type === "cots_vendor" ? "COTS Vendor" : (row.type ?? "—")),
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       sortable: true,
     },
     {
       name: <div className="tableHeader">Status</div>,
       selector: (row) => {
         const s = (row.status ?? "").toLowerCase();
-<<<<<<< HEAD
         return s === "draft"
           ? "Draft"
           : s === "submitted" || s === "completed"
             ? "Completed"
             : (row.status ?? "—");
-=======
-        return s === "draft" ? "Draft" : s === "submitted" || s === "completed" ? "Completed" : row.status ?? "—";
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
       },
       sortable: true,
     },
@@ -594,19 +529,14 @@ const Assessments = () => {
 
   return (
     <div className="sec_user_page org_settings_page">
-<<<<<<< HEAD
       <div
         className={`page_header_align ${isBuyer || isVendor || isSystemUser ? "ai_assessments_heading" : "heading_user_page"}`}
       >
-=======
-      <div className={`page_header_align ${isBuyer || isVendor || isSystemUser ? "ai_assessments_heading" : "heading_user_page"}`}>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
         <div className="headers page_header_row">
           <span className="icon_size_header" aria-hidden>
-            <ClipboardList size={24} />
+            <ClipboardList size={24} className="header_icon_svg"/>
           </span>
           <div className="page_header_title_block">
-<<<<<<< HEAD
             <h1>
               {" "}
               {isBuyer
@@ -615,20 +545,12 @@ const Assessments = () => {
                   ? "Customer Assessments"
                   : "Assessments"}
             </h1>
-=======
-            <h1>Assessments</h1>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             <p className="sub_title sub_title_card">
               {isBuyer
                 ? "Evaluate third-party vendors and manage your assessments."
                 : isVendor || isSystemUser
-<<<<<<< HEAD
                   ? "Create customer-specific risk assessments for sales opportunities"
                   : "View and manage vendor and buyer assessments."}
-=======
-                  ? "View and manage vendor and buyer assessments."
-                  : "View and manage your assessments"}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             </p>
           </div>
         </div>
@@ -636,8 +558,7 @@ const Assessments = () => {
           <div className="btn_user_page">
             <Button className="invite_user_btn" onClick={handleNewAssessment}>
               <Plus size={24} />
-<<<<<<< HEAD
-              {isVendor ? "Customer Assessment" : "Assessment"}
+              {isVendor ? "New Customer Assessment" : "Assessment"}
             </Button>
           </div>
         )}
@@ -648,8 +569,6 @@ const Assessments = () => {
               onClick={() => navigate("/buyerAssessment")}
             >
               <Plus size={24} />
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               Assessment
             </Button>
           </div>
@@ -673,7 +592,6 @@ const Assessments = () => {
             >
               Buyer
             </button>
-<<<<<<< HEAD
             <button
               type="button"
               className={`assessment_tab ${activeTab === "my" ? "active" : ""}`}
@@ -681,28 +599,38 @@ const Assessments = () => {
             >
               My Assessments
             </button>
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           </div>
           {activeTab === "vendor" && (
             <div className="ai_assessments_section">
               <h2>Vendor COTS Assessment</h2>
-<<<<<<< HEAD
               <p className="section_desc">
                 Assess your solution fit and customer context for buyers.
               </p>
               <ul className="ai_assessments_checklist">
                 <li>
-                  <Check size={16} /> Customer discovery and pain points
+                  <CircleCheck size={16} /> Customer discovery and pain points
                 </li>
                 <li>
-                  <Check size={16} /> Solution fit and implementation
+                  <CircleCheck size={16} /> Solution fit and implementation
                 </li>
                 <li>
-                  <Check size={16} /> Risk context and mitigation
+                  <CircleCheck size={16} /> Risk context and mitigation
                 </li>
               </ul>
-              <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+              <div className="assessment_list_header_row">
+                <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+                <div className="assessment_search_wrap">
+                  <Search size={18} className="assessment_search_icon" aria-hidden />
+                  <input
+                    type="search"
+                    placeholder="Search assessments…"
+                    value={assessmentSearch}
+                    onChange={(e) => setAssessmentSearch(e.target.value)}
+                    className="assessment_search_input"
+                    aria-label="Search assessments by name"
+                  />
+                </div>
+              </div>
               {loading && <LoadingMessage message="Loading assessments…" />}
               {fetchError && (
                 <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>
@@ -710,19 +638,16 @@ const Assessments = () => {
                 </p>
               )}
               {!loading && !fetchError && (
-                <div className="assessment_cards">
-                  {vendorAssessments.length === 0 && (
-                    <p
-                      style={{
-                        color: "#64748b",
-                        fontSize: "0.875rem",
-                        margin: 0,
-                      }}
-                    >
-                      No vendor assessments yet.
-                    </p>
-                  )}
-                  {vendorAssessments.map((row) => {
+                <div className="assessment_list_rows">
+                  {(() => {
+                    const q = assessmentSearch.trim().toLowerCase();
+                    const filtered = q === "" ? vendorAssessments : vendorAssessments.filter((row) => getAssessmentTitle(row, false).toLowerCase().includes(q));
+                    return filtered.length === 0 ? (
+                      <p className="assessment_search_no_results">
+                        {vendorAssessments.length === 0 ? "No vendor assessments yet." : "No assessments match your search."}
+                      </p>
+                    ) : (
+                      filtered.map((row) => {
                     const isDraft =
                       (row.status || "").toLowerCase() === "draft";
                     const customerSectorVal =
@@ -732,125 +657,55 @@ const Assessments = () => {
                         : null;
                     const title = customerSectorVal ?? "Draft";
                     const statusLabel = isDraft ? "Draft" : "Completed";
-                    const statusClass = isDraft
-                      ? "assessment_status_draft"
-                      : "assessment_status_completed";
                     const submittedDisplay = formatDate(
                       row.vendorCotsUpdatedAt ?? row.updatedAt,
                     );
                     const completedBy = getCompletedByDisplay(row) || "—";
                     return (
-                      <div key={row.assessmentId} className="assessment_card">
-                        <h2 className="assessment_card_title">
-                          {truncate(title, 60)}
-                        </h2>
-                        <div className="assessment_card_meta">
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">
-                              Status
-                            </span>
-                            <span
-                              className={`assessment_status ${statusClass}`}
-                            >
-                              {statusLabel}
-                            </span>
-                          </div>
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">
-                              {isDraft ? "Updated at" : "Updated"}
-                            </span>
-                            <span>{submittedDisplay}</span>
-                          </div>
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">
-                              {isDraft ? "Updated by" : "Completed by"}
-                            </span>
-                            <span>{completedBy}</span>
-                          </div>
-=======
-              <p className="section_desc">Assess your solution fit and customer context for buyers.</p>
-              <ul className="ai_assessments_checklist">
-                <li><Check size={16} /> Customer discovery and pain points</li>
-                <li><Check size={16} /> Solution fit and implementation</li>
-                <li><Check size={16} /> Risk context and mitigation</li>
-              </ul>
-              <p className="your_assessments_title">YOUR ASSESSMENTS</p>
-              {loading && <LoadingMessage message="Loading assessments…" />}
-              {fetchError && <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>{fetchError}</p>}
-              {!loading && !fetchError && (
-                <div className="assessment_cards">
-                  {vendorAssessments.length === 0 && (
-                    <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>No vendor assessments yet.</p>
-                  )}
-                  {vendorAssessments.map((row) => {
-                    const isDraft = (row.status || "").toLowerCase() === "draft";
-                    const customerSectorVal = row.customerSector != null && String(row.customerSector).trim() !== "" ? String(row.customerSector).trim() : null;
-                    const title = customerSectorVal ?? "Draft";
-                    const statusLabel = isDraft ? "Draft" : "Completed";
-                    const statusClass = isDraft ? "assessment_status_draft" : "assessment_status_completed";
-                    const submittedDisplay = isDraft ? "—" : formatDate(row.vendorCotsUpdatedAt ?? row.updatedAt);
-                    return (
-                      <div key={row.assessmentId} className="assessment_card">
-                        <h2 className="assessment_card_title">{truncate(title, 60)}</h2>
-                        <div className="assessment_card_meta">
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">Status</span>
-                            <span className={`assessment_status ${statusClass}`}>{statusLabel}</span>
-                          </div>
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">Updated</span>
-                            <span>{submittedDisplay}</span>
-                          </div>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
+                      <div key={row.assessmentId} className="vendor_overview_attestation_row">
+                        {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
+                        {!isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />}
+                        <div className="vendor_overview_attestation_content">
+                          <p className="vendor_overview_attestation_name">{truncate(title, 60)}</p>
+                          <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}`}>
+                            {statusLabel}
+                          </p>
+                          <p className="vendor_overview_attestation_by">
+                            {isDraft ? "Updated by:" : "Completed by:"} {completedBy}
+                          </p>
+                          <p className="vendor_overview_attestation_date">
+                            {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
+                          </p>
                         </div>
-                        <div className="assessment_card_actions">
+                        <div className="vendor_overview_attestation_actions">
                           {isDraft && (
-                            <>
-                              <button
-                                type="button"
-                                className="assessment_card_btn assessment_card_btn_primary"
-<<<<<<< HEAD
-                                onClick={() =>
-                                  navigate(`/vendorcots/${row.assessmentId}`)
-                                }
-=======
-                                onClick={() => navigate(`/vendorcots/${row.assessmentId}`)}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
-                              >
-                                <Pencil size={14} />
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                className="assessment_card_btn assessment_card_btn_danger"
-<<<<<<< HEAD
-                                onClick={() =>
-                                  handleDeleteDraft(row.assessmentId)
-                                }
-=======
-                                onClick={() => handleDeleteDraft(row.assessmentId)}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
-                                aria-label="Delete draft"
-                              >
-                                <Trash2 size={14} />
-                                Delete
-                              </button>
-                            </>
+                            <button
+                              type="button"
+                              className="vendor_overview_btn_view"
+                              onClick={() =>
+                                navigate(`/vendorcots/${row.assessmentId}`)
+                              }
+                            >
+                              <Pencil size={14} aria-hidden />
+                              Edit
+                            </button>
                           )}
                           {!isDraft && (
                             <button
                               type="button"
-                              className="assessment_card_btn assessment_card_btn_secondary"
+                              className="vendor_overview_btn_view"
                               onClick={() => setPreviewRow(row)}
                             >
-                              <Eye size={14} />
+                              <Eye size={14} aria-hidden />
                               View
                             </button>
                           )}
                         </div>
                       </div>
                     );
-                  })}
+                  })
+                  );
+                  })()}
                 </div>
               )}
             </div>
@@ -858,25 +713,37 @@ const Assessments = () => {
           {activeTab === "buyer" && (
             <div className="ai_assessments_section">
               <h2>Buy AI Product (COTS)</h2>
-<<<<<<< HEAD
               <p className="section_desc">
                 Assess a third-party vendor tool for your organization.
               </p>
               <ul className="ai_assessments_checklist">
                 <li>
-                  <Check size={16} /> Vendor security and compliance evaluation
+                  <CircleCheck size={16} /> Vendor security and compliance evaluation
                 </li>
                 <li>
-                  <Check size={16} /> Data handling and privacy assessment
+                  <CircleCheck size={16} /> Data handling and privacy assessment
                 </li>
                 <li>
-                  <Check size={16} /> Implementation readiness scoring
+                  <CircleCheck size={16} /> Implementation readiness scoring
                 </li>
                 <li>
-                  <Check size={16} /> Risk mitigation recommendations
+                  <CircleCheck size={16} /> Risk mitigation recommendations
                 </li>
               </ul>
-              <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+              <div className="assessment_list_header_row">
+                <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+                <div className="assessment_search_wrap">
+                  <Search size={18} className="assessment_search_icon" aria-hidden />
+                  <input
+                    type="search"
+                    placeholder="Search assessments…"
+                    value={assessmentSearch}
+                    onChange={(e) => setAssessmentSearch(e.target.value)}
+                    className="assessment_search_input"
+                    aria-label="Search assessments by name"
+                  />
+                </div>
+              </div>
               {loading && <LoadingMessage message="Loading assessments…" />}
               {fetchError && (
                 <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>
@@ -884,19 +751,12 @@ const Assessments = () => {
                 </p>
               )}
               {!loading && !fetchError && (
-                <div className="assessment_cards">
-                  {buyerAssessments.length === 0 && (
-                    <p
-                      style={{
-                        color: "#64748b",
-                        fontSize: "0.875rem",
-                        margin: 0,
-                      }}
-                    >
-                      No assessments yet.
-                    </p>
-                  )}
-                  {buyerAssessments.map((row) => {
+                <div className="assessment_list_rows">
+                  {(() => {
+                    const q = assessmentSearch.trim().toLowerCase();
+                    const filtered = q === "" ? buyerAssessments : buyerAssessments.filter((row) => getAssessmentTitle(row, true).toLowerCase().includes(q));
+                    if (filtered.length === 0) return <p className="assessment_search_no_results">{buyerAssessments.length === 0 ? "No assessments yet." : "No assessments match your search."}</p>;
+                    return filtered.map((row) => {
                     const isDraft =
                       (row.status || "").toLowerCase() === "draft";
                     const owningDept =
@@ -906,9 +766,6 @@ const Assessments = () => {
                         : null;
                     const title = owningDept ?? "Draft";
                     const statusLabel = isDraft ? "Draft" : "Completed";
-                    const statusClass = isDraft
-                      ? "assessment_status_draft"
-                      : "assessment_status_completed";
                     const updatedAtDisplay = formatDate(
                       row.updatedAt ?? row.cotsUpdatedAt ?? row.submittedDate,
                     );
@@ -917,117 +774,51 @@ const Assessments = () => {
                       : formatDate(row.submittedDate ?? row.updatedAt);
                     const completedBy = getCompletedByDisplay(row) || "—";
                     return (
-                      <div key={row.assessmentId} className="assessment_card">
-                        <h2 className="assessment_card_title">
-                          {truncate(title, 60)}
-                        </h2>
-                        <div className="assessment_card_meta">
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">
-                              Status
-                            </span>
-                            <span
-                              className={`assessment_status ${statusClass}`}
-                            >
-                              {statusLabel}
-                            </span>
-                          </div>
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">
-                              {isDraft ? "Updated at" : "Submitted"}
-                            </span>
-                            <span>{submittedDisplay}</span>
-                          </div>
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">
-                              {isDraft ? "Updated by" : "Completed by"}
-                            </span>
-                            <span>{completedBy}</span>
-                          </div>
-=======
-              <p className="section_desc">Assess a third-party vendor tool for your organization.</p>
-              <ul className="ai_assessments_checklist">
-                <li><Check size={16} /> Vendor security and compliance evaluation</li>
-                <li><Check size={16} /> Data handling and privacy assessment</li>
-                <li><Check size={16} /> Implementation readiness scoring</li>
-                <li><Check size={16} /> Risk mitigation recommendations</li>
-              </ul>
-              <p className="your_assessments_title">YOUR ASSESSMENTS</p>
-              {loading && <LoadingMessage message="Loading assessments…" />}
-              {fetchError && <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>{fetchError}</p>}
-              {!loading && !fetchError && (
-                <div className="assessment_cards">
-                  {buyerAssessments.length === 0 && (
-                    <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>No assessments yet.</p>
-                  )}
-                  {buyerAssessments.map((row) => {
-                    const isDraft = (row.status || "").toLowerCase() === "draft";
-                    const industrySectorVal = row.industrySector != null && String(row.industrySector).trim() !== "" ? String(row.industrySector).trim() : null;
-                    const title = industrySectorVal ?? "Draft";
-                    const statusLabel = isDraft ? "Draft" : "Completed";
-                    const statusClass = isDraft ? "assessment_status_draft" : "assessment_status_completed";
-                    const submittedDisplay = isDraft ? "—" : formatDate(row.submittedDate ?? row.updatedAt);
-                    return (
-                      <div key={row.assessmentId} className="assessment_card">
-                        <h2 className="assessment_card_title">{truncate(title, 60)}</h2>
-                        <div className="assessment_card_meta">
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">Status</span>
-                            <span className={`assessment_status ${statusClass}`}>{statusLabel}</span>
-                          </div>
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">Submitted</span>
-                            <span>{submittedDisplay}</span>
-                          </div>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
+                      <div key={row.assessmentId} className="vendor_overview_attestation_row">
+                        {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
+                        {!isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />}
+                        <div className="vendor_overview_attestation_content">
+                          <p className="vendor_overview_attestation_name">{truncate(title, 60)}</p>
+                          <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}`}>
+                            {statusLabel}
+                          </p>
+                          <p className="vendor_overview_attestation_by">
+                            {isDraft ? "Updated by:" : "Completed by:"} {completedBy}
+                          </p>
+                          <p className="vendor_overview_attestation_date">
+                            {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
+                          </p>
                         </div>
-                        <div className="assessment_card_actions">
+                        <div className="vendor_overview_attestation_actions">
                           {isDraft && (
-                            <>
-                              <button
-                                type="button"
-                                className="assessment_card_btn assessment_card_btn_primary"
-<<<<<<< HEAD
-                                onClick={() =>
-                                  navigate(
-                                    `/buyerAssessment/${row.assessmentId}`,
-                                  )
-                                }
-=======
-                                onClick={() => navigate(`/buyerAssessment/${row.assessmentId}`)}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
-                              >
-                                <Pencil size={14} />
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                className="assessment_card_btn assessment_card_btn_danger"
-<<<<<<< HEAD
-                                onClick={() =>
-                                  handleDeleteDraft(row.assessmentId)
-                                }
-                                aria-label="Delete draft"
-                              >
-                                <Trash2 size={14} />
-                                Delete
-                              </button>
-                            </>
+                            <button
+                              type="button"
+                              className="vendor_overview_btn_view"
+                              onClick={() =>
+                                navigate(
+                                  `/buyerAssessment/${row.assessmentId}`,
+                                )
+                              }
+                            >
+                              <Pencil size={14} aria-hidden />
+                              Edit
+                            </button>
                           )}
                           {!isDraft && (
                             <button
                               type="button"
-                              className="assessment_card_btn assessment_card_btn_secondary"
+                              className="vendor_overview_btn_view"
                               onClick={() => setPreviewRow(row)}
                             >
-                              <Eye size={14} />
+                              <Eye size={14} aria-hidden />
                               View
                             </button>
                           )}
                         </div>
                       </div>
                     );
-                  })}
+                  });
+                  })()}
                 </div>
               )}
             </div>
@@ -1036,6 +827,20 @@ const Assessments = () => {
             <div className="ai_assessments_section">
               <h2>My Assessments</h2>
               <p className="section_desc">Assessments for your organization.</p>
+              <div className="assessment_list_header_row">
+                <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+                <div className="assessment_search_wrap">
+                  <Search size={18} className="assessment_search_icon" aria-hidden />
+                  <input
+                    type="search"
+                    placeholder="Search assessments…"
+                    value={assessmentSearch}
+                    onChange={(e) => setAssessmentSearch(e.target.value)}
+                    className="assessment_search_input"
+                    aria-label="Search assessments by name"
+                  />
+                </div>
+              </div>
               {loading && <LoadingMessage message="Loading assessments…" />}
               {fetchError && (
                 <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>
@@ -1043,8 +848,15 @@ const Assessments = () => {
                 </p>
               )}
               {!loading && !fetchError && (
-                <div className="assessment_cards">
-                  {myAssessments.map((row) => {
+                <div className="assessment_list_rows">
+                  {(() => {
+                    const q = assessmentSearch.trim().toLowerCase();
+                    const filtered = q === "" ? myAssessments : myAssessments.filter((row) => {
+                      const isBuyerRow = (row.type || "").toLowerCase() === "cots_buyer";
+                      return getAssessmentTitle(row, isBuyerRow).toLowerCase().includes(q);
+                    });
+                    if (filtered.length === 0) return <p className="assessment_search_no_results">{myAssessments.length === 0 ? "No assessments yet." : "No assessments match your search."}</p>;
+                    return filtered.map((row) => {
                     const isBuyerRow =
                       (row.type || "").toLowerCase() === "cots_buyer";
                     const isDraft =
@@ -1077,87 +889,53 @@ const Assessments = () => {
                         );
                     const completedBy = getCompletedByDisplay(row) || "—";
                     return (
-                      <div key={row.assessmentId} className="assessment_card">
-                        <h2 className="assessment_card_title">
-                          {truncate(title, 60)}
-                        </h2>
-                        <div className="assessment_card_meta">
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">
-                              Type
-                            </span>
-                            <span>{typeLabel}</span>
-                          </div>
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">
-                              Status
-                            </span>
-                            <span
-                              className={`assessment_status ${statusClass}`}
-                            >
-                              {statusLabel}
-                            </span>
-                          </div>
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">
-                              {isDraft ? "Updated at" : "Updated"}
-                            </span>
-                            <span>{submittedDisplay}</span>
-                          </div>
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">
-                              {isDraft ? "Updated by" : "Completed by"}
-                            </span>
-                            <span>{completedBy}</span>
-                          </div>
+                      <div key={row.assessmentId} className="vendor_overview_attestation_row">
+                        {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
+                        {!isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />}
+                        <div className="vendor_overview_attestation_content">
+                          <p className="vendor_overview_attestation_name">{truncate(title, 60)}</p>
+                          <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}`}>
+                            {statusLabel}
+                          </p>
+                          <p className="vendor_overview_attestation_by">
+                            {isDraft ? "Updated by:" : "Completed by:"} {completedBy}
+                          </p>
+                          <p className="vendor_overview_attestation_date">
+                            {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
+                          </p>
                         </div>
-                        <div className="assessment_card_actions">
+                        <div className="vendor_overview_attestation_actions">
                           {isDraft && (
-                            <>
-                              <button
-                                type="button"
-                                className="assessment_card_btn assessment_card_btn_primary"
-                                onClick={() =>
-                                  navigate(
-                                    isBuyerRow
-                                      ? `/buyerAssessment/${row.assessmentId}`
-                                      : `/vendorcots/${row.assessmentId}`,
-                                  )
-                                }
-                              >
-                                <Pencil size={14} />
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                className="assessment_card_btn assessment_card_btn_danger"
-                                onClick={() =>
-                                  handleDeleteDraft(row.assessmentId)
-                                }
-=======
-                                onClick={() => handleDeleteDraft(row.assessmentId)}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
-                                aria-label="Delete draft"
-                              >
-                                <Trash2 size={14} />
-                                Delete
-                              </button>
-                            </>
+                            <button
+                              type="button"
+                              className="vendor_overview_btn_view"
+                              onClick={() =>
+                                navigate(
+                                  isBuyerRow
+                                    ? `/buyerAssessment/${row.assessmentId}`
+                                    : `/vendorcots/${row.assessmentId}`,
+                                )
+                              }
+                            >
+                              <Pencil size={14} aria-hidden />
+                              Edit
+                            </button>
                           )}
                           {!isDraft && (
                             <button
                               type="button"
-                              className="assessment_card_btn assessment_card_btn_secondary"
+                              className="vendor_overview_btn_view"
                               onClick={() => setPreviewRow(row)}
                             >
-                              <Eye size={14} />
+                              <Eye size={14} aria-hidden />
                               View
                             </button>
                           )}
                         </div>
                       </div>
                     );
-                  })}
+                  });
+                  })()}
                 </div>
               )}
             </div>
@@ -1168,26 +946,38 @@ const Assessments = () => {
       {isBuyer && (
         <div className="ai_assessments_page">
           <div className="ai_assessments_section">
-<<<<<<< HEAD
             <h2>Buy AI Product (COTS)</h2>
             <p className="section_desc">
               Assess a third-party vendor tool for your organization.
             </p>
             <ul className="ai_assessments_checklist">
               <li>
-                <Check size={16} /> Vendor security and compliance evaluation
+                <CircleCheck size={16} /> Vendor security and compliance evaluation
               </li>
               <li>
-                <Check size={16} /> Data handling and privacy assessment
+                <CircleCheck size={16} /> Data handling and privacy assessment
               </li>
               <li>
-                <Check size={16} /> Implementation readiness scoring
+                <CircleCheck size={16} /> Implementation readiness scoring
               </li>
               <li>
-                <Check size={16} /> Risk mitigation recommendations
+                <CircleCheck size={16} /> Risk mitigation recommendations
               </li>
             </ul>
-            <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+            <div className="assessment_list_header_row">
+              <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+              <div className="assessment_search_wrap">
+                <Search size={18} className="assessment_search_icon" aria-hidden />
+                <input
+                  type="search"
+                  placeholder="Search assessments…"
+                  value={assessmentSearch}
+                  onChange={(e) => setAssessmentSearch(e.target.value)}
+                  className="assessment_search_input"
+                  aria-label="Search assessments by name"
+                />
+              </div>
+            </div>
             {loading && <LoadingMessage message="Loading assessments…" />}
             {fetchError && (
               <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>
@@ -1195,19 +985,12 @@ const Assessments = () => {
               </p>
             )}
             {!loading && !fetchError && (
-              <div className="assessment_cards">
-                {buyerAssessments.length === 0 && (
-                  <p
-                    style={{
-                      color: "#64748b",
-                      fontSize: "0.875rem",
-                      margin: 0,
-                    }}
-                  >
-                    No assessments yet.
-                  </p>
-                )}
-                {buyerAssessments.map((row) => {
+              <div className="assessment_list_rows">
+                {(() => {
+                  const q = assessmentSearch.trim().toLowerCase();
+                  const filtered = q === "" ? buyerAssessments : buyerAssessments.filter((row) => getAssessmentTitle(row, true).toLowerCase().includes(q));
+                  if (filtered.length === 0) return <p className="assessment_search_no_results">{buyerAssessments.length === 0 ? "No assessments yet." : "No assessments match your search."}</p>;
+                  return filtered.map((row) => {
                   const isDraft = (row.status || "").toLowerCase() === "draft";
                   const owningDept =
                     row.owningDepartment != null &&
@@ -1216,9 +999,6 @@ const Assessments = () => {
                       : null;
                   const title = owningDept ?? "Draft";
                   const statusLabel = isDraft ? "Draft" : "Completed";
-                  const statusClass = isDraft
-                    ? "assessment_status_draft"
-                    : "assessment_status_completed";
                   const updatedAtDisplay = formatDate(
                     row.updatedAt ?? row.cotsUpdatedAt ?? row.submittedDate,
                   );
@@ -1227,150 +1007,51 @@ const Assessments = () => {
                     : formatDate(row.submittedDate ?? row.updatedAt);
                   const completedBy = getCompletedByDisplay(row) || "—";
                   return (
-                    <div key={row.assessmentId} className="assessment_card">
-                      <h2 className="assessment_card_title">
-                        {truncate(title, 60)}
-                      </h2>
-                      <div className="assessment_card_meta">
-                        <div className="assessment_card_meta_row">
-                          <span className="assessment_card_meta_label">
-                            Status
-                          </span>
-                          <span className={`assessment_status ${statusClass}`}>
-                            {statusLabel}
-                          </span>
-                        </div>
-                        <div className="assessment_card_meta_row">
-                          <span className="assessment_card_meta_label">
-                            {isDraft ? "Updated at" : "Submitted"}
-                          </span>
-                          <span>{submittedDisplay}</span>
-                        </div>
-                        <div className="assessment_card_meta_row">
-                          <span className="assessment_card_meta_label">
-                            {isDraft ? "Updated by" : "Completed by"}
-                          </span>
-                          <span>{completedBy}</span>
-                        </div>
+                    <div key={row.assessmentId} className="vendor_overview_attestation_row">
+                      {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
+                      {!isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />}
+                      <div className="vendor_overview_attestation_content">
+                        <p className="vendor_overview_attestation_name">{truncate(title, 60)}</p>
+                        <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}`}>
+                          {statusLabel}
+                        </p>
+                        <p className="vendor_overview_attestation_by">
+                          {isDraft ? "Updated by:" : "Completed by:"} {completedBy}
+                        </p>
+                        <p className="vendor_overview_attestation_date">
+                          {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
+                        </p>
                       </div>
-                      <div className="assessment_card_actions">
+                      <div className="vendor_overview_attestation_actions">
                         {isDraft && (
-                          <>
-                            <button
-                              type="button"
-                              className="assessment_card_btn assessment_card_btn_primary"
-                              onClick={() =>
-                                navigate(`/buyerAssessment/${row.assessmentId}`)
-                              }
-                            >
-                              <Pencil size={14} />
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="assessment_card_btn assessment_card_btn_danger"
-                              onClick={() =>
-                                handleDeleteDraft(row.assessmentId)
-                              }
-                              aria-label="Delete draft"
-                            >
-                              <Trash2 size={14} />
-                              Delete
-                            </button>
-                          </>
+                          <button
+                            type="button"
+                            className="vendor_overview_btn_view"
+                            onClick={() =>
+                              navigate(`/buyerAssessment/${row.assessmentId}`)
+                            }
+                          >
+                            <Pencil size={14} aria-hidden />
+                            Edit
+                          </button>
                         )}
                         {!isDraft && (
                           <button
                             type="button"
-                            className="assessment_card_btn assessment_card_btn_secondary"
+                            className="vendor_overview_btn_view"
                             onClick={() => setPreviewRow(row)}
                           >
-                            <Eye size={14} />
+                            <Eye size={14} aria-hidden />
                             View
                           </button>
                         )}
                       </div>
                     </div>
                   );
-                })}
+                });
+                })()}
               </div>
             )}
-=======
-              <h2>Buy AI Product (COTS)</h2>
-              <p className="section_desc">Assess a third-party vendor tool for your organization.</p>
-              <ul className="ai_assessments_checklist">
-                <li><Check size={16} /> Vendor security and compliance evaluation</li>
-                <li><Check size={16} /> Data handling and privacy assessment</li>
-                <li><Check size={16} /> Implementation readiness scoring</li>
-                <li><Check size={16} /> Risk mitigation recommendations</li>
-              </ul>
-              <p className="your_assessments_title">YOUR ASSESSMENTS</p>
-              {loading && <LoadingMessage message="Loading assessments…" />}
-              {fetchError && <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>{fetchError}</p>}
-              {!loading && !fetchError && (
-                <div className="assessment_cards">
-                  {buyerAssessments.length === 0 && (
-                    <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>No assessments yet.</p>
-                  )}
-                  {buyerAssessments.map((row) => {
-                    const isDraft = (row.status || "").toLowerCase() === "draft";
-                    const industrySectorVal = row.industrySector != null && String(row.industrySector).trim() !== "" ? String(row.industrySector).trim() : null;
-                    const title = industrySectorVal ?? "Draft";
-                    const statusLabel = isDraft ? "Draft" : "Completed";
-                    const statusClass = isDraft ? "assessment_status_draft" : "assessment_status_completed";
-                    const submittedDisplay = isDraft ? "—" : formatDate(row.submittedDate ?? row.updatedAt);
-                    return (
-                      <div key={row.assessmentId} className="assessment_card">
-                        <h2 className="assessment_card_title">{truncate(title, 60)}</h2>
-                        <div className="assessment_card_meta">
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">Status</span>
-                            <span className={`assessment_status ${statusClass}`}>{statusLabel}</span>
-                          </div>
-                          <div className="assessment_card_meta_row">
-                            <span className="assessment_card_meta_label">Submitted</span>
-                            <span>{submittedDisplay}</span>
-                          </div>
-                        </div>
-                        <div className="assessment_card_actions">
-                          {isDraft && (
-                            <>
-                              <button
-                                type="button"
-                                className="assessment_card_btn assessment_card_btn_primary"
-                                onClick={() => navigate(`/buyerAssessment/${row.assessmentId}`)}
-                              >
-                                <Pencil size={14} />
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                className="assessment_card_btn assessment_card_btn_danger"
-                                onClick={() => handleDeleteDraft(row.assessmentId)}
-                                aria-label="Delete draft"
-                              >
-                                <Trash2 size={14} />
-                                Delete
-                              </button>
-                            </>
-                          )}
-                          {!isDraft && (
-                            <button
-                              type="button"
-                              className="assessment_card_btn assessment_card_btn_secondary"
-                              onClick={() => setPreviewRow(row)}
-                            >
-                              <Eye size={14} />
-                              View
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
           </div>
         </div>
       )}
@@ -1378,7 +1059,6 @@ const Assessments = () => {
       {isVendor && (
         <div className="ai_assessments_page">
           <div className="ai_assessments_section">
-<<<<<<< HEAD
             <div className="header_cots">
               <div>
                 <span>
@@ -1424,7 +1104,20 @@ const Assessments = () => {
          
           </div>
           <div className="ai_assessments_section">
-               <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+            <div className="assessment_list_header_row">
+              <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+              <div className="assessment_search_wrap">
+                <Search size={18} className="assessment_search_icon" aria-hidden />
+                <input
+                  type="search"
+                  placeholder="Search assessments…"
+                  value={assessmentSearch}
+                  onChange={(e) => setAssessmentSearch(e.target.value)}
+                  className="assessment_search_input"
+                  aria-label="Search assessments by name"
+                />
+              </div>
+            </div>
             {loading && <LoadingMessage message="Loading assessments…" />}
             {fetchError && (
               <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>
@@ -1432,19 +1125,12 @@ const Assessments = () => {
               </p>
             )}
             {!loading && !fetchError && (
-              <div className="assessment_cards">
-                {vendorAssessments.length === 0 && (
-                  <p
-                    style={{
-                      color: "#64748b",
-                      fontSize: "0.875rem",
-                      margin: 0,
-                    }}
-                  >
-                    No vendor assessments yet.
-                  </p>
-                )}
-                {vendorAssessments.map((row) => {
+              <div className="assessment_list_rows">
+                {(() => {
+                  const q = assessmentSearch.trim().toLowerCase();
+                  const filtered = q === "" ? vendorAssessments : vendorAssessments.filter((row) => getAssessmentTitle(row, false).toLowerCase().includes(q));
+                  if (filtered.length === 0) return <p className="assessment_search_no_results">{vendorAssessments.length === 0 ? "No vendor assessments yet." : "No assessments match your search."}</p>;
+                  return filtered.map((row) => {
                   const isDraft = (row.status || "").toLowerCase() === "draft";
                   const customerSectorVal =
                     row.customerSector != null &&
@@ -1453,9 +1139,6 @@ const Assessments = () => {
                       : null;
                   const title = customerSectorVal ?? "Draft";
                   const statusLabel = isDraft ? "Draft" : "Completed";
-                  const statusClass = isDraft
-                    ? "assessment_status_draft"
-                    : "assessment_status_completed";
                   const updatedAtDisplay = formatDate(
                     row.vendorCotsUpdatedAt ?? row.updatedAt,
                   );
@@ -1464,116 +1147,49 @@ const Assessments = () => {
                     : formatDate(row.vendorCotsUpdatedAt ?? row.updatedAt);
                   const completedBy = getCompletedByDisplay(row) || "—";
                   return (
-                    <div key={row.assessmentId} className="assessment_card">
-                      <h2 className="assessment_card_title">
-                        {truncate(title, 60)}
-                      </h2>
-                      <div className="assessment_card_meta">
-                        <div className="assessment_card_meta_row">
-                          <span className="assessment_card_meta_label">
-                            Status
-                          </span>
-                          <span className={`assessment_status ${statusClass}`}>
-                            {statusLabel}
-                          </span>
-                        </div>
-                        <div className="assessment_card_meta_row">
-                          <span className="assessment_card_meta_label">
-                            {isDraft ? "Updated at" : "Updated"}
-                          </span>
-                          <span>{submittedDisplay}</span>
-                        </div>
-                        <div className="assessment_card_meta_row">
-                          <span className="assessment_card_meta_label">
-                            {isDraft ? "Updated by" : "Completed by"}
-                          </span>
-                          <span>{completedBy}</span>
-                        </div>
-=======
-            <h2>Vendor COTS Assessment</h2>
-            <p className="section_desc">Assess your solution fit and customer context for buyers.</p>
-            <ul className="ai_assessments_checklist">
-              <li><Check size={16} /> Customer discovery and pain points</li>
-              <li><Check size={16} /> Solution fit and implementation</li>
-              <li><Check size={16} /> Risk context and mitigation</li>
-            </ul>
-            <p className="your_assessments_title">YOUR ASSESSMENTS</p>
-            {loading && <LoadingMessage message="Loading assessments…" />}
-            {fetchError && <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>{fetchError}</p>}
-            {!loading && !fetchError && (
-              <div className="assessment_cards">
-                {vendorAssessments.length === 0 && (
-                  <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>No vendor assessments yet.</p>
-                )}
-                {vendorAssessments.map((row) => {
-                  const isDraft = (row.status || "").toLowerCase() === "draft";
-                  const customerSectorVal = row.customerSector != null && String(row.customerSector).trim() !== "" ? String(row.customerSector).trim() : null;
-                  const title = customerSectorVal ?? "Draft";
-                  const statusLabel = isDraft ? "Draft" : "Completed";
-                  const statusClass = isDraft ? "assessment_status_draft" : "assessment_status_completed";
-                  const submittedDisplay = isDraft ? "—" : formatDate(row.vendorCotsUpdatedAt ?? row.updatedAt);
-                  return (
-                    <div key={row.assessmentId} className="assessment_card">
-                      <h2 className="assessment_card_title">{truncate(title, 60)}</h2>
-                      <div className="assessment_card_meta">
-                        <div className="assessment_card_meta_row">
-                          <span className="assessment_card_meta_label">Status</span>
-                          <span className={`assessment_status ${statusClass}`}>{statusLabel}</span>
-                        </div>
-                        <div className="assessment_card_meta_row">
-                          <span className="assessment_card_meta_label">Updated</span>
-                          <span>{submittedDisplay}</span>
-                        </div>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
+                    <div key={row.assessmentId} className="vendor_overview_attestation_row">
+                      {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
+                      {!isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />}
+                      <div className="vendor_overview_attestation_content">
+                        <p className="vendor_overview_attestation_name">{truncate(title, 60)}</p>
+                        <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}`}>
+                          {statusLabel}
+                        </p>
+                        <p className="vendor_overview_attestation_by">
+                          {isDraft ? "Updated by:" : "Completed by:"} {completedBy}
+                        </p>
+                        <p className="vendor_overview_attestation_date">
+                          {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
+                        </p>
                       </div>
-                      <div className="assessment_card_actions">
+                      <div className="vendor_overview_attestation_actions">
                         {isDraft && (
-                          <>
-                            <button
-                              type="button"
-                              className="assessment_card_btn assessment_card_btn_primary"
-<<<<<<< HEAD
-                              onClick={() =>
-                                navigate(`/vendorcots/${row.assessmentId}`)
-                              }
-=======
-                              onClick={() => navigate(`/vendorcots/${row.assessmentId}`)}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
-                            >
-                              <Pencil size={14} />
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="assessment_card_btn assessment_card_btn_danger"
-<<<<<<< HEAD
-                              onClick={() =>
-                                handleDeleteDraft(row.assessmentId)
-                              }
-=======
-                              onClick={() => handleDeleteDraft(row.assessmentId)}
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
-                              aria-label="Delete draft"
-                            >
-                              <Trash2 size={14} />
-                              Delete
-                            </button>
-                          </>
+                          <button
+                            type="button"
+                            className="vendor_overview_btn_view"
+                            onClick={() =>
+                              navigate(`/vendorcots/${row.assessmentId}`)
+                            }
+                          >
+                            <Pencil size={14} aria-hidden />
+                            Edit
+                          </button>
                         )}
                         {!isDraft && (
                           <button
                             type="button"
-                            className="assessment_card_btn assessment_card_btn_secondary"
+                            className="vendor_overview_btn_view"
                             onClick={() => setPreviewRow(row)}
                           >
-                            <Eye size={14} />
+                            <Eye size={14} aria-hidden />
                             View
                           </button>
                         )}
                       </div>
                     </div>
                   );
-                })}
+                });
+                })()}
               </div>
             )}
           </div>
@@ -1584,7 +1200,6 @@ const Assessments = () => {
         <div className="table_user_page">
           <div className="orgDataTable">
             {loading && <LoadingMessage message="Loading assessments…" />}
-<<<<<<< HEAD
             {fetchError && (
               <p style={{ color: "#dc2626", padding: "1rem 0" }}>
                 {fetchError}
@@ -1594,11 +1209,6 @@ const Assessments = () => {
               <p style={{ color: "#64748b", padding: "1rem 0" }}>
                 No assessments yet. Create one using the button above.
               </p>
-=======
-            {fetchError && <p style={{ color: "#dc2626", padding: "1rem 0" }}>{fetchError}</p>}
-            {!loading && !fetchError && assessmentsList.length === 0 && (
-              <p style={{ color: "#64748b", padding: "1rem 0" }}>No assessments yet. Create one using the button above.</p>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
             )}
             {!loading && assessmentsList.length > 0 && (
               <DataTable
@@ -1613,11 +1223,13 @@ const Assessments = () => {
         </div>
       )}
 
-<<<<<<< HEAD
       {previewRow && (
         <div
           className="vendor_attestation_preview_modal_overlay"
-          onClick={() => setPreviewRow(null)}
+          onClick={() => {
+            setPreviewRow(null);
+            setVendorCotsPreviewDetail(null);
+          }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="assessment_preview_modal_title"
@@ -1631,7 +1243,10 @@ const Assessments = () => {
               <button
                 type="button"
                 className="vendor_attestation_preview_modal_close"
-                onClick={() => setPreviewRow(null)}
+                onClick={() => {
+                  setPreviewRow(null);
+                  setVendorCotsPreviewDetail(null);
+                }}
                 aria-label="Close"
               >
                 <X size={24} />
@@ -1647,105 +1262,204 @@ const Assessments = () => {
                 <div className="vendor_preview_sections">
                   {previewRow.type === "cots_vendor" ? (
                     <>
-                      <section className="vendor_preview_card">
-                        <h3 className="vendor_preview_card_title">
-                          Assessment
-                        </h3>
-                        <dl className="vendor_preview_list">
-                          <div className="vendor_preview_row">
-                            <dt className="vendor_preview_label">Type</dt>
-                            <dd className="vendor_preview_value">
-                              COTS Vendor
-                            </dd>
-                          </div>
-                          <div className="vendor_preview_row">
-                            <dt className="vendor_preview_label">Status</dt>
-                            <dd className="vendor_preview_value">
-                              {formatPreviewValue(previewRow.status, "Status")}
-                            </dd>
-                          </div>
-                          <div className="vendor_preview_row">
-                            <dt className="vendor_preview_label">Created</dt>
-                            <dd className="vendor_preview_value">
-                              {formatDate(previewRow.createdAt)}
-                            </dd>
-                          </div>
-                        </dl>
-                      </section>
-                      <section className="vendor_preview_card">
-                        <h3 className="vendor_preview_card_title">
-                          Vendor COTS
-                        </h3>
-                        <dl className="vendor_preview_list">
-                          {[
-                            {
-                              label: "Customer organization",
-                              value: getRowPreviewValue(
-                                previewRow,
-                                "customerOrganizationName",
-                              ),
-                            },
-                            {
-                              label: "Customer sector",
-                              value: formatSectorForPreview(
-                                getRowPreviewValue(
-                                  previewRow,
-                                  "customerSector",
-                                ),
-                              ),
-                            },
-                            {
-                              label: "Primary pain point",
-                              value: getRowPreviewValue(
-                                previewRow,
-                                "primaryPainPoint",
-                              ),
-                            },
-                            {
-                              label: "Expected outcomes",
-                              value: getRowPreviewValue(
-                                previewRow,
-                                "vendorExpectedOutcomes",
-                              ),
-                            },
-                            {
-                              label: "Budget range",
-                              value: getRowPreviewValue(
-                                previewRow,
-                                "customerBudgetRange",
-                              ),
-                            },
-                            {
-                              label: "Timeline",
-                              value: getRowPreviewValue(
-                                previewRow,
-                                "implementationTimeline",
-                              ),
-                            },
-                            {
-                              label: "Alternatives considered",
-                              value: getRowPreviewValue(
-                                previewRow,
-                                "alternativesConsidered",
-                              ),
-                            },
-                            {
-                              label: "Key advantages",
-                              value: getRowPreviewValue(
-                                previewRow,
-                                "keyAdvantages",
-                              ),
-                            },
-                          ].map(({ label, value }) => (
-                            <div key={label} className="vendor_preview_row">
-                              <dt className="vendor_preview_label">{label}</dt>
-                              <dd className="vendor_preview_value">
-                                {formatPreviewValue(value, label)}
-                              </dd>
-                            </div>
-                          ))}
-                        </dl>
-                      </section>
+                      {vendorCotsPreviewLoading ? (
+                        <LoadingMessage message="Loading assessment details…" />
+                      ) : (
+                        <>
+                          <section className="vendor_preview_card">
+                            <h3 className="vendor_preview_card_title">
+                              Assessment
+                            </h3>
+                            <dl className="vendor_preview_list">
+                              <div className="vendor_preview_row">
+                                <dt className="vendor_preview_label">Type</dt>
+                                <dd className="vendor_preview_value">
+                                  COTS Vendor
+                                </dd>
+                              </div>
+                              <div className="vendor_preview_row">
+                                <dt className="vendor_preview_label">Status</dt>
+                                <dd className="vendor_preview_value">
+                                  {formatPreviewValue(
+                                    (vendorCotsPreviewDetail || previewRow)?.status,
+                                    "Status",
+                                  )}
+                                </dd>
+                              </div>
+                              <div className="vendor_preview_row">
+                                <dt className="vendor_preview_label">Created</dt>
+                                <dd className="vendor_preview_value">
+                                  {formatDate(previewRow.createdAt)}
+                                </dd>
+                              </div>
+                            </dl>
+                          </section>
+                          <section className="vendor_preview_card">
+                            <h3 className="vendor_preview_card_title">
+                              Vendor COTS
+                            </h3>
+                            <dl className="vendor_preview_list">
+                              {[
+                                {
+                                  label: "Customer organization",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "customerOrganizationName",
+                                  ),
+                                },
+                                {
+                                  label: "Customer sector",
+                                  value: formatSectorForPreview(
+                                    getRowPreviewValue(
+                                      vendorCotsPreviewDetail || previewRow,
+                                      "customerSector",
+                                    ),
+                                  ),
+                                },
+                                {
+                                  label: "Primary pain point",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "primaryPainPoint",
+                                  ),
+                                },
+                                {
+                                  label: "Expected outcomes",
+                                  value:
+                                    vendorCotsPreviewDetail != null
+                                      ? getRowPreviewValue(
+                                          vendorCotsPreviewDetail,
+                                          "expectedOutcomes",
+                                        )
+                                      : getRowPreviewValue(
+                                          previewRow,
+                                          "vendorExpectedOutcomes",
+                                        ),
+                                },
+                                {
+                                  label: "Budget range",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "customerBudgetRange",
+                                  ),
+                                },
+                                {
+                                  label: "Timeline",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "implementationTimeline",
+                                  ),
+                                },
+                                {
+                                  label: "Product features",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "productFeatures",
+                                  ),
+                                },
+                                {
+                                  label: "Implementation approach",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "implementationApproach",
+                                  ),
+                                },
+                                {
+                                  label: "Customization level",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "customizationLevel",
+                                  ),
+                                },
+                                {
+                                  label: "Integration complexity",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "integrationComplexity",
+                                  ),
+                                },
+                                {
+                                  label: "Regulatory requirements",
+                                  value:
+                                    vendorCotsPreviewDetail != null
+                                      ? getRowPreviewValue(
+                                          vendorCotsPreviewDetail,
+                                          "regulatoryRequirements",
+                                        )
+                                      : getRowPreviewValue(
+                                          previewRow,
+                                          "vendorRegulatoryRequirements",
+                                        ),
+                                },
+                                {
+                                  label: "Regulatory requirements (other)",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "regulatoryRequirementsOther",
+                                  ),
+                                },
+                                {
+                                  label: "Data sensitivity",
+                                  value:
+                                    vendorCotsPreviewDetail != null
+                                      ? getRowPreviewValue(
+                                          vendorCotsPreviewDetail,
+                                          "dataSensitivity",
+                                        )
+                                      : getRowPreviewValue(
+                                          previewRow,
+                                          "vendorDataSensitivity",
+                                        ),
+                                },
+                                {
+                                  label: "Customer risk tolerance",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "customerRiskTolerance",
+                                  ),
+                                },
+                                {
+                                  label: "Alternatives considered",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "alternativesConsidered",
+                                  ),
+                                },
+                                {
+                                  label: "Key advantages",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "keyAdvantages",
+                                  ),
+                                },
+                                {
+                                  label: "Customer-specific risks",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "customerSpecificRisks",
+                                  ),
+                                },
+                                {
+                                  label: "Customer-specific risks (other)",
+                                  value: getRowPreviewValue(
+                                    vendorCotsPreviewDetail || previewRow,
+                                    "customerSpecificRisksOther",
+                                  ),
+                                },
+                              ].map(({ label, value }) => (
+                                <div key={label} className="vendor_preview_row">
+                                  <dt className="vendor_preview_label">
+                                    {label}
+                                  </dt>
+                                  <dd className="vendor_preview_value">
+                                    {formatPreviewValue(value, label)}
+                                  </dd>
+                                </div>
+                              ))}
+                            </dl>
+                          </section>
+                        </>
+                      )}
                     </>
                   ) : (
                     ASSESSMENT_PREVIEW_SECTIONS.map((section) => (
@@ -1783,71 +1497,6 @@ const Assessments = () => {
           </div>
         </div>
       )}
-=======
-      <Modal isOpen={!!previewRow}>
-        <div className="header_modal" style={{ maxWidth: "56em" }}>
-          <div>
-            <h2 className="modal_popup_title">Assessment details</h2>
-            <p className="modal_sub_title">Preview of submitted assessment (same as COTS)</p>
-          </div>
-          <div className="cancel">
-            <Button
-              className="user_cancel_btn"
-              onClick={() => setPreviewRow(null)}
-            >
-              <span>
-                <CircleX />
-              </span>
-            </Button>
-          </div>
-        </div>
-        {previewRow && (
-          <div className="popup_fields assessment_preview_modal_body" style={{ maxHeight: "70vh", overflowY: "auto", maxWidth: "56em" }}>
-            {previewRow.type === "cots_vendor" ? (
-              <>
-                <div style={{ marginBottom: 24 }}>
-                  <PreviewTable
-                    dataForPreview={previewRow}
-                    previewFields={[
-                      { label: "Type", value: () => "COTS Vendor" },
-                      { label: "Status", value: (r) => r.status ?? undefined },
-                      { label: "Created", value: (r) => formatDate(r.createdAt) },
-                    ]}
-                    previewTitle="Assessment"
-                  />
-                </div>
-                <div style={{ marginBottom: 24 }}>
-                  <PreviewTable
-                    dataForPreview={previewRow}
-                    previewFields={[
-                      { label: "Customer organization", value: (r) => getRowPreviewValue(r, "customerOrganizationName") },
-                      { label: "Customer sector", value: (r) => formatSectorForPreview(getRowPreviewValue(r, "customerSector")) },
-                      { label: "Primary pain point", value: (r) => getRowPreviewValue(r, "primaryPainPoint") },
-                      { label: "Expected outcomes", value: (r) => getRowPreviewValue(r, "vendorExpectedOutcomes") },
-                      { label: "Budget range", value: (r) => getRowPreviewValue(r, "customerBudgetRange") },
-                      { label: "Timeline", value: (r) => getRowPreviewValue(r, "implementationTimeline") },
-                      { label: "Alternatives considered", value: (r) => getRowPreviewValue(r, "alternativesConsidered") },
-                      { label: "Key advantages", value: (r) => getRowPreviewValue(r, "keyAdvantages") },
-                    ]}
-                    previewTitle="Vendor COTS"
-                  />
-                </div>
-              </>
-            ) : (
-              ASSESSMENT_PREVIEW_SECTIONS.map((section) => (
-                <div key={section.title} style={{ marginBottom: 24 }}>
-                  <PreviewTable
-                    dataForPreview={previewRow}
-                    previewFields={section.fields}
-                    previewTitle={section.title}
-                  />
-                </div>
-              ))
-            )}
-          </div>
-        )}
-      </Modal>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
     </div>
   );
 };

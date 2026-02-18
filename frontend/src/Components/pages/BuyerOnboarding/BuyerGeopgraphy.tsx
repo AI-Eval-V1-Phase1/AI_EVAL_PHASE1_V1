@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Input from "../../UI/Input";
 import HeaderForBuyer from "./HeaderForBuyer";
 import Select from "../../UI/Select";
@@ -26,15 +26,37 @@ const BuyerGeography = ({
   const [customHeadquarter, setCustomHeadquarter] = useState("");
   const [selectedHeadquarter, setSelectedHeadquarter] = useState("");
 
+  const isOtherSpecify = (v: string) => v === "Other (specify)";
+
+  useEffect(() => {
+    const hq = formBuyerData.headquartersLocation || "";
+    if (isOtherSpecify(hq)) {
+      setSelectedHeadquarter("Other (specify)");
+      setIsVisibleInput(true);
+      setCustomHeadquarter("");
+    } else if (hq) {
+      const inOptions = BUYER_HEADQUARTERS_LOCATION.some((o) => o.value === hq);
+      if (inOptions) {
+        setSelectedHeadquarter(hq);
+        setIsVisibleInput(false);
+        setCustomHeadquarter("");
+      } else {
+        setSelectedHeadquarter("Other (specify)");
+        setIsVisibleInput(true);
+        setCustomHeadquarter(hq);
+      }
+    }
+  }, [formBuyerData.headquartersLocation]);
+
   const handleHeadquartersChange = (val: string) => {
     setSelectedHeadquarter(val);
-    if (val === "Other (Specify)") {
+    if (val === "Other (specify)") {
       setIsVisibleInput(true);
       setCustomHeadquarter("");
       setFormBuyerData({ ...formBuyerData, headquartersLocation: "" });
     } else {
       setIsVisibleInput(false);
-      setCustomHeadquarter(val);
+      setCustomHeadquarter("");
       setFormBuyerData({ ...formBuyerData, headquartersLocation: val });
     }
   };
@@ -52,13 +74,8 @@ const BuyerGeography = ({
         <Select
           labelName={
             <div className="labelSection">
-<<<<<<< HEAD
               <span>Headquarters Location</span>
               <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-=======
-              <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-              <span>Headquarters Location</span>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               <ClickTooltip content={BUYER_HELPTEXT.headquartersLocation}>
                 <Info size={14} color="#6B7280" />
               </ClickTooltip>
@@ -78,25 +95,18 @@ const BuyerGeography = ({
       </div>
 
       {isVisibleInput && (
-        <div className="form_fields_vendor">
+        <div className="form_fields_vendor" style={{ marginTop: "0.5rem" }}>
           <Input
             labelName={
               <div className="labelSection">
-<<<<<<< HEAD
-                <span>Specify Location</span>
+                <span>Specify location</span>
                 <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-=======
-                <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-                <span>Specify Location</span>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
-                {/* <ClickTooltip content={VENDOR_HELPTEXT.customHeadquarter}>
-                  <Info size={14} color="#6B7280" />
-                </ClickTooltip> */}
               </div>
             }
             id="custom_headquarter"
             name="headquartersLocation"
             value={customHeadquarter}
+            placeholder="Enter your headquarters location"
             onChange={(e) => {
               setCustomHeadquarter(e.target.value);
               setFormBuyerData({
@@ -112,13 +122,8 @@ const BuyerGeography = ({
           id="operatingRegions"
           labelName={
             <div className="labelSection">
-<<<<<<< HEAD
               <span>Operating Regions</span>
               <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-=======
-              <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
-              <span>Operating Regions</span>
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
               <ClickTooltip content={BUYER_HELPTEXT.operatingRegions}>
                 <Info size={14} color="#6B7280" />
               </ClickTooltip>
