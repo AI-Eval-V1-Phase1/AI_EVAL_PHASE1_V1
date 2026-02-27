@@ -39,7 +39,7 @@
 .ai_assessments_section {
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 5px;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   margin: 0 0 1em 0;
@@ -93,11 +93,10 @@
 .header_cots span {
   background-color: #e9f2ff;
   padding: 0.5em;
-  border-radius: dis;
   display: flex;
   align-content: center;
   align-items: center;
-  border-radius: 10px;
+  border-radius: 5px;
 }
 .header_cots span svg {
   color: var(--main-auth-button-color);
@@ -123,7 +122,7 @@
 .assessment_card {
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -212,7 +211,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: 5px;
   font-size: 0.8125rem;
   font-weight: 600;
 }
@@ -249,7 +248,7 @@
 
 .assessment_card_btn {
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: 5px;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -326,7 +325,7 @@
   background: #2563eb;
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 5px;
   font-weight: 500;
   font-size: 0.9rem;
   cursor: pointer;
@@ -368,6 +367,7 @@
 .assessment_tab.active {
   color: var(--main-auth-button-color, #1e3a8a);
   border-bottom-color: var(--main-auth-button-color, #1e3a8a);
+  border-radius: 0 !important;
 }
 
 /* YOUR ASSESSMENTS header row: title + search */
@@ -399,7 +399,7 @@
   min-width: 0;
   padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 5px;
   font-size: 0.875rem;
   color: #111827;
 }
@@ -426,7 +426,7 @@
   flex-wrap: wrap;
   background: #f8fafc;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 5px;
   padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
 }
@@ -473,6 +473,11 @@
   color: #6b7280;
   margin: 0;
 }
+.assessment_list_rows .vendor_overview_attestation_points {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
 .assessment_list_rows .vendor_overview_attestation_actions {
   display: flex;
   align-items: center;
@@ -486,9 +491,11 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.4rem 0.75rem;
-  min-width: 5rem;
+  min-width: 5.5rem;
+  width: 5.5rem;
   justify-content: center;
-  border-radius: 6px;
+  box-sizing: border-box;
+  border-radius: 5px;
   font-size: 0.875rem;
   font-weight: 500;
 background: var(--main-auth-button-color, #2463eb);

@@ -35,6 +35,7 @@
   gap: 0;
   border-bottom: 1px solid #e2e8f0;
   margin-bottom: 1.5rem;
+  border-radius: 0;
 }
 
 .org_settings_tab {
@@ -50,6 +51,7 @@
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   cursor: pointer;
+  border-radius: 0;
 }
 
 .org_settings_tab:hover {
@@ -59,12 +61,13 @@
 .org_settings_tab_active {
   color: #2563eb;
   border-bottom-color: #2563eb;
+  border-radius: 0 !important;
 }
 
 .org_settings_card {
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 5px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -103,7 +106,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 5px;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -246,11 +249,17 @@
   white-space: nowrap;
 }
 
+.team_member_email_link {
+  text-decoration: none;
+}
+
+
+
 /* Role and status – box style like attestation button (not pill) */
 .pill {
   display: inline-block;
   padding: 4px 10px;
-  border-radius: 4px;
+  border-radius: 5px;
   font-size: 0.8125rem;
   font-weight: 600;
   border: 1px solid #e2e8f0;
@@ -288,10 +297,18 @@
   color: #854d0e;
 }
 
+/* Account status Invited: blue (same treatment as "invite" emphasis) */
+.pill_status_invited {
+  border-color: #93c5fd;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Expired and Inactive: crimson */
 .pill_status_inactive {
-  border-color: #e2e8f0;
-  background: #f1f5f9;
-  color: #64748b;
+  border-color: #fca5a5;
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .team_member_org {
@@ -326,6 +343,42 @@
   justify-content: center !important;
 }
 
+/* Rows per page: align label, select, range and nav in one row */
+.orgDataTable .rdt_Pagination,
+.team_members_table_wrapper .orgDataTable .rdt_Pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  padding: 0.75rem 0;
+  margin-top: 0.5rem;
+  min-height: 2.5rem;
+}
+
+.orgDataTable .rdt_Pagination > *,
+.team_members_table_wrapper .orgDataTable .rdt_Pagination > * {
+  display: inline-flex;
+  align-items: center;
+}
+
+.orgDataTable .rdt_Pagination select,
+.team_members_table_wrapper .orgDataTable .rdt_Pagination select {
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  vertical-align: middle;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  min-height: 2rem;
+}
+
+/* Rows per page: hide library's duplicate dropdown icon so only the select's arrow shows */
+.orgDataTable .rdt_Pagination div:has(> select) > svg,
+.team_members_table_wrapper .orgDataTable .rdt_Pagination div:has(> select) > svg {
+  display: none;
+}
+
 .user_table_actions {
   display: flex;
   align-items: center;
@@ -341,7 +394,7 @@
   gap: 0.4rem;
   padding: 0.4rem 0.6rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
@@ -357,6 +410,27 @@
 
 .user_table_action_btn svg {
   flex-shrink: 0;
+  color: var(--main-auth-button-color, #2463eb);
+}
+
+/* Icon-only action buttons: show label on hover via title tooltip */
+.user_table_action_btn_icon {
+  padding: 0.5rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  justify-content: center;
+}
+
+.user_table_action_btn_icon:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.resend_confirm_modal .resend_confirm_message {
+  margin: 0 0 1.25rem 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--light-gray-color, #64748b);
 }
 
 /* View User details modal */
@@ -374,24 +448,10 @@
   margin: 0;
 }
 
-.user_view_modal_close_btn {
-  padding: 0.25rem;
-  border: none;
-  background: none;
-  color: #64748b;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.user_view_modal_close_btn:hover {
-  background: #f1f5f9;
-  color: #334155;
-}
-
 .user_view_modal_card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 1.25rem;
   margin-bottom: 1rem;
 }
@@ -445,7 +505,7 @@
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 5px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -482,7 +542,7 @@
 .role_definition_card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 1.25rem;
   transition: box-shadow 0.15s ease;
 }
@@ -494,7 +554,7 @@
 .role_definition_icon {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: 5px;
   background: #e0e7ff;
   color: #4f46e5;
   display: flex;
@@ -600,7 +660,7 @@
   font-weight: 500;
   font-size: 0.8125rem;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: 5px;
   text-align: center;
   text-transform: capitalize;
   min-width: 5.5em;
@@ -626,4 +686,17 @@
 .statusInactive {
   background-color: #f1f5f9;
   color: #64748b;
+}
+
+#edit_user_role:hover {
+  cursor: pointer;
+}
+
+#edit_user_status,
+#edit_user_status:hover {
+  cursor: pointer;
+}
+
+#edit_user_reason {
+  resize: none !important;
 }

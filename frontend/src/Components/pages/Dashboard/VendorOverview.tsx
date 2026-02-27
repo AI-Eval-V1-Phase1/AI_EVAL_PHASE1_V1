@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
-  FileText,
+  Eye,
   CheckCircle2,
   LayoutDashboard,
   ClipboardCheck,
@@ -40,8 +40,8 @@ const VendorOverview = () => {
       const text = await response.text();
       let result: {
         success?: boolean;
-        attestation?: { id?: string; status?: string; created_at?: string; updated_at?: string; certificates?: Array<{ name: string; expiryDate: string | null }> };
-        attestations?: Array<{ id?: string; status?: string; created_at?: string; updated_at?: string; certificates?: Array<{ name: string; expiryDate: string | null }> }>;
+        attestation?: { id?: string; status?: string; created_at?: string; updated_at?: string; product_name?: string | null; certificates?: Array<{ name: string; expiryDate: string | null }> };
+        attestations?: Array<{ id?: string; status?: string; created_at?: string; updated_at?: string; product_name?: string | null; certificates?: Array<{ name: string; expiryDate: string | null }> }>;
         message?: string;
       } = {};
       try {
@@ -65,6 +65,7 @@ const VendorOverview = () => {
               status: (a.status ?? "").toUpperCase(),
               createdAt: a.created_at,
               updatedAt: a.updated_at,
+              productName: a.product_name ?? undefined,
               certificates: Array.isArray(a.certificates) ? a.certificates : undefined,
             });
           }
@@ -76,6 +77,7 @@ const VendorOverview = () => {
           status: (a.status ?? "").toUpperCase(),
           createdAt: a.created_at,
           updatedAt: a.updated_at,
+          productName: a.product_name ?? undefined,
           certificates: Array.isArray(a.certificates) ? a.certificates : undefined,
         });
       }
@@ -91,20 +93,40 @@ const VendorOverview = () => {
     fetchAttestations();
   }, [fetchAttestations]);
 
+  /** Default dropdown to latest completed attestation when data loads */
+  useEffect(() => {
+    const completed = attestations.filter((a) => (a.status ?? "").toUpperCase() === "COMPLETED");
+    const sorted = [...completed].sort((a, b) => {
+      const aDate = a.updatedAt ?? a.createdAt ?? "";
+      const bDate = b.updatedAt ?? b.createdAt ?? "";
+      return new Date(bDate).getTime() - new Date(aDate).getTime();
+    });
+    if (sorted.length > 0 && !selectedCompletedId) {
+      setSelectedCompletedId(sorted[0].id);
+    }
+  }, [attestations]);
+
   const draftAttestations = attestations.filter(
     (a) => (a.status ?? "").toUpperCase() === "DRAFT"
   );
   const completedAttestations = attestations.filter(
     (a) => (a.status ?? "").toUpperCase() === "COMPLETED"
   );
-  /** Certificates from all completed attestations for "My Attestations" section */
-  const certificateList = completedAttestations.flatMap((a) =>
-    (a.certificates ?? []).map((c) => ({ ...c, attestationId: a.id }))
-  );
-  /** When an attestation is selected in the dropdown, show only that attestation's documents; otherwise show all */
+  /** Sorted by latest first (updatedAt desc) for dropdown default */
+  const completedAttestationsSorted = [...completedAttestations].sort((a, b) => {
+    const aDate = a.updatedAt ?? a.createdAt ?? "";
+    const bDate = b.updatedAt ?? b.createdAt ?? "";
+    return new Date(bDate).getTime() - new Date(aDate).getTime();
+  });
+  const latestCompletedId = completedAttestationsSorted[0]?.id ?? "";
+
+  /** Certificates from the selected completed attestation only */
   const certificateListToShow = selectedCompletedId
-    ? certificateList.filter((c) => c.attestationId === selectedCompletedId)
-    : certificateList;
+    ? (completedAttestations.find((a) => a.id === selectedCompletedId)?.certificates ?? []).map((c) => ({
+        ...c,
+        attestationId: selectedCompletedId,
+      }))
+    : [];
 
   const profileCompleteness = completedAttestations.length > 0 ? 100 : draftAttestations.length > 0 ? 50 : 0;
   const profileCompleteLabel = profileCompleteness >= 100 ? "Profile complete!" : "Complete your attestation to improve.";
@@ -123,23 +145,21 @@ const VendorOverview = () => {
               Manage your security profile and compliance attestations.
             </p>
           </div>
-         
         </div>
-         {!loading && completedAttestations.length > 0 && (
-            <div className="vendor_overview_dropdown_top_right">
-              <Select
-                // labelName="Completed attestations"
-                name="completed_attestations"
-                value={selectedCompletedId}
-                default_option="All completed attestations"
-                options={completedAttestations.map((item) => ({
-                  value: item.id,
-                  label: `Vendor Self-Attestation – ${formatDisplayDate(item.updatedAt ?? item.createdAt)}`,
-                }))}
-                onChange={(e) => setSelectedCompletedId(e.target.value)}
-              />
-            </div>
-          )}
+        {!loading && completedAttestations.length > 0 && (
+          <div className="vendor_overview_dropdown_top_right">
+            <Select
+              name="completed_attestations"
+              value={selectedCompletedId}
+              default_option="Select attestation"
+              options={completedAttestationsSorted.map((item) => ({
+                value: item.id,
+                label: `${(item.productName ?? "").trim() || "Vendor Self-Attestation"} – ${formatDisplayDate(item.updatedAt ?? item.createdAt)}`,
+              }))}
+              onChange={(e) => setSelectedCompletedId(e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
       <div className="vendor_overview_metrics">
@@ -177,73 +197,42 @@ const VendorOverview = () => {
         {error && (
           <div className="vendor_overview_error">{error}</div>
         )}
-        {!loading && !error && draftAttestations.length > 0 && (
+        {!loading && !error && completedAttestations.length > 0 && (
           <>
-            {draftAttestations.map((item) => (
-              <div
-                key={item.id}
-                className="vendor_overview_attestation_row"
-              >
-                <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />
-                <div className="vendor_overview_attestation_content">
-                  <p className="vendor_overview_attestation_name">
-                    Vendor Self-Attestation
-                  </p>
-                  <p className="vendor_overview_attestation_status_label vendor_overview_attestation_status_label_draft">
-                    Draft
-                  </p>
-                  <p className="vendor_overview_attestation_date">
-                    {formatUpdatedDate(item.updatedAt ?? item.createdAt)}
-                  </p>
+            {certificateListToShow.length > 0 ? (
+              certificateListToShow.map((cert, idx) => (
+                <div
+                  key={`${cert.attestationId}-${cert.name}-${idx}`}
+                  className="vendor_overview_attestation_row"
+                >
+                  <ShieldCheck size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />
+                  <div className="vendor_overview_attestation_content">
+                    <p className="vendor_overview_attestation_name">{cert.name}</p>
+                    <p className="vendor_overview_attestation_status_label">Verified</p>
+                    <p className="vendor_overview_attestation_date">
+                      Expiry: {cert.expiryDate ? formatDisplayDate(cert.expiryDate) : "—"}
+                    </p>
+                  </div>
+                  <div className="vendor_overview_attestation_actions">
+                    <Link
+                      to="/reports"
+                      state={{ attestationId: cert.attestationId }}
+                      className="vendor_overview_btn_view"
+                    >
+                      <Eye size={16} aria-hidden />
+                      View Report
+                    </Link>
+                  </div>
                 </div>
-                <div className="vendor_overview_attestation_actions">
-                  <Link
-                    to="/vendorSelfAttestation"
-                    state={{ editId: item.id }}
-                    className="vendor_overview_btn_view vendor_overview_btn_update"
-                  >
-                    Update
-                  </Link>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="vendor_overview_empty">No documents for this attestation.</div>
+            )}
           </>
         )}
-        {!loading && !error && certificateListToShow.length > 0 && (
-          <>
-            {certificateListToShow.map((cert, idx) => (
-              <div
-                key={`${cert.attestationId}-${cert.name}-${idx}`}
-                className="vendor_overview_attestation_row"
-              >
-                <ShieldCheck size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />
-                <div className="vendor_overview_attestation_content">
-                  <p className="vendor_overview_attestation_name">{cert.name}</p>
-                  <p className="vendor_overview_attestation_status_label">
-                    Verified
-                  </p>
-                  <p className="vendor_overview_attestation_date">
-                    Expiry: {cert.expiryDate ? formatDisplayDate(cert.expiryDate) : "—"}
-                  </p>
-                </div>
-                <div className="vendor_overview_attestation_actions">
-                  <Link
-                    to="/reports"
-                    state={{ attestationId: cert.attestationId }}
-                    className="vendor_overview_btn_view"
-                  >
-                    View Report
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </>
-        )}
-        {!loading && !error && draftAttestations.length === 0 && certificateListToShow.length === 0 && (
+        {!loading && !error && completedAttestations.length === 0 && (
           <div className="vendor_overview_empty">
-            {selectedCompletedId
-              ? "No documents for this attestation."
-              : "No draft attestations. Complete an attestation to see certificates here."}
+            No completed attestations yet. Complete an attestation to see documents here.
           </div>
         )}
       </div>
@@ -277,7 +266,7 @@ const VendorOverview = () => {
                 />
                 <div className="vendor_overview_attestation_content">
                   <p className="vendor_overview_attestation_name">
-                    Vendor Self-Attestation
+                    {(item.productName ?? "").trim() || "Vendor Self-Attestation"}
                   </p>
                   <p className="vendor_overview_attestation_status_label">
                     Completed
@@ -292,6 +281,7 @@ const VendorOverview = () => {
                     state={{ attestationId: item.id }}
                     className="vendor_overview_btn_view"
                   >
+                    <Eye size={16} aria-hidden />
                     View Report
                   </Link>
                 </div>

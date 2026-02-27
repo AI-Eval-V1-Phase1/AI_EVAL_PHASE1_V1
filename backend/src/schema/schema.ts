@@ -4,6 +4,7 @@ export {
   accountStatusEnum,
   organizationStatusEnum,
   onboarding,
+  onboardingStatusEnum,
   signup,
   assessmentStatusEnum,
   assessmentTypeEnum,
@@ -34,6 +35,7 @@ export {
   cotsVendorAssessments,
   customAiAssessments,
   vendorSelfAttestations,
+  generatedProfileReports,
   attestations,
 } from "./assessments/index.js";
 

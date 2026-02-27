@@ -1,4 +1,4 @@
-import { Eye, SquarePen, CircleX, Shield, Ban } from "lucide-react";
+import { Eye, SquarePen, CircleX, Shield, Ban, Send, RefreshCw, Mail, CheckCircle, User, Landmark, UserStar, UserCheck, ClipboardCheck } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import { useDispatch, useSelector } from "react-redux";
@@ -7,6 +7,9 @@ import EditUsers from "./EditUsers";
 import LoadingMessage from "../../UI/LoadingMessage";
 import Modal from "../../UI/Modal";
 import Button from "../../UI/Button";
+import { toast } from "react-toastify";
+import "../UserProfile/user_profile.css";
+import "../../../styles/popovers.css";
 
 const UserDataTable = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -22,6 +25,11 @@ const UserDataTable = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   const [isEdit, setIsEdit] = useState(false);
   const [isSelectedUser, selectedIsUser] = useState(null);
   const [viewUser, setViewUser] = useState(null);
+  const [resendConfirm, setResendConfirm] = useState<{
+    type: "reinvite" | "resend";
+    user: { id?: number; email?: string; user_name?: string };
+  } | null>(null);
+  const [resendSending, setResendSending] = useState(false);
   // const tableData = [
   //   {
   //     id: "1",
@@ -107,14 +115,79 @@ const UserDataTable = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     const userName = (item.user_name ?? "").toLowerCase();
     const email = (item.email ?? "").toLowerCase();
     const orgName = (item.organization_name ?? "").toLowerCase();
-    return userName.includes(search) || email.includes(search) || orgName.includes(search);
+    const roleLabel = getRoleLabel(item).toLowerCase();
+    const accStatus = (item.account_status ?? "invited").toString().toLowerCase();
+    const accountLabel =
+      accStatus === "confirmed"
+        ? "confirmed"
+        : accStatus === "expired" ||
+            (accStatus === "invited" && (item.onboarding_status ?? "pending").toString().toLowerCase() === "expired")
+          ? "expired"
+          : "invited";
+    const onboardingStatus = (item.onboarding_status ?? "pending").toString().toLowerCase();
+    const onboardingLabel =
+      onboardingStatus === "completed" ? "completed" : onboardingStatus === "expired" ? "expired" : "pending";
+    const statusLabel = (item.userStatus ?? "active").toString().toLowerCase() === "active" ? "active" : "inactive";
+    return (
+      userName.includes(search) ||
+      email.includes(search) ||
+      orgName.includes(search) ||
+      roleLabel.includes(search) ||
+      accountLabel.includes(search) ||
+      onboardingLabel.includes(search) ||
+      statusLabel.includes(search)
+    );
   });
 
-  const updateUser = (row)=>{
-setUserId(row.id)
-setIsEdit(true)
-selectedIsUser(row)
-}
+  const updateUser = (row) => {
+    setUserId(row.id);
+    setIsEdit(true);
+    selectedIsUser(row);
+  };
+
+  const openReinviteConfirm = (row: { id?: number; email?: string; user_name?: string }) => {
+    if (row.id == null) return;
+    setResendConfirm({ type: "reinvite", user: row });
+  };
+
+  const openResendOnboardingConfirm = (row: { id?: number; email?: string; user_name?: string }) => {
+    if (row.id == null) return;
+    setResendConfirm({ type: "resend", user: row });
+  };
+
+  const closeResendConfirm = () => {
+    if (!resendSending) setResendConfirm(null);
+  };
+
+  const executeResend = async () => {
+    if (!resendConfirm?.user?.id) return;
+    setResendSending(true);
+    const id = resendConfirm.user.id;
+    const isReinvite = resendConfirm.type === "reinvite";
+    const endpoint = isReinvite ? `${BASE_URL}/reinvite_user/${id}` : `${BASE_URL}/resend_onboarding/${id}`;
+    const successMsg = isReinvite ? "Signup link resent." : "Onboarding link resent.";
+    const errorMsg = isReinvite ? "Failed to resend signup link." : "Failed to resend onboarding link.";
+    try {
+      const token = sessionStorage.getItem("bearerToken");
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success(data.message ?? successMsg);
+        setResendConfirm(null);
+        usersData();
+      } else {
+        toast.error(data.message ?? errorMsg);
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error(errorMsg);
+    } finally {
+      setResendSending(false);
+    }
+  };
 
   //   const subHeaderComponentMemo = React.useMemo(() => {
   //     const handleClear = () => {
@@ -182,7 +255,13 @@ selectedIsUser(row)
           <span className="team_member_initial">{getInitial(row)}</span>
           <div className="team_member_name_email">
             <span className="team_member_name">{(row.user_name && row.user_name.trim()) ? row.user_name : "—"}</span>
-            <span className="team_member_email">{row.email ?? "—"}</span>
+            {row.email ? (
+              <a href={`mailto:${row.email}`} className="team_member_email team_member_email_link">
+                {row.email}
+              </a>
+            ) : (
+              <span className="team_member_email">—</span>
+            )}
           </div>
         </div>
       ),
@@ -208,15 +287,46 @@ selectedIsUser(row)
     },
     {
       name: <div className="tableHeader">Account status</div>,
-      selector: (row) => (row.account_status ?? "invited").toString().toLowerCase(),
+      selector: (row) => {
+        const accountStatus = (row.account_status ?? "invited").toString().toLowerCase();
+        const onboardingStatus = (row.onboarding_status ?? "pending").toString().toLowerCase();
+        if (accountStatus === "expired" || (accountStatus === "invited" && onboardingStatus === "expired")) return "expired";
+        return accountStatus;
+      },
       sortable: true,
       center: true,
       cell: (row) => {
         const accountStatus = (row.account_status ?? "invited").toString().toLowerCase();
+        const onboardingStatus = (row.onboarding_status ?? "pending").toString().toLowerCase();
+        const isExpired = accountStatus === "expired" || (accountStatus === "invited" && onboardingStatus === "expired");
         const isConfirmed = accountStatus === "confirmed";
+        const label = isConfirmed ? "Confirmed" : isExpired ? "Expired" : "Invited";
+        const pillClass = isConfirmed ? "pill_status_active" : isExpired ? "pill_status_inactive" : "pill_status_invited";
         return (
-          <span className={`pill pill_status ${isConfirmed ? "pill_status_active" : "pill_status_pending"}`}>
-            {isConfirmed ? "Confirmed" : "Invited"}
+          <span className={`pill pill_status ${pillClass}`}>
+            {label}
+          </span>
+        );
+      },
+    },
+    {
+      name: <div className="tableHeader">Onboarding status</div>,
+      selector: (row) => (row.onboarding_status ?? "pending").toString().toLowerCase(),
+      sortable: true,
+      center: true,
+      cell: (row) => {
+        const status = (row.onboarding_status ?? "pending").toString().toLowerCase();
+        const isCompleted = status === "completed";
+        const isExpired = status === "expired";
+        const pillClass = isCompleted
+          ? "pill_status_active"
+          : isExpired
+            ? "pill_status_inactive"
+            : "pill_status_pending";
+        const label = status === "completed" ? "Completed" : status === "expired" ? "Expired" : "Pending";
+        return (
+          <span className={`pill pill_status ${pillClass}`}>
+            {label}
           </span>
         );
       },
@@ -239,31 +349,69 @@ selectedIsUser(row)
     {
       name: <div className="tableHeader">Actions</div>,
       center: true,
-      cell: (row) => (
-        <div className="user_table_actions">
-          <button
-            type="button"
-            className="user_table_action_btn"
-            onClick={() => setViewUser(row)}
-            title="View user details"
-          >
-            <Eye size={16} />
-            View
-          </button>
-          <button
-            type="button"
-            className="user_table_action_btn"
-            onClick={() => updateUser(row)}
-            title="Edit user"
-          >
-            <SquarePen size={16} />
-            Edit
-          </button>
-        </div>
-      ),
+      cell: (row) => {
+        const accountStatus = (row.account_status ?? "invited").toString().toLowerCase();
+        const onboardingStatus = (row.onboarding_status ?? "pending").toString().toLowerCase();
+        const signupCompleted = (row.user_signup_completed ?? "").toString().toLowerCase() === "true";
+        const isExpiredStatus = accountStatus === "expired";
+        const isInvitedStatus = accountStatus === "invited";
+        // Edit only when confirmed; disabled for invited and expired.
+        const editEnabled = accountStatus === "confirmed";
+        // Reinvite only when expired; disabled when invited.
+        const reinviteEnabled = isExpiredStatus;
+        // Resend onboarding only when signup completed and onboarding link expired; when account is expired, only reinvite/view.
+        const resendOnboardingEnabled =
+          !isExpiredStatus && signupCompleted && onboardingStatus === "expired";
+        return (
+          <div className="user_table_actions">
+            <button
+              type="button"
+              className="user_table_action_btn user_table_action_btn_icon"
+              onClick={() => setViewUser(row)}
+              title="View"
+              aria-label="View user details"
+            >
+              <Eye size={16} />
+            </button>
+            <button
+              type="button"
+              className="user_table_action_btn user_table_action_btn_icon"
+              onClick={() => editEnabled && updateUser(row)}
+              title="Edit"
+              aria-label="Edit user"
+              disabled={!editEnabled}
+              aria-disabled={!editEnabled}
+            >
+              <SquarePen size={16} />
+            </button>
+            <button
+              type="button"
+              className="user_table_action_btn user_table_action_btn_icon"
+              onClick={() => reinviteEnabled && openReinviteConfirm(row)}
+              title="Re-Invite"
+              aria-label="Resend signup link"
+              disabled={!reinviteEnabled}
+              aria-disabled={!reinviteEnabled}
+            >
+              <Send size={16} />
+            </button>
+            <button
+              type="button"
+              className="user_table_action_btn user_table_action_btn_icon"
+              onClick={() => resendOnboardingEnabled && openResendOnboardingConfirm(row)}
+              title="Resend - Onboarding"
+              aria-label="Resend onboarding"
+              disabled={!resendOnboardingEnabled}
+              aria-disabled={!resendOnboardingEnabled}
+            >
+              <RefreshCw size={16} />
+            </button>
+          </div>
+        );
+      },
       ignoreRowClick: true,
-      minWidth: "160px",
-      width: "160px",
+      minWidth: "180px",
+      width: "180px",
     },
   ];
 
@@ -276,7 +424,7 @@ selectedIsUser(row)
           className="filterInput"
           type="text"
           id="user-search"
-          placeholder="Filter by user name, email"
+          placeholder="Filter by fields"
           aria-label="Search users"
           value={filterText}
           onChange={(e) => setFilterText(e.target.value)}
@@ -300,69 +448,217 @@ selectedIsUser(row)
       <EditUsers isUserId={isUserId} setIsEdit={setIsEdit} isEdit={isEdit} isSelectedUser={isSelectedUser} />
     )}
 
-    <Modal isOpen={!!viewUser}>
-      {viewUser && (
-        <div className="user_view_modal_content">
+    <Modal isOpen={!!resendConfirm} onClose={closeResendConfirm}>
+      {resendConfirm && (
+        <div className="user_view_modal_content resend_confirm_modal">
           <div className="user_view_modal_header">
-            <h2 className="user_view_modal_title">User details</h2>
+            <h2 className="user_view_modal_title">
+              {resendConfirm.type === "reinvite" ? "Resend signup link" : "Resend onboarding link"}
+            </h2>
             <button
               type="button"
-              className="user_view_modal_close_btn"
-              onClick={() => setViewUser(null)}
+              className="modal_close_btn"
+              onClick={closeResendConfirm}
               aria-label="Close"
+              disabled={resendSending}
             >
-              <CircleX size={22} />
+              <CircleX size={20} />
             </button>
           </div>
-          <div className="user_view_modal_card">
-            <div className="user_view_modal_row">
-              <span className="user_view_modal_label">Name</span>
-              <span className="user_view_modal_value">
-                {(viewUser.user_name && viewUser.user_name.trim()) ? viewUser.user_name : "—"}
-              </span>
-            </div>
-            <div className="user_view_modal_row">
-              <span className="user_view_modal_label">Email</span>
-              <a href={`mailto:${viewUser.email ?? ""}`} className={`user_view_modal_value user_view_modal_value_email`}>
-                {viewUser.email ?? "—"}
-              </a>
-            </div>
-            <div className="user_view_modal_row">
-              <span className="user_view_modal_label">Organization</span>
-              <span className="user_view_modal_value">{(viewUser.organization_name ?? "").trim() || "—"}</span>
-            </div>
-            <div className="user_view_modal_row">
-              <span className="user_view_modal_label">Role</span>
-              <span className="user_view_modal_value">{getRoleLabel(viewUser)}</span>
-            </div>
-            <div className="user_view_modal_row">
-              <span className="user_view_modal_label">Account status</span>
-              <span className="user_view_modal_value">
-                {(viewUser.account_status ?? "invited").toString().toLowerCase() === "confirmed" ? "Confirmed" : "Invited"}
-              </span>
-            </div>
-            <div className="user_view_modal_row">
-              <span className="user_view_modal_label">Status</span>
-              <span className="user_view_modal_value">
-                {(viewUser.userStatus ?? "active").toString().toLowerCase() === "active" ? "Active" : "Inactive"}
-              </span>
-            </div>
-          </div>
+          <p className="resend_confirm_message">
+            {resendConfirm.type === "reinvite"
+              ? `Send a new signup link to ${resendConfirm.user.email ?? "this user"}?`
+              : `Send a new onboarding link to ${resendConfirm.user.email ?? "this user"}?`}
+          </p>
           <div className="fields_for_button_actions orgBtns user_view_modal_footer">
             <Button
               type="button"
               className="orgCancelBtn"
-              onClick={() => setViewUser(null)}
+              onClick={closeResendConfirm}
+              disabled={resendSending}
             >
-              <span>
-                <Ban size={16} />
-              </span>
+              <Ban size={16} />
               Cancel
+            </Button>
+            <Button
+              type="button"
+              className="orgCreateBtn"
+              onClick={executeResend}
+              disabled={resendSending}
+              aria-busy={resendSending}
+            >
+              <Send size={16} />
+              {resendSending ? "Sending…" : "Send"}
             </Button>
           </div>
         </div>
       )}
     </Modal>
+
+    {viewUser && (
+      <div
+        className="profile_modal_overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="user_details_modal_title"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setViewUser(null);
+        }}
+      >
+        <div className="profile_modal_content" onClick={(e) => e.stopPropagation()}>
+          <div className="profile_modal_header">
+            <h2 id="user_details_modal_title" className="profile_modal_title">
+              User details
+            </h2>
+            <button
+              type="button"
+              className="modal_close_btn"
+              onClick={() => setViewUser(null)}
+              aria-label="Close"
+            >
+              <CircleX size={20} />
+            </button>
+          </div>
+          <div className="profile_modal_body profile_modal_preview">
+            <div className="profile_form_sections">
+              <section className="profile_form_section">
+                <div className="settings_form">
+                  <div className="settings_form_row">
+                    <div className="settings_form_group">
+                      <label htmlFor="user_details_name">
+                        <User size={16} aria-hidden />
+                        Name
+                      </label>
+                      <input
+                        id="user_details_name"
+                        type="text"
+                        className="settings_input settings_input_readonly"
+                        value={(viewUser.user_name && viewUser.user_name.trim()) ? viewUser.user_name : "—"}
+                        readOnly
+                        aria-readonly="true"
+                      />
+                    </div>
+                    <div className="settings_form_group">
+                      <label htmlFor="user_details_email">
+                        <Mail size={16} aria-hidden />
+                        Email
+                      </label>
+                      <input
+                        id="user_details_email"
+                        type="text"
+                        className="settings_input settings_input_readonly"
+                        value={viewUser.email ?? "—"}
+                        readOnly
+                        aria-readonly="true"
+                      />
+                    </div>
+                  </div>
+                  <div className="settings_form_row">
+                    <div className="settings_form_group">
+                      <label htmlFor="user_details_organization">
+                        <Landmark size={16} aria-hidden />
+                        Organization
+                      </label>
+                      <input
+                        id="user_details_organization"
+                        type="text"
+                        className="settings_input settings_input_readonly"
+                        value={(viewUser.organization_name ?? "").trim() || "—"}
+                        readOnly
+                        aria-readonly="true"
+                      />
+                    </div>
+                    <div className="settings_form_group">
+                      <label htmlFor="user_details_role">
+                        <UserStar size={16} aria-hidden />
+                        Role
+                      </label>
+                      <input
+                        id="user_details_role"
+                        type="text"
+                        className="settings_input settings_input_readonly"
+                        value={getRoleLabel(viewUser)}
+                        readOnly
+                        aria-readonly="true"
+                      />
+                    </div>
+                  </div>
+                  <div className="settings_form_row">
+                    <div className="settings_form_group">
+                      <label htmlFor="user_details_account_status">
+                        <UserCheck size={16} aria-hidden />
+                        Account status
+                      </label>
+                      <input
+                        id="user_details_account_status"
+                        type="text"
+                        className="settings_input settings_input_readonly"
+                        value={(() => {
+                          const acc = (viewUser.account_status ?? "invited").toString().toLowerCase();
+                          const onb = (viewUser.onboarding_status ?? "pending").toString().toLowerCase();
+                          if (acc === "confirmed") return "Confirmed";
+                          if (acc === "expired" || (acc === "invited" && onb === "expired")) return "Expired";
+                          return "Invited";
+                        })()}
+                        readOnly
+                        aria-readonly="true"
+                      />
+                    </div>
+                    <div className="settings_form_group">
+                      <label htmlFor="user_details_onboarding_status">
+                        <ClipboardCheck size={16} aria-hidden />
+                        Onboarding status
+                      </label>
+                      <input
+                        id="user_details_onboarding_status"
+                        type="text"
+                        className="settings_input settings_input_readonly"
+                        value={
+                          (viewUser.onboarding_status ?? "pending").toString().toLowerCase() === "completed"
+                            ? "Completed"
+                            : (viewUser.onboarding_status ?? "pending").toString().toLowerCase() === "expired"
+                              ? "Expired"
+                              : "Pending"
+                        }
+                        readOnly
+                        aria-readonly="true"
+                      />
+                    </div>
+                  </div>
+                  <div className="settings_form_row">
+                    <div className="settings_form_group">
+                      <label htmlFor="user_details_status">
+                        <Shield size={16} aria-hidden />
+                        Status
+                      </label>
+                      <input
+                        id="user_details_status"
+                        type="text"
+                        className="settings_input settings_input_readonly"
+                        value={(viewUser.userStatus ?? "active").toString().toLowerCase() === "active" ? "Active" : "Inactive"}
+                        readOnly
+                        aria-readonly="true"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+            <div className="profile_modal_footer profile_modal_footer_center">
+              <Button
+                type="button"
+                className="orgCancelBtn"
+                onClick={() => setViewUser(null)}
+                aria-label="Close"
+              >
+                <CircleX size={16} aria-hidden />
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 };

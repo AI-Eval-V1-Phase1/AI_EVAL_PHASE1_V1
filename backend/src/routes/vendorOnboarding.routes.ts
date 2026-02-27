@@ -5,6 +5,8 @@ import updatePublicDirectoryListing from "../controllers/vendorOnboarding/update
 import listPublicVendors from "../controllers/vendorOnboarding/listPublicVendors.controller.js";
 import listVendorVisibleProducts from "../controllers/vendorOnboarding/listVendorVisibleProducts.controller.js";
 import getVendorProductDetail from "../controllers/vendorOnboarding/getVendorProductDetail.controller.js";
+import saveVendorOnboardingProgress from "../controllers/vendorOnboarding/saveVendorOnboardingProgress.controller.js";
+import clearBuyerOnboarding from "../controllers/buyerOnboarding/clearBuyerOnboarding.controller.js";
 import onboardingAccess from "../middlewares/onboarding/onboardingTokenVerify.middleware.js";
 import authenticateToken from "../middlewares/routesProtection.js";
 
@@ -26,6 +28,16 @@ vendorRoutes.post(
   "/vendorOnboarding",
   onboardingAccess,
   insertVendorOnboarding,
+);
+vendorRoutes.post(
+  "/vendorOnboarding/save-progress",
+  onboardingAccess,
+  saveVendorOnboardingProgress,
+);
+vendorRoutes.post(
+  "/vendorOnboarding/clear-buyer",
+  onboardingAccess,
+  clearBuyerOnboarding,
 );
 
 export default vendorRoutes;

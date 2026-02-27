@@ -18,7 +18,7 @@
   height: 40px;
   background-color: #2563eb;
   color: white;
-  border-radius: 10px;
+  border-radius: 5px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -87,7 +87,7 @@
   /* font-weight: 500; */
   padding: 0.5rem 0.75rem;
   color: #ffffff;
-  border-radius: 4px;
+  border-radius: 5px;
   transition: background-color 0.15s ease;
 }
 
@@ -134,14 +134,14 @@
   padding: 0.75rem 1rem;
   margin: 0 0.5rem 0 0.5rem;
   background-color: rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
+  border-radius: 5px;
 }
 
 .side_nav_user_avatar {
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: 5px;
   background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
   color: #ffffff;
   font-size: 0.875rem;

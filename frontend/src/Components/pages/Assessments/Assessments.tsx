@@ -6,8 +6,7 @@ import {
   Eye,
   CircleX,
   Check,
-  Pencil,
-  X,
+  SquarePen,
   CheckCircle,
   CircleCheck,
   Target,
@@ -121,6 +120,37 @@ function getAssessmentTitle(row, isBuyerRow) {
   }
   const v = row.customerSector != null && String(row.customerSector).trim() !== "" ? String(row.customerSector).trim() : null;
   return v ?? "Draft";
+}
+
+/** Parse COTS assessment points from risk domain scores (buyer: riskDomainScores, vendor: vendorRiskDomainScores). Returns total points or null. */
+function getCotsAssessmentPoints(row, isBuyerRow) {
+  const raw = isBuyerRow ? row.riskDomainScores : row.vendorRiskDomainScores;
+  if (raw == null || (typeof raw === "string" && raw.trim() === "")) return null;
+  const s = typeof raw === "string" ? raw.trim() : String(raw);
+  try {
+    const parsed = JSON.parse(s);
+    if (Array.isArray(parsed)) {
+      const sum = parsed.reduce((acc, item) => {
+        const n = typeof item === "object" && item != null && "score" in item ? Number(item.score) : Number(item);
+        return acc + (Number.isNaN(n) ? 0 : n);
+      }, 0);
+      return sum > 0 ? sum : null;
+    }
+    if (typeof parsed === "object" && parsed !== null) {
+      const sum = Object.values(parsed).reduce((acc, v) => {
+        const n = Number(v);
+        return acc + (Number.isNaN(n) ? 0 : n);
+      }, 0);
+      return sum > 0 ? sum : null;
+    }
+  } catch {
+    const numList = s.match(/\d+/g);
+    if (numList && numList.length > 0) {
+      const sum = numList.reduce((acc, n) => acc + parseInt(n, 10), 0);
+      return sum > 0 ? sum : null;
+    }
+  }
+  return null;
 }
 
 /** Get display value from assessment row (API shape: camelCase, arrays for jsonb) */
@@ -530,26 +560,25 @@ const Assessments = () => {
   return (
     <div className="sec_user_page org_settings_page">
       <div
-        className={`page_header_align ${isBuyer || isVendor || isSystemUser ? "ai_assessments_heading" : "heading_user_page"}`}
+        className={`org_settings_header page_header_align ${isBuyer || isVendor || isSystemUser ? "ai_assessments_heading" : "heading_user_page"}`}
       >
-        <div className="headers page_header_row">
+        <div className="org_settings_headers page_header_row">
           <span className="icon_size_header" aria-hidden>
-            <ClipboardList size={24} className="header_icon_svg"/>
+            <ClipboardList size={24} className="header_icon_svg" />
           </span>
           <div className="page_header_title_block">
-            <h1>
-              {" "}
+            <h1 className="org_settings_title page_header_title">
               {isBuyer
-                ? "Evaluate third-party vendors and manage your assessments."
+                ? "Assessments"
                 : isVendor || isSystemUser
                   ? "Customer Assessments"
                   : "Assessments"}
             </h1>
-            <p className="sub_title sub_title_card">
+            <p className="org_settings_subtitle page_header_subtitle">
               {isBuyer
                 ? "Evaluate third-party vendors and manage your assessments."
                 : isVendor || isSystemUser
-                  ? "Create customer-specific risk assessments for sales opportunities"
+                  ? "Complete and submit your customer assessments for sales opportunities."
                   : "View and manage vendor and buyer assessments."}
             </p>
           </div>
@@ -558,7 +587,7 @@ const Assessments = () => {
           <div className="btn_user_page">
             <Button className="invite_user_btn" onClick={handleNewAssessment}>
               <Plus size={24} />
-              {isVendor ? "New Customer Assessment" : "Assessment"}
+              {isVendor ? "Customer Assessment" : "Assessment"}
             </Button>
           </div>
         )}
@@ -566,10 +595,10 @@ const Assessments = () => {
           <div className="btn_user_page">
             <Button
               className="invite_user_btn"
-              onClick={() => navigate("/buyerAssessment")}
+              onClick={() => navigate("/vendorcots")}
             >
               <Plus size={24} />
-              Assessment
+              Customer Assessment
             </Button>
           </div>
         )}
@@ -661,6 +690,7 @@ const Assessments = () => {
                       row.vendorCotsUpdatedAt ?? row.updatedAt,
                     );
                     const completedBy = getCompletedByDisplay(row) || "—";
+                    const vendorPoints = getCotsAssessmentPoints(row, false);
                     return (
                       <div key={row.assessmentId} className="vendor_overview_attestation_row">
                         {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
@@ -676,6 +706,9 @@ const Assessments = () => {
                           <p className="vendor_overview_attestation_date">
                             {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
                           </p>
+                          <p className="vendor_overview_attestation_points">
+                            COTS points: {vendorPoints != null ? vendorPoints : "—"}
+                          </p>
                         </div>
                         <div className="vendor_overview_attestation_actions">
                           {isDraft && (
@@ -686,7 +719,7 @@ const Assessments = () => {
                                 navigate(`/vendorcots/${row.assessmentId}`)
                               }
                             >
-                              <Pencil size={14} aria-hidden />
+                              <SquarePen size={16} aria-hidden />
                               Edit
                             </button>
                           )}
@@ -773,6 +806,7 @@ const Assessments = () => {
                       ? updatedAtDisplay
                       : formatDate(row.submittedDate ?? row.updatedAt);
                     const completedBy = getCompletedByDisplay(row) || "—";
+                    const buyerPoints = getCotsAssessmentPoints(row, true);
                     return (
                       <div key={row.assessmentId} className="vendor_overview_attestation_row">
                         {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
@@ -788,6 +822,9 @@ const Assessments = () => {
                           <p className="vendor_overview_attestation_date">
                             {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
                           </p>
+                          <p className="vendor_overview_attestation_points">
+                            COTS points: {buyerPoints != null ? buyerPoints : "—"}
+                          </p>
                         </div>
                         <div className="vendor_overview_attestation_actions">
                           {isDraft && (
@@ -800,7 +837,7 @@ const Assessments = () => {
                                 )
                               }
                             >
-                              <Pencil size={14} aria-hidden />
+                              <SquarePen size={16} aria-hidden />
                               Edit
                             </button>
                           )}
@@ -917,7 +954,7 @@ const Assessments = () => {
                                 )
                               }
                             >
-                              <Pencil size={14} aria-hidden />
+                              <SquarePen size={16} aria-hidden />
                               Edit
                             </button>
                           )}
@@ -1031,7 +1068,7 @@ const Assessments = () => {
                               navigate(`/buyerAssessment/${row.assessmentId}`)
                             }
                           >
-                            <Pencil size={14} aria-hidden />
+                            <SquarePen size={16} aria-hidden />
                             Edit
                           </button>
                         )}
@@ -1171,7 +1208,7 @@ const Assessments = () => {
                               navigate(`/vendorcots/${row.assessmentId}`)
                             }
                           >
-                            <Pencil size={14} aria-hidden />
+                            <SquarePen size={16} aria-hidden />
                             Edit
                           </button>
                         )}
@@ -1242,14 +1279,14 @@ const Assessments = () => {
               <h2 id="assessment_preview_modal_title">Assessment details</h2>
               <button
                 type="button"
-                className="vendor_attestation_preview_modal_close"
+                className="modal_close_btn"
                 onClick={() => {
                   setPreviewRow(null);
                   setVendorCotsPreviewDetail(null);
                 }}
                 aria-label="Close"
               >
-                <X size={24} />
+                <CircleX size={20} />
               </button>
             </div>
             <div className="vendor_attestation_preview_modal_body">
@@ -1501,4 +1538,4 @@ const Assessments = () => {
   );
 };
 
-export default Assessments;
+export { Assessments as default };

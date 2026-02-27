@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
-import { vendors, vendorSelfAttestations, usersTable } from "../../schema/schema.js";
-import { and, eq } from "drizzle-orm";
+import { vendors, vendorSelfAttestations, usersTable, generatedProfileReports } from "../../schema/schema.js";
+import { and, desc, eq } from "drizzle-orm";
 
 function mapAttestationRow(attestRow: Record<string, unknown>): Record<string, unknown> {
   return {
@@ -39,11 +39,15 @@ function mapAttestationRow(attestRow: Record<string, unknown>): Record<string, u
     audit_logs_available: attestRow.audit_logs ?? undefined,
     testing_results_available: attestRow.test_results ?? undefined,
     document_uploads: attestRow.document_uploads ?? undefined,
-    visible_ai_governance: attestRow.visible_ai_governance !== false,
-    visible_security_posture: attestRow.visible_security_posture !== false,
-    visible_data_privacy: attestRow.visible_data_privacy !== false,
-    visible_compliance: attestRow.visible_compliance !== false,
-    visible_model_risk: attestRow.visible_model_risk !== false,
+    visible_ai_governance: attestRow.visible_ai_governance === true,
+    visible_security_posture: attestRow.visible_security_posture === true,
+    visible_data_privacy: attestRow.visible_data_privacy === true,
+    visible_compliance: attestRow.visible_compliance === true,
+    visible_model_risk: attestRow.visible_model_risk === true,
+    visible_data_practices: attestRow.visible_data_practices === true,
+    visible_compliance_certifications: attestRow.visible_compliance_certifications === true,
+    visible_operations_support: attestRow.visible_operations_support === true,
+    visible_vendor_management: attestRow.visible_vendor_management === true,
   };
 }
 
@@ -129,13 +133,24 @@ const getVendorProductDetail = async (req: Request, res: Response): Promise<void
     }
 
     const rowRecord = row as Record<string, unknown>;
-    const attestation = mapAttestationRow(rowRecord);
+    const [reportRow] = await db
+      .select({ report: generatedProfileReports.report })
+      .from(generatedProfileReports)
+      .where(eq(generatedProfileReports.attestation_id, productId))
+      .orderBy(desc(generatedProfileReports.created_at))
+      .limit(1);
+    const generatedProfileReport = reportRow?.report ?? rowRecord.generated_profile_report;
+    const attestation = { ...mapAttestationRow(rowRecord), generated_profile_report: generatedProfileReport };
     const sectionVisibility = {
-      aiGovernance: rowRecord.visible_ai_governance !== false,
-      securityPosture: rowRecord.visible_security_posture !== false,
-      dataPrivacy: rowRecord.visible_data_privacy !== false,
-      compliance: rowRecord.visible_compliance !== false,
-      modelRisk: rowRecord.visible_model_risk !== false,
+      aiGovernance: rowRecord.visible_ai_governance === true,
+      securityPosture: rowRecord.visible_security_posture === true,
+      dataPrivacy: rowRecord.visible_data_privacy === true,
+      compliance: rowRecord.visible_compliance === true,
+      modelRisk: rowRecord.visible_model_risk === true,
+      dataPractices: rowRecord.visible_data_practices === true,
+      complianceCertifications: rowRecord.visible_compliance_certifications === true,
+      operationsSupport: rowRecord.visible_operations_support === true,
+      vendorManagement: rowRecord.visible_vendor_management === true,
     };
 
     res.status(200).json({

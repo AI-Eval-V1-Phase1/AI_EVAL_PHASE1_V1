@@ -26,7 +26,7 @@ const updateOrganization = async (req: Request, res: Response) => {
       })
       .where(eq(createOrganization.id, orgId));
 
-    const orgLogs = await db.insert(organizationEditLogs).values({
+    await db.insert(organizationEditLogs).values({
       organizationId: String(orgId),
       organizationName: data.isOrganization,
       organizationStatus: data.isStatus,

@@ -1,6 +1,10 @@
+import dotenv from "dotenv";
+
+dotenv.config({ path: ".env.local" });
+dotenv.config({ path: ".env" });
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import { initDB } from "./database/db.js";
 import orgrouter from "./routes/organization.routes.js";
 import userRoutes from "./routes/userRoutes.routes.js";
@@ -13,19 +17,11 @@ import assessmentRoutes from "./routes/assessment.routes.js";
 import lookupRoutes from "./routes/lookup.routes.js";
 import healthRoute from "./routes/health.routes.js";
 
-dotenv.config({ path: ".env.local" });
-
-const PORT = process.env.PORT || 5003;
+const PORT = process.env.BACKEND_PORT ?? 5003;
 const app = express();
 
 const baseUrl = process.env.BASE_URL?.trim();
-const allowedOrigins: string[] = [
-  ...(baseUrl ? [baseUrl] : []),
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:3000",
-];
+const allowedOrigins: string[] = [...(baseUrl ? [baseUrl] : [])];
 
 // CORS first so preflight (OPTIONS) and all responses get correct headers
 app.use(
@@ -35,7 +31,10 @@ app.use(
       if (!origin) return cb(null, true);
       if (allowedOrigins.includes(origin)) return cb(null, true);
       // In development, allow any localhost origin so CORS never blocks
-      if (process.env.NODE_ENV !== "production" && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      if (
+        process.env.NODE_ENV !== "production" &&
+        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
         return cb(null, true);
       }
       return cb(null, true);
@@ -50,7 +49,12 @@ app.use(
 // Ensure CORS headers are on every response (even 4xx/5xx) so browser can read the body
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin && (allowedOrigins.includes(origin) || (process.env.NODE_ENV !== "production" && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)))) {
+  if (
+    origin &&
+    (allowedOrigins.includes(origin) ||
+      (process.env.NODE_ENV !== "production" &&
+        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)))
+  ) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
   res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -78,7 +82,7 @@ app.use("/api/v1", [
   buyerRoutes,
   assessmentRoutes,
   lookupRoutes,
-  healthRoute
+  healthRoute,
 ]);
 
 console.log("Starting server...");

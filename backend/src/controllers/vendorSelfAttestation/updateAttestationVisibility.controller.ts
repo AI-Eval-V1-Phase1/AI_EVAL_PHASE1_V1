@@ -8,6 +8,10 @@ import { and, eq } from "drizzle-orm";
  * Body: { attestationId: string, visible: boolean }
  * Sets visible_to_buyer for the given attestation. Only the attestation owner can update.
  * Attestation must exist and belong to the logged-in user.
+ *
+ * IMPORTANT: Product Profile toggle – must NOT update attestation submission metadata.
+ * We only set visible_to_buyer. Do NOT set updated_at or submitted_at here.
+ * submitted_at is set only in submitVendorSelfAttestation when status becomes COMPLETED.
  */
 const updateAttestationVisibility = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -33,12 +37,10 @@ const updateAttestationVisibility = async (req: Request, res: Response): Promise
       return;
     }
 
+    // Only update visibility; do not touch updated_at so attestation "Submitted" date is unchanged
     const result = await db
       .update(vendorSelfAttestations)
-      .set({
-        visible_to_buyer: Boolean(visible),
-        updated_at: new Date(),
-      })
+      .set({ visible_to_buyer: Boolean(visible) })
       .where(
         and(
           eq(vendorSelfAttestations.id, attestationId),

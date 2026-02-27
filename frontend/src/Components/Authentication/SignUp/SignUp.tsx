@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import "../Login/login.css";
 import "../ResetPassword/resetPassword.css";
+import "../../pages/UserProfile/user_profile.css";
+import "../../../styles/popovers.css";
 import "./signup.css";
 import { useEffect, useState } from "react";
 import type { SignUpdata } from "../Validations/sign_up_validations";
@@ -20,8 +22,8 @@ import {
   Link,
 } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import CardContainerOnBoarding from "../../UI/CardContainerOnBoarding";
 import HeaderForAuth from "../../UI/HeaderForAuth";
+import Button from "../../UI/Button";
 
 const SignUp = () => {
   useEffect(() => {
@@ -38,21 +40,44 @@ const SignUp = () => {
   const [onboardingEmailSent, setOnboardingEmailSent] = useState(false);
   const [isError, setIsError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  // console.log("here")
-  const decode = jwtDecode(token);
+  const [linkExpired, setLinkExpired] = useState(false);
 
-  let decodeEmail = decode.email;
+  const decode = (() => {
+    if (!token) return null;
+    try {
+      return jwtDecode<{ email?: string; exp?: number }>(token);
+    } catch {
+      return null;
+    }
+  })();
 
-  // After signup success: redirect to sign in after a few seconds
+  const decodeEmail = decode?.email ?? "";
+
+  useEffect(() => {
+    if (!token) {
+      setLinkExpired(true);
+      return;
+    }
+    try {
+      const d = jwtDecode<{ exp?: number }>(token);
+      if (d.exp != null && d.exp < Date.now() / 1000) {
+        setLinkExpired(true);
+      }
+    } catch {
+      setLinkExpired(true);
+    }
+  }, [token]);
+
+  // After signup success: redirect to sign in only when onboarding email was not sent
   const REDIRECT_DELAY_MS = 5000;
   const LOGIN_PATH = "/login";
   useEffect(() => {
-    if (!isConfirmSignup) return;
+    if (!isConfirmSignup || onboardingEmailSent) return;
     const timer = setTimeout(() => {
       navigate(LOGIN_PATH, { replace: true });
     }, REDIRECT_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [isConfirmSignup, navigate]);
+  }, [isConfirmSignup, onboardingEmailSent, navigate]);
 
   const passwordVisible = () => {
     setIsVisible((prev) => !prev);
@@ -97,7 +122,10 @@ const SignUp = () => {
         setOnboardingEmailSent(Boolean(result.onboardingEmailSent));
         sessionStorage.setItem("signup_completed", "true");
         if (signUpFormData.email && signUpFormData.newPassword) {
-          sessionStorage.setItem("signupEmail", signUpFormData.email.trim().toLowerCase());
+          sessionStorage.setItem(
+            "signupEmail",
+            signUpFormData.email.trim().toLowerCase(),
+          );
           sessionStorage.setItem("signupPassword", signUpFormData.newPassword);
         }
         setSignUpFormData({
@@ -109,7 +137,15 @@ const SignUp = () => {
           confirmPassword: "",
         });
       } else {
-        setIsError(result.message ?? "Sign up failed. Please try again.");
+        const msg = result.message ?? "Sign up failed. Please try again.";
+        setIsError(msg);
+        if (
+          response.status === 401 &&
+          typeof msg === "string" &&
+          msg.toLowerCase().includes("expired")
+        ) {
+          setLinkExpired(true);
+        }
       }
     } catch (error) {
       console.log(error);
@@ -119,141 +155,222 @@ const SignUp = () => {
     }
   };
 
+  if (linkExpired) {
+    return (
+      <div className="authPage">
+        <div className="signupContent authContent">
+          <div className="signup_page">
+            <HeaderForAuth />
+            <div className="profile_modal_content settings_modal_content">
+              <div className="profile_modal_header">
+                <p className="loginHeading">Sign up</p>
+              </div>
+              <div className="profile_modal_body">
+                <div className="signup_confirmation_wrapper">
+                  <div
+                    className="authMessage authMessage--error"
+                    style={{ padding: "0", textAlign: "center" }}
+                  >
+                    <p
+                      className="text_signup"
+                      style={{ margin: "0 0 0.5rem 0", fontWeight: 600 }}
+                    >
+                      Signup link has expired
+                    </p>
+                    <p className="text_signup" style={{ margin: 0 }}>
+                      This link is valid for 7 days from when it was sent.
+                      Please ask your administrator to resend the invite.
+                    </p>
+                    <p className="text_signup" style={{ marginTop: "1rem" }}>
+                      <Link
+                        to={LOGIN_PATH}
+                        className="login-btn signup_success_signin_btn"
+                      >
+                        Back to sign in
+                      </Link>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="authPage">
         <div className="signupContent authContent">
           {/* <h1>hhh</h1> */}
           {isConfirmSignup ? (
-            <CardContainerOnBoarding>
-              {/* <HeaderForAuth /> */}
-
-              <div className="signup_confirmation_wrapper">
-                <div className="signup_confirmation_card authMessage authMessage--success">
-                  <CheckCircle
-                    size={24}
-                    aria-hidden
-                    className="confirm_onboarding"
-                  />
-                  <p className="text_signup">
-                    <span>
-                      Your account has been{" "}
-                      <span className="sucess_text">
-                        successfully activated.
-                      </span>
-                      <span>
-                        {onboardingEmailSent
-                          ? " Please check your email to complete onboarding."
-                          : ""}{" "}
-                      </span>
-                    </span>
-                    <span> You will be redirected to sign in shortly.</span>
-                  </p>
-                  <p className="small_text">
-                    Redirecting to sign in in a few seconds…
-                  </p>
-                  <p className="signin_btn">
-                    <Link to={LOGIN_PATH}>
-                      Sign in
-                      <ArrowRight />
-                    </Link>{" "}
-                  </p>
-                  <span className="small_text">
-                    to continue to your account.
-                  </span>
+            <div className="signup_page">
+              <HeaderForAuth />
+              <div className="profile_modal_content settings_modal_content">
+                <div className="profile_modal_header">
+                  <p className="loginHeading">Sign up</p>
+                </div>
+                <div className="profile_modal_body">
+                  <div className="signup_confirmation_wrapper">
+                    <div className="signup_confirmation_card authMessage authMessage--success">
+                      <CheckCircle
+                        size={24}
+                        aria-hidden
+                        className="confirm_onboarding"
+                      />
+                      <p className="text_signup">
+                        <span>
+                          Your account has been{" "}
+                          <span className="sucess_text">
+                            successfully activated.
+                          </span>
+                        </span>
+                        {!onboardingEmailSent && (
+                          <span>
+                            {" "}
+                            You will be redirected to sign in shortly.
+                          </span>
+                        )}
+                      </p>
+                      {onboardingEmailSent ? (
+                        <>
+                          <p className="text_signup onboarding_email_sent_text">
+                            An email has been sent for onboarding. Please check
+                            your inbox and use the link to complete onboarding.
+                          </p>
+                          <p
+                            className="text_signup"
+                            style={{ marginTop: "1rem" }}
+                          >
+                            <Link
+                              to={LOGIN_PATH}
+                              className="login-btn signup_success_signin_btn"
+                            >
+                              Sign in
+                              <span>
+                                <ArrowRight width={20} />
+                              </span>
+                            </Link>{" "}
+                            when you have completed onboarding.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="small_text">
+                            Redirecting to sign in in a few seconds…
+                          </p>
+                          <div
+                            className="loginBtn"
+                            style={{ marginTop: "0.5rem" }}
+                          >
+                            <Link to={LOGIN_PATH} className="login-btn">
+                              Sign in
+                              <span>
+                                <ArrowRight width={20} />
+                              </span>
+                            </Link>
+                          </div>
+                          <p
+                            className="small_text"
+                            style={{ marginTop: "0.5rem" }}
+                          >
+                            to continue to your account.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </CardContainerOnBoarding>
+            </div>
           ) : (
-            <div className="loginData">
-              <div className="loginCred">
-                <HeaderForAuth />
-                <div className="loginForm">
+            <div className="signup_page">
+              <HeaderForAuth />
+              <div className="profile_modal_content settings_modal_content">
+                <div className="profile_modal_header">
                   <p className="loginHeading">Sign up</p>
+                </div>
+                <div className="profile_modal_body">
+                  <p className="loginCaption mailText">
+                    Create an account to get started with the AI Eval platform.
+                  </p>
                   <form
+                    className="settings_form"
                     action=""
                     autoComplete="off"
                     onSubmit={hanldeSubmitSignUp}
                   >
-                    <p className="loginCaption mailText">
-                      Create an account to get started with the AI Eval
-                      platform.
-                    </p>
-                    <div className="sign_up_form">
-                      <div className="sign_up_form_rows">
-                        <div className="emailData">
-                          <label htmlFor="loginEmail">
-                            <span>
-                              <Mail width={20} strokeWidth={1.5} />
-                            </span>{" "}
-                            Email
-                          </label>
-                          <input
-                            className="resetMail readOnlyField"
-                            type="email"
-                            name="email"
-                            value={signUpFormData.email}
-                            readOnly
-                          />
-                        </div>
-
-                        <div className="passwordData">
-                          <label htmlFor="loginEmail">
-                            <span>
-                              <User width={20} strokeWidth={1.5} />
-                            </span>{" "}
-                            User Name
-                          </label>
-                          <input
-                            //   className="resetMail"
-                            type="text"
-                            name="userName"
-                            value={signUpFormData.userName}
-                            onChange={handleChange}
-                          />
-                        </div>
+                    <div className="settings_form_row">
+                      <div className="settings_form_group">
+                        <label htmlFor="signup-email">
+                          <Mail width={20} strokeWidth={1.5} />
+                          Email
+                        </label>
+                        <input
+                          id="signup-email"
+                          className="settings_input settings_input_readonly"
+                          type="email"
+                          name="email"
+                          value={signUpFormData.email}
+                          readOnly
+                        />
                       </div>
-                      <div className="sign_up_form_rows">
-                        <div className="emailData">
-                          <label htmlFor="loginEmail">
-                            <span>
-                              <User width={20} strokeWidth={1.5} />
-                            </span>{" "}
-                            First Name
-                          </label>
-                          <input
-                            //   className="resetMail"
-                            type="text"
-                            name="firstName"
-                            value={signUpFormData.firstName}
-                            onChange={handleChange}
-                          />
-                        </div>
-                        <div className="emailData">
-                          <label htmlFor="loginEmail">
-                            <span>
-                              <User width={20} strokeWidth={1.5} />
-                            </span>{" "}
-                            Last Name
-                          </label>
-                          <input
-                            //   className="resetMail"
-                            type="text"
-                            name="lastName"
-                            value={signUpFormData.lastName}
-                            onChange={handleChange}
-                          />
-                        </div>
+                      <div className="settings_form_group">
+                        <label htmlFor="signup-userName">
+                          <User width={20} strokeWidth={1.5} />
+                          User Name
+                        </label>
+                        <input
+                          id="signup-userName"
+                          className="settings_input"
+                          type="text"
+                          name="userName"
+                          value={signUpFormData.userName}
+                          onChange={handleChange}
+                        />
                       </div>
-                      <div className="sign_up_form_rows">
-                        <div className="passwordData">
-                          <label htmlFor="loginPassword">
-                            <span>
-                              <LockKeyhole width={20} strokeWidth={1.5} />
-                            </span>
-                            New Password
-                          </label>
+                    </div>
+                    <div className="settings_form_row">
+                      <div className="settings_form_group">
+                        <label htmlFor="signup-firstName">
+                          <User width={20} strokeWidth={1.5} />
+                          First Name
+                        </label>
+                        <input
+                          id="signup-firstName"
+                          className="settings_input"
+                          type="text"
+                          name="firstName"
+                          value={signUpFormData.firstName}
+                          onChange={handleChange}
+                        />
+                      </div>
+                      <div className="settings_form_group">
+                        <label htmlFor="signup-lastName">
+                          <User width={20} strokeWidth={1.5} />
+                          Last Name
+                        </label>
+                        <input
+                          id="signup-lastName"
+                          className="settings_input"
+                          type="text"
+                          name="lastName"
+                          value={signUpFormData.lastName}
+                          onChange={handleChange}
+                        />
+                      </div>
+                    </div>
+                    <div className="settings_form_row">
+                      <div className="settings_form_group">
+                        <label htmlFor="signup-newPassword">
+                          <LockKeyhole width={20} strokeWidth={1.5} />
+                          New Password
+                        </label>
+                        <div className="settings_password_wrap">
                           <input
+                            id="signup-newPassword"
+                            className="settings_input"
                             type={isVisible ? "text" : "password"}
                             maxLength={16}
                             name="newPassword"
@@ -263,6 +380,14 @@ const SignUp = () => {
                           <span
                             onClick={passwordVisible}
                             className="passwordVisible"
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && passwordVisible()
+                            }
+                            aria-label={
+                              isVisible ? "Hide password" : "Show password"
+                            }
                           >
                             {isVisible ? (
                               <Eye size={20} strokeWidth={1.5} />
@@ -271,14 +396,16 @@ const SignUp = () => {
                             )}
                           </span>
                         </div>
-                        <div className="passwordData">
-                          <label htmlFor="loginPassword">
-                            <span>
-                              <LockKeyhole width={20} strokeWidth={1.5} />
-                            </span>
-                            Confirm Password
-                          </label>
+                      </div>
+                      <div className="settings_form_group">
+                        <label htmlFor="signup-confirmPassword">
+                          <LockKeyhole width={20} strokeWidth={1.5} />
+                          Confirm Password
+                        </label>
+                        <div className="settings_password_wrap">
                           <input
+                            id="signup-confirmPassword"
+                            className="settings_input"
                             type={isVisibleConfirm ? "text" : "password"}
                             name="confirmPassword"
                             value={signUpFormData.confirmPassword}
@@ -288,6 +415,16 @@ const SignUp = () => {
                           <span
                             onClick={confirmPasswordVisible}
                             className="passwordVisible"
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && confirmPasswordVisible()
+                            }
+                            aria-label={
+                              isVisibleConfirm
+                                ? "Hide password"
+                                : "Show password"
+                            }
                           >
                             {isVisibleConfirm ? (
                               <Eye size={20} strokeWidth={1.5} />
@@ -298,11 +435,11 @@ const SignUp = () => {
                         </div>
                       </div>
                     </div>
-                    {isError && <p className="orgError">{isError}</p>}
-                    <div className="loginBtn">
-                      <button
+                    {isError && <p className="settings_error">{isError}</p>}
+                    <div className="settings_form_actions">
+                      <Button
                         type="submit"
-                        className={`login-btn ${isDisabledBtn ? "disabled_css" : ""} ${isLoading ? "auth_btn_loading" : ""}`}
+                        className={`orgCreateBtn ${isDisabledBtn ? "disabled_css" : ""} ${isLoading ? "auth_btn_loading" : ""}`}
                         disabled={isDisabledBtn}
                         aria-busy={isLoading}
                       >
@@ -318,20 +455,11 @@ const SignUp = () => {
                         ) : (
                           <>
                             Sign Up
-                            <span>
-                              <ArrowRight width={20} />
-                            </span>
+                            <ArrowRight width={20} />
                           </>
                         )}
-                      </button>
+                      </Button>
                     </div>
-                    {/* {isLinkVisible && (
-                    <div>
-                      <p className="signinText">
-                        Proceed to <Link to="/login"><span>Login</span></Link>
-                      </p>
-                    </div>
-                  )} */}
                   </form>
                 </div>
               </div>

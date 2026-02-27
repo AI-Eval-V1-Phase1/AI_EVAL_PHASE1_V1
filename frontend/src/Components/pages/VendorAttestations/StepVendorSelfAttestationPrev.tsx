@@ -3,7 +3,7 @@
  * Uses the same UI as Vendor Onboarding preview (vendor_preview cards). Document rows keep View/Edit actions.
  */
 import React from "react";
-import { Eye, ShieldCheck, Pencil } from "lucide-react";
+import { Eye, ShieldCheck, CircleArrowUp } from "lucide-react";
 import type { VendorSelfAttestationFormState } from "../../../types/vendorSelfAttestation";
 import { VENDOR_SELF_ATTESTATION } from "../../../constants/vendorAttestionData";
 import { ATTESTATION_SECTION_FIELDS } from "../../../constants/vendorAttestationFields";
@@ -117,7 +117,7 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
             onClick={onUpdate}
             title="Replace document"
           >
-            <Pencil size={14} aria-hidden />
+            <CircleArrowUp size={16} aria-hidden />
             <span style={{ marginLeft: "0.25rem" }}>Update</span>
           </button>
         )}
@@ -135,6 +135,53 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
     { label: "Headquarters", value: formatValue(companyProfile.headquartersLocation) },
     { label: "Operating Regions", value: formatValue(companyProfile.operatingRegions) },
   ];
+
+  /** Regulatory and Compliance Certification Material rows — shown under Compliance Certifications section in preview */
+  const regulatoryRows = (
+    <>
+      {documentUpload?.["2"]?.categories
+        ?.filter((category) => (documentUpload["2"]?.byCategory?.[category] ?? []).length > 0)
+        ?.map((category) => {
+          const names = documentUpload["2"]?.byCategory?.[category] ?? [];
+          const regDoc = renderDocumentValue(names);
+          return (
+            <div key={category} className="vendor_preview_row vendor_preview_row_regulatory">
+              <dt className="vendor_preview_label">
+                <span className="vendor_preview_doc_label">
+                  <span>Regulatory and Compliance Certification Material — {category}</span>
+                  <span className="preview-regulatory-verified" title="Document uploaded and verified">
+                    <ShieldCheck size={14} aria-hidden />
+                    <span>Verified</span>
+                  </span>
+                  <DocumentRowActions
+                    step={STEP_COMPLIANCE_CERTIFICATIONS}
+                    show={!regDoc.isNa}
+                    documentNames={names}
+                    showUpdate={true}
+                    onUpdate={() => onNavigateToStep?.(STEP_COMPLIANCE_CERTIFICATIONS)}
+                  />
+                </span>
+              </dt>
+              <dd className="vendor_preview_value">{regDoc.content}</dd>
+            </div>
+          );
+        })}
+      {(!documentUpload?.["2"]?.categories?.length ||
+        documentUpload["2"]?.categories?.every(
+          (cat) => (documentUpload["2"]?.byCategory?.[cat] ?? []).length === 0
+        )) && (
+        <div className="vendor_preview_row">
+          <dt className="vendor_preview_label">
+            <span className="vendor_preview_doc_label">
+              <span>Regulatory and Compliance Certification Material</span>
+              <DocumentRowActions step={STEP_COMPLIANCE_CERTIFICATIONS} show={false} documentNames={[]} />
+            </span>
+          </dt>
+          <dd className="vendor_preview_value">N/A</dd>
+        </div>
+      )}
+    </>
+  );
 
   return (
     <div className="vendor_preview vendor-attestation-preview">
@@ -189,48 +236,6 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
                 </div>
               );
             })()}
-            {/* Regulatory (2): in Compliance & Certifications step; only categories where user uploaded at least one doc */}
-            {documentUpload?.["2"]?.categories
-              ?.filter((category) => (documentUpload["2"]?.byCategory?.[category] ?? []).length > 0)
-              ?.map((category) => {
-                const names = documentUpload["2"]?.byCategory?.[category] ?? [];
-                const regDoc = renderDocumentValue(names);
-                return (
-                  <div key={category} className="vendor_preview_row vendor_preview_row_regulatory">
-                    <dt className="vendor_preview_label">
-                      <span className="vendor_preview_doc_label">
-                        <span>Regulatory and Compliance Certification Material — {category}</span>
-                        <span className="preview-regulatory-verified" title="Document uploaded and verified">
-                          <ShieldCheck size={14} aria-hidden />
-                          <span>Verified</span>
-                        </span>
-                        <DocumentRowActions
-                          step={STEP_COMPLIANCE_CERTIFICATIONS}
-                          show={!regDoc.isNa}
-                          documentNames={names}
-                          showUpdate={true}
-                          onUpdate={() => onNavigateToStep?.(STEP_COMPLIANCE_CERTIFICATIONS)}
-                        />
-                      </span>
-                    </dt>
-                    <dd className="vendor_preview_value">{regDoc.content}</dd>
-                  </div>
-                );
-              })}
-            {(!documentUpload?.["2"]?.categories?.length ||
-              documentUpload["2"]?.categories?.every(
-                (cat) => (documentUpload["2"]?.byCategory?.[cat] ?? []).length === 0
-              )) && (
-              <div className="vendor_preview_row">
-                <dt className="vendor_preview_label">
-                  <span className="vendor_preview_doc_label">
-                    <span>Regulatory and Compliance Certification Material</span>
-                    <DocumentRowActions step={STEP_COMPLIANCE_CERTIFICATIONS} show={false} documentNames={[]} />
-                  </span>
-                </dt>
-                <dd className="vendor_preview_value">N/A</dd>
-              </div>
-            )}
             {(() => {
               const evidenceNames = documentUpload?.evidenceTestingPolicy ?? [];
               const evidenceDoc = renderDocumentValue(evidenceNames);
@@ -257,6 +262,7 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
           const entries = Object.entries(sectionData)
             .filter(([k]) => k !== "length" && Object.prototype.hasOwnProperty.call(sectionData, k))
             .sort((a, b) => Number(a[0]) - Number(b[0]));
+          const isComplianceCertifications = sectionKey === "compliance_certifications";
           return (
             <section key={sectionKey} className="vendor_preview_card">
               <h3 className="vendor_preview_card_title">{title}</h3>
@@ -273,6 +279,7 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
                     </div>
                   );
                 })}
+                {isComplianceCertifications && regulatoryRows}
               </dl>
             </section>
           );

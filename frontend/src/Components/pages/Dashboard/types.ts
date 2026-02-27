@@ -32,6 +32,8 @@ export interface AttestationItem {
   status: string;
   createdAt?: string;
   updatedAt?: string;
+  /** Product name from attestation (display label); fallback "Vendor Self-Attestation" when empty */
+  productName?: string | null;
   /** Certificates uploaded in self-attestation (from backend) */
   certificates?: CertificateItem[];
 }

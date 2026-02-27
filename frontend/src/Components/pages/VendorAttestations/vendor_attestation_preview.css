@@ -48,7 +48,7 @@
   color: var(--color-link, #2563eb);
   background: none;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 5px;
   cursor: pointer;
 }
 .vendor-attestation-preview .preview-view-btn:hover {
@@ -65,7 +65,7 @@
   color: var(--color-link, #2563eb);
   background: none;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 5px;
   cursor: pointer;
 }
 .vendor-attestation-preview .preview-update-btn:hover {
@@ -121,7 +121,7 @@
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  border-radius: 4px;
+  border-radius: 5px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;

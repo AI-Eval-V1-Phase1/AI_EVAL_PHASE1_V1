@@ -3,6 +3,7 @@ import { pgTable, serial, varchar, timestamp, text, integer } from "drizzle-orm/
 import {
   accountStatusEnum,
   onboarding,
+  onboardingStatusEnum,
   organizationStatusEnum,
   signup,
 } from "../EnumValues/enumValues.js";
@@ -29,5 +30,9 @@ export const usersTable = pgTable("users", {
   user_onboarding_completed: onboarding("user_onboarding_completed")
     .default("false")
     .notNull(),
+  onboarding_status: onboardingStatusEnum("onboarding_status")
+    .default("pending")
+    .notNull(),
+  onboarding_link_sent_at: timestamp("onboarding_link_sent_at"),
   user_platform_role:varchar("user_platform_role"),
 });

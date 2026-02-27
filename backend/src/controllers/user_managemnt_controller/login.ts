@@ -3,18 +3,23 @@ import { db } from "../../database/db.js";
 import { createOrganization, usersTable } from "../../schema/schema.js";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
-import  jwt  from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
+import { getJwtSecret, getJwtExpiry } from "../../config/auth.js";
 
 const userLogin = async (req: Request, res: Response) => {
-  const rawEmail = req.body?.email;
+  const rawEmailOrUsername = req.body?.email;
   const userPassword = req.body?.password;
-  const email = (rawEmail ?? "").toString().trim().toLowerCase();
-  if (!email) {
-    return res.status(401).json({ message: "Email is required" });
+  const input = (rawEmailOrUsername ?? "").toString().trim();
+  if (!input) {
+    return res.status(401).json({ message: "Email or username is required" });
   }
   if (userPassword == null || userPassword === "") {
     return res.status(401).json({ message: "Password is required" });
   }
+
+  const isEmail = input.includes("@");
+  const emailForLookup = isEmail ? input.toLowerCase() : null;
+  const usernameForLookup = isEmail ? null : input;
 
   try {
     const rows = await db
@@ -24,7 +29,11 @@ const userLogin = async (req: Request, res: Response) => {
       })
       .from(usersTable)
       .leftJoin(createOrganization, eq(usersTable.organization_id, createOrganization.id))
-      .where(eq(usersTable.email, email))
+      .where(
+        isEmail
+          ? eq(usersTable.email, emailForLookup!)
+          : eq(usersTable.user_name, usernameForLookup!),
+      )
       .limit(1);
     const row = rows[0];
     if (!row) {
@@ -36,26 +45,34 @@ const userLogin = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "User not found" });
     }
 
-        const user = await db
+    const user = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.email, email))
+      .where(
+        isEmail
+          ? eq(usersTable.email, emailForLookup!)
+          : eq(usersTable.user_name, usernameForLookup!),
+      )
       .limit(1);
     const usertable = user[0];
     if (!usertable) {
       return res.status(401).json({ message: "User not found" });
     }
 
-    const userStatus = String(usertable.userStatus ?? "active").trim().toLowerCase();
-    if (userStatus === "inactive") {
-      return res.status(403).json({
-        message: "Your account is inactive. Contact your administrator to restore access.",
-        code: "inactive",
-      });
+    const userStatus = String(usertable.userStatus ?? "").trim().toLowerCase();
+    const signupCompleted = String(usertable.user_signup_completed ?? "").trim().toLowerCase();
+    const onboardingCompleted = String(usertable.user_onboarding_completed ?? "").trim().toLowerCase();
+
+    if (
+      userStatus !== "active" ||
+      signupCompleted !== "true" ||
+      onboardingCompleted !== "true"
+    ) {
+      return res.status(401).json({ message: "User not found" });
     }
 
     if (!usertable.user_password || usertable.user_password.trim() === "") {
-      return res.status(401).json({ message: "User has been invited.", code: "invited" });
+      return res.status(401).json({ message: "User not found" });
     }
 
     const passwordMatch = await bcrypt.compare(
@@ -78,8 +95,7 @@ const userLogin = async (req: Request, res: Response) => {
 
     // console.log("checkUser", user);
 
-    const secret = process.env.JWT_SECRET_KEY ?? "";
-    if (!secret) throw new Error("JWT_SECRET_KEY not set");
+    const secret = getJwtSecret();
     const token = jwt.sign(
       {
         id: user_table.id,
@@ -87,7 +103,7 @@ const userLogin = async (req: Request, res: Response) => {
         userRole: user_table.role,
       },
       secret,
-      { expiresIn: "24h" },
+      { expiresIn: getJwtExpiry() } as SignOptions,
     );
 
     const userDetails = [{ ...user_table, organization_name: row.organizationName ?? "", organization_id: user_table.organization_id }];

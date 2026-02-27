@@ -8,7 +8,7 @@ import OrganizationDataTable from "./OrganizationDataTable";
 import StepVendorSelfAttestationPrev from "../VendorAttestations/StepVendorSelfAttestationPrev";
 // import { buildFormStateFromApi } from "../../utils/vendorAttestationState";
 import { buildFormStateFromApi } from "../../../utils/vendorAttestationState";
-import { Landmark, Plus, User, FileCheck, ClipboardList, Eye, X } from "lucide-react";
+import { Landmark, Plus, User, FileCheck, ClipboardList, Eye, CircleX } from "lucide-react";
 import Button from "../../UI/Button";
 import Breadcrumbs from "../../UI/Breadcrumbs";
 
@@ -589,11 +589,11 @@ const Organizations = () => {
                   <h2>Attestation Preview</h2>
                   <button
                     type="button"
-                    className="vendor_attestation_preview_modal_close"
+                    className="modal_close_btn"
                     onClick={() => setPreviewOpen(false)}
                     aria-label="Close"
                   >
-                    <X size={24} />
+                    <CircleX size={20} />
                   </button>
                 </div>
                 <div className="vendor_attestation_preview_modal_body">

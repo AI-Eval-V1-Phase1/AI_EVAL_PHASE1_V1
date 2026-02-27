@@ -4,15 +4,14 @@ import {
   FileCheck,
   Eye,
   Plus,
-  Pencil,
-  X,
+  SquarePen,
+  CircleX,
   Shield,
   AlertTriangle,
   Check,
   CircleCheck,
   CheckCircle2,
   FileText,
-  XCircle,
   Calendar,
   Search,
 } from "lucide-react";
@@ -233,12 +232,18 @@ const VendorAttestationDetails = () => {
             const completedByName =
               (attestation as { completedBy?: { name?: string } }).completedBy
                 ?.name ?? null;
+            // For Completed: use only submitted_at so Product Profile toggles never change "Submitted" date
+            const submittedAt = (attestation as { submitted_at?: string | null }).submitted_at ?? null;
+            const isCompleted = statusLabel === "Completed";
+            const submittedDate =
+              isCompleted
+                ? submittedAt ?? attestation.updated_at ?? attestation.created_at ?? null
+                : (attestation.updated_at ?? attestation.created_at ?? null);
             list.push({
               id: attestation.id,
               title: productName || "Draft",
               status: statusLabel as AttestationStatus,
-              submittedDate:
-                attestation.updated_at ?? attestation.created_at ?? null,
+              submittedDate,
               expiryDate: null,
               recordId: attestation.id,
               completedBy: completedByName ?? null,
@@ -368,7 +373,7 @@ const VendorAttestationDetails = () => {
       <div className="heading_user_page page_header_align">
         <div className="headers page_header_row">
           <span className="icon_size_header" aria-hidden>
-            <FileCheck size={24} className="header_icon_svg"/>
+            <FileCheck size={24} className="header_icon_svg" />
           </span>
           <div className="page_header_title_block">
             <h1 className="page_header_title">Attestation</h1>
@@ -425,6 +430,8 @@ const VendorAttestationDetails = () => {
               <CircleCheck size={16} className="attestation_check" /> AI safety
               and testing practices
             </li>
+          </ul>
+          <ul className="attestation_covers_list">
             <li>
               <CircleCheck size={16} className="attestation_check" /> Compliance
               certifications
@@ -443,6 +450,8 @@ const VendorAttestationDetails = () => {
               <CircleCheck size={16} className="attestation_check" /> Deployment
               options
             </li>
+          </ul>
+          <ul className="attestation_covers_list">
             <li>
               <CircleCheck size={16} className="attestation_check" /> Risk
               mitigations
@@ -484,19 +493,45 @@ const VendorAttestationDetails = () => {
             ) : (
               filteredAttestations.map((item) => (
                 <div key={item.id} className="vendor_overview_attestation_row">
-                  {item.status === "Draft" && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
-                  {item.status === "Completed" && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />}
-                  {item.status === "Rejected" && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_rejected" aria-hidden />}
+                  {item.status === "Draft" && (
+                    <FileText
+                      size={24}
+                      className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft"
+                      aria-hidden
+                    />
+                  )}
+                  {item.status === "Completed" && (
+                    <FileText
+                      size={24}
+                      className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check"
+                      aria-hidden
+                    />
+                  )}
+                  {item.status === "Rejected" && (
+                    <FileText
+                      size={24}
+                      className="vendor_overview_attestation_icon vendor_overview_attestation_icon_rejected"
+                      aria-hidden
+                    />
+                  )}
                   <div className="vendor_overview_attestation_content">
-                    <p className="vendor_overview_attestation_name">{item.title}</p>
-                    <p className={`vendor_overview_attestation_status_label${item.status === "Draft" ? " vendor_overview_attestation_status_label_draft" : item.status === "Rejected" ? " vendor_overview_attestation_status_label_rejected" : ""}`}>
+                    <p className="vendor_overview_attestation_name">
+                      {item.title}
+                    </p>
+                    <p
+                      className={`vendor_overview_attestation_status_label${item.status === "Draft" ? " vendor_overview_attestation_status_label_draft" : item.status === "Rejected" ? " vendor_overview_attestation_status_label_rejected" : ""}`}
+                    >
                       {item.status}
                     </p>
                     <p className="vendor_overview_attestation_by">
-                      {item.status === "Draft" ? "Updated by:" : "Completed by:"} {item.completedBy?.trim() || "—"}
+                      {item.status === "Draft"
+                        ? "Updated by:"
+                        : "Completed by:"}{" "}
+                      {item.completedBy?.trim() || "—"}
                     </p>
                     <p className="vendor_overview_attestation_date">
-                      {item.status === "Draft" ? "Updated" : "Submitted"}: {formatDate(item.submittedDate)}
+                      {item.status === "Draft" ? "Updated" : "Submitted"}:{" "}
+                      {formatDate(item.submittedDate)}
                     </p>
                   </div>
                   <div className="vendor_overview_attestation_actions">
@@ -506,7 +541,7 @@ const VendorAttestationDetails = () => {
                         state={{ editId: item.recordId }}
                         className="vendor_overview_btn_view"
                       >
-                        <Pencil size={14} aria-hidden />
+                        <SquarePen size={16} aria-hidden />
                         Edit
                       </Link>
                     )}
@@ -535,7 +570,7 @@ const VendorAttestationDetails = () => {
                           state={{ editId: item.recordId }}
                           className="vendor_overview_btn_view"
                         >
-                          <Pencil size={14} aria-hidden />
+                          <SquarePen size={16} aria-hidden />
                           Edit
                         </Link>
                       </>
@@ -605,11 +640,11 @@ const VendorAttestationDetails = () => {
               <h2>Attestation Preview</h2>
               <button
                 type="button"
-                className="vendor_attestation_preview_modal_close"
+                className="modal_close_btn"
                 onClick={() => setPreviewOpen(false)}
                 aria-label="Close"
               >
-                <X size={24} />
+                <CircleX size={20} />
               </button>
             </div>
             <div className="vendor_attestation_preview_modal_body">

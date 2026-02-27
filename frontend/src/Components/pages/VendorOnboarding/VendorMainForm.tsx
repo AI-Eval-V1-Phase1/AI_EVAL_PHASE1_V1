@@ -251,7 +251,7 @@ const VendorMainForm = ({ type }: { type: string }) => {
     };
   }, [BASE_URL]);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (currentStep >= 4) return
 
     const stepSchemas = [
@@ -290,6 +290,27 @@ const VendorMainForm = ({ type }: { type: string }) => {
       return
     }
     setValidationError(null)
+    const orgId =
+      sessionStorage.getItem("organizationId") ?? sessionStorage.getItem("org_Id")
+    try {
+      const res = await fetch(`${BASE_URL}/vendorOnboarding/save-progress`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Onboardingtoken}`,
+        },
+        body: JSON.stringify({
+          ...formVendorData,
+          organization_Id: orgId ?? formVendorData.organization_Id,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        console.error("Save progress failed:", data?.error ?? res.statusText)
+      }
+    } catch (err) {
+      console.error("Save progress error:", err)
+    }
     setCurrentStep((prev) => prev + 1)
   }
 
@@ -342,6 +363,35 @@ const VendorMainForm = ({ type }: { type: string }) => {
     if (!validationError || currentStep > 3) return {}
     return getFieldErrorsFromZod(validationError, currentStep)
   }, [validationError, currentStep])
+
+  // Can advance to next step via tab icon (same condition as Continue: current step valid). Used only for steps 0-3; step 4 has no next.
+  const canGoNext = useMemo(() => {
+    if (currentStep > 3) return true
+    const schema = vendorStepSchemas[currentStep]
+    const stepData = [
+      {
+        vendorType: formVendorData.vendorType,
+        sector: formVendorData.sector,
+        vendorMaturity: formVendorData.vendorMaturity,
+        companyWebsite: formVendorData.companyWebsite,
+        companyDescription: formVendorData.companyDescription,
+      },
+      {
+        primaryContactName: formVendorData.primaryContactName,
+        primaryContactEmail: formVendorData.primaryContactEmail,
+        primaryContactRole: formVendorData.primaryContactRole,
+      },
+      {
+        employeeCount: formVendorData.employeeCount,
+        yearFounded: formVendorData.yearFounded,
+      },
+      {
+        headquartersLocation: formVendorData.headquartersLocation,
+        operatingRegions: formVendorData.operatingRegions ?? [],
+      },
+    ][currentStep]
+    return schema.safeParse(stepData).success
+  }, [currentStep, formVendorData])
 
   // Steps with content for MultiStepTabs; clicking a tab navigates to that step
   const tabStepsWithContent = useMemo(
@@ -558,6 +608,7 @@ const VendorMainForm = ({ type }: { type: string }) => {
             }}
             completedSteps={completedStepsForProgress}
             disabledSteps={disabledSteps}
+            canGoNext={canGoNext}
             className="vendor_onboarding_tabs"
           />
 

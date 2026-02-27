@@ -19,7 +19,7 @@
 .vendor_preview_card {
   background: var(--bg-main, var(--bg-colour-main, #f6f8fb));
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 1.25rem 1.5rem;
 }
 

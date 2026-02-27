@@ -637,12 +637,13 @@ const VendorAttestationsMainForm = () => {
     (_, i) => i,
   );
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!isVendorAttestationStepValid(currentStep, formState)) {
       setValidationAttemptedSteps((prev) => new Set(prev).add(currentStep));
       return;
     }
     setStepValidationError(null);
+    await saveDraftOrSubmit(true);
     setCurrentStep((prev) => Math.min(prev + 1, totalSteps - 1));
   };
 
@@ -958,11 +959,12 @@ const VendorAttestationsMainForm = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Full submit only: is_draft: false → backend sets status "submitted" → details page shows "Completed"
+    // Full submit only: is_draft: false → backend sets status COMPLETED and generates product profile report
     const ok = await saveDraftOrSubmit(false);
     if (ok) {
       setAllStepsFilled(true);
-      navigate("/reports");
+      toast.success("Attestation submitted. Product profile report has been generated.");
+      navigate("/product_profile");
     }
   };
 
@@ -1008,6 +1010,7 @@ const VendorAttestationsMainForm = () => {
               }}
               completedSteps={completedStepsForProgress}
               disabledSteps={disabledSteps}
+              canGoNext={isVendorAttestationStepValid(currentStep, formState)}
               className="vendor_onboarding_tabs"
             />
 

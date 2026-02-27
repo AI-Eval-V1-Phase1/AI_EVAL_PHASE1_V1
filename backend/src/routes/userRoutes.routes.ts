@@ -1,9 +1,10 @@
 import express from "express";
-import { inviteUser } from "../controllers/user_managemnt_controller/user.js";
+import { inviteUser, reinviteUser, resendOnboardingLink } from "../controllers/user_managemnt_controller/user.js";
 import userSignup from "../controllers/user_managemnt_controller/signup.js";
 import userTokenVerify from "../middlewares/user_management/userTokenVerify.js";
 import userLogin from "../controllers/user_managemnt_controller/login.js";
 import getMe from "../controllers/user_managemnt_controller/getUser.js";
+import updateMyProfile from "../controllers/user_managemnt_controller/updateMyProfile.js";
 import fetchAllUsers from "../controllers/user_managemnt_controller/allUsers.usermanagement.js";
 import signupAccess from "../middlewares/user_management/signup.middleware.js";
 import authenticateToken from "../middlewares/routesProtection.js";
@@ -14,8 +15,11 @@ const router = express.Router();
 
 router
 .get("/me", authenticateToken, getMe)
+.put("/me", authenticateToken, updateMyProfile)
 .get("/allUsers",authenticateToken, fetchAllUsers)
-.post("/invite_user", authenticateToken,inviteUser)
+.post("/invite_user", authenticateToken, inviteUser)
+.post("/reinvite_user/:id", authenticateToken, reinviteUser)
+.post("/resend_onboarding/:id", authenticateToken, resendOnboardingLink)
 .post("/signupData/:token", userTokenVerify, signupAccess, userSignup)
 .post("/login", userLogin)
 .post("/forgotPassword", forgotPassword)

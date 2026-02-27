@@ -7,13 +7,57 @@ import {
   FlaskConical,
   Search,
   ShieldCheck,
-  X,
+  CircleX,
   ChevronRight,
 } from "lucide-react";
 import "./VendorDirectory.css";
 import "../ProductProfile/product_profile.css";
+import GeneratedProductProfileCards from "../ProductProfile/GeneratedProductProfileCards";
+import type { GeneratedProductProfileReport } from "../../../types/generatedProductProfile";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
+
+const defaultSectionVis = {
+  aiGovernance: false,
+  securityPosture: false,
+  dataPrivacy: false,
+  compliance: false,
+  modelRisk: false,
+  dataPractices: false,
+  complianceCertifications: false,
+  operationsSupport: false,
+  vendorManagement: false,
+};
+
+/** Section id 1–9 map to buyer visibility flags (vendor toggles in View Product). Names match card titles: Data Practices, Compliance & Certifications, Operations & Support, Vendor Management. */
+const SECTION_ID_TO_VIS_KEY: Record<number, keyof typeof defaultSectionVis> = {
+  1: "aiGovernance",
+  2: "securityPosture",
+  3: "dataPrivacy",
+  4: "compliance",
+  5: "modelRisk",
+  6: "dataPractices",
+  7: "complianceCertifications",
+  8: "operationsSupport",
+  9: "vendorManagement",
+};
+
+function parseGeneratedReport(raw: unknown): GeneratedProductProfileReport | null {
+  if (raw == null || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  if (o.trustScore == null || typeof o.trustScore !== "object" || !Array.isArray(o.sections)) return null;
+  const ts = o.trustScore as Record<string, unknown>;
+  if (typeof ts.overallScore !== "number" || typeof ts.summary !== "string") return null;
+  return {
+    trustScore: {
+      overallScore: ts.overallScore as number,
+      label: (ts.label as string) ?? "",
+      summary: ts.summary as string,
+      scoreByCategory: ts.scoreByCategory as Record<string, string | number> | undefined,
+    },
+    sections: o.sections as GeneratedProductProfileReport["sections"],
+  };
+}
 
 interface PublicVendor {
   id: string;
@@ -80,6 +124,10 @@ const VendorDirectory = () => {
     dataPrivacy: boolean;
     compliance: boolean;
     modelRisk: boolean;
+    dataPractices?: boolean;
+    complianceCertifications?: boolean;
+    operationsSupport?: boolean;
+    vendorManagement?: boolean;
   } | null>(null);
   const [productDetailLoading, setProductDetailLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -200,18 +248,16 @@ const VendorDirectory = () => {
         setProductDetail(data.attestation as Record<string, unknown>);
         const vis = data?.sectionVisibility;
         setProductSectionVisibility(vis ? {
-          aiGovernance: vis.aiGovernance !== false,
-          securityPosture: vis.securityPosture !== false,
-          dataPrivacy: vis.dataPrivacy !== false,
-          compliance: vis.compliance !== false,
-          modelRisk: vis.modelRisk !== false,
-        } : {
-          aiGovernance: true,
-          securityPosture: true,
-          dataPrivacy: true,
-          compliance: true,
-          modelRisk: true,
-        });
+          aiGovernance: vis.aiGovernance === true,
+          securityPosture: vis.securityPosture === true,
+          dataPrivacy: vis.dataPrivacy === true,
+          compliance: vis.compliance === true,
+          modelRisk: vis.modelRisk === true,
+          dataPractices: vis.dataPractices === true,
+          complianceCertifications: vis.complianceCertifications === true,
+          operationsSupport: vis.operationsSupport === true,
+          vendorManagement: vis.vendorManagement === true,
+        } : defaultSectionVis);
       } else {
         setProductDetail(null);
         setProductSectionVisibility(null);
@@ -418,30 +464,36 @@ const VendorDirectory = () => {
               onKeyDown={(e) => e.key === "Enter" && handleVendorClick(v)}
               aria-label={`View details for ${displayName(v)}`}
             >
-              <div className="vendor_directory_card_avatar">
-                {initials(v)}
+              <div className="vendor_directory_card_header">
+                <div className="vendor_directory_card_avatar">
+                  {initials(v)}
+                </div>
+                <div className="vendor_directory_card_header_text">
+                  <h2 className="vendor_directory_card_name">{displayName(v)}</h2>
+                  {(v.productNames?.length ?? 0) > 0 && (
+                    <p className="vendor_directory_card_products">
+                      {v.productNames!.join(", ")}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="vendor_directory_card_body">
-                <h2 className="vendor_directory_card_name">{displayName(v)}</h2>
-                {(v.productNames?.length ?? 0) > 0 && (
-                  <p className="vendor_directory_card_products">
-                    {v.productNames!.join(", ")}
-                  </p>
-                )}
                 {v.vendorType && (
                   <p className="vendor_directory_card_type">{v.vendorType}</p>
                 )}
                 {v.companyDescription && (
                   <p className="vendor_directory_card_desc">
-                    {v.companyDescription.slice(0, 160)}
-                    {v.companyDescription.length > 160 ? "…" : ""}
+                    {v.companyDescription.slice(0, 200)}
+                    {v.companyDescription.length > 200 ? "…" : ""}
                   </p>
                 )}
-                {v.headquartersLocation && (
-                  <p className="vendor_directory_card_location">{v.headquartersLocation}</p>
-                )}
+              </div>
+              <div className="vendor_directory_card_footer">
+                <span className="vendor_directory_card_location">
+                  {v.headquartersLocation || "—"}
+                </span>
                 <span className="vendor_directory_card_action">
-                  View details <ChevronRight size={16} aria-hidden />
+                  View details <ChevronRight size={18} aria-hidden />
                 </span>
               </div>
             </article>
@@ -494,30 +546,36 @@ const VendorDirectory = () => {
               onKeyDown={(e) => e.key === "Enter" && handleVendorClick(v)}
               aria-label={`View details for ${displayName(v)}`}
             >
-              <div className="vendor_directory_card_avatar">
-                {initials(v)}
+              <div className="vendor_directory_card_header">
+                <div className="vendor_directory_card_avatar">
+                  {initials(v)}
+                </div>
+                <div className="vendor_directory_card_header_text">
+                  <h2 className="vendor_directory_card_name">{displayName(v)}</h2>
+                  {(v.productNames?.length ?? 0) > 0 && (
+                    <p className="vendor_directory_card_products">
+                      {v.productNames!.join(", ")}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="vendor_directory_card_body">
-                <h2 className="vendor_directory_card_name">{displayName(v)}</h2>
-                {(v.productNames?.length ?? 0) > 0 && (
-                  <p className="vendor_directory_card_products">
-                    {v.productNames!.join(", ")}
-                  </p>
-                )}
                 {v.vendorType && (
                   <p className="vendor_directory_card_type">{v.vendorType}</p>
                 )}
                 {v.companyDescription && (
                   <p className="vendor_directory_card_desc">
-                    {v.companyDescription.slice(0, 160)}
-                    {v.companyDescription.length > 160 ? "…" : ""}
+                    {v.companyDescription.slice(0, 200)}
+                    {v.companyDescription.length > 200 ? "…" : ""}
                   </p>
                 )}
-                {v.headquartersLocation && (
-                  <p className="vendor_directory_card_location">{v.headquartersLocation}</p>
-                )}
+              </div>
+              <div className="vendor_directory_card_footer">
+                <span className="vendor_directory_card_location">
+                  {v.headquartersLocation || "—"}
+                </span>
                 <span className="vendor_directory_card_action">
-                  View details <ChevronRight size={16} aria-hidden />
+                  View details <ChevronRight size={18} aria-hidden />
                 </span>
               </div>
             </article>
@@ -543,11 +601,11 @@ const VendorDirectory = () => {
               </h2>
               <button
                 type="button"
-                className="vendor_directory_modal_close"
+                className="modal_close_btn"
                 onClick={() => { setSelectedVendor(null); setVendorProducts([]); setSelectedProduct(null); setProductDetail(null); }}
                 aria-label="Close"
               >
-                <X size={24} />
+                <CircleX size={20} />
               </button>
             </div>
             <div className="vendor_directory_modal_body">
@@ -602,11 +660,11 @@ const VendorDirectory = () => {
               </h2>
               <button
                 type="button"
-                className="vendor_directory_modal_close"
+                className="modal_close_btn"
                 onClick={() => { setSelectedProduct(null); setProductDetail(null); setProductSectionVisibility(null); }}
                 aria-label="Close"
               >
-                <X size={24} />
+                <CircleX size={20} />
               </button>
             </div>
             <div className="vendor_directory_modal_body">
@@ -614,9 +672,43 @@ const VendorDirectory = () => {
                 <div className="vendor_directory_loading">Loading product details…</div>
               )}
               {!productDetailLoading && productDetail && productSectionVisibility && (() => {
-                const detail = buildDetailItemsFromAttestation(productDetail);
                 const vis = productSectionVisibility;
-                const anyVisible = vis.aiGovernance || vis.securityPosture || vis.dataPrivacy || vis.compliance || vis.modelRisk;
+                const rawReport = productDetail.generated_profile_report;
+                const report = parseGeneratedReport(rawReport);
+                if (report) {
+                  // Only show sections the vendor has toggled on (visible to buyers) in Product Profile → View Product.
+                  const visibleSectionIds = new Set(
+                    [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((id) => {
+                      const key = SECTION_ID_TO_VIS_KEY[id];
+                      return key != null && vis[key] === true;
+                    })
+                  );
+                  const filteredSections = report.sections.filter((sec) => visibleSectionIds.has(sec.id));
+                  if (filteredSections.length === 0) {
+                    return (
+                      <p className="vendor_directory_empty_products">
+                        No detail sections are currently visible for this product. The vendor can make sections visible from Product Profile → View Product.
+                      </p>
+                    );
+                  }
+                  return (
+                    <div className="generated_profile_wrap">
+                      <GeneratedProductProfileCards
+                        report={{
+                          trustScore: report.trustScore,
+                          sections: filteredSections,
+                        }}
+                      />
+                    </div>
+                  );
+                }
+                const detail = buildDetailItemsFromAttestation(productDetail);
+                const anyVisible =
+                  vis.aiGovernance === true ||
+                  vis.securityPosture === true ||
+                  vis.dataPrivacy === true ||
+                  vis.compliance === true ||
+                  vis.modelRisk === true;
                 const detailItem = (label: string, value: string) => (
                   <li key={label} className="product_profile_detail_item">
                     <span className="product_profile_detail_label">{label}:</span>{" "}

@@ -1,4 +1,4 @@
-import { Ban, CircleX, Landmark, Plus } from "lucide-react";
+import { Ban, CircleX, Landmark, CircleArrowUp } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { getOrganizations } from "../../../Context/OrganizationsData";
@@ -13,6 +13,10 @@ const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => 
   const [isOrganizationName, setIsOrganizationName] = useState("");
   const [isStatus, setIsStatus] = useState("");
   const [isReason, setIsReason] = useState("");
+
+  useEffect(() => {
+    if (id) dispatch(getOrganizations());
+  }, [id, dispatch]);
 
   useEffect(() => {
     if (orgData) {
@@ -175,7 +179,7 @@ const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => 
                 aria-busy={isUpdateLoading}
               >
                 <span>
-                  <Plus width={18} />
+                  <CircleArrowUp size={16} aria-hidden />
                 </span>
                 {isUpdateLoading ? "Saving…" : "Update"}
               </button>

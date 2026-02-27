@@ -3,12 +3,25 @@ import { db } from "../../database/db.js";
 import { vendorSelfAttestations } from "../../schema/schema.js";
 import { and, eq } from "drizzle-orm";
 
-type SectionKey = "visible_ai_governance" | "visible_security_posture" | "visible_data_privacy" | "visible_compliance" | "visible_model_risk";
+type SectionKey =
+  | "visible_ai_governance"
+  | "visible_security_posture"
+  | "visible_data_privacy"
+  | "visible_compliance"
+  | "visible_model_risk"
+  | "visible_data_practices"
+  | "visible_compliance_certifications"
+  | "visible_operations_support"
+  | "visible_vendor_management";
 
 /**
  * PATCH /vendorSelfAttestation/section-visibility
  * Body: { attestationId: string, visible_ai_governance?: boolean, visible_security_posture?: boolean, visible_data_privacy?: boolean, visible_compliance?: boolean, visible_model_risk?: boolean }
  * Updates which detail sections are visible to buyers. Only the attestation owner can update.
+ *
+ * IMPORTANT: Product Profile toggle – must NOT update attestation submission metadata.
+ * We only set section visibility fields. Do NOT set updated_at or submitted_at here.
+ * submitted_at is set only in submitVendorSelfAttestation when status becomes COMPLETED.
  */
 const updateSectionVisibility = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -36,6 +49,10 @@ const updateSectionVisibility = async (req: Request, res: Response): Promise<voi
       "visible_data_privacy",
       "visible_compliance",
       "visible_model_risk",
+      "visible_data_practices",
+      "visible_compliance_certifications",
+      "visible_operations_support",
+      "visible_vendor_management",
     ];
 
     const updates: Record<string, boolean> = {};
@@ -50,12 +67,10 @@ const updateSectionVisibility = async (req: Request, res: Response): Promise<voi
       return;
     }
 
+    // Only update section visibility; do not touch updated_at so attestation "Submitted" date is unchanged
     const result = await db
       .update(vendorSelfAttestations)
-      .set({
-        ...updates,
-        updated_at: new Date(),
-      })
+      .set(updates)
       .where(
         and(
           eq(vendorSelfAttestations.id, attestationId),

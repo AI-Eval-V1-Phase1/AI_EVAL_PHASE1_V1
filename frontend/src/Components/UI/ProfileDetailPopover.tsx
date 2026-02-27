@@ -41,48 +41,95 @@ function ProfileDetailPopover({ className = "" }: ProfileDetailPopoverProps) {
   return (
     <div className={`profile_detail_popover ${className}`.trim()}>
       <div className="profile_detail_popover_row">
-        <span className="profile_detail_popover_label">Name</span>
-        <span className="profile_detail_popover_value">{displayName}</span>
+        <label className="profile_detail_popover_label" htmlFor="popover_name">Name</label>
+        <input
+          id="popover_name"
+          type="text"
+          className="profile_detail_popover_input"
+          value={displayName}
+          readOnly
+          aria-readonly="true"
+        />
       </div>
       {userName && (
         <div className="profile_detail_popover_row">
-          <span className="profile_detail_popover_label">User name</span>
-          <span className="profile_detail_popover_value">{userName}</span>
+          <label className="profile_detail_popover_label" htmlFor="popover_username">User name</label>
+          <input
+            id="popover_username"
+            type="text"
+            className="profile_detail_popover_input"
+            value={userName}
+            readOnly
+            aria-readonly="true"
+          />
         </div>
       )}
       {firstName && (
         <div className="profile_detail_popover_row">
-          <span className="profile_detail_popover_label">First name</span>
-          <span className="profile_detail_popover_value">{firstName}</span>
+          <label className="profile_detail_popover_label" htmlFor="popover_first_name">First name</label>
+          <input
+            id="popover_first_name"
+            type="text"
+            className="profile_detail_popover_input"
+            value={firstName}
+            readOnly
+            aria-readonly="true"
+          />
         </div>
       )}
       {lastName && (
         <div className="profile_detail_popover_row">
-          <span className="profile_detail_popover_label">Last name</span>
-          <span className="profile_detail_popover_value">{lastName}</span>
-        </div>
-      )}
-      {email && (
-        <div className="profile_detail_popover_row">
-          <span className="profile_detail_popover_label">
-            <Mail size={12} aria-hidden /> Email
-          </span>
-          <span className="profile_detail_popover_value profile_detail_popover_value--email">{email}</span>
-        </div>
-      )}
-      {organizationName && (
-        <div className="profile_detail_popover_row">
-          <span className="profile_detail_popover_label">
-            <Building2 size={12} aria-hidden /> Organization
-          </span>
-          <span className="profile_detail_popover_value">{organizationName}</span>
+          <label className="profile_detail_popover_label" htmlFor="popover_last_name">Last name</label>
+          <input
+            id="popover_last_name"
+            type="text"
+            className="profile_detail_popover_input"
+            value={lastName}
+            readOnly
+            aria-readonly="true"
+          />
         </div>
       )}
       <div className="profile_detail_popover_row">
-        <span className="profile_detail_popover_label">
+        <label className="profile_detail_popover_label" htmlFor="popover_email">
+          <Mail size={12} aria-hidden /> Email
+        </label>
+        <input
+          id="popover_email"
+          type="text"
+          className="profile_detail_popover_input profile_detail_popover_input--email"
+          value={email || "—"}
+          readOnly
+          aria-readonly="true"
+        />
+      </div>
+      {organizationName && (
+        <div className="profile_detail_popover_row">
+          <label className="profile_detail_popover_label" htmlFor="popover_organization">
+            <Building2 size={12} aria-hidden /> Organization
+          </label>
+          <input
+            id="popover_organization"
+            type="text"
+            className="profile_detail_popover_input"
+            value={organizationName}
+            readOnly
+            aria-readonly="true"
+          />
+        </div>
+      )}
+      <div className="profile_detail_popover_row">
+        <label className="profile_detail_popover_label" htmlFor="popover_role">
           <Shield size={12} aria-hidden /> Role
-        </span>
-        <span className="profile_detail_popover_value">{roleLabel}</span>
+        </label>
+        <input
+          id="popover_role"
+          type="text"
+          className="profile_detail_popover_input"
+          value={roleLabel}
+          readOnly
+          aria-readonly="true"
+        />
       </div>
     </div>
   );

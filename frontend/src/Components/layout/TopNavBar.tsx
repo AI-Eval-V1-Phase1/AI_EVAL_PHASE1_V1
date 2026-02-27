@@ -90,6 +90,12 @@ const TopNavBar = () => {
     fetchMe();
   }, [fetchMe, setUserFromSessionStorage]);
 
+  useEffect(() => {
+    const onProfileUpdated = () => setUserFromSessionStorage();
+    window.addEventListener("userProfileUpdated", onProfileUpdated);
+    return () => window.removeEventListener("userProfileUpdated", onProfileUpdated);
+  }, [setUserFromSessionStorage]);
+
   const initials = user
     ? getInitials(
         user.user_first_name ?? "",

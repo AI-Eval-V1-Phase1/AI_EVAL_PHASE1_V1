@@ -1,7 +1,9 @@
 import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
-import { vendorSelfAttestations, usersTable } from "../../schema/schema.js";
+import { vendorSelfAttestations, usersTable, generatedProfileReports } from "../../schema/schema.js";
 import { and, eq, sql } from "drizzle-orm";
+import { buildVendorDataFromPayload } from "../../utils/buildVendorDataFromPayload.js";
+import { generateVendorAttestationReport, parseScoreFromTrustText } from "../agents/vendorAttestation.js";
 
 /** Allowed file extensions for document_uploads (metadata only; actual files validated on frontend). */
 const ALLOWED_DOC_EXTENSIONS = [".pdf", ".doc", ".docx", ".ppt", ".pptx"];
@@ -190,6 +192,7 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
       user_id: userId,
       organization_id: organizationIdStr,
       status,
+      ...(status === "COMPLETED" ? { submitted_at: new Date() } : {}),
       ...companyProfileValues,
       product_name,
       purchase_decisions_by,
@@ -266,6 +269,7 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
       audit_logs_available: row.audit_logs ?? undefined,
       testing_results_available: row.test_results ?? undefined,
       document_uploads: row.document_uploads ?? undefined,
+      generated_profile_report: row.generated_profile_report ?? undefined,
     });
 
     // --- New Attestation: always INSERT (never reuse or overwrite existing). No attestationId = create new. ---
@@ -274,11 +278,50 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
         .insert(vendorSelfAttestations)
         .values(values)
         .returning();
+      const insertedId = inserted?.id as string | undefined;
+      let reportPayload: { trustScore: unknown; sections: unknown[] } | null = null;
+      if (status === "COMPLETED" && insertedId) {
+        try {
+          const vendorData = buildVendorDataFromPayload(b);
+          const report = await generateVendorAttestationReport(vendorData);
+          let trustScoreNum = typeof report.trustScore?.overallScore === "number" ? report.trustScore.overallScore : 0;
+          if (trustScoreNum === 0 && report.trustScore) {
+            const fromSummary = parseScoreFromTrustText(String(report.trustScore.summary ?? ""));
+            const fromLabel = parseScoreFromTrustText(String(report.trustScore.label ?? ""));
+            const fallback = fromSummary ?? fromLabel ?? null;
+            if (fallback != null) trustScoreNum = fallback;
+          }
+          const trustScoreForPayload =
+            trustScoreNum !== 0 && report.trustScore
+              ? { ...report.trustScore, overallScore: trustScoreNum }
+              : report.trustScore;
+          reportPayload = { trustScore: trustScoreForPayload, sections: report.sections };
+          const summaryText =
+            report.trustScore && typeof report.trustScore === "object" && "summary" in report.trustScore
+              ? String((report.trustScore as { summary?: string }).summary ?? "")
+              : "";
+          await db.insert(generatedProfileReports).values({
+            user_id: userId,
+            organization_id: organizationIdStr ?? undefined,
+            attestation_id: insertedId,
+            trust_score: trustScoreNum,
+            summary: summaryText || undefined,
+            report: reportPayload,
+          });
+        } catch (genErr) {
+          console.error("generateVendorAttestationReport after submit (new):", genErr);
+        }
+      }
+      const [rowAfter] = insertedId
+        ? await db.select().from(vendorSelfAttestations).where(eq(vendorSelfAttestations.id, insertedId)).limit(1)
+        : [inserted];
+      const att = rowAfter ? buildAttestationResponse(rowAfter as Record<string, unknown>) : (inserted ? buildAttestationResponse(inserted as Record<string, unknown>) : null);
+      if (att && reportPayload) (att as Record<string, unknown>).generated_profile_report = reportPayload;
       res.status(201).json({
         success: true,
         message: isDraft ? "Draft saved successfully" : "Vendor self attestation submitted successfully",
         status,
-        attestation: inserted ? buildAttestationResponse(inserted as Record<string, unknown>) : null,
+        attestation: att,
       });
       return;
     }
@@ -304,18 +347,57 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
       }
       await db
         .update(vendorSelfAttestations)
-        .set({ ...values, updated_at: sql`now()` })
+        .set({
+          ...values,
+          updated_at: sql`now()`,
+          ...(status === "COMPLETED" ? { submitted_at: sql`now()` } : {}),
+        })
         .where(eq(vendorSelfAttestations.id, attestationId));
+      let reportPayload: { trustScore: unknown; sections: unknown[] } | null = null;
+      if (status === "COMPLETED") {
+        try {
+          const vendorData = buildVendorDataFromPayload(b);
+          const report = await generateVendorAttestationReport(vendorData);
+          let trustScoreNum = typeof report.trustScore?.overallScore === "number" ? report.trustScore.overallScore : 0;
+          if (trustScoreNum === 0 && report.trustScore) {
+            const fromSummary = parseScoreFromTrustText(String(report.trustScore.summary ?? ""));
+            const fromLabel = parseScoreFromTrustText(String(report.trustScore.label ?? ""));
+            const fallback = fromSummary ?? fromLabel ?? null;
+            if (fallback != null) trustScoreNum = fallback;
+          }
+          const trustScoreForPayload =
+            trustScoreNum !== 0 && report.trustScore
+              ? { ...report.trustScore, overallScore: trustScoreNum }
+              : report.trustScore;
+          reportPayload = { trustScore: trustScoreForPayload, sections: report.sections };
+          const summaryText =
+            report.trustScore && typeof report.trustScore === "object" && "summary" in report.trustScore
+              ? String((report.trustScore as { summary?: string }).summary ?? "")
+              : "";
+          await db.insert(generatedProfileReports).values({
+            user_id: userId,
+            organization_id: organizationIdStr ?? undefined,
+            attestation_id: attestationId,
+            trust_score: trustScoreNum,
+            summary: summaryText || undefined,
+            report: reportPayload,
+          });
+        } catch (genErr) {
+          console.error("generateVendorAttestationReport after submit (update):", genErr);
+        }
+      }
       const [savedRow] = await db
         .select()
         .from(vendorSelfAttestations)
         .where(eq(vendorSelfAttestations.id, attestationId))
         .limit(1);
+      const att = savedRow ? buildAttestationResponse(savedRow as Record<string, unknown>) : null;
+      if (att && reportPayload) (att as Record<string, unknown>).generated_profile_report = reportPayload;
       res.status(200).json({
         success: true,
         message: isDraft ? "Draft saved successfully" : "Vendor self attestation submitted successfully",
         status,
-        attestation: savedRow ? buildAttestationResponse(savedRow as Record<string, unknown>) : null,
+        attestation: att,
       });
       return;
     }

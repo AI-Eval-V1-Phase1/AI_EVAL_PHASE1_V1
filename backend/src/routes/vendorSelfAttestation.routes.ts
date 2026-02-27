@@ -4,6 +4,8 @@ import submitVendorSelfAttestation from "../controllers/vendorSelfAttestation/su
 import getAttestationDocument from "../controllers/vendorSelfAttestation/getAttestationDocument.controller.js";
 import updateAttestationVisibility from "../controllers/vendorSelfAttestation/updateAttestationVisibility.controller.js";
 import updateSectionVisibility from "../controllers/vendorSelfAttestation/updateSectionVisibility.controller.js";
+import generateProductProfile from "../controllers/vendorSelfAttestation/generateProductProfile.controller.js";
+import listGeneratedReports from "../controllers/vendorSelfAttestation/listGeneratedReports.controller.js";
 import authenticateToken from "../middlewares/routesProtection.js";
 
 const router = express.Router();
@@ -21,5 +23,11 @@ router.post("/vendorSelfAttestation", authenticateToken, submitVendorSelfAttesta
 router.patch("/vendorSelfAttestation/visibility", authenticateToken, updateAttestationVisibility);
 // PATCH: Set which detail sections are visible to buyers (per card)
 router.patch("/vendorSelfAttestation/section-visibility", authenticateToken, updateSectionVisibility);
+
+// POST: Generate product profile report from vendor data (agent; no file output). Saves to generated_profile_reports.
+router.post("/vendorSelfAttestation/generate-profile", authenticateToken, generateProductProfile);
+
+// GET: List stored generated profile reports for the current user
+router.get("/vendorSelfAttestation/generated-reports", authenticateToken, listGeneratedReports);
 
 export default router;

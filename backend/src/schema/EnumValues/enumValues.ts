@@ -19,7 +19,7 @@ export const organizationTypeEnum = pgEnum("organization_type", [
 ]);
 
 // Legacy enums (for users table / app use)
-export const accountStatusEnum = pgEnum("account_status", ["invited", "confirmed"]);
+export const accountStatusEnum = pgEnum("account_status", ["invited", "confirmed", "expired"]);
 
 export const organizationStatusEnum = pgEnum("organizationStatus", [
   "active",
@@ -32,4 +32,10 @@ export const signup = pgEnum("user_signup_completed", [
 export const onboarding = pgEnum("user_onboarding_completed", [
   "true",
   "false",
+]);
+
+export const onboardingStatusEnum = pgEnum("onboarding_status", [
+  "completed",
+  "expired",
+  "pending",
 ]);

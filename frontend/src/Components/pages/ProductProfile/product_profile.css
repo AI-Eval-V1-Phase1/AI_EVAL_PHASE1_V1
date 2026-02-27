@@ -18,7 +18,7 @@
   color: #374151;
   background: #fff;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 5px;
   cursor: pointer;
   font-family: inherit;
   transition: background 0.15s ease, border-color 0.15s ease;
@@ -46,7 +46,7 @@
   padding: 0.8em 1em;
   background-color: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
+  border-radius: 5px;
 
   font-size: 0.875rem;
   font-weight: 600;
@@ -57,7 +57,7 @@
 .product_profile_toggle {
   width: 2.75rem;
   height: 1.5rem;
-  border-radius: 9999px;
+  border-radius: 25px;
   background-color: #2563eb;
   border: none;
   cursor: pointer;
@@ -121,7 +121,7 @@
 .product_profile_summary_card {
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 1rem 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
@@ -193,7 +193,7 @@
 .product_profile_detail_card {
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 1.25rem 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -297,6 +297,65 @@
   }
 }
 
+/* Full generated report (Trust Score + sections) when a report is selected or just generated */
+.product_profile_generated_report_section {
+  margin-bottom: 1.5rem;
+}
+
+/* Stored generated reports (under Trust Score / summary cards) */
+.product_profile_stored_reports_section {
+  margin-bottom: 1.5rem;
+}
+
+.product_profile_stored_reports_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.product_profile_stored_report_card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.product_profile_stored_report_card:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.product_profile_stored_report_card_selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+.product_profile_stored_report_trust {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+.product_profile_stored_report_date {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.product_profile_stored_report_attestation {
+  font-size: 0.75rem;
+  color: #059669;
+  font-weight: 500;
+}
+
 /* Products section and product cards */
 .product_profile_products_section {
   margin-bottom: 1.5rem;
@@ -320,7 +379,7 @@
 .product_profile_product_card {
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 1rem 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
@@ -347,7 +406,7 @@
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  border-radius: 8px;
+  border-radius: 5px;
   background: #e0e7ff;
   color: #4338ca;
   font-size: 0.75rem;
@@ -367,7 +426,7 @@
 .product_profile_product_card_status {
   display: inline-block;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: 5px;
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -381,13 +440,15 @@
 .product_profile_product_card_status_completed {
   background: #d8f3dc;
   color: #166534;
-  margin-left: 3.5em;
+  width: fit-content;
+  /* margin-left: 3.5em; */
 }
 
 /* Toggle used in modal (and elsewhere if needed) */
 .product_profile_product_toggle {
   width: 2.25rem;
   height: 1.25rem;
+  border-radius: 25px;
 }
 
 .product_profile_product_toggle::after {
@@ -401,7 +462,7 @@
   transform: translateX(-1rem);
   right: auto;
   left: 18px;
-  background-color: crimson;
+  background-color: var(--main-auth-button-color);
   top: 1.5px;
 }
 
@@ -439,9 +500,10 @@
 
 .product_profile_modal {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 5px;
   width: 100%;
-  max-width: 56rem;
+  max-width: 88rem;
+  /* max-width: 56rem; */
   max-height: calc(100vh - 4rem);
   display: flex;
   flex-direction: column;
@@ -463,21 +525,6 @@
   font-weight: 600;
   color: #111827;
   margin: 0;
-}
-
-.product_profile_modal_close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280;
-}
-
-.product_profile_modal_close:hover {
-  color: #111827;
 }
 
 .product_profile_modal_body {
@@ -515,10 +562,21 @@
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1.25rem;
+  background-color: #f5f7fa;
+  padding: 10px;
+  border-radius: 5px;
 }
 
 .product_profile_modal_visibility_label {
   font-size: 0.875rem;
   font-weight: 500;
   color: #374151;
+}
+
+
+.product_status_Data{
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin-left: 5px;
 }

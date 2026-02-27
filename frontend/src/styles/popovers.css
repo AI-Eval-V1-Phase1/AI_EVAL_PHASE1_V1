@@ -1,7 +1,7 @@
 /* Reusable popover panel (dropdown content) */
 .popover_panel {
   background: #ffffff;
-  border-radius: 10px;
+  border-radius: 5px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   padding: 12px 16px;
   z-index: 10000;
@@ -48,6 +48,25 @@
   color: var(--main-dark-color, #2463eb);
 }
 
+/* Profile detail popover: label + input (read-only) */
+.profile_detail_popover_input {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  box-sizing: border-box;
+  cursor: not-allowed;
+  word-break: break-word;
+}
+
+.profile_detail_popover_input--email {
+  font-size: 0.8125rem;
+  color: var(--main-dark-color, #2463eb);
+}
+
 /* Notifications popover */
 .notifications_popover {
   display: flex;
@@ -84,7 +103,7 @@
 
 .profile_modal_content {
   background: #fff;
-  border-radius: 10px;
+  border-radius: 5px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   width: 100%;
   max-width: 340px;
@@ -106,23 +125,6 @@
   font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
-}
-
-.profile_modal_close_btn {
-  background: none;
-  border: none;
-  padding: 0.25rem;
-  cursor: pointer;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-
-.profile_modal_close_btn:hover {
-  background: #f1f5f9;
-  color: #334155;
 }
 
 .profile_modal_body {

@@ -337,6 +337,22 @@ CREATE TABLE IF NOT EXISTS public.vendor_self_attestations (
   updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
+-- Generated product profile reports (from POST /vendorSelfAttestation/generate-profile)
+CREATE TABLE IF NOT EXISTS public.generated_profile_reports (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id integer NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  organization_id varchar(255),
+  attestation_id uuid REFERENCES public.vendor_self_attestations(id) ON DELETE SET NULL,
+  trust_score integer NOT NULL,
+  summary text,
+  report jsonb NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_generated_profile_reports_user_id ON public.generated_profile_reports(user_id);
+CREATE INDEX IF NOT EXISTS idx_generated_profile_reports_org_id ON public.generated_profile_reports(organization_id);
+CREATE INDEX IF NOT EXISTS idx_generated_profile_reports_attestation_id ON public.generated_profile_reports(attestation_id);
+CREATE INDEX IF NOT EXISTS idx_generated_profile_reports_created_at ON public.generated_profile_reports(created_at DESC);
+
 CREATE TABLE IF NOT EXISTS public.attestations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   assessment_id uuid NOT NULL,

@@ -9,6 +9,7 @@
 
 :root {
   --main-auth-button-color: #2463eb;
+  --ui-border-radius: 5px;
   --background-color-onboarding: #eff6ff;
   --edit-button-background: #bde0fe;
   --edit-button-color: black;
@@ -29,14 +30,18 @@ input {
 }
 button {
   font-family: "Inter", sans-serif;
+  border-radius: var(--ui-border-radius);
 }
 
-input[type="textarea"] {
+/* All textareas: 5px radius, no resize */
+textarea {
   border: 1px solid lightgray;
-  border-radius: 4px;
+  border-radius: 5px;
   padding: 5px;
   font-size: 16px;
-  height: 40px;
+  resize: none;
+  min-height: 2.5em;
+  box-sizing: border-box;
 }
 
 /* COTS-style select: applied to all form selects across the app */
@@ -46,7 +51,7 @@ select {
   max-width: 100%;
   box-sizing: border-box;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 5px;
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   font-size: 0.9375rem;
   line-height: 1.5;
@@ -75,7 +80,7 @@ select:focus {
   cursor: pointer;
   color: white;
   width: fit-content;
-  border-radius: 4px;
+  border-radius: var(--ui-border-radius);
   display: flex;
   justify-content: center;
   align-content: center;
@@ -159,9 +164,81 @@ select option {
   /* height: 50px; */
   background-color: var(--main-dark-color);
   color: white;
-  border-radius: 10px;
+  border-radius: var(--ui-border-radius);
   display: flex;
   justify-content: center;
   align-content: center;
   align-items: center;
+}
+
+/* Global: all buttons and cards use 5px border radius */
+button,
+input[type="submit"],
+input[type="button"],
+[class*="Btn"],
+[class*="_btn"],
+.card,
+.cards,
+.card_vendor,
+.org_settings_card,
+.attestation_section,
+.profile_modal_content,
+.modal_popup,
+.vendor_overview_attestation_row,
+.vendor_overview_metric_card,
+.icon_size_header,
+.user_popup,
+.settings_modal_content,
+.governance_risk_list .card--risk.card--risk--low-border,
+.governance_overview_top_cards .card--metric,
+.governance_bottom_card,
+.ai_assessments_section,
+.assessment_card,
+.sales_enablement_section,
+.sales_enablement_chat_main,
+.sales_enablement_sidebar_card,
+.report_card,
+.report_summary_card,
+.report_recommendation_card,
+.report_detail_empty,
+.product_profile_summary_card,
+.product_profile_detail_card,
+.product_profile_product_card,
+.product_profile_modal {
+  border-radius: var(--ui-border-radius) !important;
+}
+
+/* Toggles: 25px border radius (switch track only) */
+.vendor_overview_toggle,
+.product_profile_toggle,
+.product_profile_product_toggle {
+  border-radius: 25px !important;
+}
+
+/* Modal/page close button (CircleX) – same across the application */
+.modal_close_btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #64748b;
+  border-radius: 5px;
+}
+
+.modal_close_btn:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.modal_close_btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal_close_btn svg {
+  flex-shrink: 0;
+  color: inherit;
 }

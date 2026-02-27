@@ -1,5 +1,6 @@
-import React from "react"
+import React, { useRef, useEffect } from "react"
 import type { LucideIcon } from "lucide-react"
+import { CircleChevronLeft, CircleChevronRight } from "lucide-react"
 import "./MultiStepTabs.css"
 
 export interface MultiStepTabStep {
@@ -20,6 +21,8 @@ export interface MultiStepTabsProps {
   completedSteps?: number[]
   /** Step indices that are disabled (e.g. until previous steps are valid). Clicking them does nothing. */
   disabledSteps?: number[]
+  /** When false, the "next step" (forward) tab icon is disabled (e.g. current step data not filled). When enabled, clicking it only advances the step; it does not run Continue validation. Default true. */
+  canGoNext?: boolean
   /** Optional class name for the root container */
   className?: string
 }
@@ -34,6 +37,7 @@ function MultiStepTabs({
   onStepChange,
   completedSteps,
   disabledSteps = [],
+  canGoNext = true,
   className = "",
 }: MultiStepTabsProps) {
   const total = steps.length
@@ -45,6 +49,16 @@ function MultiStepTabs({
     total > 0
       ? Math.min(100, Math.round(((currentStep + 1) / total) * 100))
       : 0
+
+  const activeTabRef = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    activeTabRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    })
+  }, [currentStep])
 
   return (
     <div className={`multi_step_tabs ${className}`.trim()}>
@@ -70,32 +84,54 @@ function MultiStepTabs({
         />
       </div>
 
-      {/* Tabs in a single horizontal scrollable line */}
-      <div className="multi_step_tabs_list" role="tablist">
-        {steps.map((step, index) => {
-          const Icon = step.icon
-          const isActive = index === currentStep
-          const isCompleted = completed.includes(index)
-          const isDisabled = disabledSteps.includes(index)
-          return (
-            <button
-              key={step.id}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              aria-disabled={isDisabled}
-              aria-controls={`step-panel-${step.id}`}
-              id={`step-tab-${step.id}`}
-              className={`multi_step_tabs_tab ${isActive ? "multi_step_tabs_tab--active" : ""} ${isCompleted ? "multi_step_tabs_tab--completed" : ""} ${isDisabled ? "multi_step_tabs_tab--disabled" : ""}`}
-              onClick={() => !isDisabled && onStepChange(index)}
-            >
-              <span className="multi_step_tabs_tab_icon">
-                <Icon size={18} aria-hidden />
-              </span>
-              <span className="multi_step_tabs_tab_label">{step.label}</span>
-            </button>
-          )
-        })}
+      {/* Tabs with prev/next move icons */}
+      <div className="multi_step_tabs_nav_wrapper">
+        <button
+          type="button"
+          className="multi_step_tabs_nav_btn multi_step_tabs_nav_btn_prev"
+          onClick={() => currentStep > 0 && onStepChange(currentStep - 1)}
+          disabled={currentStep === 0}
+          aria-label="Previous step"
+        >
+          <CircleChevronLeft size={28} aria-hidden />
+        </button>
+        <div className="multi_step_tabs_list" role="tablist">
+          {steps.map((step, index) => {
+            const Icon = step.icon
+            const isActive = index === currentStep
+            const isCompleted = completed.includes(index)
+            const isDisabled = disabledSteps.includes(index)
+            return (
+              <button
+                key={step.id}
+                ref={isActive ? activeTabRef : undefined}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-disabled={isDisabled}
+                aria-controls={`step-panel-${step.id}`}
+                id={`step-tab-${step.id}`}
+                className={`multi_step_tabs_tab ${isActive ? "multi_step_tabs_tab--active" : ""} ${isCompleted ? "multi_step_tabs_tab--completed" : ""} ${isDisabled ? "multi_step_tabs_tab--disabled" : ""}`}
+                onClick={() => !isDisabled && onStepChange(index)}
+              >
+                <span className="multi_step_tabs_tab_icon">
+                  <Icon size={18} aria-hidden />
+                </span>
+                <span className="multi_step_tabs_tab_label">{step.label}</span>
+              </button>
+            )
+          })}
+        </div>
+        <button
+          type="button"
+          className="multi_step_tabs_nav_btn multi_step_tabs_nav_btn_next"
+          onClick={() => canGoNext && currentStep < total - 1 && onStepChange(currentStep + 1)}
+          disabled={currentStep === total - 1 || !canGoNext}
+          aria-label="Next step"
+          aria-disabled={currentStep === total - 1 || !canGoNext}
+        >
+          <CircleChevronRight size={28} aria-hidden />
+        </button>
       </div>
 
       {/* Form content below progress and tabs */}

@@ -2,11 +2,54 @@ import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
 import { createOrganization, usersTable } from "../../schema/schema.js";
 import { eq } from "drizzle-orm";
+import { SIGNUP_LINK_EXPIRY_DAYS, ONBOARDING_LINK_EXPIRY_DAYS } from "../../constants/tokenExpiry.js";
 
 interface JwtPayload {
   id?: number;
   email?: string;
   userRole?: string;
+}
+
+/**
+ * Derive onboarding status from DB and token expiry.
+ * - Completed: user_onboarding_completed === true.
+ * - Expired (signup): account is invited and signup link has expired (invited_at + 7 days < now). Status is then persisted as expired.
+ * - Expired (onboarding): signup completed, onboarding not completed, onboarding link sent at + 1 day < now.
+ * - Pending: otherwise.
+ */
+function getOnboardingStatus(user: {
+  user_onboarding_completed?: string | null;
+  user_signup_completed?: string | null;
+  account_status?: string | null;
+  invited_at?: Date | string | null;
+  onboarding_status?: string | null;
+  onboarding_link_sent_at?: Date | string | null;
+}): "completed" | "expired" | "pending" {
+  if (String(user.user_onboarding_completed ?? "").toLowerCase() === "true") {
+    return "completed";
+  }
+  const accountStatus = String(user.account_status ?? "").toLowerCase();
+  const signupCompleted = String(user.user_signup_completed ?? "").toLowerCase() === "true";
+
+  if (accountStatus === "invited" && user.invited_at) {
+    const invitedAt = typeof user.invited_at === "string" ? new Date(user.invited_at) : user.invited_at;
+    const expiry = new Date(invitedAt);
+    expiry.setDate(expiry.getDate() + SIGNUP_LINK_EXPIRY_DAYS);
+    if (new Date() > expiry) {
+      return "expired";
+    }
+  }
+
+  if (signupCompleted && user.onboarding_link_sent_at) {
+    const sentAt = typeof user.onboarding_link_sent_at === "string" ? new Date(user.onboarding_link_sent_at) : user.onboarding_link_sent_at;
+    const expiry = new Date(sentAt);
+    expiry.setDate(expiry.getDate() + ONBOARDING_LINK_EXPIRY_DAYS);
+    if (new Date() > expiry) {
+      return "expired";
+    }
+  }
+
+  return (user.onboarding_status as "completed" | "expired" | "pending") ?? "pending";
 }
 
 /**
@@ -64,11 +107,47 @@ const fetchAllUsers = async (req: Request, res: Response) => {
         .leftJoin(createOrganization, eq(usersTable.organization_id, createOrganization.id));
     }
 
-    const data = userRows.map(({ user, organizationName }) => ({
-      ...user,
-      organization_id: user.organization_id,
-      organization_name: organizationName ?? "",
-    }));
+    // Automatically mark as expired when not completed: invited + onboarding pending and signup expiry (invited_at) has passed
+    const expiredUserIds = new Map<number, { accountStatus: "invited" | "confirmed" }>();
+    for (const { user } of userRows) {
+      const onboardingStatus = getOnboardingStatus(user);
+      if (onboardingStatus === "expired" && user.id != null) {
+        const accountStatus = String(user.account_status ?? "").toLowerCase() as "invited" | "confirmed";
+        if (accountStatus === "invited" || accountStatus === "confirmed") {
+          expiredUserIds.set(user.id, { accountStatus: accountStatus as "invited" | "confirmed" });
+        }
+      }
+    }
+    for (const [id, { accountStatus }] of expiredUserIds) {
+      try {
+        if (accountStatus === "invited") {
+          await db
+            .update(usersTable)
+            .set({ onboarding_status: "expired", account_status: "expired" })
+            .where(eq(usersTable.id, id));
+        } else {
+          await db
+            .update(usersTable)
+            .set({ onboarding_status: "expired" })
+            .where(eq(usersTable.id, id));
+        }
+      } catch (err) {
+        console.error("Failed to set expired for user", id, err);
+      }
+    }
+
+    const data = userRows.map(({ user, organizationName }) => {
+      const onboardingStatus = getOnboardingStatus(user);
+      const wasMarkedExpired = user.id != null && expiredUserIds.has(user.id);
+      const info = user.id != null ? expiredUserIds.get(user.id) : undefined;
+      return {
+        ...user,
+        organization_id: user.organization_id,
+        organization_name: organizationName ?? "",
+        onboarding_status: wasMarkedExpired ? "expired" : onboardingStatus,
+        account_status: wasMarkedExpired && info?.accountStatus === "invited" ? "expired" : user.account_status,
+      };
+    });
 
     res.status(200).json({
       message: "Users fetched successfully",

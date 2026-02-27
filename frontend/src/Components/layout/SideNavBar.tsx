@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { NAVIGATION } from "../../constants/navConfig"; // the list of side navigation bar
 import { NavLink, useLocation } from "react-router-dom";
 import { Shield } from "lucide-react";
@@ -11,6 +12,12 @@ const isAttestationArea = (pathname: string) =>
 
 const SideNavBar = () => {
   const location = useLocation();
+  const [, setProfileRefresh] = useState(0);
+  useEffect(() => {
+    const onProfileUpdated = () => setProfileRefresh((n) => n + 1);
+    window.addEventListener("userProfileUpdated", onProfileUpdated);
+    return () => window.removeEventListener("userProfileUpdated", onProfileUpdated);
+  }, []);
   const rawUserRole = sessionStorage.getItem("userRole") ?? "";
   const rawSystemRole = sessionStorage.getItem("systemRole") ?? "";
   const userRole = String(rawUserRole).toLowerCase().trim();

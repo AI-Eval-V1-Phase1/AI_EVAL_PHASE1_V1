@@ -19,8 +19,11 @@ const LayoutWithoutNav = () => {
       </div> */}
       <div className="layout_onBoarrding">
         <header className="header_onboarding">
-          <div className="logo_sec">
-            <Shield className="logo_img" size={40} />
+          <div className="logo_sec header_for_auth" aria-label="AI Eval">
+            <span>
+              <Shield size={24} aria-hidden />
+            </span>
+            <p>AI Eval Platform</p>
           </div>
           <h2>Welcome to AI Eval!</h2>
           <p className="modal_sub_title">

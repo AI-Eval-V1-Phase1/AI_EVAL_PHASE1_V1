@@ -41,34 +41,27 @@ const updatesUsers = async (req: Request, res: Response) => {
   }
 
   try {
-    const emailLower = data.email.toLowerCase();
-    const organizationId = Number(data.organization);
-    if (!Number.isInteger(organizationId) || organizationId < 1) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid organization",
-      });
-    }
-
-    const existingUser = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.email, emailLower));
-
-    const conflictUser = existingUser[0];
-    if (existingUser.length > 0 && conflictUser !== undefined && conflictUser.id !== user_Id) {
-      return res.status(400).json({
-        success: false,
-        message: "Email already exists for another user",
-      });
-    }
-
-     const currentUser = await db
-      .select({ userStatus: usersTable.userStatus })
+    // Email and organization are not editable; load current user for logging and status check only.
+    const [currentUserRow] = await db
+      .select({
+        email: usersTable.email,
+        organization_id: usersTable.organization_id,
+        userStatus: usersTable.userStatus,
+      })
       .from(usersTable)
       .where(eq(usersTable.id, user_Id))
       .limit(1);
-    const previousStatus = String(currentUser[0]?.userStatus ?? "").trim().toLowerCase();
+
+    if (!currentUserRow) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const emailLower = currentUserRow.email ?? "";
+    const organizationId = Number(currentUserRow.organization_id);
+    const previousStatus = String(currentUserRow.userStatus ?? "").trim().toLowerCase();
 
     const [orgRow] = await db
       .select({ organizationName: createOrganization.organizationName })
@@ -77,13 +70,18 @@ const updatesUsers = async (req: Request, res: Response) => {
       .limit(1);
     const organizationNameForLog = orgRow?.organizationName ?? String(organizationId);
 
+    const validOnboardingStatuses = ["completed", "expired", "pending"] as const;
+    const raw = data.onboarding_status && String(data.onboarding_status).toLowerCase();
+    const onboardingStatus =
+      raw && validOnboardingStatuses.includes(raw) ? raw : undefined;
+
+    // Only update editable fields: role, userStatus, optional onboarding_status (email and organization are immutable).
     await db
       .update(usersTable)
       .set({
-        email: emailLower,
-        organization_id: organizationId,
         role: data.role,
         userStatus: data.isStatus,
+        ...(onboardingStatus != null && { onboarding_status: onboardingStatus }),
       })
       .where(eq(usersTable.id, user_Id));
 
@@ -113,7 +111,7 @@ const updatesUsers = async (req: Request, res: Response) => {
             to: emailLower,
             subject: "Your AI Eval account has been reactivated – Confirm your email",
             html: signupConfirmationEmailHtml(
-              data.organization ?? "",
+              organizationNameForLog,
               data.role ?? "",
               confirmationLink,
             ),

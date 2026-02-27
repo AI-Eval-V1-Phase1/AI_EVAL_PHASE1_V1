@@ -54,10 +54,35 @@ useEffect(() => {
 }, [token, navigate]);
 
 
-  const handleSelection = () => {
+  const handleSelection = async () => {
+    const activeToken = token || sessionStorage.getItem("onboardingToken");
+    if (!activeToken) return;
+    const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
     if (role === "buyer") {
+      try {
+        await fetch(`${BASE_URL}/buyerOnboarding/clear-vendor`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${activeToken}`,
+          },
+        });
+      } catch (e) {
+        console.error("Clear vendor onboarding failed", e);
+      }
       navigate(`/onBoarding/buyerOnboarding/${token}`);
     } else if (role === "vendor") {
+      try {
+        await fetch(`${BASE_URL}/vendorOnboarding/clear-buyer`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${activeToken}`,
+          },
+        });
+      } catch (e) {
+        console.error("Clear buyer onboarding failed", e);
+      }
       navigate(`/onBoarding/vendorOnboarding/${token}`);
     }
   };

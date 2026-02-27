@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
-import { vendors, vendorSelfAttestations, usersTable } from "../../schema/schema.js";
-import { and, desc, eq } from "drizzle-orm";
+import { createOrganization, vendors, vendorSelfAttestations, usersTable, generatedProfileReports } from "../../schema/schema.js";
+import { and, desc, eq, inArray, or } from "drizzle-orm";
 
 function userDisplayName(u: { user_name?: string | null; user_first_name?: string | null; user_last_name?: string | null; email?: string | null }): string {
   const name = (u.user_name ?? "").trim();
@@ -58,13 +58,18 @@ function mapAttestationRow(attestRow: Record<string, unknown>, completedByName?:
     status: rowStatus,
     created_at: attestRow.created_at ?? undefined,
     updated_at: attestRow.updated_at ?? undefined,
+    submitted_at: attestRow.submitted_at ?? undefined,
     product_name: attestRow.product_name ?? undefined,
     visible_to_buyer: attestRow.visible_to_buyer === true || attestRow.visible_to_buyer === 1,
-    visible_ai_governance: attestRow.visible_ai_governance !== false,
-    visible_security_posture: attestRow.visible_security_posture !== false,
-    visible_data_privacy: attestRow.visible_data_privacy !== false,
-    visible_compliance: attestRow.visible_compliance !== false,
-    visible_model_risk: attestRow.visible_model_risk !== false,
+    visible_ai_governance: attestRow.visible_ai_governance === true,
+    visible_security_posture: attestRow.visible_security_posture === true,
+    visible_data_privacy: attestRow.visible_data_privacy === true,
+    visible_compliance: attestRow.visible_compliance === true,
+    visible_model_risk: attestRow.visible_model_risk === true,
+    visible_data_practices: attestRow.visible_data_practices === true,
+    visible_compliance_certifications: attestRow.visible_compliance_certifications === true,
+    visible_operations_support: attestRow.visible_operations_support === true,
+    visible_vendor_management: attestRow.visible_vendor_management === true,
     purchase_decision_makers: attestRow.purchase_decisions_by ?? undefined,
     pain_points_solved: attestRow.pain_points ?? undefined,
     alternatives_considered: attestRow.alternatives_consider ?? undefined,
@@ -94,6 +99,7 @@ function mapAttestationRow(attestRow: Record<string, unknown>, completedByName?:
     testing_results_available: attestRow.test_results ?? undefined,
     document_uploads: attestRow.document_uploads ?? undefined,
     certificates,
+    generated_profile_report: attestRow.generated_profile_report ?? undefined,
   };
   if (completedByName != null && completedByName !== "") {
     base.completedBy = { name: completedByName };
@@ -194,6 +200,21 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       platformRole === "systemadmin" ||
       (Number(orgId) === 1 && role === "admin");
 
+    // For system admin: resolve org name so we can filter attestations by org (organization_id may be id or name in vendor_self_attestations)
+    let orgNameForFilter: string | null = null;
+    if (isSystemAdmin && orgId != null) {
+      const numOrgId = Number(orgId);
+      if (Number.isInteger(numOrgId) && numOrgId >= 1) {
+        const [orgRow] = await db
+          .select({ organizationName: createOrganization.organizationName })
+          .from(createOrganization)
+          .where(eq(createOrganization.id, numOrgId))
+          .limit(1);
+        orgNameForFilter = orgRow?.organizationName ?? null;
+      }
+    }
+    const orgIdStr = orgId != null ? String(orgId) : "";
+
     const organizationId = typeof req.query?.organizationId === "string" ? req.query.organizationId.trim() : null;
     const attestationId = typeof req.query?.id === "string" ? req.query.id.trim() || null : null;
 
@@ -275,8 +296,14 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       visible_data_privacy: vendorSelfAttestations.visible_data_privacy,
       visible_compliance: vendorSelfAttestations.visible_compliance,
       visible_model_risk: vendorSelfAttestations.visible_model_risk,
+      visible_data_practices: vendorSelfAttestations.visible_data_practices,
+      visible_compliance_certifications: vendorSelfAttestations.visible_compliance_certifications,
+      visible_operations_support: vendorSelfAttestations.visible_operations_support,
+      visible_vendor_management: vendorSelfAttestations.visible_vendor_management,
       created_at: vendorSelfAttestations.created_at,
       updated_at: vendorSelfAttestations.updated_at,
+      submitted_at: vendorSelfAttestations.submitted_at,
+      generated_profile_report: vendorSelfAttestations.generated_profile_report,
       user_name: usersTable.user_name,
       user_first_name: usersTable.user_first_name,
       user_last_name: usersTable.user_last_name,
@@ -321,10 +348,19 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
     }
 
     if (attestationId) {
-      // System admin: do not expose vendor attestations (require own user_id, so they never match)
+      // System admin: allow access if attestation belongs to their org; otherwise require own user_id
+      const orgCondition =
+        isSystemAdmin && (orgIdStr || orgNameForFilter)
+          ? orgIdStr && orgNameForFilter
+            ? or(
+                eq(vendorSelfAttestations.organization_id, orgIdStr),
+                eq(vendorSelfAttestations.organization_id, orgNameForFilter),
+              )
+            : eq(vendorSelfAttestations.organization_id, orgIdStr || orgNameForFilter || "")
+          : eq(vendorSelfAttestations.user_id, userId);
       const whereSingle = and(
         eq(vendorSelfAttestations.id, attestationId),
-        eq(vendorSelfAttestations.user_id, userId)
+        orgCondition,
       );
       const [one] = await db
         .select(attestationWithUserSelect)
@@ -350,6 +386,15 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
         email: one.user_email ?? null,
       });
       const attestation = mapAttestationRow(oneRow, completedByName);
+      const [reportRow] = await db
+        .select({ report: generatedProfileReports.report })
+        .from(generatedProfileReports)
+        .where(eq(generatedProfileReports.attestation_id, attestationId))
+        .orderBy(desc(generatedProfileReports.created_at))
+        .limit(1);
+      if (reportRow?.report != null) {
+        (attestation as Record<string, unknown>).generated_profile_report = reportRow.report;
+      }
       // When editing a draft: use company profile saved in the attestation (draft data), not onboarding.
       let resolvedCompanyProfile = companyProfile;
       if (attestationHasCompanyProfile(oneRow)) {
@@ -369,23 +414,47 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       return;
     }
 
-    // System admin: do not display vendor attestations on this page (return empty list)
-    const attestRows = isSystemAdmin
-      ? []
-      : await db
-          .select(attestationWithUserSelect)
-          .from(vendorSelfAttestations)
-          .leftJoin(usersTable, eq(vendorSelfAttestations.user_id, usersTable.id))
-          .where(eq(vendorSelfAttestations.user_id, userId))
-          .orderBy(desc(vendorSelfAttestations.created_at));
+    // System admin: fetch attestations for their organization; others: fetch by user_id
+    const listWhere =
+      isSystemAdmin && (orgIdStr || orgNameForFilter)
+        ? orgIdStr && orgNameForFilter
+          ? or(
+              eq(vendorSelfAttestations.organization_id, orgIdStr),
+              eq(vendorSelfAttestations.organization_id, orgNameForFilter),
+            )
+          : eq(vendorSelfAttestations.organization_id, orgIdStr || orgNameForFilter || "")
+        : eq(vendorSelfAttestations.user_id, userId);
+    const attestRows = await db
+      .select(attestationWithUserSelect)
+      .from(vendorSelfAttestations)
+      .leftJoin(usersTable, eq(vendorSelfAttestations.user_id, usersTable.id))
+      .where(listWhere)
+      .orderBy(desc(vendorSelfAttestations.created_at));
+    const attestationIds = attestRows.map((r) => (r as Record<string, unknown>).id as string).filter(Boolean);
+    const reportByAttestationId = new Map<string, unknown>();
+    if (attestationIds.length > 0) {
+      const reportRows = await db
+        .select({ attestation_id: generatedProfileReports.attestation_id, report: generatedProfileReports.report })
+        .from(generatedProfileReports)
+        .where(inArray(generatedProfileReports.attestation_id, attestationIds))
+        .orderBy(desc(generatedProfileReports.created_at));
+      for (const r of reportRows) {
+        const aid = r.attestation_id;
+        if (aid && !reportByAttestationId.has(aid)) reportByAttestationId.set(aid, r.report);
+      }
+    }
     const attestations = attestRows.map((row) => {
+      const rowRecord = row as Record<string, unknown>;
       const completedByName = userDisplayName({
         user_name: row.user_name ?? null,
         user_first_name: row.user_first_name ?? null,
         user_last_name: row.user_last_name ?? null,
         email: row.user_email ?? null,
       });
-      return mapAttestationRow(row as Record<string, unknown>, completedByName);
+      const att = mapAttestationRow(rowRecord, completedByName);
+      const reportFromTable = rowRecord.id != null ? reportByAttestationId.get(String(rowRecord.id)) : undefined;
+      if (reportFromTable != null) (att as Record<string, unknown>).generated_profile_report = reportFromTable;
+      return att;
     });
     const attestation = attestations[0] ?? {};
 

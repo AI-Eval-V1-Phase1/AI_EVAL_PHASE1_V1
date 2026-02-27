@@ -117,8 +117,9 @@ const BuyerMainForm = ({ type }: { type: string }) => {
   const [allStepsFilled, setAllStepsFilled] = useState(false)
   const [formBuyerData, setFormBuyerData] = useState<BuyerDataInterface>(buyerFormInitialState as BuyerDataInterface)
   const [validationError, setValidationError] = useState<z.ZodError | null>(null)
+    const token = sessionStorage.getItem("onboardingToken")
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (currentStep >= 8) return
     const schema = stepSchemas[currentStep]
     const stepData = getStepData(currentStep, formBuyerData)
@@ -128,6 +129,28 @@ const BuyerMainForm = ({ type }: { type: string }) => {
       return
     }
     setValidationError(null)
+    const orgId = sessionStorage.getItem("organizationId")
+    if (token) {
+      try {
+        const res = await fetch(`${BASE_URL}/buyerOnboarding/save-progress`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            ...formBuyerData,
+            organization_Id: orgId ?? undefined,
+          }),
+        })
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          console.error("Save progress failed:", data?.error ?? res.statusText)
+        }
+      } catch (err) {
+        console.error("Save progress error:", err)
+      }
+    }
     setCurrentStep((prev) => prev + 1)
   }
 
@@ -283,6 +306,13 @@ const BuyerMainForm = ({ type }: { type: string }) => {
 
   const completedStepsForProgress = Array.from({ length: currentStep }, (_, i) => i)
 
+  const canGoNext = useMemo(() => {
+    if (currentStep >= 8) return true
+    const schema = stepSchemas[currentStep]
+    const stepData = getStepData(currentStep, formBuyerData)
+    return schema.safeParse(stepData).success
+  }, [currentStep, formBuyerData])
+
   const disabledSteps = useMemo(() => {
     const disabled: number[] = []
     for (let i = 0; i <= 7; i++) {
@@ -296,7 +326,7 @@ const BuyerMainForm = ({ type }: { type: string }) => {
     return disabled
   }, [formBuyerData])
 
-  const handleBackToSelection = () => navigate("/onboarding")
+  const handleBackToSelection = () => navigate(`/onboarding/${token}`)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -335,6 +365,7 @@ const BuyerMainForm = ({ type }: { type: string }) => {
             }}
             completedSteps={completedStepsForProgress}
             disabledSteps={disabledSteps}
+            canGoNext={canGoNext}
             className="vendor_onboarding_tabs"
           />
 

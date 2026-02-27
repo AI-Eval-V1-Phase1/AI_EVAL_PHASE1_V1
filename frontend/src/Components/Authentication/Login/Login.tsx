@@ -23,12 +23,13 @@ const Login = () => {
   const location = useLocation();
   const resetSuccess = (location.state as { resetSuccess?: boolean } | null)
     ?.resetSuccess;
-  const [email, setEmail] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [isUser, setIsUser] = useState({});
   const [isError, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   const getUser = async (e: any) => {
     e.preventDefault();
@@ -36,7 +37,7 @@ const Login = () => {
     setError("");
 
     const data = {
-      email: email.trim().toLowerCase(),
+      email: emailOrUsername.trim(),
       password,
     };
     // console.log(data);
@@ -117,6 +118,7 @@ const Login = () => {
           "user_onboarding_completed",
           String(userDetails.user_onboarding_completed ?? "false"),
         );
+        setLoginSuccess(true);
         toast.success("Login successful!", { autoClose: 2000 });
         const nextPath =
           userDetails.user_onboarding_completed === true ||
@@ -125,6 +127,7 @@ const Login = () => {
             : "/onBoarding";
         setTimeout(() => navigate(nextPath), 2000);
       } else {
+        setIsLoading(false);
         const msg = (result.message ?? "").toLowerCase();
         const isInvited =
           msg.includes("invited") ||
@@ -144,14 +147,13 @@ const Login = () => {
           setError("User Not found.");
         } else {
           setError(
-            result.message || "Login failed. Check your email and password.",
+            result.message || "Login failed. Check your email/username and password.",
           );
         }
       }
     } catch (error) {
       console.log(error);
       setError("Something went wrong. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -160,7 +162,7 @@ const Login = () => {
     setIsVisible((prev) => !prev);
   };
 
-  const isDisabledBtn = !email.trim() || !password.trim() || isLoading;
+  const isDisabledBtn = !emailOrUsername.trim() || !password.trim() || isLoading || loginSuccess;
 
   return (
     <>
@@ -178,16 +180,18 @@ const Login = () => {
                       <span>
                         <Mail width={20} strokeWidth={1.5} />
                       </span>{" "}
-                      Email
+                      Email or username
                     </label>
                     <input
-                      type="email"
-                      value={email}
+                      type="text"
+                      id="loginEmail"
+                      autoComplete="username"
+                      value={emailOrUsername}
                       onChange={(e) => {
-                        setEmail(e.target.value);
+                        setEmailOrUsername(e.target.value);
                         if (isError) setError("");
                       }}
-                      placeholder="johndoe@domain.com"
+                      placeholder="Email or username"
                       aria-invalid={!!isError}
                     />
                   </div>
@@ -245,13 +249,22 @@ const Login = () => {
                   <div className="loginBtn">
                     <button
                       type="submit"
-                      className={`login-btn ${isDisabledBtn ? "disabled_css" : ""} ${isLoading ? "auth_btn_loading" : ""}`}
+                      className={`login-btn ${isDisabledBtn ? "disabled_css" : ""} ${(isLoading || loginSuccess) ? "auth_btn_loading" : ""}`}
                       disabled={isDisabledBtn}
-                      aria-busy={isLoading}
+                      aria-busy={isLoading || loginSuccess}
                     >
-                      {isLoading ? (
+                      {loginSuccess ? (
                         <>
                           Signing in…
+                          <Loader2
+                            className="auth_spinner"
+                            size={20}
+                            aria-hidden
+                          />
+                        </>
+                      ) : isLoading ? (
+                        <>
+                          
                           <Loader2
                             className="auth_spinner"
                             size={20}

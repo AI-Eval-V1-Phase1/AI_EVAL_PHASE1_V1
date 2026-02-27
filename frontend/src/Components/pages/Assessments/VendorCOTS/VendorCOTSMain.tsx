@@ -214,7 +214,7 @@ const VendorCOTSMain = () => {
     };
   }, [assessmentIdFromUrl, navigate]);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (
       currentStep < VENDOR_COTS_FORM_SECTIONS.length &&
       !isVendorCotsStepValid(currentStep, formData)
@@ -222,7 +222,8 @@ const VendorCOTSMain = () => {
       setValidationAttemptedSteps((prev) => new Set(prev).add(currentStep));
       return;
     }
-    setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS - 1));
+    const saved = await handleSaveDraft({ silent: true });
+    if (saved) setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS - 1));
   };
 
   const handleBack = () => setCurrentStep((prev) => Math.max(0, prev - 1));
@@ -284,20 +285,21 @@ const VendorCOTSMain = () => {
     }
   };
 
-  const handleSaveDraft = async () => {
+  const handleSaveDraft = async (options?: { silent?: boolean }): Promise<boolean> => {
+    const silent = options?.silent === true;
     const token = sessionStorage.getItem("bearerToken");
     const organizationId = sessionStorage.getItem("organizationId");
     if (!token) {
       setSubmitError("Please log in to save draft.");
-      return;
+      return false;
     }
     if (!organizationId) {
       setSubmitError(
         "Organization context missing. Please complete onboarding or log in again.",
       );
-      return;
+      return false;
     }
-    setSavingDraft(true);
+    if (!silent) setSavingDraft(true);
     setSubmitError("");
     try {
       const payload: Record<string, unknown> = { organizationId, ...formData };
@@ -333,7 +335,7 @@ const VendorCOTSMain = () => {
             "This assessment is completed and cannot be changed back to draft.",
           );
           navigate("/assessments", { replace: true });
-          return;
+          return false;
         }
         const msg =
           result?.message || `Failed to save draft (${response.status})`;
@@ -348,13 +350,15 @@ const VendorCOTSMain = () => {
           navigate(`/vendorcots/${savedId}`, { replace: true });
         }
       }
-      toast.success("Draft saved.");
+      if (!silent) toast.success("Draft saved.");
+      return true;
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : "Failed to save draft",
       );
+      return false;
     } finally {
-      setSavingDraft(false);
+      if (!silent) setSavingDraft(false);
     }
   };
 
@@ -433,6 +437,10 @@ const VendorCOTSMain = () => {
             onStepChange={setCurrentStep}
             completedSteps={completedStepsForProgress}
             disabledSteps={disabledSteps}
+            canGoNext={
+              currentStep >= TOTAL_STEPS - 1 ||
+              isVendorCotsStepValid(currentStep, formData)
+            }
             className="vendor_onboarding_tabs"
           />
           <CardOnBoarding className="card_vendor">

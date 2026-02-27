@@ -37,7 +37,7 @@
   box-sizing: border-box;
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 5px;
   background: white;
   font-size: 0.875rem;
   color: #374151;
@@ -84,7 +84,7 @@
 .vendor_overview_toggle {
   width: 2.75rem;
   height: 1.5rem;
-  border-radius: 9999px;
+  border-radius: 25px;
   background-color: #2563eb;
   border: none;
   cursor: pointer;
@@ -119,7 +119,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  border-radius: 8px;
+  border-radius: 5px;
   font-size: 0.875rem;
   font-weight: 500;
   background: #2563eb;
@@ -162,7 +162,7 @@
 .vendor_overview_metric_card {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   position: relative;
@@ -172,7 +172,7 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
-  color: #9ca3af;
+  color: #2563eb;
 }
 
 .vendor_overview_metric_card_icon_green {
@@ -184,6 +184,11 @@
   font-weight: 500;
   color: black;
   margin: 0 0 1em 0;
+}
+
+.vendor_overview_metric_title svg {
+  color: #2563eb;
+  flex-shrink: 0;
 }
 
 .vendor_overview_metric_value {
@@ -223,7 +228,7 @@
   /* background: #f9fafb; */
   /* border: 1px solid #e5e7eb; */
   background-color: white;
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -247,11 +252,15 @@
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-  background: white;
+  background: #f8fafc;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 5px;
   padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
+}
+
+.vendor_overview_attestation_row:hover {
+  background-color: white;
 }
 
 .vendor_overview_attestation_row:last-child {
@@ -355,7 +364,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.4rem 0.75rem;
-  border-radius: 6px;
+  border-radius: 5px;
   font-size: 0.875rem;
   font-weight: 500;
   background: white;
@@ -367,6 +376,20 @@
 
 .vendor_overview_btn_view:hover {
   background: #f9fafb;
+}
+
+/* My Attestations – dropdown to pick completed attestation, then documents list */
+.vendor_overview_my_attestations_dropdown {
+  margin-bottom: 1.25rem;
+  max-width: 360px;
+}
+
+.vendor_overview_my_attestations_dropdown .select_label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.35rem;
 }
 
 /* Verified certificates – same card design as vendor attestation cards */
@@ -789,7 +812,7 @@
 /* Low and very low risk cards: same border as buyer dashboard buttons (View Report, Assessment) */
 .governance_risk_list .card--risk.card--risk--low-border {
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 5px;
 }
 
 /* Risk breakdown pills: 4px radius in buyer dashboard */
@@ -806,6 +829,10 @@
 /* Top metric cards – white background for buyer dashboard */
 .governance_overview_top_cards .card--metric {
   background: white;
+}
+
+.governance_overview_top_cards .card__icon {
+  color: #2563eb;
 }
 
 /* ========== Bottom row: Risks by Intent, Risk Domains, Recent Assessments ========== */
@@ -825,7 +852,7 @@
 .governance_bottom_card {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 5px;
   padding: 1.25rem 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
@@ -886,12 +913,18 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 0.75rem 1rem;
+  border-radius: 5px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.governance_recent_item:hover {
+  background-color: white;
 }
 
 .governance_recent_item:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
 .governance_recent_icon {

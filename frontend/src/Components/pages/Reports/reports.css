@@ -22,7 +22,7 @@
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   cursor: pointer;
-  border-radius: 8px 8px 0 0;
+  border-radius: 5px 5px 0 0;
 }
 
 .reports_tab:hover {
@@ -53,7 +53,7 @@
   min-width: 0;
   padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 5px;
   font-size: 0.875rem;
   color: #111827;
 }
@@ -80,7 +80,7 @@
   padding: 1rem 1.25rem;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 5px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   cursor: pointer;
   text-decoration: none;
@@ -99,7 +99,7 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: 5px;
   background: #ede9fe;
   color: #7c3aed;
   flex-shrink: 0;
@@ -139,7 +139,7 @@
   font-weight: 500;
   color: #fff;
   background: #2563eb;
-  border-radius: 4px;
+  border-radius: 5px;
 }
 
 .report_card_download {
@@ -150,7 +150,7 @@
   height: 36px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: 5px;
   background: transparent;
   color: #6b7280;
   cursor: pointer;
@@ -221,7 +221,7 @@
   color: #fff;
   background: #2563eb;
   border: none;
-  border-radius: 8px;
+  border-radius: 5px;
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -234,7 +234,7 @@
 .report_recommendation_card {
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
-  border-radius: 12px;
+  border-radius: 5px;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.5rem;
   position: relative;
@@ -248,7 +248,7 @@
   bottom: 0;
   width: 4px;
   background: #16a34a;
-  border-radius: 4px 0 0 4px;
+  border-radius: 5px 0 0 5px;
 }
 
 .report_recommendation_heading {
@@ -283,7 +283,7 @@
 .report_summary_card {
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 5px;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -309,7 +309,7 @@
   background: #fff;
   border: 1px dashed var(--light-gray-color);
   /* border: 1px dashed #e5e7eb; */
-  border-radius: 4px;
+  border-radius: 5px;
   padding: 2rem;
   text-align: center;
   max-width: 480px;

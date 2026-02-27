@@ -5,6 +5,7 @@ import { createOrganization, usersTable } from "../../schema/schema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import emailConfig from "../../functions/emailconfig.js";
+import { ONBOARDING_LINK_EXPIRY_JWT } from "../../constants/tokenExpiry.js";
 
 const userSignup = async (req: Request, res: Response) => {
   const userData = req.body ?? {};
@@ -179,7 +180,7 @@ const userSignup = async (req: Request, res: Response) => {
     const secret = process.env.JWT_SECRET_KEY;
     if (!secret) throw new Error("JWT_SECRET_KEY not set");
     const token = jwt.sign({ email, userId, organizationId }, secret, {
-      expiresIn: "1d",
+      expiresIn: ONBOARDING_LINK_EXPIRY_JWT,
     });
 
     const onboardingLink = `${BASE_URL}/onBoarding/${token}`;
@@ -222,19 +223,20 @@ const userSignup = async (req: Request, res: Response) => {
         console.log("Onboarding email sent to admin:", email);
         onboardingEmailSent = true;
 
-        // Ensure platform role is set for AI Eval even when org not yet onboarded
-        if (platformRoleToStore != null) {
-          await db
-            .update(usersTable)
-            .set({ user_platform_role: platformRoleToStore })
-            .where(eq(usersTable.id, dbUser.id));
-        }
+        await db
+          .update(usersTable)
+          .set({
+            onboarding_link_sent_at: new Date(),
+            ...(platformRoleToStore != null ? { user_platform_role: platformRoleToStore } : {}),
+          })
+          .where(eq(usersTable.id, dbUser.id));
       } else {
         // Organization onboarding already completed (e.g. another admin invited this admin): do not send onboarding email; mark as onboarded so they proceed normally.
         await db
           .update(usersTable)
           .set({
             user_onboarding_completed: "true",
+            onboarding_status: "completed",
             ...(platformRoleToStore != null ? { user_platform_role: platformRoleToStore } : {}),
           })
           .where(eq(usersTable.id, dbUser.id));
@@ -249,6 +251,7 @@ const userSignup = async (req: Request, res: Response) => {
         .update(usersTable)
         .set({
           user_onboarding_completed: "true",
+          onboarding_status: "completed",
           ...(platformRoleToStore != null ? { user_platform_role: platformRoleToStore } : {}),
         })
         .where(eq(usersTable.id, dbUser.id));

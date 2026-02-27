@@ -8,18 +8,19 @@ import {
   FileCheck,
   Building2,
   Globe,
-  Cpu,
-  ShieldCheck,
-  Database,
-  FlaskConical,
   FileText,
   Package,
-  X,
+  CircleX,
 } from "lucide-react";
 import type { VendorSelfAttestationFormState } from "../../../types/vendorSelfAttestation";
+import type { GeneratedProductProfileReport } from "../../../types/generatedProductProfile";
 import ProductProfileSummaryCard from "./ProductProfileSummaryCard";
+import GeneratedProductProfileCards from "./GeneratedProductProfileCards";
 import KebabMenu from "../../UI/KebabMenu";
-import type { ProductProfileProduct } from "../DirectoryListing/DirectoryListing";
+import type {
+  ProductProfileProduct,
+  StoredGeneratedReport,
+} from "../DirectoryListing/DirectoryListing";
 import "../UserManagement/user_management.css";
 import "./product_profile.css";
 
@@ -41,12 +42,56 @@ function productInitials(name: string): string {
   return s ? s.toUpperCase() : "Dr";
 }
 
+/** Parse trust score 0–100 from text (e.g. "62 (Moderate)" or "Overall Trust Score: 62"). */
+function parseScoreFromText(text: string): number | null {
+  if (!text || typeof text !== "string") return null;
+  const withParen = text.match(/(\d{1,3})\s*[(\[]/);
+  const m = withParen ?? text.match(/\b(\d{1,3})\b/);
+  if (!m) return null;
+  const n = parseInt(m[1], 10);
+  return Number.isNaN(n) ? null : Math.min(100, Math.max(0, n));
+}
+
+/** Normalize API-generated report to GeneratedProductProfileReport (from attestation submit or fetch). */
+function asGeneratedReport(raw: unknown): GeneratedProductProfileReport | null {
+  if (raw == null || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  if (
+    o.trustScore == null ||
+    typeof o.trustScore !== "object" ||
+    !Array.isArray(o.sections)
+  )
+    return null;
+  const ts = o.trustScore as Record<string, unknown>;
+  const summary = typeof ts.summary === "string" ? ts.summary : "";
+  let overallScore = typeof ts.overallScore === "number" ? ts.overallScore : 0;
+  if (overallScore === 0) {
+    const fromSummary = summary ? parseScoreFromText(summary) : null;
+    const fromLabel = typeof ts.label === "string" ? parseScoreFromText(ts.label) : null;
+    const parsed = fromSummary ?? fromLabel ?? null;
+    if (parsed != null) overallScore = parsed;
+  }
+  return {
+    trustScore: {
+      overallScore,
+      label: (typeof ts.label === "string" ? ts.label : "") || "—",
+      summary,
+      scoreByCategory: ts.scoreByCategory as
+        | Record<string, string | number>
+        | undefined,
+    },
+    sections: o.sections as GeneratedProductProfileReport["sections"],
+  };
+}
+
 export interface ProductProfileViewProps {
   formState: VendorSelfAttestationFormState | null;
   /** List of products (attestations) for product cards */
   products?: ProductProfileProduct[];
   /** Fetch full attestation detail by id for View Product modal */
-  fetchProductDetail?: (id: string) => Promise<VendorSelfAttestationFormState | null>;
+  fetchProductDetail?: (
+    id: string,
+  ) => Promise<VendorSelfAttestationFormState | null>;
   /** Trust score label e.g. "A+", compliancePercent e.g. "92%" */
   trustScore?: string;
   compliancePercent?: string;
@@ -58,7 +103,26 @@ export interface ProductProfileViewProps {
   /** Toggle product visibility to buyers (only for Completed products) */
   onProductVisibilityToggle?: (productId: string, visible: boolean) => void;
   /** Toggle a detail section's visibility to buyers (only for Completed products) */
-  onSectionVisibilityChange?: (attestationId: string, sectionKey: SectionVisibilityKey, value: boolean) => Promise<void>;
+  onSectionVisibilityChange?: (
+    attestationId: string,
+    sectionKey: SectionVisibilityKey,
+    value: boolean,
+  ) => Promise<void>;
+  /** Generated product profile (from agent or selected stored report); trust score shown on top in cards */
+  generatedReport?: GeneratedProductProfileReport | null;
+  /** Stored generated reports from GET generated-reports */
+  storedReports?: StoredGeneratedReport[];
+  selectedStoredReportId?: string | null;
+  onSelectStoredReport?: (
+    report: GeneratedProductProfileReport,
+    storedReportId: string,
+  ) => void;
+  generateLoading?: boolean;
+  generateError?: string | null;
+  vendorDataInput?: string;
+  onVendorDataInputChange?: (value: string) => void;
+  onUseAttestationData?: () => void;
+  onGenerateProfile?: () => void;
 }
 
 export type SectionVisibilityKey =
@@ -66,7 +130,11 @@ export type SectionVisibilityKey =
   | "visible_security_posture"
   | "visible_data_privacy"
   | "visible_compliance"
-  | "visible_model_risk";
+  | "visible_model_risk"
+  | "visible_data_practices"
+  | "visible_compliance_certifications"
+  | "visible_operations_support"
+  | "visible_vendor_management";
 
 function ProductProfileView({
   formState,
@@ -80,9 +148,20 @@ function ProductProfileView({
   publicListingError = null,
   onProductVisibilityToggle,
   onSectionVisibilityChange,
+  generatedReport = null,
+  storedReports = [],
+  selectedStoredReportId = null,
+  onSelectStoredReport,
+  generateLoading = false,
+  generateError = null,
+  vendorDataInput = "",
+  onVendorDataInputChange,
+  onUseAttestationData,
+  onGenerateProfile,
 }: ProductProfileViewProps) {
   const [viewProductModalOpen, setViewProductModalOpen] = useState(false);
-  const [viewProductDetail, setViewProductDetail] = useState<VendorSelfAttestationFormState | null>(null);
+  const [viewProductDetail, setViewProductDetail] =
+    useState<VendorSelfAttestationFormState | null>(null);
   const [viewProductMeta, setViewProductMeta] = useState<{
     productName: string;
     status: string;
@@ -92,6 +171,14 @@ function ProductProfileView({
   } | null>(null);
   const [viewProductLoading, setViewProductLoading] = useState(false);
 
+  /** Report to show on main page: from manual generate, selected stored report, or first product that has a report. */
+  const reportToShow =
+    generatedReport ??
+    asGeneratedReport(
+      products.find((p) => p.generated_profile_report)
+        ?.generated_profile_report,
+    );
+
   const company = formState?.companyProfile;
   const attestation = formState?.attestation ?? {};
 
@@ -100,7 +187,8 @@ function ProductProfileView({
     : "Not specified.";
   const vendorType = formatVal(company?.vendorType) || "SaaS Provider";
   const operatingRegions =
-    Array.isArray(company?.operatingRegions) && company.operatingRegions.length > 0
+    Array.isArray(company?.operatingRegions) &&
+    company.operatingRegions.length > 0
       ? company.operatingRegions.join(", ")
       : "Not specified.";
   const headquarters = formatVal(company?.headquartersLocation);
@@ -139,83 +227,27 @@ function ProductProfileView({
     }
   };
 
-  const detailItem = (label: string, value: string) => (
-    <li key={label} className="product_profile_detail_item">
-      <span className="product_profile_detail_label">{label}:</span>{" "}
-      <span className="product_profile_detail_value">{value}</span>
-    </li>
-  );
-
-  const aiGovernanceItems = [
-    ["AI Ethics Policy", formatVal(attestation.unique_value_proposition) || "Not specified."],
-    ["AI Ethics Board", formatVal(attestation.human_oversight) || "Not specified."],
-    ["Human Oversight", formatVal(attestation.human_oversight) || formatVal(attestation.decision_autonomy) || "Not specified."],
-    ["Model Governance", formatVal(attestation.model_transparency) || formatVal(attestation.training_data_documentation) || "Not specified."],
-  ];
-
-  const securityItems = [
-    ["Security Certifications", formatVal(attestation.security_certifications) || "Not specified."],
-    ["Access Controls", formatVal(attestation.adversarial_security_testing) || "Not specified."],
-    ["Vulnerability Management", formatVal(attestation.adversarial_security_testing) || "Not specified."],
-    ["Incident History", formatVal(attestation.incident_response_plan) || "Not specified."],
-  ];
-
-  const dataPrivacyItems = [
-    ["Data Types Processed", formatVal(attestation.pii_handling) || "Not specified."],
-    ["Data Retention Policy", formatVal(attestation.data_retention_policy) || "Not specified."],
-    ["Encryption Standards", formatVal(attestation.data_residency_options) || "Not specified."],
-  ];
-
-  const complianceItems = [
-    ["Regulatory Frameworks", formatVal(attestation.security_certifications) || "Not specified."],
-    ["Certifications", formatVal(attestation.security_certifications) || formatVal(attestation.assessment_completion_level) || "Not specified."],
-    ["Audit History", formatVal(attestation.assessment_completion_level) || "Not specified."],
-  ];
-
-  const modelRiskItems = [
-    ["Training Data Sources", formatVal(attestation.training_data_documentation) || "Not specified."],
-    ["Model Monitoring", formatVal(attestation.model_transparency) || formatVal(attestation.rollback_capability) || "Not specified."],
-    ["Bias Testing", formatVal(attestation.bias_testing_approach) || "Not specified."],
-    ["Explainability", formatVal(attestation.model_transparency) || formatVal(attestation.decision_autonomy) || "Not specified."],
-  ];
-
-  const buildDetailItemsFromAttestation = (att: Record<string, unknown>) => ({
-    aiGovernance: [
-      ["AI Ethics Policy", formatVal(att.unique_value_proposition) || "Not specified."],
-      ["AI Ethics Board", formatVal(att.human_oversight) || "Not specified."],
-      ["Human Oversight", formatVal(att.human_oversight) || formatVal(att.decision_autonomy) || "Not specified."],
-      ["Model Governance", formatVal(att.model_transparency) || formatVal(att.training_data_documentation) || "Not specified."],
-    ],
-    security: [
-      ["Security Certifications", formatVal(att.security_certifications) || "Not specified."],
-      ["Access Controls", formatVal(att.adversarial_security_testing) || "Not specified."],
-      ["Vulnerability Management", formatVal(att.adversarial_security_testing) || "Not specified."],
-      ["Incident History", formatVal(att.incident_response_plan) || "Not specified."],
-    ],
-    dataPrivacy: [
-      ["Data Types Processed", formatVal(att.pii_handling) || "Not specified."],
-      ["Data Retention Policy", formatVal(att.data_retention_policy) || "Not specified."],
-      ["Encryption Standards", formatVal(att.data_residency_options) || "Not specified."],
-    ],
-    compliance: [
-      ["Regulatory Frameworks", formatVal(att.security_certifications) || "Not specified."],
-      ["Certifications", formatVal(att.security_certifications) || formatVal(att.assessment_completion_level) || "Not specified."],
-      ["Audit History", formatVal(att.assessment_completion_level) || "Not specified."],
-    ],
-    modelRisk: [
-      ["Training Data Sources", formatVal(att.training_data_documentation) || "Not specified."],
-      ["Model Monitoring", formatVal(att.model_transparency) || formatVal(att.rollback_capability) || "Not specified."],
-      ["Bias Testing", formatVal(att.bias_testing_approach) || "Not specified."],
-      ["Explainability", formatVal(att.model_transparency) || formatVal(att.decision_autonomy) || "Not specified."],
-    ],
-  });
-
-  const modalDetail = viewProductDetail ? buildDetailItemsFromAttestation(viewProductDetail.attestation ?? {}) : null;
-
-  const attRecord = viewProductDetail?.attestation as Record<string, unknown> | undefined;
-  /** Section visibility toggles default to off; only on when explicitly true. */
-  const sectionVisible = (key: SectionVisibilityKey) => attRecord?.[key] === true;
-  const handleSectionToggle = async (key: SectionVisibilityKey, next: boolean) => {
+  const attRecord = viewProductDetail?.attestation as
+    | Record<string, unknown>
+    | undefined;
+  /** Section id (1–9) maps to backend visibility keys. */
+  const SECTION_VISIBILITY_KEYS: Record<number, SectionVisibilityKey> = {
+    1: "visible_ai_governance",
+    2: "visible_security_posture",
+    3: "visible_data_privacy",
+    4: "visible_compliance",
+    5: "visible_model_risk",
+    6: "visible_data_practices",
+    7: "visible_compliance_certifications",
+    8: "visible_operations_support",
+    9: "visible_vendor_management",
+  };
+  const sectionVisible = (key: SectionVisibilityKey) =>
+    attRecord?.[key] === true;
+  const handleSectionToggle = async (
+    key: SectionVisibilityKey,
+    next: boolean,
+  ) => {
     if (!viewProductMeta || !onSectionVisibilityChange) return;
     await onSectionVisibilityChange(viewProductMeta.productId, key, next);
     if (fetchProductDetail) {
@@ -223,13 +255,27 @@ function ProductProfileView({
       setViewProductDetail(detail);
     }
   };
+  const getSectionVisibility = (sectionId: number) => {
+    const key = SECTION_VISIBILITY_KEYS[sectionId];
+    if (
+      !key ||
+      !viewProductMeta ||
+      viewProductMeta.status !== "Completed" ||
+      !onSectionVisibilityChange
+    )
+      return null;
+    return {
+      visible: sectionVisible(key),
+      onToggle: (next: boolean) => handleSectionToggle(key, next),
+    };
+  };
 
   return (
     <div className="sec_user_page attestation_page org_settings_page product_profile_page">
       <div className="heading_user_page page_header_align">
         <div className="headers page_header_row">
           <span className="icon_size_header" aria-hidden>
-            <FileText size={24} className="header_icon_svg"/>
+            <FileText size={24} className="header_icon_svg" />
           </span>
           <div className="page_header_title_block">
             <h1 className="page_header_title">Product Profile</h1>
@@ -262,12 +308,63 @@ function ProductProfileView({
         </div>
       </div>
 
+      {/* Generate profile: vendor data input + generate button; generated data in cards (no file) */}
+      {/* {onGenerateProfile && (
+        <section className="generated_profile_form" aria-label="Generate product profile">
+          <h2 className="generated_profile_form_title">Generate product profile</h2>
+          <p className="product_profile_detail_subtitle" style={{ marginBottom: "0.5rem" }}>
+            Paste vendor data below or use your saved attestation data, then generate a structured report. Results appear in cards with trust score on top (no file download).
+          </p>
+          {onVendorDataInputChange && (
+            <textarea
+              className="generated_profile_form_textarea"
+              placeholder="Paste vendor data here, or click “Use my attestation data” to fill from your profile…"
+              value={vendorDataInput}
+              onChange={(e) => onVendorDataInputChange(e.target.value)}
+              aria-label="Vendor data for profile generation"
+            />
+          )}
+          <div className="generated_profile_form_actions">
+            {onUseAttestationData && (
+              <button
+                type="button"
+                className="product_profile_btn_view_attestation"
+                onClick={onUseAttestationData}
+              >
+                Use my attestation data
+              </button>
+            )}
+            <button
+              type="button"
+              className="product_profile_btn_view_attestation"
+              onClick={onGenerateProfile}
+              disabled={generateLoading}
+            >
+              {generateLoading ? "Generating…" : "Generate profile"}
+            </button>
+          </div>
+          {generateError && (
+            <p className="generated_profile_form_error" role="alert">
+              {generateError}
+            </p>
+          )}
+        </section>
+      )} */}
+
       <section className="product_profile_summary_cards">
         <ProductProfileSummaryCard
           title="Trust Score"
           icon={<Shield size={24} />}
-          primary={trustScore}
-          secondary={`${compliancePercent} compliance`}
+          primary={
+            reportToShow?.trustScore
+              ? `${reportToShow.trustScore.overallScore}%`
+              : trustScore
+          }
+          secondary={
+            reportToShow?.trustScore?.summary
+              ? truncate(reportToShow.trustScore.summary, 60)
+              : `${compliancePercent} compliance`
+          }
           iconColor="blue"
           primaryVariant="trustScore"
         />
@@ -290,7 +387,7 @@ function ProductProfileView({
           icon={<Globe size={24} />}
           primary={operatingRegions}
           secondary={headquarters || "—"}
-          iconColor="purple"
+          iconColor="blue"
         />
       </section>
 
@@ -302,14 +399,23 @@ function ProductProfileView({
               <div key={product.id} className="product_profile_product_card">
                 <div className="product_profile_product_card_content">
                   <div className="product_profile_product_card_title_row">
-                    <span className="product_profile_product_card_icon" aria-hidden>
+                    <span
+                      className="product_profile_product_card_icon"
+                      aria-hidden
+                    >
                       {productInitials(product.productName)}
                     </span>
-                    <h3 className="product_profile_product_card_title">{product.productName}</h3>
+                    <div className="product_status_Data">
+                      <h3 className="product_profile_product_card_title">
+                        {product.productName}
+                      </h3>
+                      <span
+                        className={`product_profile_product_card_status product_profile_product_card_status_${product.status.toLowerCase()}`}
+                      >
+                        {product.status}
+                      </span>
+                    </div>
                   </div>
-                  <span className={`product_profile_product_card_status product_profile_product_card_status_${product.status.toLowerCase()}`}>
-                    {product.status}
-                  </span>
                 </div>
                 <div className="product_profile_product_card_actions">
                   <KebabMenu
@@ -341,190 +447,102 @@ function ProductProfileView({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="product_profile_modal_header">
-              <h2 id="product_profile_modal_title" className="product_profile_modal_title">
+              <h2
+                id="product_profile_modal_title"
+                className="product_profile_modal_title"
+              >
                 {viewProductMeta?.productName ?? "Product details"}
               </h2>
               <button
                 type="button"
-                className="product_profile_modal_close"
+                className="modal_close_btn"
                 onClick={() => setViewProductModalOpen(false)}
                 aria-label="Close"
               >
-                <X size={24} />
+                <CircleX size={20} />
               </button>
             </div>
             <div className="product_profile_modal_body">
               {viewProductLoading && (
-                <div className="product_profile_loading" style={{ padding: "2rem", textAlign: "center" }}>
+                <div
+                  className="product_profile_loading"
+                  style={{ padding: "2rem", textAlign: "center" }}
+                >
                   Loading…
                 </div>
               )}
               {!viewProductLoading && viewProductMeta && (
                 <>
-                  <div className="product_profile_modal_status_row">
-                    <span className="product_profile_modal_status_label">Attestation status</span>
-                    <span className={`product_profile_product_card_status product_profile_product_card_status_${viewProductMeta.status.toLowerCase()}`}>
-                      {viewProductMeta.status}
-                    </span>
-                    <span className="product_profile_modal_status_sub">
-                      {viewProductMeta.completedDate !== "—" ? `Completed: ${viewProductMeta.completedDate}` : "—"}
-                    </span>
+                  <div className="attestation_visible_status">
+                    <div className="product_profile_modal_status_row">
+                      <span className="product_profile_modal_status_label">
+                        Attestation status
+                      </span>
+                      <span
+                        className={`product_profile_product_card_status product_profile_product_card_status_${viewProductMeta.status.toLowerCase()}`}
+                      >
+                        {viewProductMeta.status}
+                      </span>
+                      <span className="product_profile_modal_status_sub">
+                        {viewProductMeta.completedDate !== "—"
+                          ? `Completed: ${viewProductMeta.completedDate}`
+                          : "—"}
+                      </span>
+                    </div>
+                    {viewProductMeta.status === "Completed" &&
+                      onProductVisibilityToggle && (
+                        <div className="product_profile_modal_visibility">
+                          <button
+                            type="button"
+                            className="product_profile_toggle product_profile_product_toggle"
+                            aria-pressed={viewProductMeta.visibleToBuyer}
+                            onClick={() => {
+                              const next = !viewProductMeta.visibleToBuyer;
+                              onProductVisibilityToggle(
+                                viewProductMeta.productId,
+                                next,
+                              );
+                              setViewProductMeta((prev) =>
+                                prev ? { ...prev, visibleToBuyer: next } : null,
+                              );
+                            }}
+                            aria-label={`${viewProductMeta.visibleToBuyer ? "Hide" : "Show"} this product to buyers`}
+                          />
+                          <span className="product_profile_modal_visibility_label">
+                            Visible to buyers
+                          </span>
+                        </div>
+                      )}
                   </div>
-                  {viewProductMeta.status === "Completed" && onProductVisibilityToggle && (
-                    <div className="product_profile_modal_visibility">
-                      <span className="product_profile_modal_visibility_label">Visible to buyers</span>
-                      <button
-                        type="button"
-                        className="product_profile_toggle product_profile_product_toggle"
-                        aria-pressed={viewProductMeta.visibleToBuyer}
-                        onClick={() => {
-                          const next = !viewProductMeta.visibleToBuyer;
-                          onProductVisibilityToggle(viewProductMeta.productId, next);
-                          setViewProductMeta((prev) => (prev ? { ...prev, visibleToBuyer: next } : null));
-                        }}
-                        aria-label={`${viewProductMeta.visibleToBuyer ? "Hide" : "Show"} this product to buyers`}
-                      />
-                    </div>
-                  )}
-                  {modalDetail && (
-                    <div className="product_profile_detail_grid">
-                      <div className="product_profile_detail_card">
-                        <div className="product_profile_detail_card_header">
-                          <FlaskConical className="product_profile_detail_icon product_profile_icon_purple" size={24} aria-hidden />
-                          <div className="product_profile_detail_card_header_content">
-                            <div>
-                              <h3 className="product_profile_detail_title">AI Governance</h3>
-                              <p className="product_profile_detail_subtitle">Ethics, oversight, and governance practices.</p>
-                            </div>
-                            {viewProductMeta.status === "Completed" && onSectionVisibilityChange && (
-                              <div className="product_profile_detail_card_toggle">
-                                <span className="product_profile_detail_card_toggle_label">Visible to buyers</span>
-                                <button
-                                  type="button"
-                                  className="product_profile_toggle product_profile_product_toggle"
-                                  aria-pressed={sectionVisible("visible_ai_governance")}
-                                  onClick={() => handleSectionToggle("visible_ai_governance", !sectionVisible("visible_ai_governance"))}
-                                  aria-label="Toggle AI Governance visible to buyers"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <ul className="product_profile_detail_list">
-                          {modalDetail.aiGovernance.map(([label, value]) => detailItem(label, truncate(value, 200)))}
-                        </ul>
+
+                  {(() => {
+                    const viewedProduct = products.find(
+                      (p) => p.id === viewProductMeta.productId,
+                    );
+                    const modalReport =
+                      asGeneratedReport(
+                        viewedProduct?.generated_profile_report,
+                      ) ??
+                      asGeneratedReport(
+                        (
+                          viewProductDetail?.attestation as Record<
+                            string,
+                            unknown
+                          >
+                        )?.generated_profile_report,
+                      );
+                    return modalReport ? (
+                      <div
+                        className="product_profile_modal_generated_wrap"
+                        style={{ marginTop: "1rem" }}
+                      >
+                        <GeneratedProductProfileCards
+                          report={modalReport}
+                          sectionVisibility={getSectionVisibility}
+                        />
                       </div>
-                      <div className="product_profile_detail_card">
-                        <div className="product_profile_detail_card_header">
-                          <ShieldCheck className="product_profile_detail_icon product_profile_icon_blue" size={24} aria-hidden />
-                          <div className="product_profile_detail_card_header_content">
-                            <div>
-                              <h3 className="product_profile_detail_title">Security Posture</h3>
-                              <p className="product_profile_detail_subtitle">Security controls and certifications.</p>
-                            </div>
-                            {viewProductMeta.status === "Completed" && onSectionVisibilityChange && (
-                              <div className="product_profile_detail_card_toggle">
-                                <span className="product_profile_detail_card_toggle_label">Visible to buyers</span>
-                                <button
-                                  type="button"
-                                  className="product_profile_toggle product_profile_product_toggle"
-                                  aria-pressed={sectionVisible("visible_security_posture")}
-                                  onClick={() => handleSectionToggle("visible_security_posture", !sectionVisible("visible_security_posture"))}
-                                  aria-label="Toggle Security Posture visible to buyers"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <ul className="product_profile_detail_list">
-                          {modalDetail.security.map(([label, value]) => detailItem(label, truncate(value, 200)))}
-                        </ul>
-                      </div>
-                      <div className="product_profile_detail_card">
-                        <div className="product_profile_detail_card_header">
-                          <Database className="product_profile_detail_icon product_profile_icon_green" size={24} aria-hidden />
-                          <div className="product_profile_detail_card_header_content">
-                            <div>
-                              <h3 className="product_profile_detail_title">Data Privacy</h3>
-                              <p className="product_profile_detail_subtitle">Data handling and privacy practices.</p>
-                            </div>
-                            {viewProductMeta.status === "Completed" && onSectionVisibilityChange && (
-                              <div className="product_profile_detail_card_toggle">
-                                <span className="product_profile_detail_card_toggle_label">Visible to buyers</span>
-                                <button
-                                  type="button"
-                                  className="product_profile_toggle product_profile_product_toggle"
-                                  aria-pressed={sectionVisible("visible_data_privacy")}
-                                  onClick={() => handleSectionToggle("visible_data_privacy", !sectionVisible("visible_data_privacy"))}
-                                  aria-label="Toggle Data Privacy visible to buyers"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <ul className="product_profile_detail_list">
-                          {modalDetail.dataPrivacy.map(([label, value]) => detailItem(label, truncate(value, 200)))}
-                        </ul>
-                      </div>
-                      <div className="product_profile_detail_card">
-                        <div className="product_profile_detail_card_header">
-                          <FileCheck className="product_profile_detail_icon product_profile_icon_green" size={24} aria-hidden />
-                          <div className="product_profile_detail_card_header_content">
-                            <div>
-                              <h3 className="product_profile_detail_title">Compliance</h3>
-                              <p className="product_profile_detail_subtitle">Regulatory frameworks and certifications.</p>
-                            </div>
-                            {viewProductMeta.status === "Completed" && onSectionVisibilityChange && (
-                              <div className="product_profile_detail_card_toggle">
-                                <span className="product_profile_detail_card_toggle_label">Visible to buyers</span>
-                                <button
-                                  type="button"
-                                  className="product_profile_toggle product_profile_product_toggle"
-                                  aria-pressed={sectionVisible("visible_compliance")}
-                                  onClick={() => handleSectionToggle("visible_compliance", !sectionVisible("visible_compliance"))}
-                                  aria-label="Toggle Compliance visible to buyers"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <ul className="product_profile_detail_list">
-                          {modalDetail.compliance.map(([label, value]) => detailItem(label, truncate(value, 200)))}
-                        </ul>
-                      </div>
-                      <div className="product_profile_detail_card product_profile_detail_card_span_2">
-                        <div className="product_profile_detail_card_header">
-                          <Cpu className="product_profile_detail_icon product_profile_icon_purple" size={24} aria-hidden />
-                          <div className="product_profile_detail_card_header_content">
-                            <div>
-                              <h3 className="product_profile_detail_title">Model Risk Management</h3>
-                              <p className="product_profile_detail_subtitle">AI model governance and risk controls.</p>
-                            </div>
-                            {viewProductMeta.status === "Completed" && onSectionVisibilityChange && (
-                              <div className="product_profile_detail_card_toggle">
-                                <span className="product_profile_detail_card_toggle_label">Visible to buyers</span>
-                                <button
-                                  type="button"
-                                  className="product_profile_toggle product_profile_product_toggle"
-                                  aria-pressed={sectionVisible("visible_model_risk")}
-                                  onClick={() => handleSectionToggle("visible_model_risk", !sectionVisible("visible_model_risk"))}
-                                  aria-label="Toggle Model Risk Management visible to buyers"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="product_profile_model_risk_columns">
-                          <ul className="product_profile_detail_list">
-                            {modalDetail.modelRisk.slice(0, 2).map(([label, value]) => detailItem(label, truncate(value, 180)))}
-                          </ul>
-                          <ul className="product_profile_detail_list">
-                            {modalDetail.modelRisk.slice(2, 4).map(([label, value]) => detailItem(label, truncate(value, 180)))}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                    ) : null;
+                  })()}
                 </>
               )}
             </div>

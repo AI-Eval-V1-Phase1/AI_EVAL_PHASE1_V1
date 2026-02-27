@@ -200,6 +200,7 @@ const insertBuyerOnboarding = async (req: Request, res: Response) => {
       .set({
         user_platform_role: "buyer",
         user_onboarding_completed: "true",
+        onboarding_status: "completed",
       })
       .where(eq(usersTable.id, user.id));
 

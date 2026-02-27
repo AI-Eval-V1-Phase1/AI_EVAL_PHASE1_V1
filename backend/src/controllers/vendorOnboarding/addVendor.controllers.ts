@@ -147,6 +147,7 @@ const insertVendorOnboarding = async (req: Request, res: Response) => {
       .set({
         user_platform_role: "vendor",
         user_onboarding_completed: "true",
+        onboarding_status: "completed",
       })
       .where(eq(usersTable.id, user.id));
 

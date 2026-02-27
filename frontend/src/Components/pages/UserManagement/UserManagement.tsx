@@ -206,7 +206,7 @@ const UserManagement = () => {
                 className="invite_user_btn org_invite_btn"
                 onClick={() => setIsModalOpen(true)}
               >
-                <UserPlus size={20} />
+                <UserPlus size={18} />
                 Invite User
               </Button>
             </div>

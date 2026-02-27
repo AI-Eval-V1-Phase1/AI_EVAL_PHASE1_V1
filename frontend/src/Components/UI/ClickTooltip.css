@@ -47,7 +47,7 @@
   color: #f9fafb;
   background-color: var(--tooltip_bg, #1f2937);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border-radius: 5px;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.15),
     0 10px 20px -4px rgba(0, 0, 0, 0.12);

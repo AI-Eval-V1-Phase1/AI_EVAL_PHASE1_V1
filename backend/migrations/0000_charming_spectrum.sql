@@ -219,16 +219,6 @@ CREATE TABLE IF NOT EXISTS "custom_ai_assessments" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "organizationEditLogs" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"organizationId" varchar NOT NULL,
-	"organizationName" varchar NOT NULL,
-	"organizationStatus" "organizationStatus" NOT NULL,
-	"updated_by" varchar NOT NULL,
-	"reason" varchar NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "risk_top5_mitigations" (
 	"mapping_id" integer NOT NULL,
 	"risk_id" varchar(50) NOT NULL,
@@ -246,17 +236,6 @@ CREATE TABLE IF NOT EXISTS "risks" (
 	"description" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "userEditLogs" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"userId" varchar NOT NULL,
-	"email" varchar(255) NOT NULL,
-	"organizationName" varchar NOT NULL,
-	"userStatus" "organizationStatus" NOT NULL,
-	"updated_by" varchar NOT NULL,
-	"reason" varchar NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "users" (

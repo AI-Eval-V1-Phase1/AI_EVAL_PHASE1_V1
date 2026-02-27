@@ -1,10 +1,29 @@
 import { useEffect, useState, useCallback } from "react";
 import ProductProfileView from "../ProductProfile/ProductProfileView";
 import { buildFormStateFromApi } from "../../../utils/vendorAttestationState";
+import { buildVendorDataFromFormState } from "../../../utils/buildVendorDataFromFormState";
 import type { VendorSelfAttestationFormState } from "../../../types/vendorSelfAttestation";
+import type { GeneratedProductProfileReport } from "../../../types/generatedProductProfile";
 import "../ProductProfile/product_profile.css";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
+
+/** Clear auth session and navigate to login. Call only when user explicitly chooses to log in again. */
+function clearAuthAndGoToLogin() {
+  sessionStorage.removeItem("bearerToken");
+  sessionStorage.removeItem("userEmail");
+  sessionStorage.removeItem("userRole");
+  sessionStorage.removeItem("userId");
+  sessionStorage.removeItem("organizationId");
+  sessionStorage.removeItem("organizationName");
+  sessionStorage.removeItem("userName");
+  sessionStorage.removeItem("systemRole");
+  sessionStorage.removeItem("userFirstName");
+  sessionStorage.removeItem("userLastName");
+  sessionStorage.removeItem("user_signup_completed");
+  sessionStorage.removeItem("user_onboarding_completed");
+  window.location.href = "/login";
+}
 
 export interface ProductProfileProduct {
   id: string;
@@ -13,6 +32,17 @@ export interface ProductProfileProduct {
   updated_at: string | null;
   /** When true, this product is visible to buyers when they view the vendor. Only applicable when status is Completed. */
   visibleToBuyer?: boolean;
+  /** Generated product profile report (trust score + sections) after attestation submit. */
+  generated_profile_report?: { trustScore: unknown; sections: unknown[] };
+}
+
+/** One item from GET /vendorSelfAttestation/generated-reports */
+export interface StoredGeneratedReport {
+  id: string;
+  attestationId?: string;
+  trustScore: number;
+  report: { trustScore?: unknown; sections?: unknown[] };
+  createdAt: string;
 }
 
 export const DirectoryListing = () => {
@@ -22,6 +52,16 @@ export const DirectoryListing = () => {
   const [publicListing, setPublicListing] = useState(false);
   const [publicListingUpdating, setPublicListingUpdating] = useState(false);
   const [publicListingError, setPublicListingError] = useState<string | null>(null);
+  const [generatedReport, setGeneratedReport] = useState<GeneratedProductProfileReport | null>(null);
+  const [generateLoading, setGenerateLoading] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [vendorDataInput, setVendorDataInput] = useState("");
+  const [sessionExpired, setSessionExpired] = useState(false);
+  /** Stored generated reports (user + org); loaded from GET generated-reports */
+  const [storedReports, setStoredReports] = useState<StoredGeneratedReport[]>([]);
+  /** Selected stored report to display (when user clicks one in the list) */
+  const [selectedStoredReport, setSelectedStoredReport] = useState<GeneratedProductProfileReport | null>(null);
+  const [selectedStoredReportId, setSelectedStoredReportId] = useState<string | null>(null);
 
   const fetchVendorPublicListing = useCallback(async () => {
     const token = sessionStorage.getItem("bearerToken");
@@ -46,12 +86,30 @@ export const DirectoryListing = () => {
     }
   }, []);
 
+  const fetchGeneratedReports = useCallback(async () => {
+    const token = sessionStorage.getItem("bearerToken");
+    if (!token) return;
+    try {
+      const res = await fetch(`${BASE_URL}/vendorSelfAttestation/generated-reports`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success && Array.isArray(data?.data?.reports)) {
+        setStoredReports(data.data.reports);
+      }
+    } catch {
+      // leave storedReports unchanged
+    }
+  }, []);
+
   const fetchProductProfileData = useCallback(async () => {
     const token = sessionStorage.getItem("bearerToken");
     if (!token) {
       setLoading(false);
       return;
     }
+    setSessionExpired(false);
     setLoading(true);
     try {
       const organizationId = sessionStorage.getItem("organizationId") ?? "";
@@ -66,8 +124,8 @@ export const DirectoryListing = () => {
       const text = await response.text();
       let result: {
         success?: boolean;
-        attestation?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean };
-        attestations?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean }[];
+        attestation?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean; generated_profile_report?: unknown };
+        attestations?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean; generated_profile_report?: unknown }[];
         companyProfile?: Record<string, unknown>;
         message?: string;
       } = {};
@@ -78,6 +136,11 @@ export const DirectoryListing = () => {
         return;
       }
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setSessionExpired(true);
+          setLoading(false);
+          return;
+        }
         setLoading(false);
         return;
       }
@@ -107,8 +170,10 @@ export const DirectoryListing = () => {
             updated_at: a.updated_at ?? a.created_at ?? null,
             /** Default off when not set; only on when API explicitly sends true. */
             visibleToBuyer: a.visible_to_buyer === true,
+            generated_profile_report: a.generated_profile_report,
           };
-        });
+        })
+        .filter((p) => p.status !== "Draft");
       setProducts(productList);
 
       const latest = sorted[0];
@@ -215,6 +280,52 @@ export const DirectoryListing = () => {
     }
   }, [publicListing]);
 
+  const handleUseAttestationData = useCallback(() => {
+    setGenerateError(null);
+    setVendorDataInput(buildVendorDataFromFormState(formState));
+  }, [formState]);
+
+  const handleGenerateProfile = useCallback(async () => {
+    const token = sessionStorage.getItem("bearerToken");
+    if (!token) {
+      setGenerateError("Please log in to generate profile.");
+      return;
+    }
+    const vendorData = vendorDataInput.trim();
+    if (!vendorData) {
+      setGenerateError("Enter vendor data or use \"Use my attestation data\" first.");
+      return;
+    }
+    setGenerateError(null);
+    setGenerateLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/vendorSelfAttestation/generate-profile`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ vendorData }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success && data?.data) {
+        setGeneratedReport({
+          trustScore: data.data.trustScore,
+          sections: data.data.sections ?? [],
+        });
+        setSelectedStoredReport(null);
+        setSelectedStoredReportId(null);
+        fetchGeneratedReports();
+      } else {
+        setGenerateError((data?.message as string) || "Failed to generate profile.");
+      }
+    } catch {
+      setGenerateError("Network error. Try again.");
+    } finally {
+      setGenerateLoading(false);
+    }
+  }, [vendorDataInput, fetchGeneratedReports]);
+
   const handleProductVisibilityToggle = useCallback(
     async (productId: string, visible: boolean) => {
       const token = sessionStorage.getItem("bearerToken");
@@ -242,7 +353,16 @@ export const DirectoryListing = () => {
   const handleSectionVisibilityChange = useCallback(
     async (
       attestationId: string,
-      sectionKey: "visible_ai_governance" | "visible_security_posture" | "visible_data_privacy" | "visible_compliance" | "visible_model_risk",
+      sectionKey:
+        | "visible_ai_governance"
+        | "visible_security_posture"
+        | "visible_data_privacy"
+        | "visible_compliance"
+        | "visible_model_risk"
+        | "visible_data_practices"
+        | "visible_compliance_certifications"
+        | "visible_operations_support"
+        | "visible_vendor_management",
       value: boolean
     ) => {
       const token = sessionStorage.getItem("bearerToken");
@@ -262,7 +382,8 @@ export const DirectoryListing = () => {
   useEffect(() => {
     fetchProductProfileData();
     fetchVendorPublicListing();
-  }, [fetchProductProfileData, fetchVendorPublicListing]);
+    fetchGeneratedReports();
+  }, [fetchProductProfileData, fetchVendorPublicListing, fetchGeneratedReports]);
 
   useEffect(() => {
     const prevTitle = document.title;
@@ -280,6 +401,33 @@ export const DirectoryListing = () => {
     );
   }
 
+  if (sessionExpired) {
+    return (
+      <div className="sec_user_page attestation_page org_settings_page product_profile_page" style={{ padding: "2rem" }}>
+        <div
+          className="product_profile_detail_card"
+          style={{ maxWidth: "28rem", margin: "2rem auto", textAlign: "center" }}
+        >
+          <h2 className="product_profile_detail_title" style={{ marginBottom: "0.5rem" }}>
+            Session expired
+          </h2>
+          <p className="product_profile_detail_subtitle" style={{ marginBottom: "1.25rem" }}>
+            Your session has expired or the token is invalid. Log in again to view the Product Profile.
+          </p>
+          <button
+            type="button"
+            className="product_profile_btn_view_attestation"
+            onClick={clearAuthAndGoToLogin}
+          >
+            Log in again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const reportToShow = generatedReport ?? selectedStoredReport;
+
   return (
     <ProductProfileView
       formState={formState}
@@ -293,6 +441,19 @@ export const DirectoryListing = () => {
       publicListingError={publicListingError}
       onProductVisibilityToggle={handleProductVisibilityToggle}
       onSectionVisibilityChange={handleSectionVisibilityChange}
+      generatedReport={reportToShow}
+      storedReports={storedReports}
+      selectedStoredReportId={selectedStoredReportId}
+      onSelectStoredReport={(report, id) => {
+        setSelectedStoredReport(report);
+        setSelectedStoredReportId(id);
+      }}
+      generateLoading={generateLoading}
+      generateError={generateError}
+      vendorDataInput={vendorDataInput}
+      onVendorDataInputChange={setVendorDataInput}
+      onUseAttestationData={handleUseAttestationData}
+      onGenerateProfile={handleGenerateProfile}
     />
   );
 };

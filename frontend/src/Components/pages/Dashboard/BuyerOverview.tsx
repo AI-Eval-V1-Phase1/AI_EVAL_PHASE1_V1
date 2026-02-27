@@ -10,7 +10,7 @@ import {
   ExternalLink,
   ChevronDown,
   BarChart3,
-  Pencil,
+  SquarePen,
   Plus,
   Sparkles,
   Send,
@@ -185,7 +185,7 @@ const BuyerOverview = () => {
                 {(selectedAssessment.status ?? "").toLowerCase() === "draft" ? (
                   <Link to={`/buyerAssessment/${selectedAssessment.assessmentId}`} className="governance_evaluation_view_report">
                     Edit assessment
-                    <Pencil size={16} />
+                    <SquarePen size={16} />
                   </Link>
                 ) : (
                   <button

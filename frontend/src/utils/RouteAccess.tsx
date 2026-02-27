@@ -67,7 +67,8 @@ const RouteAccess = () => {
     (path.startsWith("/reports/") && path.length > "/reports/".length) ||
     (normalizedSystemRole === "vendor" && path.startsWith("/vendorSelfAttestation/")) ||
     (normalizedSystemRole === "vendor" && path.startsWith("/vendorcots/")) ||
-    (normalizedSystemRole === "buyer" && path.startsWith("/buyerAssessment/"));
+    (normalizedSystemRole === "buyer" && path.startsWith("/buyerAssessment/")) ||
+    (normalizedSystemRole === "system admin" && (path.startsWith("/vendorcots") || path.startsWith("/buyerAssessment")));
 
   if (!pathAllowed) {
     return <Navigate to="/pageNotFound" replace />;
