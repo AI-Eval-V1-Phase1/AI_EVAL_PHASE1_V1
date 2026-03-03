@@ -209,6 +209,8 @@ export const OPERATING_REGIONS = [
 
 // HELPER TEXT FOR VENDOR ONBOARDING
 export const VENDOR_HELPTEXT = {
+  vendorName:
+    "Your company or vendor display name as it should appear in the platform",
   vendorType:
     "Select the category that best describes your primary business model",
   sector:
@@ -245,6 +247,7 @@ export const VENDOR_PREVIEW_SECTIONS: PreviewSection<VendorFormData>[] = [
      */
     title: "Company Profile",
     fields: [
+      { label: "Vendor Name", value: (d) => d.vendorName ?? "—" },
       { label: "Vendor Type", value: (d) => d.vendorType },
 
       /**

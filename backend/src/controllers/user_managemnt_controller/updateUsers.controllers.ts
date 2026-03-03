@@ -100,7 +100,7 @@ const updatesUsers = async (req: Request, res: Response) => {
       const secret = process.env.JWT_SECRET_KEY;
       if (secret && BASE_URL) {
         try {
-          const token = jwt.sign({ email: emailLower }, secret, { expiresIn: "7d" });
+          const token = jwt.sign({ email: emailLower }, secret, { expiresIn: "7d" } as jwt.SignOptions);
           const confirmationLink = `${BASE_URL}/signup/${token}`;
           const transporter = emailConfig();
           await transporter.sendMail({

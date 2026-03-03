@@ -6,4 +6,5 @@ export { cotsVendorAssessments } from "./cotsVendorAssessments.js";
 export { customAiAssessments } from "./customAiAssessments.js";
 export { vendorSelfAttestations } from "./vendorSelfAttestations.js";
 export { generatedProfileReports } from "./generatedProfileReports.js";
+export { customerRiskAssessmentReports } from "./customerRiskAssessmentReports.js";
 export { attestations } from "./attestations.js";

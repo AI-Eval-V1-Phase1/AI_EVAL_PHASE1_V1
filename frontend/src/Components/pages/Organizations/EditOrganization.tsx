@@ -1,8 +1,10 @@
-import { Ban, CircleX, Landmark, CircleArrowUp } from "lucide-react";
+import { Ban, CircleX, Landmark, CircleArrowUp, Shield, FileText } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { getOrganizations } from "../../../Context/OrganizationsData";
 import { toast } from "react-toastify";
+import "../UserProfile/user_profile.css";
+import "../../../styles/popovers.css";
 
 const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -102,74 +104,85 @@ const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => 
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="newOrg">
-        <div className="newOrgHeading">
-          <h2>Update Organization</h2>
-          <span onClick={closeUpdateOrg}>
-            <CircleX />
-          </span>
+    <div
+      className="profile_modal_overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit_org_modal_title"
+      onClick={(e) => e.target === e.currentTarget && closeUpdateOrg()}
+    >
+      <div className="profile_modal_content settings_modal_content" onClick={(e) => e.stopPropagation()}>
+        <div className="profile_modal_header">
+          <h2 id="edit_org_modal_title" className="profile_modal_title">
+            Update Organization
+          </h2>
+          <button
+            type="button"
+            className="modal_close_btn"
+            onClick={closeUpdateOrg}
+            aria-label="Close"
+          >
+            <CircleX size={20} />
+          </button>
         </div>
-        <div className="orgDetails">
-          <form action="" autoComplete="off" onSubmit={updateOrg}>
-            <div className="orgName">
-              <label htmlFor="orgname">
-                <span>
-                  <Landmark width={20} />
-                </span>
-                Organization Name
-              </label>
-              <input
-                type="text"
-                value={isOrganizationName}
-                onChange={(e) => {
-                  setIsOrganizationName(e.target.value);
-                  if (isError) setIsError("");
-                }}
-              />
+        <div className="profile_modal_body">
+          <form action="" autoComplete="off" onSubmit={updateOrg} className="settings_form">
+            <div className="settings_form_row">
+              <div className="settings_form_group">
+                <label htmlFor="edit_org_name">
+                  <Landmark size={16} aria-hidden />
+                  Organization Name
+                </label>
+                <input
+                  id="edit_org_name"
+                  type="text"
+                  className="settings_input"
+                  value={isOrganizationName}
+                  onChange={(e) => {
+                    setIsOrganizationName(e.target.value);
+                    if (isError) setIsError("");
+                  }}
+                />
+              </div>
+              <div className="settings_form_group">
+                <label htmlFor="edit_org_status">
+                  <Shield size={16} aria-hidden />
+                  Status
+                </label>
+                <select
+                  id="edit_org_status"
+                  value={isStatus}
+                  onChange={(e) => setIsStatus(e.target.value)}
+                  className={`settings_input settings_input_cursor_pointer ${!isStatus || isStatus === "select" ? "select_input--placeholder" : ""}`}
+                >
+                  <option value="select" disabled>
+                    SELECT
+                  </option>
+                  <option value="active">Active</option>
+                  <option value="inactive">In active</option>
+                </select>
+              </div>
             </div>
-            <div className="orgName">
-              <label htmlFor="orgname">
-                <span>
-                  <Landmark width={20} />
-                </span>
-                Status
-              </label>
-              <select
-                name=""
-                id=""
-                value={isStatus}
-                onChange={(e) => setIsStatus(e.target.value)}
-                className={`select_input ${!isStatus || isStatus === "select" ? "select_input--placeholder" : ""}`}
-              >
-                <option value="select" disabled>
-                  SELECT
-                </option>
-                <option value="active">Active</option>
-                <option value="inactive">In active</option>
-              </select>
-              {/* {isError && <p className="orgError">{isError}</p>} */}
+            <div className="settings_form_row">
+              <div className="settings_form_group" style={{ flex: "1 1 100%" }}>
+                <label htmlFor="edit_org_reason">
+                  <FileText size={16} aria-hidden />
+                  Reason
+                </label>
+                <textarea
+                  id="edit_org_reason"
+                  className="settings_input"
+                  value={isReason}
+                  onChange={(e) => setIsReason(e.target.value)}
+                  rows={3}
+                  style={{ resize: "none", minHeight: "4em" }}
+                />
+              </div>
             </div>
-            <div className="orgName">
-              <label htmlFor="orgname">
-                <span>
-                  <Landmark width={20} />
-                </span>
-                Reason
-              </label>
-              <textarea
-                style={{ resize: "none", height: "4em" }}
-                type="text"
-                value={isReason}
-                onChange={(e) => setIsReason(e.target.value)}
-              ></textarea>
-              {isError && <p className="orgError">{isError}</p>}
-            </div>
-            <div className="orgBtns">
-              <button className="orgCancelBtn" onClick={closeUpdateOrg}>
-                <span>
-                  <Ban width={16} />
-                </span>
+            {isError && <p className="settings_error">{isError}</p>}
+            <div className="settings_form_actions">
+              <button type="button" className="orgCancelBtn" onClick={closeUpdateOrg}>
+                <Ban size={16} aria-hidden />
                 Cancel
               </button>
               <button
@@ -178,9 +191,7 @@ const EditOrganization = ({ setIsEdit, id, orgData, allOrganizations = [] }) => 
                 disabled={isUpdateLoading}
                 aria-busy={isUpdateLoading}
               >
-                <span>
-                  <CircleArrowUp size={16} aria-hidden />
-                </span>
+                <CircleArrowUp size={16} aria-hidden />
                 {isUpdateLoading ? "Saving…" : "Update"}
               </button>
             </div>

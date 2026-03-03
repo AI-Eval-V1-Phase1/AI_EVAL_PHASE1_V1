@@ -31,6 +31,7 @@ export function mapApiCompanyProfile(api: Record<string, unknown>): AttestationC
     };
   }
   return {
+    vendorName: (api.vendorName as string) ?? "",
     vendorType: (api.vendorType as string) ?? "",
     sector: sectorNorm,
     vendorMaturity: (api.vendorMaturity as string) ?? "",
@@ -44,6 +45,7 @@ export function mapApiCompanyProfile(api: Record<string, unknown>): AttestationC
 }
 
 const emptyCompanyProfile: AttestationCompanyProfile = {
+  vendorName: "",
   vendorType: "",
   sector: { public_sector: [], private_sector: [], non_profit_sector: [] },
   vendorMaturity: "",

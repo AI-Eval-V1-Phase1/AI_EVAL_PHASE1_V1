@@ -14,6 +14,7 @@ export const vendorOnboarding = pgTable("vendor_onboarding", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: integer("user_id").notNull(),
   organizationId: varchar("organization_id", { length: 255 }).notNull().unique(),
+  vendorName: varchar("vendor_name", { length: 255 }),
   vendorType: varchar("vendor_type", { length: 100 }).notNull(),
   sector: varchar("sector", { length: 500 }),
   vendorMaturity: varchar("vendor_maturity", { length: 100 }),

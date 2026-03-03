@@ -66,7 +66,8 @@ export const NAVIGATION = {
     //   systemRoles: ["system admin", "vendor"],
     // },
     {
-      label: "Vendor Portal",
+      label: "AI Vendor Directory",
+      // label: "Vendor Portal",
       icon: Building2,
       path: "/vendor-directory",
       accessRoles: ["admin"],

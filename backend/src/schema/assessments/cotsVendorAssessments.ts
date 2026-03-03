@@ -10,6 +10,7 @@ import {
 export const cotsVendorAssessments = pgTable("cots_vendor_assessments", {
   id: uuid("id").defaultRandom().primaryKey(),
   assessment_id: uuid("assessment_id").notNull(),
+  vendor_attestation_id: uuid("vendor_attestation_id"),
   customer_organization_name: varchar("customer_organization_name", { length: 200 }),
   customer_sector: varchar("customer_sector", { length: 200 }),
   primary_pain_point: text("primary_pain_point"),

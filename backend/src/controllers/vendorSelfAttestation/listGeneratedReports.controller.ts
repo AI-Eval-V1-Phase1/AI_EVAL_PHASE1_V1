@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db } from "../../database/db.js";
 import { usersTable, generatedProfileReports } from "../../schema/schema.js";
+import { mergeSummaryIntoReport } from "../../utils/mergeProfileReportSummary.js";
 
 /**
  * GET /vendorSelfAttestation/generated-reports
@@ -40,6 +41,7 @@ const listGeneratedReports = async (req: Request, res: Response): Promise<void> 
         attestation_id: generatedProfileReports.attestation_id,
         trust_score: generatedProfileReports.trust_score,
         report: generatedProfileReports.report,
+        summary: generatedProfileReports.summary,
         created_at: generatedProfileReports.created_at,
       })
       .from(generatedProfileReports)
@@ -51,7 +53,7 @@ const listGeneratedReports = async (req: Request, res: Response): Promise<void> 
       id: r.id,
       attestationId: r.attestation_id ?? undefined,
       trustScore: r.trust_score,
-      report: r.report,
+      report: mergeSummaryIntoReport(r.report, r.summary),
       createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
     }));
 

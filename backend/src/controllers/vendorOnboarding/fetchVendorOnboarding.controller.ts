@@ -54,6 +54,7 @@ const fetchVendorOnboarding = async (req: Request, res: Response): Promise<void>
         .select({
           userId: vendors.userId,
           organizationId: vendors.organizationId,
+          vendorName: vendors.vendorName,
           vendorType: vendors.vendorType,
           sector: vendors.sector,
           vendorMaturity: vendors.vendorMaturity,
@@ -100,6 +101,7 @@ const fetchVendorOnboarding = async (req: Request, res: Response): Promise<void>
     const data = {
       userId: row.userId,
       organizationId: row.organizationId,
+      vendorName: row.vendorName ?? "",
       vendorType: row.vendorType ?? "",
       sector: sector ?? {},
       vendorMaturity: row.vendorMaturity ?? "",

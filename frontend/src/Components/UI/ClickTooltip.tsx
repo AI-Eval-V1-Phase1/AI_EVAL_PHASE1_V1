@@ -6,20 +6,25 @@ interface ClickTooltipProps {
   children: ReactNode
   content: string
   position?: "top" | "bottom" | "left" | "right"
+  /** "click" = show on click; "hover" = show on mouse enter, hide on mouse leave */
+  showOn?: "click" | "hover"
 }
 
 function ClickTooltip({
   children,
   content,
   position = "top",
+  showOn = "click",
 }: ClickTooltipProps) {
   const [open, setOpen] = useState(false)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const tooltipId = useId()
   const triggerId = useId()
+  const isHover = showOn === "hover"
 
   const toggleTooltip = () => setOpen((prev) => !prev)
   const close = () => setOpen(false)
+  const openTooltip = () => setOpen(true)
 
   // Close on click outside
   useEffect(() => {
@@ -49,22 +54,31 @@ function ClickTooltip({
       ref={tooltipRef}
       className="click_tooltip_wrapper labelInfo"
       data-position={position}
+      data-show-on={showOn}
+      {...(isHover && {
+        onMouseEnter: openTooltip,
+        onMouseLeave: close,
+      })}
     >
       <span
         id={triggerId}
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        aria-haspopup="true"
+        role={isHover ? undefined : "button"}
+        tabIndex={isHover ? undefined : 0}
+        aria-expanded={isHover ? undefined : open}
+        aria-haspopup={isHover ? undefined : "true"}
         aria-describedby={open ? tooltipId : undefined}
         className="click_tooltip_trigger"
-        onClick={toggleTooltip}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault()
-            toggleTooltip()
-          }
-        }}
+        onClick={isHover ? undefined : toggleTooltip}
+        onKeyDown={
+          isHover
+            ? undefined
+            : (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  toggleTooltip()
+                }
+              }
+        }
       >
         {children}
       </span>

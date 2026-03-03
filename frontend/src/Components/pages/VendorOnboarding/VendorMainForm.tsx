@@ -59,6 +59,7 @@ const getDefaultVendorFormState = (
   vendorId: vendor_Id,
   organization_Id: organization_Id ?? undefined,
   vendorType: "",
+  vendorName: "",
   sector: {
     public_sector: [],
     private_sector: [],
@@ -109,6 +110,7 @@ function mapApiDataToFormState(
     organization_Id:
       (apiData.organizationId as string) ?? defaults.organization_Id,
     vendorType: (apiData.vendorType as string) ?? "",
+    vendorName: (apiData.vendorName as string) ?? "",
     sector: sectorNormalized,
     vendorMaturity: (apiData.vendorMaturity as string) ?? "",
     companyWebsite: (apiData.companyWebsite as string) ?? "",
@@ -264,6 +266,7 @@ const VendorMainForm = ({ type }: { type: string }) => {
     const stepData = [
       {
         vendorType: formVendorData.vendorType,
+        vendorName: formVendorData.vendorName,
         sector: formVendorData.sector,
         vendorMaturity: formVendorData.vendorMaturity,
         companyWebsite: formVendorData.companyWebsite,
@@ -332,6 +335,7 @@ const VendorMainForm = ({ type }: { type: string }) => {
     const stepData = [
       {
         vendorType: formVendorData.vendorType,
+        vendorName: formVendorData.vendorName,
         sector: formVendorData.sector,
         vendorMaturity: formVendorData.vendorMaturity,
         companyWebsite: formVendorData.companyWebsite,
@@ -371,6 +375,7 @@ const VendorMainForm = ({ type }: { type: string }) => {
     const stepData = [
       {
         vendorType: formVendorData.vendorType,
+        vendorName: formVendorData.vendorName,
         sector: formVendorData.sector,
         vendorMaturity: formVendorData.vendorMaturity,
         companyWebsite: formVendorData.companyWebsite,
@@ -472,6 +477,7 @@ const VendorMainForm = ({ type }: { type: string }) => {
     const disabled: number[] = [];
     const step1Result = vendorStep1CompanyProfileSchema.safeParse({
       vendorType: formVendorData.vendorType,
+      vendorName: formVendorData.vendorName,
       sector: formVendorData.sector,
       vendorMaturity: formVendorData.vendorMaturity,
       companyWebsite: formVendorData.companyWebsite,

@@ -87,6 +87,14 @@ export const VENDOR_COTS_FORM_SECTIONS: VendorCotsSectionConfig[] = [
     subTitle: "Product fit and implementation approach",
     fields: [
       {
+        key: "selectedProductId",
+        label: "Which product is this assessment for?",
+        placeholder: "Select a completed product",
+        inputType: "select",
+        optionsKey: "vendorCompletedProducts",
+        required: true,
+      },
+      {
         key: "productFeatures",
         label: "Which product features directly address the customer's needs?",
         placeholder: "Select all features that solve the customer's pain point",

@@ -1,6 +1,6 @@
 /**
  * Product Profile view for vendors: summary cards (Trust Score, No of products, Company, Regions),
- * product cards with kebab "View Product", and View Product modal with attestation details.
+ * product cards with trust score and View details, and View Product modal with attestation details.
  */
 import { useState } from "react";
 import {
@@ -11,12 +11,12 @@ import {
   FileText,
   Package,
   CircleX,
+  ChevronRight,
 } from "lucide-react";
 import type { VendorSelfAttestationFormState } from "../../../types/vendorSelfAttestation";
 import type { GeneratedProductProfileReport } from "../../../types/generatedProductProfile";
 import ProductProfileSummaryCard from "./ProductProfileSummaryCard";
 import GeneratedProductProfileCards from "./GeneratedProductProfileCards";
-import KebabMenu from "../../UI/KebabMenu";
 import type {
   ProductProfileProduct,
   StoredGeneratedReport,
@@ -50,6 +50,17 @@ function parseScoreFromText(text: string): number | null {
   if (!m) return null;
   const n = parseInt(m[1], 10);
   return Number.isNaN(n) ? null : Math.min(100, Math.max(0, n));
+}
+
+/** Get overallScore (0–100) from report column trustScore.overallScore when full report validation fails. */
+function getOverallScoreFromReport(raw: unknown): number | null {
+  if (raw == null || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const ts = o.trustScore;
+  if (ts == null || typeof ts !== "object") return null;
+  const t = ts as Record<string, unknown>;
+  if (typeof t.overallScore === "number") return Math.min(100, Math.max(0, t.overallScore));
+  return null;
 }
 
 /** Normalize API-generated report to GeneratedProductProfileReport (from attestation submit or fetch). */
@@ -353,7 +364,7 @@ function ProductProfileView({
 
       <section className="product_profile_summary_cards">
         <ProductProfileSummaryCard
-          title="Trust Score"
+          title="Average Trust Score"
           icon={<Shield size={24} />}
           primary={
             reportToShow?.trustScore
@@ -362,7 +373,7 @@ function ProductProfileView({
           }
           secondary={
             reportToShow?.trustScore?.summary
-              ? truncate(reportToShow.trustScore.summary, 60)
+              ? truncate((reportToShow.trustScore.summary || "").replace(/\s*-+\s*$/, "").trim(), 60)
               : `${compliancePercent} compliance`
           }
           iconColor="blue"
@@ -395,41 +406,57 @@ function ProductProfileView({
         <section className="product_profile_products_section">
           <h2 className="product_profile_products_heading">Products</h2>
           <div className="product_profile_product_cards">
-            {products.map((product) => (
+            {products.map((product) => {
+              const productReport = asGeneratedReport(product.generated_profile_report);
+              const overallFromReport = getOverallScoreFromReport(product.generated_profile_report);
+              const trustScoreDisplay =
+                productReport?.trustScore != null
+                  ? `${productReport.trustScore.overallScore}%`
+                  : overallFromReport != null
+                    ? `${overallFromReport}%`
+                    : "—";
+              return (
               <div key={product.id} className="product_profile_product_card">
-                <div className="product_profile_product_card_content">
-                  <div className="product_profile_product_card_title_row">
-                    <span
-                      className="product_profile_product_card_icon"
-                      aria-hidden
-                    >
-                      {productInitials(product.productName)}
-                    </span>
-                    <div className="product_status_Data">
-                      <h3 className="product_profile_product_card_title">
-                        {product.productName}
-                      </h3>
+                <div className="product_profile_product_card_top">
+                  <div className="product_profile_product_card_content">
+                    <div className="product_profile_product_card_title_row">
                       <span
-                        className={`product_profile_product_card_status product_profile_product_card_status_${product.status.toLowerCase()}`}
+                        className="product_profile_product_card_icon"
+                        aria-hidden
                       >
-                        {product.status}
+                        {productInitials(product.productName)}
                       </span>
+                      <div className="product_status_Data">
+                        <h3 className="product_profile_product_card_title">
+                          {product.productName}
+                        </h3>
+                        <span
+                          className={`product_profile_product_card_status product_profile_product_card_status_${product.status.toLowerCase()}`}
+                        >
+                          {product.status}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <div className="product_profile_product_card_trust_badge">
+                    <span className="product_profile_product_card_trust_label">Trust score</span>
+                    <span className="product_profile_product_card_trust_value">{trustScoreDisplay}</span>
+                  </div>
                 </div>
-                <div className="product_profile_product_card_actions">
-                  <KebabMenu
-                    ariaLabel={`Actions for ${product.productName}`}
-                    options={[
-                      {
-                        label: "View Product",
-                        onClick: () => handleViewProduct(product),
-                      },
-                    ]}
-                  />
+                <div className="product_profile_product_card_footer">
+                  <button
+                    type="button"
+                    className="product_profile_product_card_view_btn"
+                    onClick={() => handleViewProduct(product)}
+                    aria-label={`View details for ${product.productName}`}
+                  >
+                    View details
+                    <ChevronRight size={16} aria-hidden />
+                  </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}

@@ -22,8 +22,9 @@ export const industrySectorSchema = z
     }
   )
 
-/** Step 1 – Company Profile schema (vendorType, sector, maturity, website, description) */
+/** Step 1 – Company Profile schema (vendorName, vendorType, sector, maturity, website, description) */
 export const vendorStep1CompanyProfileSchema = z.object({
+  vendorName: z.string().min(1, "Vendor name is required").max(255, "Maximum 255 characters"),
   vendorType: z.string().min(1, "Single selection required"),
   sector: industrySectorSchema,
   vendorMaturity: z.string().min(1, "Single selection required"),
@@ -37,6 +38,7 @@ export const vendorStep1CompanyProfileSchema = z.object({
 /** Re-export for backward compatibility: full vendor onboarding (all steps combined) */
 export const emailSchema = z.string().min(1).email("Invalid email address")
 export const vendorOnboardingSchema = z.object({
+  vendorName: z.string().min(1, "Vendor name is required").max(255, "Maximum 255 characters"),
   vendorType: z.string().min(1, "Single selection required"),
   sector: industrySectorSchema,
   vendorMaturity: z.string().min(1, "Single selection required"),

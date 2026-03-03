@@ -136,7 +136,8 @@ Vendor data to use (use only this information; infer only when reasonable):
 
 function parseBulletItems(text: string): Record<string, string> {
   const items: Record<string, string> = {};
-  const bulletRegex = /^[-*]\s*\*\*(.+?):\*\*\s*([\s\S]*?)(?=^[-*]\s*\*\*|$)/gm;
+  // Value stops at next bullet line (- **Label:**) or section (## 1), not at lone "**" so Summary paragraph is captured fully
+  const bulletRegex = /^[-*]\s*\*\*(.+?):\*\*\s*([\s\S]*?)(?=\n\s*[-*]\s*\*\*[A-Za-z][^\n]*:|\n\s*##\s*\d|$)/gm;
   let m;
   while ((m = bulletRegex.exec(text)) !== null) {
     const label = m[1].trim();
@@ -154,19 +155,6 @@ const TRUST_SCORE_KNOWN_CATEGORIES = [
   "Operations",
   "Company Maturity",
 ];
-
-/** Extract only the content after "**Summary:**" – no label, stop at next ## or bullet. */
-function extractSummaryAfterLabel(text: string): string {
-  if (!text || !/Summary/i.test(text)) return "";
-  const afterLabel = text.split(/\*\*Summary\*\*:\s*/i)[1];
-  if (!afterLabel) return "";
-  const content = afterLabel
-    .replace(/\n+/g, " ")
-    .trim()
-    .split(/\n\s*##\s*\d|\n\s*[-*]\s*\*\*/)[0]
-    .trim();
-  return content.split(/^\*\*Summary\*\*:\s*/i)[1]?.trim() || content.trim();
-}
 
 function parseTrustScoreBlock(sectionText: string): TrustScoreBlock {
   const items = parseBulletItems(sectionText);
@@ -204,11 +192,19 @@ function parseTrustScoreBlock(sectionText: string): TrustScoreBlock {
   if (!summary.trim() && /Summary/i.test(sectionText)) {
     const afterSummary = sectionText.split(/\*\*Summary\*\*:\s*/i)[1];
     if (afterSummary) {
+      // Stop at next bullet line (- **Label:**) or section (##), not at lone "**"
       summary = afterSummary
         .replace(/\n+/g, " ")
         .trim()
-        .split(/\n\s*[-*]\s*\*\*|\n\s*##/)[0]
+        .split(/\n\s*[-*]\s*\*\*[A-Za-z][^\n]*:|\n\s*##/)[0]
         .trim();
+    }
+  }
+  // Format: **Summary** on its own line, content on next line(s)
+  if (!summary.trim() && /\*\*Summary\*\*/i.test(sectionText)) {
+    const afterLabel = sectionText.match(/(?:^|\n)\s*\*\*Summary\*\*\s*\n\s*([\s\S]*?)(?=\n\s*[-*]\s*\*\*[A-Za-z][^\n]*:|\n\s*##\s*\d|$)/im);
+    if (afterLabel && afterLabel[1]) {
+      summary = afterLabel[1].replace(/\n+/g, " ").trim();
     }
   }
   const scoreByCategory: Record<string, string | number> = {};
@@ -374,20 +370,122 @@ function parseReportSections(rawReply: string): {
     }
   }
 
-  // Last resort: extract Summary from raw reply if still empty
-  if (!trustScore.summary.trim() && /\*\*Summary\*\*:/i.test(rawReply)) {
-    const afterSummary = rawReply.split(/\*\*Summary\*\*:\s*/i)[1];
-    if (afterSummary) {
-      const summaryText = afterSummary
-        .replace(/\n+/g, " ")
-        .trim()
-        .split(/\n\s*##\s*\d/)[0]
-        .trim();
-      if (summaryText.length > 20) trustScore = { ...trustScore, summary: summaryText };
-    }
+  // Last resort: extract Summary from raw reply using same pattern as parseBulletItems / extractSummaryFromRawReply
+  if (!trustScore.summary.trim() && (/\*\*Summary\*\*:/i.test(rawReply) || /\*\*Summary\*\*\s*\n/i.test(rawReply))) {
+    const fromRaw = extractSummaryFromRawReply(rawReply);
+    if (fromRaw) trustScore = { ...trustScore, summary: fromRaw };
   }
 
   return { trustScore, sections };
+}
+
+export function extractSummaryFromRawReply(rawReply: string): string {
+  if (!rawReply || typeof rawReply !== "string") return "";
+
+  function clean(s: string): string {
+    const t = s.replace(/\s*\n\s*/g, " ").trim();
+    const noAsterisks = t.replace(/^\*+|\*+$/g, "").trim();
+    return noAsterisks.length > 0 && !/^\*+$/.test(noAsterisks) ? noAsterisks : t.length > 0 && !/^\*+$/.test(t) ? t : "";
+  }
+
+  // 1) **Summary:** or **Summary** (optional - or * prefix), content until next bullet/section
+  const primaryRegex =
+    /(?:^|\n)(?:[-*]\s*)?\*\*Summary\*\*:?\s*\n?\s*([\s\S]*?)(?=\n\s*[-*]\s*\*\*[A-Za-z][^\n]*:|\n\s*##\s*\d|$)/im;
+  const primaryMatch = rawReply.match(primaryRegex);
+  if (primaryMatch?.[1]) {
+    const value = clean(primaryMatch[1]);
+    if (value.length > 0) {
+      // console.log("[Summary] extractSummaryFromRawReply — primary regex, length:", value.length, "| content:", value);
+      return value;
+    }
+  }
+
+  // 2) Split on **Summary** or **Summary:** and take first block until ## or next ** bullet
+  const splitPattern = /\*\*Summary\*\*:?\s*/i;
+  if (splitPattern.test(rawReply)) {
+    const parts = rawReply.split(splitPattern);
+    if (parts.length >= 2) {
+      const after = parts[1];
+      const untilSection = after.split(/\n\s*##\s*\d/)[0];
+      const untilBullet = untilSection.split(/\n\s*[-*]\s*\*\*[A-Za-z]/)[0];
+      const value = clean(untilBullet);
+      if (value.length > 0) {
+        // console.log("[Summary] extractSummaryFromRawReply — fallback split, length:", value.length, "| content:", value);
+        return value;
+      }
+    }
+  }
+
+  // 3) Any "Summary" line (with or without **): content after colon or on next lines until ## or next bullet
+  const summaryLineMatch = rawReply.match(/\n\s*(?:\*\*)?Summary(?:\*\*)?:?\s*\n?\s*([\s\S]*?)(?=\n\s*##\s*\d|\n\s*[-*]\s*\*\*[A-Za-z]|$)/im);
+  if (summaryLineMatch?.[1]) {
+    const value = clean(summaryLineMatch[1]);
+    if (value.length > 0) {
+      // console.log("[Summary] extractSummaryFromRawReply — Summary line match, length:", value.length, "| content:", value);
+      return value;
+    }
+  }
+
+  // 4) Last resort: after first occurrence of "Summary" (case insensitive), take rest until ## 1
+  const idx = rawReply.search(/\bSummary\s*:?\s*/i);
+  if (idx >= 0) {
+    const after = rawReply.slice(idx).replace(/^\s*Summary\s*:?\s*/i, "");
+    const block = after.split(/\n\s*##\s*1\b/)[0].split(/\n\s*[-*]\s*\*\*[A-Za-z]/)[0];
+    const value = clean(block);
+    if (value.length > 0) {
+      // console.log("[Summary] extractSummaryFromRawReply — last resort after 'Summary', length:", value.length, "| content:", value);
+      return value;
+    }
+  }
+
+  // console.log("[Summary] extractSummaryFromRawReply — no summary found in raw (length " + rawReply.length + ")");
+  return "";
+}
+
+export type ReportPayloadAndSummary = {
+  reportPayload: { trustScore: unknown; sections: ReportSection[] };
+  trustScoreNum: number;
+  summaryToStore: string | undefined;
+};
+
+/**
+ * Build report payload (trust score + sections) and derive summary for DB storage.
+ * Use after generateVendorAttestationReport to normalize score and summary consistently.
+ */
+export function buildReportPayloadAndSummary(report: VendorAttestationReport): ReportPayloadAndSummary {
+  let trustScoreNum = typeof report.trustScore?.overallScore === "number" ? report.trustScore.overallScore : 0;
+  if (trustScoreNum === 0 && report.trustScore) {
+    const fromSummary = parseScoreFromTrustText(String(report.trustScore.summary ?? ""));
+    const fromLabel = parseScoreFromTrustText(String(report.trustScore.label ?? ""));
+    const fallback = fromSummary ?? fromLabel ?? null;
+    if (fallback != null) trustScoreNum = fallback;
+  }
+  const trustScoreForPayload =
+    trustScoreNum !== 0 && report.trustScore
+      ? { ...report.trustScore, overallScore: trustScoreNum }
+      : report.trustScore;
+  const reportPayload = { trustScore: trustScoreForPayload, sections: report.sections };
+
+  const summaryFromReport =
+    report.trustScore && typeof report.trustScore === "object" && "summary" in report.trustScore
+      ? String((report.trustScore as { summary?: string }).summary ?? "").trim()
+      : "";
+  const fromRaw = report.raw ? extractSummaryFromRawReply(report.raw).trim() : "";
+  const validParsed = summaryFromReport.length > 0 && !/^\*+$/.test(summaryFromReport);
+  const summaryToStore = validParsed ? summaryFromReport : (fromRaw.length > 0 ? fromRaw : undefined);
+
+  // console.log("[Summary] Step: buildReportPayloadAndSummary — summaryFromReport (parsed trustScore.summary) length:", summaryFromReport.length, "| complete content:", summaryFromReport);
+  // console.log("[Summary] Step: buildReportPayloadAndSummary — fromRaw (extractSummaryFromRawReply) length:", fromRaw.length, "| complete content:", fromRaw);
+  // console.log("[Summary] Step: buildReportPayloadAndSummary — summaryToStore:", summaryToStore == null ? "undefined" : "length " + summaryToStore.length, summaryToStore != null ? "| complete content: " + summaryToStore : "");
+
+  if (summaryToStore && reportPayload.trustScore) {
+  reportPayload.trustScore = {
+    ...reportPayload.trustScore,
+    summary: summaryToStore,
+  };
+}
+
+  return { reportPayload, trustScoreNum, summaryToStore };
 }
 
 async function chat(
@@ -419,7 +517,6 @@ async function chat(
   const response = await client.send(command);
   const result = JSON.parse(new TextDecoder().decode(response.body));
   const reply = result.content?.[0]?.text ?? "";
-
   return reply;
 }
 
@@ -436,8 +533,15 @@ export async function generateVendorAttestationReport(
     content: { type: string; text: string }[];
   }[] = [];
   const reply = await chat(messages, userInput);
+  // console.log("[Summary] Step: generateVendorAttestationReport — raw reply length:", reply.length, "| complete content:", reply);
   const { trustScore, sections } = parseReportSections(reply);
-  console.log("Product Data", reply);
+  const parsedSummary = (trustScore.summary || "").trim();
+  const summaryFromRaw = extractSummaryFromRawReply(reply);
+  if ((parsedSummary.length === 0 || /^\*+$/.test(parsedSummary)) && summaryFromRaw.length > 0) {
+    trustScore.summary = summaryFromRaw;
+  }
+  const contentToLog = (trustScore.summary || "").trim();
+  // console.log("[Summary] Step: generateVendorAttestationReport — parsed trustScore.summary length:", contentToLog.length, "| complete content:", contentToLog || "(no summary extracted)");
   return {
     trustScore,
     sections,

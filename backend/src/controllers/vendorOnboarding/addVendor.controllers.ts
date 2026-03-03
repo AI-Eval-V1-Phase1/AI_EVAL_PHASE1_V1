@@ -3,9 +3,11 @@ import jwt from "jsonwebtoken";
 import { db } from "../../database/db.js";
 import { createOrganization, usersTable, vendors } from "../../schema/schema.js";
 import { and, eq, sql } from "drizzle-orm";
+import { getJwtExpiry, getJwtSecret } from "../../config/auth.js";
 
 const insertVendorOnboarding = async (req: Request, res: Response) => {
-  console.log(req.body);
+  // console.log(req.body);
+  
   try {
     const {
       vendorType,
@@ -71,7 +73,36 @@ const insertVendorOnboarding = async (req: Request, res: Response) => {
     }
 
     if (user.user_onboarding_completed === "true") {
-      return res.status(200).json({ message: "Onboarding already completed" });
+      // Return token + userDetails so frontend can set bearerToken and user can proceed to attestation
+      const [existingRow] = await db
+        .select({
+          user: usersTable,
+          organizationName: createOrganization.organizationName,
+        })
+        .from(usersTable)
+        .leftJoin(createOrganization, eq(usersTable.organization_id, createOrganization.id))
+        .where(eq(usersTable.id, user.id))
+        .limit(1);
+      const u = existingRow?.user;
+      const organizationName = existingRow?.organizationName ?? "";
+      
+      const token = jwt.sign(
+        { id: u?.id, email: u?.email, userRole: u?.role },
+        getJwtSecret(),
+        { expiresIn: getJwtExpiry() } as jwt.SignOptions,
+      );
+      const userDetails = [
+        {
+          ...u,
+          organization_name: organizationName,
+          organization_id: u?.organization_id,
+        },
+      ];
+      return res.status(200).json({
+        message: "Onboarding already completed",
+        token,
+        userDetails,
+      });
     }
 
     const organizationIdRaw = bodyOrgId ?? bodyOrgIdCamel ?? user.organization_id;
@@ -164,12 +195,10 @@ const insertVendorOnboarding = async (req: Request, res: Response) => {
     const u = updatedRow?.user;
     const organizationName = updatedRow?.organizationName ?? "";
 
-    const secret = process.env.JWT_SECRET_KEY ?? "";
-    if (!secret) throw new Error("JWT_SECRET_KEY not set");
     const token = jwt.sign(
       { id: u?.id, email: u?.email, userRole: u?.role },
-      secret,
-      { expiresIn: "24h" },
+      getJwtSecret(),
+      { expiresIn: getJwtExpiry() } as jwt.SignOptions,
     );
 
     const userDetails = [

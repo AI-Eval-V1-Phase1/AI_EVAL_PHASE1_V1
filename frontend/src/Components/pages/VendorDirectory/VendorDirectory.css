@@ -60,13 +60,16 @@
   border-radius: 5px;
 }
 
-/* Search: organization name and product name */
+/* Search: product name and organization – full width */
 .vendor_directory_search_wrap {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
   padding: 0.5rem 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .vendor_directory_search_icon {
   color: #9ca3af;
@@ -74,12 +77,15 @@
 }
 .vendor_directory_search_input {
   flex: 1;
-  max-width: 360px;
+  min-width: 0;
+  width: 100%;
+  max-width: none;
   padding: 0.5rem 0.75rem;
   font-size: 0.9375rem;
   border: 1px solid #e5e7eb;
   border-radius: 5px;
   outline: none;
+  box-sizing: border-box;
 }
 .vendor_directory_search_input:focus {
   border-color: #2563eb;
@@ -143,6 +149,28 @@
   min-width: 0;
 }
 
+.vendor_directory_card_trust_sector_wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+/* Trust score badge uses product_profile_product_card_trust_* (product_profile.css) for same look as Product Profile */
+
+.vendor_directory_card_sector {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #059669;
+  line-height: 1.2;
+  text-align: right;
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .vendor_directory_card_name {
   font-size: 1.125rem;
   font-weight: 700;
@@ -203,9 +231,37 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.875rem;
+  font-size: 14px;
   font-weight: 600;
   color: #2563eb;
+  text-decoration: none;
+}
+
+.vendor_directory_card_action_btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.vendor_directory_card_action_btn:hover {
+  text-decoration: none;
+  color: #1d4ed8;
+}
+
+.vendor_directory_card_action_btn svg {
+  color: currentColor;
+}
+
+.vendor_directory_card_action_btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
 
 /* Vendor detail modal – centered like Invite User popup (modal.css), same overlay background */
@@ -265,6 +321,27 @@
   padding: 1.25rem;
   overflow-y: auto;
   flex: 1;
+}
+
+.vendor_directory_product_description {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.vendor_directory_product_description_heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.vendor_directory_product_description_text {
+  font-size: 0.9375rem;
+  color: #374151;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
 }
 
 .vendor_directory_empty_products {
@@ -331,6 +408,29 @@
   font-size: 0.75rem;
   color: #16a34a;
   font-weight: 600;
+}
+
+.vendor_directory_product_card_trust_badge {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.vendor_directory_product_card_trust_label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #059669;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.vendor_directory_product_card_trust_value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #059669;
+  line-height: 1.1;
 }
 
 .vendor_directory_product_card_arrow {

@@ -41,9 +41,10 @@ const Input = ({
           value={value}
           rows={rows}
           cols={cols}
-          required ={required}
+          required={required}
           onChange={onChange}
           className="textarea_field"
+          {...props}
         />
       ) : (
         <input

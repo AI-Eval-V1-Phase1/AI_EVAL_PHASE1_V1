@@ -1,8 +1,10 @@
-import Input from "../../../UI/Input";
-import HeaderForVendor from "../../VendorOnboarding/HeaderForVendor";
-import FormField from "../../../UI/FormField";
-import Select from "../../../UI/Select";
-import { VENDOR_COTS_FIELD_KEYS } from "../../../../constants/vendorCotsAssessmentKeys";
+// ** Check the import paths - ../ is added extra in the below line, error as type declaration or header cannot find
+// import Input from "../../../UI/Input"; 
+import Input from "../../UI/Input";
+import HeaderForVendor from "../VendorOnboarding/HeaderForVendor";
+import FormField from "../../UI/FormField";
+import Select from "../../UI/Select";
+import { VENDOR_COTS_FIELD_KEYS } from "../../../constants/vendorCotsAssessmentKeys";
 
 const KEYS = VENDOR_COTS_FIELD_KEYS.solutionFit;
 const IMPL_OPTIONS = [{ value: "", label: "Select" }, { value: "cloud", label: "Cloud" }, { value: "on_prem", label: "On-premise" }, { value: "hybrid", label: "Hybrid" }];

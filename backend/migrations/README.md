@@ -45,3 +45,7 @@
 - **Migration `0015_create_sectors_industries_if_missing.sql`**: Creates **sectors** and **industries** tables if they do not exist (Excel "Industry_sectors" structure); seeds data with ON CONFLICT DO NOTHING (no duplicates). Safe to run anytime. Run **`node migrations/run-migration-0015.js`** from the backend folder.
 
 - **Migration `0016_create_cots_buyer_assessments_if_missing.sql`**: Creates **cots_buyer_assessments** table if it does not exist (Excel "buyer_cots" structure). Requires **assessments** table. Run **`node migrations/run-migration-0016.js`** from the backend folder.
+
+- **Migration `0042_risk_mappings_unique_constraints.sql`**: Adds unique constraint on **risks**(risk_id) and unique index on **risk_top5_mitigations**(mapping_id, risk_id). Optional if you only use **risk_mappings** for Excel data.
+
+- **Migration `0043_risk_mappings_table.sql`**: Creates **risk_mappings** table for "Shared Enhanced Risk Database Jan 2026.xlsx" data. Run **`node migrations/run-migration-0043.js`** from the backend folder, then **`npm run seed-risk-mappings`** to load the Excel into **risk_mappings** (all sheets: risk rows and mapping rows).

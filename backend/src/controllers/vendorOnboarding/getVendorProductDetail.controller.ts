@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
 import { vendors, vendorSelfAttestations, usersTable, generatedProfileReports } from "../../schema/schema.js";
 import { and, desc, eq } from "drizzle-orm";
+import { mergeSummaryIntoReport } from "../../utils/mergeProfileReportSummary.js";
 
 function mapAttestationRow(attestRow: Record<string, unknown>): Record<string, unknown> {
   return {
@@ -10,6 +11,8 @@ function mapAttestationRow(attestRow: Record<string, unknown>): Record<string, u
     created_at: attestRow.created_at ?? undefined,
     updated_at: attestRow.updated_at ?? undefined,
     product_name: attestRow.product_name ?? undefined,
+    product_description: attestRow.market_product_material ?? undefined,
+    company_description: attestRow.company_description ?? undefined,
     visible_to_buyer: attestRow.visible_to_buyer === true || attestRow.visible_to_buyer === 1,
     purchase_decision_makers: attestRow.purchase_decisions_by ?? undefined,
     pain_points_solved: attestRow.pain_points ?? undefined,
@@ -134,12 +137,14 @@ const getVendorProductDetail = async (req: Request, res: Response): Promise<void
 
     const rowRecord = row as Record<string, unknown>;
     const [reportRow] = await db
-      .select({ report: generatedProfileReports.report })
+      .select({ report: generatedProfileReports.report, summary: generatedProfileReports.summary })
       .from(generatedProfileReports)
       .where(eq(generatedProfileReports.attestation_id, productId))
       .orderBy(desc(generatedProfileReports.created_at))
       .limit(1);
-    const generatedProfileReport = reportRow?.report ?? rowRecord.generated_profile_report;
+    const rawReport = reportRow?.report ?? rowRecord.generated_profile_report;
+    const generatedProfileReport =
+      rawReport != null ? mergeSummaryIntoReport(rawReport, reportRow?.summary) : undefined;
     const attestation = { ...mapAttestationRow(rowRecord), generated_profile_report: generatedProfileReport };
     const sectionVisibility = {
       aiGovernance: rowRecord.visible_ai_governance === true,

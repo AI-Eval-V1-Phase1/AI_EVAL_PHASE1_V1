@@ -3,7 +3,7 @@ import { db } from "../../database/db.js";
 import { vendorSelfAttestations, usersTable, generatedProfileReports } from "../../schema/schema.js";
 import { and, eq, sql } from "drizzle-orm";
 import { buildVendorDataFromPayload } from "../../utils/buildVendorDataFromPayload.js";
-import { generateVendorAttestationReport, parseScoreFromTrustText } from "../agents/vendorAttestation.js";
+import { generateVendorAttestationReport, buildReportPayloadAndSummary } from "../agents/vendorAttestation.js";
 
 /** Allowed file extensions for document_uploads (metadata only; actual files validated on frontend). */
 const ALLOWED_DOC_EXTENSIONS = [".pdf", ".doc", ".docx", ".ppt", ".pptx"];
@@ -68,6 +68,44 @@ function normalizeDocumentUploads(raw: unknown): { ok: true; value: Record<strin
     ok: true,
     value: { "0": slot0, "1": slot1, "2": slot2, evidenceTestingPolicy },
   };
+}
+
+type ReportPayload = { trustScore: unknown; sections: unknown[] };
+
+/**
+ * Generate product profile report from vendor data and insert into generated_profile_reports.
+ * Returns the report payload for the response, or null on error.
+ */
+async function generateAndStoreProfileReport(
+  vendorData: string,
+  userId: number,
+  organizationIdStr: string | null,
+  attestationId: string,
+): Promise<ReportPayload | null> {
+  try {
+    const report = await generateVendorAttestationReport(vendorData);
+    const { reportPayload, trustScoreNum, summaryToStore } = buildReportPayloadAndSummary(report);
+
+    const summaryForDb = summaryToStore && summaryToStore.length > 0 ? summaryToStore : null;
+    // console.log("[Summary] Step: submitVendorSelfAttestation (generateAndStoreProfileReport) — before DB insert | attestation_id:", attestationId, "| summaryToStore:", summaryToStore == null ? "undefined" : "length " + summaryToStore.length, "| summary column value:", summaryForDb == null ? "null" : "length " + summaryForDb.length);
+    // if (summaryForDb) console.log("[Summary] Step: submitVendorSelfAttestation — complete summary being stored:", summaryForDb);
+
+    await db.insert(generatedProfileReports).values({
+      user_id: userId,
+      organization_id: organizationIdStr ?? undefined,
+      attestation_id: attestationId,
+      trust_score: trustScoreNum,
+      summary: summaryForDb,
+      report: reportPayload,
+    });
+
+    // console.log("[Summary] Step: submitVendorSelfAttestation (generateAndStoreProfileReport) — inserted into generated_profile_reports | attestation_id:", attestationId, "| summary stored:", summaryForDb != null);
+
+    return reportPayload;
+  } catch (err) {
+    console.error("generateVendorAttestationReport after submit:", err);
+    return null;
+  }
 }
 
 /**
@@ -279,38 +317,15 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
         .values(values)
         .returning();
       const insertedId = inserted?.id as string | undefined;
-      let reportPayload: { trustScore: unknown; sections: unknown[] } | null = null;
+      let reportPayload: ReportPayload | null = null;
       if (status === "COMPLETED" && insertedId) {
-        try {
-          const vendorData = buildVendorDataFromPayload(b);
-          const report = await generateVendorAttestationReport(vendorData);
-          let trustScoreNum = typeof report.trustScore?.overallScore === "number" ? report.trustScore.overallScore : 0;
-          if (trustScoreNum === 0 && report.trustScore) {
-            const fromSummary = parseScoreFromTrustText(String(report.trustScore.summary ?? ""));
-            const fromLabel = parseScoreFromTrustText(String(report.trustScore.label ?? ""));
-            const fallback = fromSummary ?? fromLabel ?? null;
-            if (fallback != null) trustScoreNum = fallback;
-          }
-          const trustScoreForPayload =
-            trustScoreNum !== 0 && report.trustScore
-              ? { ...report.trustScore, overallScore: trustScoreNum }
-              : report.trustScore;
-          reportPayload = { trustScore: trustScoreForPayload, sections: report.sections };
-          const summaryText =
-            report.trustScore && typeof report.trustScore === "object" && "summary" in report.trustScore
-              ? String((report.trustScore as { summary?: string }).summary ?? "")
-              : "";
-          await db.insert(generatedProfileReports).values({
-            user_id: userId,
-            organization_id: organizationIdStr ?? undefined,
-            attestation_id: insertedId,
-            trust_score: trustScoreNum,
-            summary: summaryText || undefined,
-            report: reportPayload,
-          });
-        } catch (genErr) {
-          console.error("generateVendorAttestationReport after submit (new):", genErr);
-        }
+        const vendorData = buildVendorDataFromPayload(b);
+        reportPayload = await generateAndStoreProfileReport(
+          vendorData,
+          userId,
+          organizationIdStr ?? null,
+          insertedId,
+        );
       }
       const [rowAfter] = insertedId
         ? await db.select().from(vendorSelfAttestations).where(eq(vendorSelfAttestations.id, insertedId)).limit(1)
@@ -353,38 +368,15 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
           ...(status === "COMPLETED" ? { submitted_at: sql`now()` } : {}),
         })
         .where(eq(vendorSelfAttestations.id, attestationId));
-      let reportPayload: { trustScore: unknown; sections: unknown[] } | null = null;
+      let reportPayload: ReportPayload | null = null;
       if (status === "COMPLETED") {
-        try {
-          const vendorData = buildVendorDataFromPayload(b);
-          const report = await generateVendorAttestationReport(vendorData);
-          let trustScoreNum = typeof report.trustScore?.overallScore === "number" ? report.trustScore.overallScore : 0;
-          if (trustScoreNum === 0 && report.trustScore) {
-            const fromSummary = parseScoreFromTrustText(String(report.trustScore.summary ?? ""));
-            const fromLabel = parseScoreFromTrustText(String(report.trustScore.label ?? ""));
-            const fallback = fromSummary ?? fromLabel ?? null;
-            if (fallback != null) trustScoreNum = fallback;
-          }
-          const trustScoreForPayload =
-            trustScoreNum !== 0 && report.trustScore
-              ? { ...report.trustScore, overallScore: trustScoreNum }
-              : report.trustScore;
-          reportPayload = { trustScore: trustScoreForPayload, sections: report.sections };
-          const summaryText =
-            report.trustScore && typeof report.trustScore === "object" && "summary" in report.trustScore
-              ? String((report.trustScore as { summary?: string }).summary ?? "")
-              : "";
-          await db.insert(generatedProfileReports).values({
-            user_id: userId,
-            organization_id: organizationIdStr ?? undefined,
-            attestation_id: attestationId,
-            trust_score: trustScoreNum,
-            summary: summaryText || undefined,
-            report: reportPayload,
-          });
-        } catch (genErr) {
-          console.error("generateVendorAttestationReport after submit (update):", genErr);
-        }
+        const vendorData = buildVendorDataFromPayload(b);
+        reportPayload = await generateAndStoreProfileReport(
+          vendorData,
+          userId,
+          organizationIdStr ?? null,
+          attestationId,
+        );
       }
       const [savedRow] = await db
         .select()

@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "../../database/db.js";
 import { usersTable, generatedProfileReports } from "../../schema/schema.js";
-import { generateVendorAttestationReport, parseScoreFromTrustText } from "../agents/vendorAttestation.js";
+import { generateVendorAttestationReport, buildReportPayloadAndSummary } from "../agents/vendorAttestation.js";
 
 /**
  * POST /vendorSelfAttestation/generate-profile
@@ -53,44 +53,31 @@ const generateProductProfile = async (req: Request, res: Response): Promise<void
     const organizationIdStr = userRow?.organization_id != null ? String(userRow.organization_id) : null;
 
     const report = await generateVendorAttestationReport(vendorData);
-    let trustScore =
-      typeof report.trustScore?.overallScore === "number" ? report.trustScore.overallScore : 0;
-    if (trustScore === 0 && report.trustScore) {
-      const fromSummary = parseScoreFromTrustText(String(report.trustScore.summary ?? ""));
-      const fromLabel = parseScoreFromTrustText(String(report.trustScore.label ?? ""));
-      const fallback = fromSummary ?? fromLabel ?? null;
-      if (fallback != null) trustScore = fallback;
-    }
-    const trustScoreForPayload =
-      trustScore !== 0 && report.trustScore
-        ? { ...report.trustScore, overallScore: trustScore }
-        : report.trustScore;
-    const reportPayload = {
-      trustScore: trustScoreForPayload,
-      sections: report.sections,
-    };
+    const { reportPayload, trustScoreNum, summaryToStore } = buildReportPayloadAndSummary(report);
 
     const attestationIdRaw = req.body?.attestationId ?? req.body?.attestation_id;
     const attestationId =
       typeof attestationIdRaw === "string" && attestationIdRaw.trim() ? attestationIdRaw.trim() : null;
 
-    const summaryText =
-      typeof trustScoreForPayload === "object" && trustScoreForPayload !== null && "summary" in trustScoreForPayload
-        ? String((trustScoreForPayload as { summary?: string }).summary ?? "")
-        : "";
+    const summaryForDb = summaryToStore && summaryToStore.length > 0 ? summaryToStore : null;
+    console.log("[Summary] Step: generateProductProfile (controller) — before DB insert | summaryToStore:", summaryToStore == null ? "undefined" : "length " + summaryToStore.length, "| summary column value:", summaryForDb == null ? "null" : "length " + summaryForDb.length);
+    if (summaryForDb) console.log("[Summary] Step: generateProductProfile — complete summary being stored:", summaryForDb);
+
     await db.insert(generatedProfileReports).values({
       user_id: userId,
       organization_id: organizationIdStr,
       attestation_id: attestationId ?? undefined,
-      trust_score: trustScore,
-      summary: summaryText || undefined,
+      trust_score: trustScoreNum,
+      summary: summaryForDb,
       report: reportPayload,
     });
+
+    console.log("[Summary] Step: generateProductProfile (controller) — inserted into generated_profile_reports | attestation_id:", attestationId ?? "(none)", "| summary stored:", summaryForDb != null);
 
     res.status(200).json({
       success: true,
       data: {
-        trustScore: trustScoreForPayload,
+        trustScore: reportPayload.trustScore,
         sections: report.sections,
       },
     });

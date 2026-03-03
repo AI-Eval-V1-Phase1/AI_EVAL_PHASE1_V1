@@ -42,6 +42,7 @@ import "../UserManagement/user_management.css";
 import "./vendor_attestation_preview.css";
 
 const defaultCompanyProfile: AttestationCompanyProfile = {
+  vendorName: "",
   vendorType: "",
   sector: { public_sector: [], private_sector: [], non_profit_sector: [] },
   vendorMaturity: "",
@@ -262,6 +263,7 @@ function mapApiCompanyProfile(
     };
   }
   return {
+    vendorName: (api.vendorName as string) ?? "",
     vendorType: (api.vendorType as string) ?? "",
     sector: sectorNorm,
     vendorMaturity: (api.vendorMaturity as string) ?? "",
@@ -361,6 +363,7 @@ const VendorAttestationsMainForm = () => {
     useState<VendorSelfAttestationFormState>(defaultFormState);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [attestationId, setAttestationId] = useState<string | null>(null);
   const formStateRef = useRef(formState);
   formStateRef.current = formState;
@@ -443,7 +446,11 @@ const VendorAttestationsMainForm = () => {
         if (!response.ok) {
           if (!cancelled) {
             setFormState(defaultFormState);
-            setFetchError(null);
+            const errMsg =
+              response.status === 401
+                ? (result.message as string) || "Session expired. Please sign in again."
+                : null;
+            setFetchError(errMsg);
             setFetchDone(true);
           }
           return;
@@ -856,6 +863,7 @@ const VendorAttestationsMainForm = () => {
 
   const saveDraftOrSubmit = async (isDraft: boolean) => {
     setSubmitError(null);
+    if (!isDraft) setSubmitting(true);
     const token =
       sessionStorage.getItem("bearerToken") ??
       sessionStorage.getItem("onboardingToken") ??
@@ -864,6 +872,7 @@ const VendorAttestationsMainForm = () => {
       setSubmitError(
         "Not authenticated. Please log in or complete onboarding.",
       );
+      if (!isDraft) setSubmitting(false);
       return false;
     }
     const latestState = formStateRef.current;
@@ -914,6 +923,7 @@ const VendorAttestationsMainForm = () => {
         result = text ? JSON.parse(text) : {};
       } catch {
         setSubmitError("Invalid response from server");
+        if (!isDraft) setSubmitting(false);
         return false;
       }
       if (!response.ok) {
@@ -927,6 +937,7 @@ const VendorAttestationsMainForm = () => {
         } else {
           setSubmitError(msg);
         }
+        if (!isDraft) setSubmitting(false);
         return false;
       }
       if (result.success && result.attestation?.id) {
@@ -947,7 +958,10 @@ const VendorAttestationsMainForm = () => {
       return result.success === true;
     } catch {
       setSubmitError("Network or server error");
+      if (!isDraft) setSubmitting(false);
       return false;
+    } finally {
+      if (!isDraft) setSubmitting(false);
     }
   };
 
@@ -970,6 +984,19 @@ const VendorAttestationsMainForm = () => {
 
   return (
     <div className="sec_user_page org_settings_page">
+      {submitting && (
+        <div
+          className="vendor_attestation_submit_overlay"
+          role="status"
+          aria-live="polite"
+          aria-label="Submitting attestation"
+        >
+          <div className="vendor_attestation_submit_overlay_content">
+            <p>Submitting attestation…</p>
+            <p className="vendor_attestation_submit_overlay_hint">Please wait. Do not close or refresh.</p>
+          </div>
+        </div>
+      )}
       <div className="org_settings_header page_header_align">
         <div className="org_settings_headers page_header_row">
           <span className="icon_size_header" aria-hidden>
@@ -991,6 +1018,7 @@ const VendorAttestationsMainForm = () => {
             className="form_back_to_assessments"
             onClick={() => navigate("/attestation_details")}
             aria-label="Back to Self Attestations"
+            disabled={submitting}
           >
             <ChevronLeftCircle size={18} />
             <span>Back to Self Attestations</span>
@@ -1005,6 +1033,7 @@ const VendorAttestationsMainForm = () => {
               steps={tabStepsWithContent}
               currentStep={currentStep}
               onStepChange={(step) => {
+                if (submitting) return;
                 setStepValidationError(null);
                 setCurrentStep(step);
               }}
@@ -1036,7 +1065,7 @@ const VendorAttestationsMainForm = () => {
                     <Button
                       type="button"
                       onClick={currentStep > 0 ? handleBack : undefined}
-                      disabled={currentStep === 0}
+                      disabled={currentStep === 0 || submitting}
                       className="back_btn"
                     >
                       <span>
@@ -1052,6 +1081,7 @@ const VendorAttestationsMainForm = () => {
                       <Button
                         type="button"
                         onClick={handleSaveDraft}
+                        disabled={submitting}
                         className="vendor_attestation_save_draft_btn_form"
                       >
                         <span>
@@ -1067,6 +1097,7 @@ const VendorAttestationsMainForm = () => {
                       <Button
                         type="button"
                         onClick={handleContinue}
+                        disabled={submitting}
                         className="continue_btn"
                       >
                         <span>
@@ -1078,7 +1109,7 @@ const VendorAttestationsMainForm = () => {
 
                   {currentStep === totalSteps - 1 && !allStepsFilled && (
                     <div className="action_submit_btn">
-                      <Button type="submit" className="submit_btn_vendor">
+                      <Button type="submit" className="submit_btn_vendor" disabled={submitting}>
                         <span>
                           Submit <Send size={16} />
                         </span>

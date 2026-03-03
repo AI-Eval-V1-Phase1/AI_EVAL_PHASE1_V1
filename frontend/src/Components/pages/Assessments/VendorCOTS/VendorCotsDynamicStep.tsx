@@ -30,6 +30,8 @@ export interface VendorCotsDynamicStepProps {
   title?: string
   subTitle?: string
   icon?: ReactNode
+  /** Options for Product dropdown (vendor's completed attestations). Used when field.optionsKey === "vendorCompletedProducts". */
+  completedProductOptions?: { value: string; label: string }[]
 }
 
 function VendorCotsDynamicStep({
@@ -40,6 +42,7 @@ function VendorCotsDynamicStep({
   title,
   subTitle,
   icon,
+  completedProductOptions = [],
 }: VendorCotsDynamicStepProps) {
   const displayTitle = title ?? section.label
   const displaySubTitle = subTitle ?? section.subTitle
@@ -47,7 +50,12 @@ function VendorCotsDynamicStep({
   function renderField(field: VendorCotsFieldConfig) {
     const key = field.key
     const value = formData[key] ?? ""
-    const options = field.optionsKey ? getVendorCotsFieldOptions(field.optionsKey) : undefined
+    const isProductSelect = field.optionsKey === "vendorCompletedProducts"
+    const options = isProductSelect
+      ? completedProductOptions
+      : field.optionsKey
+        ? getVendorCotsFieldOptions(field.optionsKey)
+        : undefined
     const errorText = fieldErrors[key]
 
     if (field.inputType === "multiselect" && options) {
@@ -74,7 +82,31 @@ function VendorCotsDynamicStep({
       )
     }
 
-    if (field.inputType === "select" && options) {
+    if (field.inputType === "select" && isProductSelect && completedProductOptions.length === 0) {
+      return (
+        <div key={key} className="form_fields_vendor">
+          <FormField
+            label={field.label}
+            mandatory={field.required}
+            tooltipText={field.placeholder}
+            errorText={errorText ?? "No completed products. Complete a vendor self-attestation first."}
+          >
+            <Select
+              labelName=""
+              id={`cots-${section.id}-${key}`}
+              name={key}
+              value=""
+              default_option="No completed products"
+              options={[]}
+              required={field.required}
+              onChange={() => {}}
+            />
+          </FormField>
+        </div>
+      )
+    }
+
+    if (field.inputType === "select" && options && options.length > 0) {
       return (
         <div key={key} className="form_fields_vendor">
           <FormField

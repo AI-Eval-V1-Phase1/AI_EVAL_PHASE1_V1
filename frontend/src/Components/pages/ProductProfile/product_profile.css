@@ -383,6 +383,12 @@
   padding: 1rem 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.product_profile_product_card_top {
+  display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
@@ -444,6 +450,66 @@
   /* margin-left: 3.5em; */
 }
 
+.product_profile_product_card_trust_row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.product_profile_product_card_trust_badge {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.product_profile_product_card_trust_label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #059669;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.product_profile_product_card_trust_value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #059669;
+  line-height: 1.1;
+}
+
+.product_profile_product_card_footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f3f4f6;
+  margin-top: auto;
+}
+
+.product_profile_product_card_view_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2563eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.product_profile_product_card_view_btn:hover {
+  text-decoration: none;
+  color: #1d4ed8;
+}
+
 /* Toggle used in modal (and elsewhere if needed) */
 .product_profile_product_toggle {
   width: 2.25rem;
@@ -476,10 +542,6 @@
 .product_profile_product_card_status_pending {
   background: #e5e7eb;
   color: #374151;
-}
-
-.product_profile_product_card_actions {
-  flex-shrink: 0;
 }
 
 /* View Product modal */

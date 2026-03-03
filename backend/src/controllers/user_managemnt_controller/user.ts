@@ -141,7 +141,7 @@ export const inviteUser = async (req: Request, res: Response) => {
 
     const secret = process.env.JWT_SECRET_KEY;
     if (!secret) throw new Error("JWT_SECRET_KEY not set");
-    const token = jwt.sign({ email }, secret, { expiresIn: SIGNUP_LINK_EXPIRY_JWT });
+    const token = jwt.sign({ email }, secret, { expiresIn: SIGNUP_LINK_EXPIRY_JWT } as jwt.SignOptions);
 
     const confirmationLink = `${BASE_URL}/signup/${token}`;
 
@@ -159,7 +159,7 @@ export const inviteUser = async (req: Request, res: Response) => {
     await transporter.sendMail({
       from: {
         name: "AI_Eval",
-        address: process.env.SENDER_EMAIL ?? "noreply@aieval.example.com",
+        address: process.env.SENDER_EMAIL! ,
       },
       to: email,
       subject: "Confirm your AI Eval account",
@@ -207,7 +207,7 @@ export const reinviteUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "User is already confirmed. Reinvite is only for invited or expired users." });
     }
     const email = (user.email ?? "").toLowerCase();
-    const token = jwt.sign({ email }, secret, { expiresIn: SIGNUP_LINK_EXPIRY_JWT });
+    const token = jwt.sign({ email }, secret, { expiresIn: SIGNUP_LINK_EXPIRY_JWT } as jwt.SignOptions);
     const confirmationLink = `${BASE_URL}/signup/${token}`;
 
     await db
@@ -246,7 +246,7 @@ export const reinviteUser = async (req: Request, res: Response) => {
 
     const transporter = emailConfig();
     await transporter.sendMail({
-      from: { name: "AI_Eval", address: process.env.SENDER_EMAIL ?? "noreply@aieval.example.com" },
+      from: { name: "AI_Eval", address: process.env.SENDER_EMAIL! },
       to: email,
       subject: "Confirm your AI Eval account",
       html: inviteEmailTemplate(email, organizationNameCapitalized, roleCapitalized, confirmationLink),
@@ -287,7 +287,7 @@ export const resendOnboardingLink = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { email, userId: user.id, organizationId: user.organization_id },
       secret,
-      { expiresIn: ONBOARDING_LINK_EXPIRY_JWT },
+      { expiresIn: ONBOARDING_LINK_EXPIRY_JWT } as jwt.SignOptions,
     );
     const onboardingLink = `${BASE_URL}/onBoarding/${token}`;
 
@@ -346,7 +346,7 @@ export const resendOnboardingLink = async (req: Request, res: Response) => {
 
     const transporter = emailConfig();
     await transporter.sendMail({
-      from: { name: "AI_Eval", address: process.env.SENDER_EMAIL ?? "noreply@aieval.example.com" },
+      from: { name: "AI_Eval", address: process.env.SENDER_EMAIL! },
       to: email,
       subject: "Onboarding in AI Eval",
       html: onboardingEmailTemplate(name, roleCapitalized, onboardingLink, orgDisplayName),

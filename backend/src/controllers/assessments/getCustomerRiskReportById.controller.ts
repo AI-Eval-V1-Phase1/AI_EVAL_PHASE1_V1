@@ -1,0 +1,79 @@
+import type { Request, Response } from "express";
+import { eq, and } from "drizzle-orm";
+import { db } from "../../database/db.js";
+import { usersTable } from "../../schema/schema.js";
+import { customerRiskAssessmentReports } from "../../schema/assessments/customerRiskAssessmentReports.js";
+
+/**
+ * GET /customerRiskReports/:id
+ * Returns a single Customer Risk Assessment report by id; user must belong to same organization.
+ */
+const getCustomerRiskReportById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const payload = req.user as { id?: number } | undefined;
+    const userId = payload?.id;
+    if (userId == null) {
+      res.status(401).json({ success: false, message: "User not authenticated" });
+      return;
+    }
+
+    const idParam = (req.params as { id?: string }).id;
+    const id = idParam != null && String(idParam).trim() !== "" ? String(idParam).trim() : null;
+    if (!id) {
+      res.status(400).json({ success: false, message: "Report ID required" });
+      return;
+    }
+
+    const [user] = await db
+      .select({ organization_id: usersTable.organization_id })
+      .from(usersTable)
+      .where(eq(usersTable.id, Number(userId)))
+      .limit(1);
+    const orgId = user?.organization_id != null ? String(user.organization_id).trim() : "";
+    if (!orgId) {
+      res.status(403).json({ success: false, message: "User has no organization" });
+      return;
+    }
+
+    const [row] = await db
+      .select({
+        id: customerRiskAssessmentReports.id,
+        assessmentId: customerRiskAssessmentReports.assessment_id,
+        title: customerRiskAssessmentReports.title,
+        report: customerRiskAssessmentReports.report,
+        createdAt: customerRiskAssessmentReports.created_at,
+      })
+      .from(customerRiskAssessmentReports)
+      .where(
+        and(
+          eq(customerRiskAssessmentReports.id, id),
+          eq(customerRiskAssessmentReports.organization_id, orgId),
+        ),
+      )
+      .limit(1);
+
+    if (!row) {
+      res.status(404).json({ success: false, message: "Report not found" });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: row.id,
+        assessmentId: row.assessmentId,
+        title: row.title,
+        report: row.report,
+        createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+      },
+    });
+  } catch (error) {
+    console.error("getCustomerRiskReportById error:", error);
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to get report",
+    });
+  }
+};
+
+export default getCustomerRiskReportById;

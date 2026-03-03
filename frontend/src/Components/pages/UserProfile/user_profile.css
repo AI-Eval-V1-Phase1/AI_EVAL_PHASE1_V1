@@ -263,6 +263,10 @@
   cursor: pointer;
 }
 
+select.settings_input:not([disabled]) {
+  background-color: white;
+}
+
 .settings_input::placeholder {
   color: #94a3b8;
 }

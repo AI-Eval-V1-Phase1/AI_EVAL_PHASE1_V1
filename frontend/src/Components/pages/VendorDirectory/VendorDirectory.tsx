@@ -71,6 +71,8 @@ interface PublicVendor {
   companyDescription: string;
   headquartersLocation: string;
   vendorMaturity?: string;
+  /** Sector/industry (string or JSON object from API). */
+  sector?: string | Record<string, unknown> | null;
 }
 
 interface VendorProduct {
@@ -78,6 +80,18 @@ interface VendorProduct {
   productName: string;
   status: string;
   updated_at: string | null;
+  trustScore?: number;
+}
+
+/** One product in the directory grid (product + vendor info for display). */
+interface DirectoryProduct {
+  productId: string;
+  productName: string;
+  status: string;
+  vendorId: string;
+  vendor: PublicVendor;
+  /** Product trust score 0–100 from generated profile report (optional). */
+  trustScore?: number;
 }
 
 function formatVal(val: unknown): string {
@@ -92,10 +106,53 @@ function truncate(s: string, maxLen: number): string {
   return s.slice(0, maxLen).trim() + "...";
 }
 
+function getProductDescription(detail: Record<string, unknown> | null): string {
+  if (!detail) return "";
+  const productDesc = detail.product_description;
+  const companyDesc = detail.company_description;
+  const valueProp = detail.unique_value_proposition;
+  const str = (v: unknown) => (v != null && String(v).trim() !== "" ? String(v).trim() : "");
+  return str(productDesc) || str(companyDesc) || str(valueProp) || "";
+}
+
 function productInitials(name: string): string {
   const s = (name || "Product").trim();
   if (s.length >= 2) return s.slice(0, 2).toUpperCase();
   return s ? s.toUpperCase() : "Pr";
+}
+
+const SECTOR_KEYS_ORDER = ["public_sector", "private_sector", "non_profit_sector"] as const;
+const SECTOR_LABELS: Record<string, string> = {
+  public_sector: "Public sector",
+  private_sector: "Private sector",
+  non_profit_sector: "Non-profit sector",
+};
+
+/** Format sector for display. If object has public_sector/private_sector/non_profit_sector arrays, show only the first non-empty one. */
+function formatSector(sector: string | Record<string, unknown> | null | undefined): string {
+  if (sector == null) return "";
+  if (typeof sector === "string") return sector.trim() || "";
+  if (typeof sector === "object" && sector !== null) {
+    for (const key of SECTOR_KEYS_ORDER) {
+      const val = sector[key];
+      if (Array.isArray(val) && val.length > 0) {
+        const items = val.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean);
+        if (items.length > 0) {
+          const label = SECTOR_LABELS[key] ?? key.replace(/_/g, " ");
+          return `${label}: ${items.join(", ")}`;
+        }
+      }
+    }
+    const name = (sector.name ?? sector.sectorName ?? sector.industryName) as string | undefined;
+    if (typeof name === "string" && name.trim()) return name.trim();
+    try {
+      const s = JSON.stringify(sector);
+      return s.length > 80 ? s.slice(0, 77) + "..." : s;
+    } catch {
+      return "";
+    }
+  }
+  return "";
 }
 
 type VendorTab = "all" | "listed" | "my";
@@ -131,6 +188,9 @@ const VendorDirectory = () => {
   } | null>(null);
   const [productDetailLoading, setProductDetailLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  /** Flat list of products for directory grid (one card per product). */
+  const [directoryProducts, setDirectoryProducts] = useState<DirectoryProduct[]>([]);
+  const [directoryProductsLoading, setDirectoryProductsLoading] = useState(false);
 
   /** All Vendors: all vendors even if directory listing is off (backend returns all for system admin). */
   const fetchAllVendors = useCallback(async () => {
@@ -270,6 +330,41 @@ const VendorDirectory = () => {
     }
   }, []);
 
+  /** Build flat list of products (one per product) from current vendor list for directory grid. */
+  const fetchDirectoryProducts = useCallback(async (vendorList: PublicVendor[]) => {
+    const token = sessionStorage.getItem("bearerToken");
+    if (!token || vendorList.length === 0) {
+      setDirectoryProducts([]);
+      return;
+    }
+    setDirectoryProductsLoading(true);
+    try {
+      const results = await Promise.all(
+        vendorList.map(async (v) => {
+          const res = await fetch(`${BASE_URL}/vendorDirectory/${v.id}/products`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          const products: VendorProduct[] = res.ok && data?.products ? data.products : [];
+          return products.map((p) => ({
+            productId: p.id,
+            productName: p.productName,
+            status: p.status,
+            vendorId: v.id,
+            vendor: v,
+            trustScore: p.trustScore,
+          }));
+        })
+      );
+      const flat = results.flat();
+      setDirectoryProducts(flat);
+    } catch {
+      setDirectoryProducts([]);
+    } finally {
+      setDirectoryProductsLoading(false);
+    }
+  }, []);
+
   const handleVendorClick = (v: PublicVendor) => {
     setSelectedVendor(v);
     setSelectedProduct(null);
@@ -281,6 +376,14 @@ const VendorDirectory = () => {
     if (!selectedVendor) return;
     setSelectedProduct({ id: p.id, productName: p.productName });
     fetchProductDetail(selectedVendor.id, p.id);
+  };
+
+  const handleDirectoryProductClick = (dp: DirectoryProduct) => {
+    setSelectedVendor(null);
+    setVendorProducts([]);
+    setSelectedProduct({ id: dp.productId, productName: dp.productName });
+    setProductDetail(null);
+    fetchProductDetail(dp.vendorId, dp.productId);
   };
 
   const buildDetailItemsFromAttestation = (att: Record<string, unknown>) => ({
@@ -322,6 +425,17 @@ const VendorDirectory = () => {
     else if (vendorTab === "my") fetchMyVendors();
   }, [vendorTab, isBuyer, fetchAllVendors, fetchListedVendors, fetchMyVendors]);
 
+  /** When vendors or myVendors load (or tab changes), build flat product list for grid. */
+  useEffect(() => {
+    if (vendorTab === "all" || vendorTab === "listed") {
+      if (vendors.length > 0) fetchDirectoryProducts(vendors);
+      else setDirectoryProducts([]);
+    } else {
+      if (myVendors.length > 0) fetchDirectoryProducts(myVendors);
+      else setDirectoryProducts([]);
+    }
+  }, [vendorTab, vendors, myVendors, fetchDirectoryProducts]);
+
   const displayName = (v: PublicVendor) => {
     if (v.organizationName && String(v.organizationName).trim()) return String(v.organizationName).trim();
     if (v.organizationId && v.organizationId !== v.companyWebsite) return v.organizationId;
@@ -336,29 +450,15 @@ const VendorDirectory = () => {
     return v.organizationId || "Vendor";
   };
 
-  const matchesSearch = (v: PublicVendor, q: string): boolean => {
+  const matchesProductSearch = (dp: DirectoryProduct, q: string): boolean => {
     if (!q.trim()) return true;
     const lower = q.trim().toLowerCase();
-    const orgName = displayName(v).toLowerCase();
-    if (orgName.includes(lower)) return true;
-    const names = v.productNames ?? [];
-    for (const p of names) {
-      if (String(p).toLowerCase().includes(lower)) return true;
-    }
+    if (dp.productName.toLowerCase().includes(lower)) return true;
+    if (displayName(dp.vendor).toLowerCase().includes(lower)) return true;
     return false;
   };
 
-  const filteredVendors = (list: PublicVendor[]) =>
-    list.filter((v) => matchesSearch(v, searchQuery));
-
-  const vendorsToShow = vendorTab === "my" ? filteredVendors(myVendors) : filteredVendors(vendors);
-
-  const initials = (v: PublicVendor) => {
-    const name = displayName(v);
-    const parts = name.split(/[\s.-]+/).filter(Boolean);
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2);
-    return name.slice(0, 2).toUpperCase();
-  };
+  const filteredDirectoryProducts = directoryProducts.filter((dp) => matchesProductSearch(dp, searchQuery));
 
   return (
     <div className="vendor_directory_page sec_user_page">
@@ -370,7 +470,7 @@ const VendorDirectory = () => {
           <div className="page_header_title_block">
             <h1 className="page_header_title">AI Vendor Directory</h1>
             <p className="vendor_directory_subtitle page_header_subtitle">
-              Browse vendors who have turned on Public Directory Listing.
+              Browse products from vendors who have turned on Public Directory Listing.
             </p>
           </div>
         </div>
@@ -386,7 +486,7 @@ const VendorDirectory = () => {
           className={`vendor_directory_tab ${vendorTab === "all" ? "vendor_directory_tab_active" : ""}`}
           onClick={() => setVendorTab("all")}
         >
-          All Vendors
+          All Products
         </button>
         {!isBuyer && (
           <button
@@ -398,7 +498,7 @@ const VendorDirectory = () => {
             className={`vendor_directory_tab ${vendorTab === "listed" ? "vendor_directory_tab_active" : ""}`}
             onClick={() => setVendorTab("listed")}
           >
-            Listed Vendors
+            Listed Products
           </button>
         )}
         <button
@@ -410,27 +510,29 @@ const VendorDirectory = () => {
           className={`vendor_directory_tab ${vendorTab === "my" ? "vendor_directory_tab_active" : ""}`}
           onClick={() => setVendorTab("my")}
         >
-          My Vendors
+          My Products
         </button>
       </div>
 
       {(vendorTab === "all" || vendorTab === "listed") && (
         <>
-          {!loading && !error && vendors.length > 0 && (
+          {!loading && !error && (vendors.length > 0 || directoryProducts.length > 0) && (
             <div className="vendor_directory_search_wrap">
               <Search size={18} className="vendor_directory_search_icon" aria-hidden />
               <input
                 type="search"
                 className="vendor_directory_search_input"
-                placeholder="Search by organization name or product name…"
+                placeholder="Search by product name or organization…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                aria-label="Search by organization name or product name"
+                aria-label="Search by product name or organization"
               />
             </div>
           )}
-          {loading && (
-            <div className="vendor_directory_loading">Loading vendors…</div>
+          {(loading || directoryProductsLoading) && (
+            <div className="vendor_directory_loading">
+              {loading ? "Loading vendors…" : "Loading products…"}
+            </div>
           )}
           {error && (
             <div className="vendor_directory_error">{error}</div>
@@ -442,59 +544,72 @@ const VendorDirectory = () => {
                 : "No vendors have completed onboarding yet."}
             </div>
           )}
-          {!loading && !error && vendors.length > 0 && vendorsToShow.length === 0 && (
+          {!loading && !error && vendors.length > 0 && !directoryProductsLoading && directoryProducts.length === 0 && (
             <div className="vendor_directory_empty">
-              No vendors match your search.
+              No products are currently visible from these vendors.
             </div>
           )}
-          {!loading && !error && vendors.length > 0 && vendorsToShow.length > 0 && (
+          {!loading && !error && vendors.length > 0 && directoryProducts.length > 0 && filteredDirectoryProducts.length === 0 && (
+            <div className="vendor_directory_empty">
+              No products match your search.
+            </div>
+          )}
+          {!loading && !error && !directoryProductsLoading && directoryProducts.length > 0 && filteredDirectoryProducts.length > 0 && (
             <div
               className="vendor_directory_grid"
               id={vendorTab === "all" ? "vendor-directory-panel-all" : "vendor-directory-panel-listed"}
               role="tabpanel"
               aria-labelledby={vendorTab === "all" ? "vendor-tab-all" : "vendor-tab-listed"}
             >
-              {vendorsToShow.map((v) => (
+              {filteredDirectoryProducts.map((dp) => (
             <article
-              key={v.id}
-              className="vendor_directory_card vendor_directory_card_clickable"
-              role="button"
-              tabIndex={0}
-              onClick={() => handleVendorClick(v)}
-              onKeyDown={(e) => e.key === "Enter" && handleVendorClick(v)}
-              aria-label={`View details for ${displayName(v)}`}
+              key={`${dp.vendorId}-${dp.productId}`}
+              className="vendor_directory_card"
             >
               <div className="vendor_directory_card_header">
                 <div className="vendor_directory_card_avatar">
-                  {initials(v)}
+                  {productInitials(dp.productName)}
                 </div>
                 <div className="vendor_directory_card_header_text">
-                  <h2 className="vendor_directory_card_name">{displayName(v)}</h2>
-                  {(v.productNames?.length ?? 0) > 0 && (
-                    <p className="vendor_directory_card_products">
-                      {v.productNames!.join(", ")}
-                    </p>
+                  <h2 className="vendor_directory_card_name">{dp.productName}</h2>
+                  <p className="vendor_directory_card_products">
+                    {displayName(dp.vendor)}
+                  </p>
+                </div>
+                <div className="vendor_directory_card_trust_sector_wrap">
+                  <div className="product_profile_product_card_trust_badge" aria-label={dp.trustScore != null ? `Trust score ${dp.trustScore}%` : "Trust score not available"}>
+                    <span className="product_profile_product_card_trust_label">Trust score</span>
+                    <span className="product_profile_product_card_trust_value">{dp.trustScore != null ? `${dp.trustScore}%` : "—"}</span>
+                  </div>
+                  {formatSector(dp.vendor.sector) && (
+                    <span className="vendor_directory_card_sector">{formatSector(dp.vendor.sector)}</span>
                   )}
                 </div>
               </div>
               <div className="vendor_directory_card_body">
-                {v.vendorType && (
-                  <p className="vendor_directory_card_type">{v.vendorType}</p>
+                {dp.vendor.vendorType && (
+                  <p className="vendor_directory_card_type">{dp.vendor.vendorType}</p>
                 )}
-                {v.companyDescription && (
+                {dp.vendor.companyDescription && (
                   <p className="vendor_directory_card_desc">
-                    {v.companyDescription.slice(0, 200)}
-                    {v.companyDescription.length > 200 ? "…" : ""}
+                    {dp.vendor.companyDescription.slice(0, 200)}
+                    {dp.vendor.companyDescription.length > 200 ? "…" : ""}
                   </p>
                 )}
               </div>
               <div className="vendor_directory_card_footer">
                 <span className="vendor_directory_card_location">
-                  {v.headquartersLocation || "—"}
+                  {dp.vendor.headquartersLocation || "—"}
                 </span>
-                <span className="vendor_directory_card_action">
-                  View details <ChevronRight size={18} aria-hidden />
-                </span>
+                <button
+                  type="button"
+                  className="vendor_directory_card_action vendor_directory_card_action_btn"
+                  onClick={(e) => { e.stopPropagation(); handleDirectoryProductClick(dp); }}
+                  aria-label={`View details for ${dp.productName}`}
+                >
+                  View details
+                  <ChevronRight size={16} aria-hidden />
+                </button>
               </div>
             </article>
           ))}
@@ -505,78 +620,93 @@ const VendorDirectory = () => {
 
       {vendorTab === "my" && (
         <>
-          {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && (
+          {!myVendorsLoading && !myVendorsError && (myVendors.length > 0 || directoryProducts.length > 0) && (
             <div className="vendor_directory_search_wrap">
               <Search size={18} className="vendor_directory_search_icon" aria-hidden />
               <input
                 type="search"
                 className="vendor_directory_search_input"
-                placeholder="Search by organization name or product name…"
+                placeholder="Search by product name or organization…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                aria-label="Search by organization name or product name"
+                aria-label="Search by product name or organization"
               />
             </div>
           )}
-          {myVendorsLoading && (
-            <div className="vendor_directory_loading">Loading my vendors…</div>
+          {(myVendorsLoading || directoryProductsLoading) && (
+            <div className="vendor_directory_loading">
+              {myVendorsLoading ? "Loading my vendors…" : "Loading products…"}
+            </div>
           )}
           {myVendorsError && (
             <div className="vendor_directory_error">{myVendorsError}</div>
           )}
           {!myVendorsLoading && !myVendorsError && myVendors.length === 0 && (
             <div className="vendor_directory_empty">
-              NO vendor
+              No vendors in your list.
             </div>
           )}
-          {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && vendorsToShow.length === 0 && (
+          {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && !directoryProductsLoading && directoryProducts.length === 0 && (
             <div className="vendor_directory_empty">
-              No vendors match your search.
+              No products are currently visible from your vendors.
             </div>
           )}
-          {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && vendorsToShow.length > 0 && (
+          {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && directoryProducts.length > 0 && filteredDirectoryProducts.length === 0 && (
+            <div className="vendor_directory_empty">
+              No products match your search.
+            </div>
+          )}
+          {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && directoryProducts.length > 0 && filteredDirectoryProducts.length > 0 && (
             <div className="vendor_directory_grid" id="vendor-directory-panel-my" role="tabpanel" aria-labelledby="vendor-tab-my">
-              {vendorsToShow.map((v) => (
+              {filteredDirectoryProducts.map((dp) => (
             <article
-              key={v.id}
-              className="vendor_directory_card vendor_directory_card_clickable"
-              role="button"
-              tabIndex={0}
-              onClick={() => handleVendorClick(v)}
-              onKeyDown={(e) => e.key === "Enter" && handleVendorClick(v)}
-              aria-label={`View details for ${displayName(v)}`}
+              key={`${dp.vendorId}-${dp.productId}`}
+              className="vendor_directory_card"
             >
               <div className="vendor_directory_card_header">
                 <div className="vendor_directory_card_avatar">
-                  {initials(v)}
+                  {productInitials(dp.productName)}
                 </div>
                 <div className="vendor_directory_card_header_text">
-                  <h2 className="vendor_directory_card_name">{displayName(v)}</h2>
-                  {(v.productNames?.length ?? 0) > 0 && (
-                    <p className="vendor_directory_card_products">
-                      {v.productNames!.join(", ")}
-                    </p>
+                  <h2 className="vendor_directory_card_name">{dp.productName}</h2>
+                  <p className="vendor_directory_card_products">
+                    {displayName(dp.vendor)}
+                  </p>
+                </div>
+                <div className="vendor_directory_card_trust_sector_wrap">
+                  <div className="product_profile_product_card_trust_badge" aria-label={dp.trustScore != null ? `Trust score ${dp.trustScore}%` : "Trust score not available"}>
+                    <span className="product_profile_product_card_trust_label">Trust score</span>
+                    <span className="product_profile_product_card_trust_value">{dp.trustScore != null ? `${dp.trustScore}%` : "—"}</span>
+                  </div>
+                  {formatSector(dp.vendor.sector) && (
+                    <span className="vendor_directory_card_sector">{formatSector(dp.vendor.sector)}</span>
                   )}
                 </div>
               </div>
               <div className="vendor_directory_card_body">
-                {v.vendorType && (
-                  <p className="vendor_directory_card_type">{v.vendorType}</p>
+                {dp.vendor.vendorType && (
+                  <p className="vendor_directory_card_type">{dp.vendor.vendorType}</p>
                 )}
-                {v.companyDescription && (
+                {dp.vendor.companyDescription && (
                   <p className="vendor_directory_card_desc">
-                    {v.companyDescription.slice(0, 200)}
-                    {v.companyDescription.length > 200 ? "…" : ""}
+                    {dp.vendor.companyDescription.slice(0, 200)}
+                    {dp.vendor.companyDescription.length > 200 ? "…" : ""}
                   </p>
                 )}
               </div>
               <div className="vendor_directory_card_footer">
                 <span className="vendor_directory_card_location">
-                  {v.headquartersLocation || "—"}
+                  {dp.vendor.headquartersLocation || "—"}
                 </span>
-                <span className="vendor_directory_card_action">
-                  View details <ChevronRight size={18} aria-hidden />
-                </span>
+                <button
+                  type="button"
+                  className="vendor_directory_card_action vendor_directory_card_action_btn"
+                  onClick={(e) => { e.stopPropagation(); handleDirectoryProductClick(dp); }}
+                  aria-label={`View details for ${dp.productName}`}
+                >
+                  View details
+                  <ChevronRight size={16} aria-hidden />
+                </button>
               </div>
             </article>
           ))}
@@ -625,7 +755,7 @@ const VendorDirectory = () => {
                       type="button"
                       className="vendor_directory_product_card"
                       onClick={() => handleProductClick(p)}
-                      aria-label={`View details for ${p.productName}`}
+                      aria-label={`View details for ${p.productName}${p.trustScore != null ? `, Trust score ${p.trustScore}%` : ""}`}
                     >
                       <span className="vendor_directory_product_card_icon" aria-hidden>
                         {productInitials(p.productName)}
@@ -634,6 +764,12 @@ const VendorDirectory = () => {
                         <span className="vendor_directory_product_card_name">{p.productName}</span>
                         <span className="vendor_directory_product_card_status">Completed</span>
                       </div>
+                      {p.trustScore != null && (
+                        <div className="vendor_directory_product_card_trust_badge" aria-label={`Trust score ${p.trustScore}%`}>
+                          <span className="vendor_directory_product_card_trust_label">Trust score</span>
+                          <span className="vendor_directory_product_card_trust_value">{p.trustScore}%</span>
+                        </div>
+                      )}
                       <ChevronRight size={20} className="vendor_directory_product_card_arrow" aria-hidden />
                     </button>
                   ))}
@@ -648,7 +784,7 @@ const VendorDirectory = () => {
       {selectedProduct && (
         <div
           className="vendor_directory_modal_overlay vendor_directory_modal_overlay_second"
-          onClick={() => { setSelectedProduct(null); setProductDetail(null); setProductSectionVisibility(null); }}
+          onClick={() => { setSelectedProduct(null); setProductDetail(null); setProductSectionVisibility(null); setSelectedVendor(null); setVendorProducts([]); }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="product_detail_modal_title"
@@ -661,7 +797,7 @@ const VendorDirectory = () => {
               <button
                 type="button"
                 className="modal_close_btn"
-                onClick={() => { setSelectedProduct(null); setProductDetail(null); setProductSectionVisibility(null); }}
+                onClick={() => { setSelectedProduct(null); setProductDetail(null); setProductSectionVisibility(null); setSelectedVendor(null); setVendorProducts([]); }}
                 aria-label="Close"
               >
                 <CircleX size={20} />
@@ -671,7 +807,17 @@ const VendorDirectory = () => {
               {productDetailLoading && (
                 <div className="vendor_directory_loading">Loading product details…</div>
               )}
-              {!productDetailLoading && productDetail && productSectionVisibility && (() => {
+              {!productDetailLoading && productDetail && (
+                <>
+                  {getProductDescription(productDetail) && (
+                    <div className="vendor_directory_product_description">
+                      <h3 className="vendor_directory_product_description_heading">Description</h3>
+                      <p className="vendor_directory_product_description_text">
+                        {getProductDescription(productDetail)}
+                      </p>
+                    </div>
+                  )}
+                  {productSectionVisibility && (() => {
                 const vis = productSectionVisibility;
                 const rawReport = productDetail.generated_profile_report;
                 const report = parseGeneratedReport(rawReport);
@@ -802,6 +948,8 @@ const VendorDirectory = () => {
                   </div>
                 );
               })()}
+                </>
+              )}
             </div>
           </div>
         </div>

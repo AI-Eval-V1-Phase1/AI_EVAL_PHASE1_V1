@@ -200,37 +200,28 @@
 }
 
 .signup_confirmation_wrapper {
-  height: 120px; /* reserve fixed space for the card */
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 1em; /* optional spacing from form */
+  margin-bottom: 1em;
+  padding: 0.5em 0;
 }
 
 .signup_confirmation_card {
-  /* background-color: #d4edda;
-  color: #155724;
-  border-radius: 5px;
-  width: 400px;
-  padding: 1em;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4em; */
-
   width: 100%;
   max-width: 920px;
   background: #fff;
-  border-radius: 5px;
+  border-radius: 10px;
   box-shadow:
     0 1px 3px 0 rgba(0, 0, 0, 0.08),
     0 1px 2px -1px rgba(0, 0, 0, 0.06);
   border: 1px solid #e5e7eb;
-  padding: 2em;
+  padding: 2rem 2.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 1rem;
+  text-align: center;
 }
 
 .signup_confirmation_card {
@@ -246,20 +237,46 @@
   transform: translateY(0);
 }
 
+.signup_confirmation_card .confirm_onboarding {
+  flex-shrink: 0;
+}
+
 .signup_confirmation_card h2 {
-  font-size: 1em;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
 }
 
 .signup_confirmation_card p {
-  /* color: #4b5563; */
-  /* font-size: 0.9em; */
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.text_signup {
+  font-size: 0.9375rem;
+  color: #4b5563;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.signup_confirmation_card .text_signup {
+  display: flex;
+  flex-direction: column;
+}
+
+.signup_confirmation_card .onboarding_email_sent_text {
+  margin-top: 0.25rem;
+  max-width: 32em;
 }
 
 .sucess_text {
-  color: green;
-  text-transform: capitalize;
+  color: #16a34a;
   font-weight: 600;
 }
+
 .signin_btn a {
   font-weight: 500;
   padding: 0.3em;
@@ -272,14 +289,7 @@
   align-items: center;
   gap: 0.3em;
 }
-.text_signup {
-  color: green;
-  display: flex;
-  text-align: center;
-  color: #4b5563;
-  line-height: 1.5em;
-  flex-direction: column;
-}
+
 .small_text {
   /* margin: 8px 0px 0px; */
   font-size: 13px;

@@ -4,6 +4,7 @@ import type { ChangeEvent } from "react";
 export interface VendorDataInterface {
   organization_Id?: string;
   vendorType: string;
+  vendorName: string;
   sector: {
     public_sector: string[];
     private_sector: string[];

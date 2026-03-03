@@ -126,6 +126,7 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
   };
 
   const companyProfileRows: { label: string; value: string }[] = [
+    { label: "Vendor Name", value: formatValue(companyProfile.vendorName) },
     { label: "Vendor Type", value: formatValue(companyProfile.vendorType) },
     { label: "Vendor Maturity", value: formatValue(companyProfile.vendorMaturity) },
     { label: "Company Website", value: formatValue(companyProfile.companyWebsite) },
@@ -157,7 +158,7 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
                     step={STEP_COMPLIANCE_CERTIFICATIONS}
                     show={!regDoc.isNa}
                     documentNames={names}
-                    showUpdate={true}
+                    showUpdate={Boolean(onNavigateToStep)}
                     onUpdate={() => onNavigateToStep?.(STEP_COMPLIANCE_CERTIFICATIONS)}
                   />
                 </span>
@@ -174,7 +175,13 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
           <dt className="vendor_preview_label">
             <span className="vendor_preview_doc_label">
               <span>Regulatory and Compliance Certification Material</span>
-              <DocumentRowActions step={STEP_COMPLIANCE_CERTIFICATIONS} show={false} documentNames={[]} />
+              <DocumentRowActions
+                step={STEP_COMPLIANCE_CERTIFICATIONS}
+                show={false}
+                documentNames={[]}
+                showUpdate={Boolean(onNavigateToStep)}
+                onUpdate={() => onNavigateToStep?.(STEP_COMPLIANCE_CERTIFICATIONS)}
+              />
             </span>
           </dt>
           <dd className="vendor_preview_value">N/A</dd>

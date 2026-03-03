@@ -161,7 +161,7 @@ const SignUp = () => {
         <div className="signupContent authContent">
           <div className="signup_page">
             <HeaderForAuth />
-            <div className="profile_modal_content settings_modal_content">
+            <div className="signup_modal_content">
               <div className="profile_modal_header">
                 <p className="loginHeading">Sign up</p>
               </div>
@@ -207,31 +207,18 @@ const SignUp = () => {
           {isConfirmSignup ? (
             <div className="signup_page">
               <HeaderForAuth />
-              <div className="profile_modal_content settings_modal_content">
-                <div className="profile_modal_header">
-                  <p className="loginHeading">Sign up</p>
-                </div>
+              <div className="signup_modal_content">
                 <div className="profile_modal_body">
                   <div className="signup_confirmation_wrapper">
                     <div className="signup_confirmation_card authMessage authMessage--success">
                       <CheckCircle
-                        size={24}
+                        size={48}
                         aria-hidden
                         className="confirm_onboarding"
                       />
-                      <p className="text_signup">
-                        <span>
-                          Your account has been{" "}
-                          <span className="sucess_text">
-                            successfully activated.
-                          </span>
-                        </span>
-                        {!onboardingEmailSent && (
-                          <span>
-                            {" "}
-                            You will be redirected to sign in shortly.
-                          </span>
-                        )}
+                      <p className="signup_confirmation_title">
+                        Your account has been{" "}
+                        <span className="sucess_text">successfully activated.</span>
                       </p>
                       {onboardingEmailSent ? (
                         <>
@@ -239,18 +226,13 @@ const SignUp = () => {
                             An email has been sent for onboarding. Please check
                             your inbox and use the link to complete onboarding.
                           </p>
-                          <p
-                            className="text_signup"
-                            style={{ marginTop: "1rem" }}
-                          >
+                          <p className="text_signup" style={{ marginTop: "0.5rem" }}>
                             <Link
                               to={LOGIN_PATH}
-                              className="login-btn signup_success_signin_btn"
+                              className="login-btn signup_success_signin_btn signup_confirmation_cta"
                             >
                               Sign in
-                              <span>
-                                <ArrowRight width={20} />
-                              </span>
+                              <span aria-hidden><ArrowRight width={20} /></span>
                             </Link>{" "}
                             when you have completed onboarding.
                           </p>
@@ -260,21 +242,14 @@ const SignUp = () => {
                           <p className="small_text">
                             Redirecting to sign in in a few seconds…
                           </p>
-                          <div
-                            className="loginBtn"
-                            style={{ marginTop: "0.5rem" }}
+                          <Link
+                            to={LOGIN_PATH}
+                            className="login-btn signup_success_signin_btn signup_confirmation_cta"
                           >
-                            <Link to={LOGIN_PATH} className="login-btn">
-                              Sign in
-                              <span>
-                                <ArrowRight width={20} />
-                              </span>
-                            </Link>
-                          </div>
-                          <p
-                            className="small_text"
-                            style={{ marginTop: "0.5rem" }}
-                          >
+                            Sign in now
+                            <span aria-hidden><ArrowRight width={20} /></span>
+                          </Link>
+                          <p className="small_text">
                             to continue to your account.
                           </p>
                         </>
@@ -287,7 +262,7 @@ const SignUp = () => {
           ) : (
             <div className="signup_page">
               <HeaderForAuth />
-              <div className="profile_modal_content settings_modal_content">
+              <div className="signup_modal_content">
                 <div className="profile_modal_header">
                   <p className="loginHeading">Sign up</p>
                 </div>

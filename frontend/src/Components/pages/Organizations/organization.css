@@ -315,6 +315,11 @@
   margin-top: 5px;
 }
 
+#edit_org_status,
+#edit_org_status:hover {
+  cursor: pointer;
+}
+
 /* ----- Organization detail / preview ----- */
 .organizationPreview {
   max-width: 960px;

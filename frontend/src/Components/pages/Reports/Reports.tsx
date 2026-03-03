@@ -1,45 +1,70 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { FileText, Search } from "lucide-react"
 import ReportCard from "./ReportCard"
 import "../UserManagement/user_management.css"
 import "./reports.css"
 
-/** Mock report list – replace with API when available */
-const MOCK_ASSESSMENT_REPORTS = [
-  {
-    id: "1",
-    title: "AI Vendor Assessment: MedicarAI for Mount Sinai Health System - Full Report",
-    meta: "Vendor Assessment Report • 22/1/2026",
-    status: "Published",
-  },
-  {
-    id: "2",
-    title: "MedicarAI - Vendor Risk Assessment Report",
-    meta: "Vendor Assessment Report • 27/1/2026",
-    status: "Published",
-  },
-  {
-    id: "3",
-    title: "AcmeAnalytics - Vendor Risk Assessment Report",
-    meta: "Vendor Assessment Report • 21/11/2025",
-    status: "Published",
-  },
-  {
-    id: "4",
-    title: "DataForge AI - Vendor Risk Assessment Report",
-    meta: "Vendor Assessment Report • 27/1/2026",
-    status: "Published",
-  },
-]
+const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1"
+
+export interface CustomerRiskReportItem {
+  id: string
+  assessmentId: string
+  title: string
+  report: Record<string, unknown>
+  createdAt: string
+}
 
 type TabId = "assessment" | "general"
+
+function formatReportMeta(createdAt: string): string {
+  if (!createdAt) return "Customer Risk Assessment"
+  try {
+    const d = new Date(createdAt)
+    if (Number.isNaN(d.getTime())) return "Customer Risk Assessment"
+    const day = d.getDate()
+    const month = d.getMonth() + 1
+    const year = d.getFullYear()
+    return `Customer Risk Assessment • ${day}/${month}/${year}`
+  } catch {
+    return "Customer Risk Assessment"
+  }
+}
 
 function Reports() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<TabId>("assessment")
+  const [reports, setReports] = useState<CustomerRiskReportItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const reports = activeTab === "assessment" ? MOCK_ASSESSMENT_REPORTS : []
+  useEffect(() => {
+    if (activeTab !== "assessment") return
+    const token = sessionStorage.getItem("bearerToken")
+    if (!token) {
+      setLoading(false)
+      setReports([])
+      return
+    }
+    setLoading(true)
+    setError(null)
+    fetch(`${BASE_URL}/customerRiskReports`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data?.data?.reports)) {
+          setReports(data.data.reports)
+        } else {
+          setReports([])
+        }
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Failed to load reports")
+        setReports([])
+      })
+      .finally(() => setLoading(false))
+  }, [activeTab])
 
   const handleSelectReport = (reportId: string) => {
     navigate(`/reports/${reportId}`)
@@ -50,6 +75,8 @@ function Reports() {
     e.stopPropagation()
     // TODO: trigger PDF download
   }
+
+  const assessmentReports = activeTab === "assessment" ? reports : []
 
   return (
     <div className="sec_user_page org_settings_page reports_page">
@@ -95,19 +122,30 @@ function Reports() {
       </div>
 
       <div className="reports_list">
-        {activeTab === "assessment" && reports.length > 0 &&
-          reports.map((report) => (
+        {activeTab === "assessment" && loading && (
+          <div className="report_detail_empty">
+            <p className="report_detail_empty_text">Loading reports…</p>
+          </div>
+        )}
+        {activeTab === "assessment" && !loading && error && (
+          <div className="report_detail_empty">
+            <h2 className="report_detail_empty_title">Error loading reports</h2>
+            <p className="report_detail_empty_text">{error}</p>
+          </div>
+        )}
+        {activeTab === "assessment" && !loading && !error && assessmentReports.length > 0 &&
+          assessmentReports.map((report) => (
             <ReportCard
               key={report.id}
               reportId={report.id}
               title={report.title}
-              meta={report.meta}
-              status={report.status}
+              meta={formatReportMeta(report.createdAt)}
+              status="Published"
               onSelect={handleSelectReport}
               onDownload={handleDownload}
             />
           ))}
-        {activeTab === "assessment" && reports.length === 0 && (
+        {activeTab === "assessment" && !loading && !error && assessmentReports.length === 0 && (
           <div className="report_detail_empty">
             <h2 className="report_detail_empty_title">No reports yet</h2>
             <p className="report_detail_empty_text">

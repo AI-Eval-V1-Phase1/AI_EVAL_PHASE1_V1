@@ -36,9 +36,10 @@ export {
   customAiAssessments,
   vendorSelfAttestations,
   generatedProfileReports,
+  customerRiskAssessmentReports,
   attestations,
 } from "./assessments/index.js";
 
-export { risks, riskTop5Mitigations } from "./risks/index.js";
+export { risks, riskTop5Mitigations, riskMappings } from "./risks/index.js";
 
 export { sectors, industries } from "./lookup/index.js";

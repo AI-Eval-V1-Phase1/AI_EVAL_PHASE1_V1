@@ -58,6 +58,12 @@ export interface SectionVisibilityControl {
   onToggle: (value: boolean) => void;
 }
 
+/** Remove trailing "---", "--", or " -" from summary text for display. */
+function summaryForDisplay(summary: string | null | undefined): string {
+  if (!summary || typeof summary !== "string") return "";
+  return summary.replace(/\s*-+\s*$/, "").trim();
+}
+
 export interface GeneratedProductProfileCardsProps {
   report: GeneratedProductProfileReport;
   /** When set, each section card (not Trust Score) can show a "Visible to buyers" toggle. */
@@ -66,23 +72,22 @@ export interface GeneratedProductProfileCardsProps {
 
 function GeneratedProductProfileCards({ report, sectionVisibility }: GeneratedProductProfileCardsProps) {
   const { trustScore, sections } = report;
-  const hasLabel = trustScore.label && trustScore.label.trim() && trustScore.label !== "Not specified";
-  const scoreDisplay = hasLabel
-    ? `${trustScore.overallScore} (${trustScore.label.trim()})`
-    : `${trustScore.overallScore}%`;
+  const scoreNumber = trustScore.overallScore != null ? `${trustScore.overallScore}%` : "—";
 
   return (
     <div className="generated_profile_wrap">
-      {/* Trust Score on top – no "Visible to buyers" toggle */}
+      {/* Trust Score on top – number then label (match reference: large green number, "Trust Score" below) */}
       <section className="generated_profile_trust_section" aria-label="Trust Score">
-        <h2 className="generated_profile_trust_heading">Trust Score</h2>
         <div className="generated_profile_trust_cards">
           <div className="generated_profile_trust_card generated_profile_trust_main">
-            <span className="generated_profile_trust_score_value">{scoreDisplay}</span>
+            <div className="generated_profile_trust_score_block">
+              <span className="generated_profile_trust_score_value" aria-hidden="true">{scoreNumber}</span>
+              <span className="generated_profile_trust_score_label">Trust Score</span>
+            </div>
             <div className="generated_profile_trust_summary_block">
               <p className="generated_profile_trust_cat_title">Summary:</p>
               <p className="generated_profile_trust_summary">
-                {trustScore.summary && trustScore.summary.trim() ? trustScore.summary : "—"}
+                {trustScore.summary && trustScore.summary.trim() ? summaryForDisplay(trustScore.summary) : "—"}
               </p>
             </div>
           </div>

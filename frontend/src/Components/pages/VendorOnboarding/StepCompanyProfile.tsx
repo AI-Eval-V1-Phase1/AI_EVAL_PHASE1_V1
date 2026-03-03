@@ -45,6 +45,29 @@ const StepCompanyProfile = ({
           sub_title_vendor="Basic information about your company"
         />
         <div className="step_form_right">
+          {/* Vendor Name */}
+          <div className="form_fields_vendor">
+            <Input
+              labelName={
+                <div className="labelSection">
+                  <span>Vendor Name</span>
+                  <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
+                  <ClickTooltip content={VENDOR_HELPTEXT.vendorName}>
+                    <Info size={14} color="#6B7280" />
+                  </ClickTooltip>
+                </div>
+              }
+              type="text"
+              id="vendorName"
+              name="vendorName"
+              value={formVendorData.vendorName || ""}
+              onChange={handleChangeVendor}
+            />
+            {fieldErrors?.vendorName && (
+              <FieldError message={fieldErrors.vendorName} />
+            )}
+          </div>
+
           {/* Vendor Type */}
           <div className="form_fields_vendor">
             <Select

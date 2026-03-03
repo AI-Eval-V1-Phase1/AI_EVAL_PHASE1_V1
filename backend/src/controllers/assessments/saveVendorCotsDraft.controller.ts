@@ -21,6 +21,7 @@ function buildPayloadVendorCots(body: Record<string, unknown>) {
     return v;
   };
   return {
+    vendor_attestation_id: get("selectedProductId") != null && String(get("selectedProductId")).trim() !== "" ? String(get("selectedProductId")).trim() : null,
     customer_organization_name: get("customerOrganizationName") != null ? String(get("customerOrganizationName")).slice(0, 200) : null,
     customer_sector: get("customerSector") != null ? String(get("customerSector")).slice(0, 200) : null,
     primary_pain_point: get("primaryPainPoint") != null ? String(get("primaryPainPoint")) : null,

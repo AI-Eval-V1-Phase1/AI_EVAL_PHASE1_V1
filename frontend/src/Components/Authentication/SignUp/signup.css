@@ -49,12 +49,43 @@
   display: flex;
 }
 
+/* Confirmation page: title and primary CTA */
+.signup_confirmation_title {
+  margin: 0;
+  font-size: 1.0625rem;
+  color: #374151;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.signup_confirmation_cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  margin-bottom: 10px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--main-auth-button-color, #2563eb);
+  border: 1px solid var(--main-auth-button-color, #2563eb);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.signup_confirmation_cta:hover {
+  opacity: 0.92;
+  color: #fff;
+}
+
 /* Signup page: match reference image – wide card, centered content, soft shadow */
 .authPage:has(.signup_page) {
   background-color: #f8f8f8;
 }
 
-.signup_page .profile_modal_content.settings_modal_content {
+.signup_page .signup_modal_content {
   width: 100%;
   max-width: 900px;
   border-radius: 10px;

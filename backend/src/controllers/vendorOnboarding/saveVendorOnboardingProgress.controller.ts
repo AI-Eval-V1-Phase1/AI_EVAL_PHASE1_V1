@@ -23,6 +23,7 @@ export default async function saveVendorOnboardingProgress(req: Request, res: Re
       organization_Id: bodyOrgId,
       organizationId: bodyOrgIdCamel,
       vendorType,
+      vendorName,
       sector,
       vendorMaturity,
       companyWebsite,
@@ -61,6 +62,7 @@ export default async function saveVendorOnboardingProgress(req: Request, res: Re
       userId: user.id,
       organizationId,
       vendorType: String(vendorType ?? ""),
+      vendorName: vendorName != null && String(vendorName).trim() !== "" ? String(vendorName).trim() : null,
       sector: sectorTruncated,
       vendorMaturity: vendorMaturity != null ? String(vendorMaturity) : null,
       companyWebsite: String(companyWebsite ?? ""),
@@ -82,6 +84,7 @@ export default async function saveVendorOnboardingProgress(req: Request, res: Re
         set: {
           userId: user.id,
           vendorType: vendorValues.vendorType,
+          vendorName: vendorValues.vendorName,
           sector: vendorValues.sector,
           vendorMaturity: vendorValues.vendorMaturity,
           companyWebsite: vendorValues.companyWebsite,

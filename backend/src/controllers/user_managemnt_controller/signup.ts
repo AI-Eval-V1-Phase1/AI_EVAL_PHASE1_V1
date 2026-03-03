@@ -181,7 +181,7 @@ const userSignup = async (req: Request, res: Response) => {
     if (!secret) throw new Error("JWT_SECRET_KEY not set");
     const token = jwt.sign({ email, userId, organizationId }, secret, {
       expiresIn: ONBOARDING_LINK_EXPIRY_JWT,
-    });
+    } as jwt.SignOptions);
 
     const onboardingLink = `${BASE_URL}/onBoarding/${token}`;
 
@@ -208,7 +208,7 @@ const userSignup = async (req: Request, res: Response) => {
         await transporter.sendMail({
           from: {
             name: "AI_Eval",
-            address: process.env.SENDER_EMAIL ?? "noreply@aieval.example.com",
+            address: process.env.SENDER_EMAIL!,
           },
           to: email,
           subject: "Onboarding in AI Eval",

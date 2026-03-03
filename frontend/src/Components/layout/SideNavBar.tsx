@@ -5,10 +5,13 @@ import { Shield } from "lucide-react";
 import "../../styles/layout/sideNav.css";
 
 const ASSESSMENT_PATHS = ["/assessments", "/vendorcots", "/buyerAssessment"];
-const isAssessmentArea = (pathname: string) => ASSESSMENT_PATHS.includes(pathname);
+const isAssessmentArea = (pathname: string) =>
+  ASSESSMENT_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
 const isAttestationArea = (pathname: string) =>
-  pathname === "/attestation_details" || pathname.startsWith("/vendorSelfAttestation");
+  pathname === "/attestation_details" ||
+  pathname.startsWith("/attestation_details/") ||
+  pathname.startsWith("/vendorSelfAttestation");
 
 const SideNavBar = () => {
   const location = useLocation();

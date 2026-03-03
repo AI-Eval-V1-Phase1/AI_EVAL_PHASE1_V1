@@ -19,6 +19,7 @@ import {
   Shield,
   Sparkles,
   FileCheck,
+  CheckCircle,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { VENDOR_COTS_DATA } from "../../../../constants/vendorCotsData";
@@ -121,6 +122,35 @@ const VendorCOTSMain = () => {
   const [validationAttemptedSteps, setValidationAttemptedSteps] = useState<
     Set<number>
   >(() => new Set());
+  const [completedProductOptions, setCompletedProductOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+
+  // Fetch vendor's completed products (for Solution Fit Product dropdown)
+  useEffect(() => {
+    const token = sessionStorage.getItem("bearerToken");
+    if (!token) return;
+    fetch(`${BASE_URL}/vendorSelfAttestation`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((result: { success?: boolean; attestations?: Array<{ id?: string; status?: string; product_name?: string | null }> }) => {
+        if (!result?.success || !Array.isArray(result.attestations)) return;
+        const completed = result.attestations.filter(
+          (a) => String(a.status ?? "").toUpperCase() === "COMPLETED" && a.id
+        );
+        const opts = completed.map((a) => ({
+          value: String(a.id),
+          label: (a.product_name ?? "").trim() || `Product ${a.id}`,
+        }));
+        setCompletedProductOptions(opts);
+      })
+      .catch(() => {});
+  }, []);
 
   // When starting a new assessment (no id), ensure org context from onboarding so form can be saved
   useEffect(() => {
@@ -275,7 +305,7 @@ const VendorCOTSMain = () => {
         throw new Error(result.message || "Failed to submit assessment");
       }
       setAllStepsFilled(true);
-      setTimeout(() => navigate("/reports"), 2000);
+      navigate("/reports");
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : "Failed to submit assessment",
@@ -401,16 +431,17 @@ const VendorCOTSMain = () => {
                 title={step.label}
                 subTitle={undefined}
                 icon={stepIconNode}
+                completedProductOptions={completedProductOptions}
               />
             ) : (
               // After step 5 go to preview (Auto-Generated step commented out)
               <>
-                <StepVendorCotsPreview formData={formData} />
+                <StepVendorCotsPreview formData={formData} completedProductOptions={completedProductOptions} />
               </>
             ),
         };
       }),
-    [formData, effectiveFieldErrors],
+    [formData, effectiveFieldErrors, completedProductOptions],
   );
 
   const completedStepsForProgress = Array.from(
@@ -420,12 +451,26 @@ const VendorCOTSMain = () => {
 
   return (
     <div className="form_card_centered">
+      {submitting && (
+        <div
+          className="vendor_attestation_submit_overlay"
+          role="status"
+          aria-live="polite"
+          aria-label="Submitting assessment"
+        >
+          <div className="vendor_attestation_submit_overlay_content">
+            <p>Submitting assessment…</p>
+            <p className="vendor_attestation_submit_overlay_hint">Please wait. Do not close or refresh.</p>
+          </div>
+        </div>
+      )}
       <CardContainerOnBoarding>
         <button
           type="button"
           className="form_back_to_assessments"
           onClick={() => navigate("/assessments")}
           aria-label="Back to Assessments"
+          disabled={submitting}
         >
           <ChevronLeftCircle size={18} />
           <span>Back to Assessments</span>
@@ -434,7 +479,10 @@ const VendorCOTSMain = () => {
           <MultiStepTabs
             steps={tabStepsWithContent}
             currentStep={currentStep}
-            onStepChange={setCurrentStep}
+            onStepChange={(step) => {
+              if (submitting) return;
+              setCurrentStep(step);
+            }}
             completedSteps={completedStepsForProgress}
             disabledSteps={disabledSteps}
             canGoNext={
@@ -445,9 +493,24 @@ const VendorCOTSMain = () => {
           />
           <CardOnBoarding className="card_vendor">
             {allStepsFilled ? (
-              <div className="vendor_success_step">
-                <h2>Assessment submitted</h2>
-                <p>Redirecting to reports...</p>
+              <div className="vendor_self_attestation_confirmation_center">
+                <CardContainerOnBoarding>
+                  <div className="onboarding_setup_card">
+                    <CheckCircle className="confirm_onboarding" />
+                    <h2>Submission successful</h2>
+                    <p>Your assessment has been submitted.</p>
+                    <p style={{ marginTop: "1rem" }}>
+                      <button
+                        type="button"
+                        className="report_detail_back_link"
+                        onClick={() => navigate("/reports")}
+                        style={{ background: "none", border: "none", cursor: "pointer", font: "inherit", color: "var(--color-link, #2563eb)", padding: 0 }}
+                      >
+                        View reports
+                      </button>
+                    </p>
+                  </div>
+                </CardContainerOnBoarding>
               </div>
             ) : (
               <>
@@ -465,7 +528,7 @@ const VendorCOTSMain = () => {
                     <Button
                       type="button"
                       onClick={currentStep > 0 ? handleBack : undefined}
-                      disabled={currentStep === 0}
+                      disabled={currentStep === 0 || submitting}
                       className="back_btn"
                     >
                       <span>
@@ -479,7 +542,7 @@ const VendorCOTSMain = () => {
                       <Button
                         type="button"
                         onClick={handleSaveDraft}
-                        disabled={savingDraft}
+                        disabled={savingDraft || submitting}
                         className="vendor_attestation_save_draft_btn_form"
                       >
                         <span>
@@ -494,6 +557,7 @@ const VendorCOTSMain = () => {
                         <Button
                           type="button"
                           onClick={handleContinue}
+                          disabled={submitting}
                           className="continue_btn"
                         >
                           <span>

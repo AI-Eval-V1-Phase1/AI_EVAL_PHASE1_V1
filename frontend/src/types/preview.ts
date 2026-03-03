@@ -27,6 +27,7 @@ export interface PreviewSection<T> {
  * Represents the vendor datatype collected in the onboarding form for preview
  */
 export interface VendorFormData {
+  vendorName?: string;
   vendorType?: string;
   vendorMaturity?: string;
   companyWebsite?: string;

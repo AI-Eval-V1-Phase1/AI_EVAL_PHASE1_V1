@@ -3,6 +3,7 @@
  * Matches backend vendor_onboarding / GET companyProfile shape.
  */
 export interface AttestationCompanyProfile {
+  vendorName?: string;
   vendorType: string;
   sector: Record<string, string[]> | Record<string, unknown>;
   vendorMaturity: string;

@@ -77,7 +77,7 @@ const forgotPassword = async (req: Request, res: Response) => {
     const resetToken = jwt.sign(
       { email: userRow.email, purpose: "password_reset" },
       secret,
-      { expiresIn: RESET_TOKEN_EXPIRY }
+      { expiresIn: RESET_TOKEN_EXPIRY } as jwt.SignOptions,
     );
 
     const resetLink = `${BASE_URL}/resetPassword?token=${encodeURIComponent(resetToken)}`;

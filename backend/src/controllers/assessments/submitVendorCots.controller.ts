@@ -3,9 +3,101 @@ import { db } from "../../database/db.js";
 import { usersTable } from "../../schema/schema.js";
 import { assessments } from "../../schema/assessments/assessments.js";
 import { cotsVendorAssessments } from "../../schema/assessments/cotsVendorAssessments.js";
-import { eq, and } from "drizzle-orm";
+import { customerRiskAssessmentReports } from "../../schema/assessments/customerRiskAssessmentReports.js";
+import { vendorSelfAttestations } from "../../schema/assessments/vendorSelfAttestations.js";
+import { eq, and, or } from "drizzle-orm";
+import { generateVendorCotsReport } from "../agents/vendorCotsReportAgent.js";
 
 /** POST /vendorCotsAssessment - submit: create or update assessment. Save draft = status "draft", Submit = status "submitted" (DB enum has draft/submitted). */
+async function createCustomerRiskReport(
+  assessmentId: string,
+  orgIdStr: string,
+  payloadCots: Record<string, unknown>,
+): Promise<void> {
+  const vendorAttestationId = payloadCots.vendor_attestation_id != null ? String(payloadCots.vendor_attestation_id).trim() : null;
+  let productName = "";
+  if (vendorAttestationId) {
+    const [row] = await db
+      .select({ product_name: vendorSelfAttestations.product_name })
+      .from(vendorSelfAttestations)
+      .where(
+        or(
+          eq(vendorSelfAttestations.id, vendorAttestationId),
+          eq(vendorSelfAttestations.vendor_self_attestation_id, vendorAttestationId),
+        ),
+      )
+      .limit(1);
+    productName = (row?.product_name ?? "").trim() || "Product";
+  } else {
+    productName = "Product";
+  }
+  const orgName = (payloadCots.customer_organization_name != null ? String(payloadCots.customer_organization_name).trim() : "") || "Organization";
+  const title = `Customer Risk Assessment: ${orgName} - ${productName}`;
+  const toJson = (v: unknown) =>
+    v != null ? (Array.isArray(v) ? v : typeof v === "object" ? JSON.stringify(v) : String(v)) : "";
+  const report: Record<string, unknown> = {
+    assessmentId,
+    status: "submitted",
+    organizationId: orgIdStr,
+    selectedProductId: vendorAttestationId ?? "",
+    customerOrganizationName: payloadCots.customer_organization_name ?? "",
+    customerSector: payloadCots.customer_sector ?? "",
+    primaryPainPoint: payloadCots.primary_pain_point ?? "",
+    expectedOutcomes: payloadCots.expected_outcomes ?? "",
+    customerBudgetRange: payloadCots.customer_budget_range ?? "",
+    implementationTimeline: payloadCots.implementation_timeline ?? "",
+    productFeatures:
+      payloadCots.product_features != null
+        ? Array.isArray(payloadCots.product_features)
+          ? payloadCots.product_features
+          : toJson(payloadCots.product_features)
+        : "",
+    implementationApproach: payloadCots.implementation_approach ?? "",
+    customizationLevel: payloadCots.customization_level ?? "",
+    integrationComplexity: payloadCots.integration_complexity ?? "",
+    regulatoryRequirements:
+      payloadCots.regulatory_requirements != null
+        ? Array.isArray(payloadCots.regulatory_requirements)
+          ? payloadCots.regulatory_requirements
+          : toJson(payloadCots.regulatory_requirements)
+        : "",
+    regulatoryRequirementsOther: payloadCots.regulatory_requirements_other ?? "",
+    dataSensitivity: payloadCots.data_sensitivity ?? "",
+    customerRiskTolerance: payloadCots.customer_risk_tolerance ?? "",
+    alternativesConsidered: payloadCots.alternatives_considered ?? "",
+    keyAdvantages: payloadCots.key_advantages ?? "",
+    customerSpecificRisks:
+      payloadCots.customer_specific_risks != null
+        ? Array.isArray(payloadCots.customer_specific_risks)
+          ? payloadCots.customer_specific_risks
+          : toJson(payloadCots.customer_specific_risks)
+        : "",
+    customerSpecificRisksOther: payloadCots.customer_specific_risks_other ?? "",
+    identifiedRisks: payloadCots.identified_risks ?? "",
+    riskDomainScores: payloadCots.risk_domain_scores ?? "",
+    contextualMultipliers: payloadCots.contextual_multipliers ?? "",
+    riskMitigation: payloadCots.risk_mitigation ?? "",
+  };
+
+  const generated = await generateVendorCotsReport(payloadCots);
+  if (generated) {
+    report.generatedAnalysis = {
+      overallRiskScore: generated.overallRiskScore,
+      riskLevel: generated.riskLevel,
+      summary: generated.summary,
+      keyRisks: generated.keyRisks,
+      recommendations: generated.recommendations,
+    };
+  }
+
+  await db.insert(customerRiskAssessmentReports).values({
+    assessment_id: assessmentId,
+    organization_id: orgIdStr,
+    title,
+    report,
+  });
+}
+
 const submitVendorCotsAssessment = async (req: Request, res: Response) => {
   try {
     const decoded = req.user as { id?: number } | undefined;
@@ -42,6 +134,7 @@ const submitVendorCotsAssessment = async (req: Request, res: Response) => {
     };
 
     const payloadCots = {
+      vendor_attestation_id: get("selectedProductId") != null && String(get("selectedProductId")).trim() !== "" ? String(get("selectedProductId")).trim() : null,
       customer_organization_name: get("customerOrganizationName") != null ? String(get("customerOrganizationName")).slice(0, 200) : null,
       customer_sector: get("customerSector") != null ? String(get("customerSector")).slice(0, 200) : null,
       primary_pain_point: get("primaryPainPoint") != null ? String(get("primaryPainPoint")) : null,
@@ -98,6 +191,7 @@ const submitVendorCotsAssessment = async (req: Request, res: Response) => {
             .set({ ...payloadCots, updated_at: new Date() })
             .where(eq(cotsVendorAssessments.assessment_id, assessmentId));
         });
+        await createCustomerRiskReport(assessmentId, orgIdStr, payloadCots);
         return res.status(200).json({
           message: "Vendor COTS assessment submitted successfully",
           assessmentId,
@@ -126,6 +220,8 @@ const submitVendorCotsAssessment = async (req: Request, res: Response) => {
 
       return [a];
     });
+
+    await createCustomerRiskReport(assessment.id, orgIdStr, payloadCots);
 
     return res.status(201).json({
       message: "Vendor COTS assessment submitted successfully",

@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
 import { createOrganization, vendors, vendorSelfAttestations, usersTable, generatedProfileReports } from "../../schema/schema.js";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
+import { mergeSummaryIntoReport } from "../../utils/mergeProfileReportSummary.js";
 
 function userDisplayName(u: { user_name?: string | null; user_first_name?: string | null; user_last_name?: string | null; email?: string | null }): string {
   const name = (u.user_name ?? "").trim();
@@ -328,6 +329,7 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       companyProfile = {
         userId: r.userId,
         organizationId: r.organizationId,
+        vendorName: r.vendorName ?? "",
         vendorType: r.vendorType ?? "",
         sector,
         vendorMaturity: r.vendorMaturity ?? "",
@@ -387,13 +389,16 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       });
       const attestation = mapAttestationRow(oneRow, completedByName);
       const [reportRow] = await db
-        .select({ report: generatedProfileReports.report })
+        .select({ report: generatedProfileReports.report, summary: generatedProfileReports.summary })
         .from(generatedProfileReports)
         .where(eq(generatedProfileReports.attestation_id, attestationId))
         .orderBy(desc(generatedProfileReports.created_at))
         .limit(1);
       if (reportRow?.report != null) {
-        (attestation as Record<string, unknown>).generated_profile_report = reportRow.report;
+        (attestation as Record<string, unknown>).generated_profile_report = mergeSummaryIntoReport(
+          reportRow.report,
+          reportRow.summary,
+        );
       }
       // When editing a draft: use company profile saved in the attestation (draft data), not onboarding.
       let resolvedCompanyProfile = companyProfile;
@@ -434,13 +439,19 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
     const reportByAttestationId = new Map<string, unknown>();
     if (attestationIds.length > 0) {
       const reportRows = await db
-        .select({ attestation_id: generatedProfileReports.attestation_id, report: generatedProfileReports.report })
+        .select({
+          attestation_id: generatedProfileReports.attestation_id,
+          report: generatedProfileReports.report,
+          summary: generatedProfileReports.summary,
+        })
         .from(generatedProfileReports)
         .where(inArray(generatedProfileReports.attestation_id, attestationIds))
         .orderBy(desc(generatedProfileReports.created_at));
       for (const r of reportRows) {
         const aid = r.attestation_id;
-        if (aid && !reportByAttestationId.has(aid)) reportByAttestationId.set(aid, r.report);
+        if (aid && !reportByAttestationId.has(aid)) {
+          reportByAttestationId.set(aid, mergeSummaryIntoReport(r.report, r.summary));
+        }
       }
     }
     const attestations = attestRows.map((row) => {

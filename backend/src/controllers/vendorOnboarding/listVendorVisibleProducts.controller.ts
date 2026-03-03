@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
-import { vendors, vendorSelfAttestations, usersTable } from "../../schema/schema.js";
-import { and, desc, eq } from "drizzle-orm";
+import { vendors, vendorSelfAttestations, usersTable, generatedProfileReports } from "../../schema/schema.js";
+import { and, desc, eq, inArray } from "drizzle-orm";
 
 /**
  * GET /vendorDirectory/:vendorId/products
@@ -98,14 +98,52 @@ const listVendorVisibleProducts = async (req: Request, res: Response): Promise<v
             )
             .orderBy(desc(vendorSelfAttestations.updated_at));
 
+    const attestationIds = rows.map((r) => r.id).filter((id): id is string => id != null && String(id).trim() !== "");
+    /**
+     * Trust score per product from report column (same as Product Profile):
+     * report.trustScore.overallScore from generated_profile_reports.report (latest report per attestation).
+     * Fallback to trust_score column if overallScore is missing in report JSON.
+     */
+    const trustScoreByAttestation: Record<string, number> = {};
+    if (attestationIds.length > 0) {
+      const reportRows = await db
+        .select({
+          attestation_id: generatedProfileReports.attestation_id,
+          report: generatedProfileReports.report,
+          trust_score: generatedProfileReports.trust_score,
+        })
+        .from(generatedProfileReports)
+        .where(inArray(generatedProfileReports.attestation_id, attestationIds))
+        .orderBy(desc(generatedProfileReports.created_at));
+      for (const row of reportRows) {
+        const aid = row.attestation_id != null ? String(row.attestation_id) : "";
+        if (aid && trustScoreByAttestation[aid] === undefined) {
+          let report = row.report as Record<string, unknown> | string | null | undefined;
+          if (typeof report === "string") {
+            try {
+              report = JSON.parse(report) as Record<string, unknown>;
+            } catch {
+              report = null;
+            }
+          }
+          const ts = report?.trustScore as Record<string, unknown> | null | undefined;
+          const overallScore = typeof ts?.overallScore === "number" ? ts.overallScore : null;
+          trustScoreByAttestation[aid] = overallScore ?? row.trust_score;
+        }
+      }
+    }
+
     const products = rows.map((r) => {
       const apiStatus = (r.status ?? "").toUpperCase();
       const status = apiStatus === "COMPLETED" ? "Completed" : apiStatus === "REJECTED" ? "Rejected" : "Draft";
+      const idStr = r.id != null ? String(r.id) : "";
+      const trustScore = idStr ? (trustScoreByAttestation[idStr] ?? null) : null;
       return {
         id: r.id,
         productName: (r.product_name ?? "").trim() || "Product",
         status,
         updated_at: r.updated_at ?? null,
+        trustScore,
       };
     });
 

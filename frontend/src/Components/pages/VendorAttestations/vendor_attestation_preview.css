@@ -147,3 +147,25 @@
 .document-upload-helper {
   margin-top: 1rem;
 }
+
+/* Full-page overlay while attestation is submitting – blocks all interaction */
+.vendor_attestation_submit_overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+}
+.vendor_attestation_submit_overlay_content {
+  text-align: center;
+  padding: 2rem;
+  max-width: 20rem;
+}
+.vendor_attestation_submit_overlay_hint {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}

@@ -34,6 +34,7 @@
   border-bottom-color: #2563eb;
   background: #fff;
   box-shadow: 0 1px 0 0 #fff;
+  border-radius: 0 !important;
 }
 
 /* Search (UI only – no functionality) */
@@ -165,6 +166,201 @@
 .report_detail_page {
   max-width: 900px;
   margin: 0 auto;
+}
+
+.report_detail_page.report_detail_full {
+  max-width: 960px;
+}
+
+.report_detail_breadcrumb {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+.report_detail_breadcrumb a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.report_detail_breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.report_detail_breadcrumb_sep {
+  margin: 0 0.25rem;
+  color: #9ca3af;
+}
+
+/* Section cards (all sections) */
+.report_section_card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.report_section_heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.report_detail_info_grid {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 0.5rem 1.5rem;
+}
+
+.report_status_badge {
+  display: inline-flex;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.report_status_completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Tables */
+.report_table_wrap {
+  overflow-x: auto;
+}
+
+.report_table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.report_table th,
+.report_table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.report_table th {
+  font-weight: 600;
+  color: #374151;
+  background: #f9fafb;
+}
+
+.report_table td {
+  color: #111827;
+}
+
+.report_table_empty {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Risk level badges */
+.report_risk_badge {
+  display: inline-flex;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+}
+
+.report_risk_badge.risk_low {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.report_risk_badge.risk_medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.report_risk_badge.risk_high {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Risk category sections */
+.report_risk_section .report_risk_intro {
+  font-size: 0.9375rem;
+  color: #4b5563;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.5;
+}
+
+.report_risk_list {
+  list-style: none;
+  margin: 0 0 0.75rem 0;
+  padding: 0;
+}
+
+.report_risk_list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  gap: 0.5rem;
+}
+
+.report_risk_item_text {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.report_risk_icon_ok {
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.report_risk_icon_warn {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.report_show_details_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: #2563eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+.report_show_details_btn:hover {
+  text-decoration: underline;
+}
+
+.report_show_details_btn .report_chevron_open {
+  transform: rotate(180deg);
+}
+
+.report_risk_expanded {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.report_attachment_empty,
+.report_comments_placeholder {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  font-style: italic;
+  margin: 0;
 }
 
 .report_detail_header {
@@ -302,6 +498,38 @@
   line-height: 1.6;
   margin: 0;
   white-space: pre-line;
+}
+
+/* Assessment details key-value list */
+.report_detail_dl {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.report_detail_row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 0.75rem 1.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: flex-start;
+}
+.report_detail_row:last-child {
+  border-bottom: none;
+}
+.report_detail_dt {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0;
+}
+.report_detail_dd {
+  font-size: 0.9375rem;
+  color: #111827;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* Report not found / Report not completed */

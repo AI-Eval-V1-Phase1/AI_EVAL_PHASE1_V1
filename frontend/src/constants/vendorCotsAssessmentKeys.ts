@@ -9,6 +9,7 @@ export const VENDOR_COTS_FIELD_KEYS = {
     "implementationTimeline",
   ] as const,
   solutionFit: [
+    "selectedProductId",
     "productFeatures",
     "implementationApproach",
     "customizationLevel",
