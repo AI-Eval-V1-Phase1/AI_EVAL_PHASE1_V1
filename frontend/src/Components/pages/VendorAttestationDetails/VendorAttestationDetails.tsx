@@ -30,6 +30,7 @@ import type { DocumentUploadState } from "../../types/vendorSelfAttestation";
 import type { AttestationCompanyProfile } from "../../types/vendorSelfAttestation";
 import "../UserManagement/user_management.css";
 import "./vendor_attestation_details.css";
+import { formatDateDDMMMYYYY } from "../../../utils/formatDate.js";
 
 type AttestationStatus = "Draft" | "Completed" | "Rejected";
 
@@ -129,20 +130,6 @@ function buildFormStateFromFormData(
   }
   return { companyProfile, attestation, documentUpload };
 }
-
-const formatDate = (dateStr: string | null | undefined): string => {
-  if (!dateStr) return "—";
-  try {
-    const d = new Date(dateStr);
-    if (Number.isNaN(d.getTime())) return "—";
-    const day = d.getDate().toString().padStart(2, "0");
-    const month = d.toLocaleDateString("en-GB", { month: "short" });
-    const year = d.getFullYear();
-    return `${day}-${month}-${year}`;
-  } catch {
-    return "—";
-  }
-};
 
 const VendorAttestationDetails = () => {
   const navigate = useNavigate();
@@ -531,7 +518,7 @@ const VendorAttestationDetails = () => {
                     </p>
                     <p className="vendor_overview_attestation_date">
                       {item.status === "Draft" ? "Updated" : "Submitted"}:{" "}
-                      {formatDate(item.submittedDate)}
+                      {formatDateDDMMMYYYY(item.submittedDate)}
                     </p>
                   </div>
                   <div className="vendor_overview_attestation_actions">

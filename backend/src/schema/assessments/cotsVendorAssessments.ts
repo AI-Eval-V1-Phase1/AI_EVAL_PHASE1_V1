@@ -5,11 +5,13 @@ import {
   text,
   timestamp,
   jsonb,
+  integer,
 } from "drizzle-orm/pg-core";
 
 export const cotsVendorAssessments = pgTable("cots_vendor_assessments", {
   id: uuid("id").defaultRandom().primaryKey(),
   assessment_id: uuid("assessment_id").notNull(),
+  user_id: integer("user_id"),
   vendor_attestation_id: uuid("vendor_attestation_id"),
   customer_organization_name: varchar("customer_organization_name", { length: 200 }),
   customer_sector: varchar("customer_sector", { length: 200 }),

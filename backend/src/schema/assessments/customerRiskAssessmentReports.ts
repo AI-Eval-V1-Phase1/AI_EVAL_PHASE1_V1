@@ -1,8 +1,8 @@
 import { pgTable, uuid, varchar, timestamp, jsonb } from "drizzle-orm/pg-core";
 
 /**
- * Customer Risk Assessment reports generated when a vendor COTS assessment is submitted.
- * Title format: "Customer Risk Assessment: {organization name} - {product name}"
+ * Analysis Report records generated when a vendor COTS assessment is submitted.
+ * Title format: "Analysis Report: {organization name} - {product name}"
  */
 export const customerRiskAssessmentReports = pgTable("customer_risk_assessment_reports", {
   id: uuid("id").defaultRandom().primaryKey(),

@@ -2,6 +2,7 @@ import express from "express";
 import fetchVendorSelfAttestation from "../controllers/vendorSelfAttestation/fetchVendorSelfAttestation.controller.js";
 import submitVendorSelfAttestation from "../controllers/vendorSelfAttestation/submitVendorSelfAttestation.controller.js";
 import getAttestationDocument from "../controllers/vendorSelfAttestation/getAttestationDocument.controller.js";
+import { uploadAttestationDocument } from "../controllers/vendorSelfAttestation/uploadAttestationDocument.controller.js";
 import updateAttestationVisibility from "../controllers/vendorSelfAttestation/updateAttestationVisibility.controller.js";
 import updateSectionVisibility from "../controllers/vendorSelfAttestation/updateSectionVisibility.controller.js";
 import generateProductProfile from "../controllers/vendorSelfAttestation/generateProductProfile.controller.js";
@@ -15,6 +16,9 @@ router.get("/vendorSelfAttestation", authenticateToken, fetchVendorSelfAttestati
 
 // GET: Serve an uploaded attestation document (for preview "open document")
 router.get("/vendorSelfAttestation/document/:attestationId/:fileName", authenticateToken, getAttestationDocument);
+
+// POST: Upload a document for an attestation (multipart form field "document")
+router.post("/vendorSelfAttestation/upload/:attestationId", authenticateToken, uploadAttestationDocument);
 
 // POST: Submit or update vendor self attestation (upsert by user_id)
 router.post("/vendorSelfAttestation", authenticateToken, submitVendorSelfAttestation);

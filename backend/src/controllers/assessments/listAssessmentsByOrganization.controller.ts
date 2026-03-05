@@ -1,10 +1,8 @@
 import type { Request, Response } from "express";
-import { db } from "../../database/db.js";
+import { db, pool } from "../../database/db.js";
 import { usersTable } from "../../schema/schema.js";
-import { assessments } from "../../schema/assessments/assessments.js";
-import { cotsBuyerAssessments } from "../../schema/assessments/cotsBuyerAssessments.js";
-import { cotsVendorAssessments } from "../../schema/assessments/cotsVendorAssessments.js";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+
 
 /**
  * GET /assessments (uses authenticated user's org).
@@ -34,102 +32,111 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
     const organizationIdFromQuery = typeof req.query?.organizationId === "string" ? req.query.organizationId.trim() || null : null;
     const orgIdFromUser = user.organization_id;
     const orgIdStrFromUser = orgIdFromUser != null ? String(orgIdFromUser).trim() : "";
-    const orgIdStr = isSystemAdmin && organizationIdFromQuery ? organizationIdFromQuery : orgIdStrFromUser;
+    const orgIdStr = (isSystemAdmin && organizationIdFromQuery ? organizationIdFromQuery : orgIdStrFromUser) || "";
     if (!isSystemAdmin && !orgIdStr) {
       return res.status(400).json({ message: "User has no organization" });
     }
+    // Ensure string for varchar column (avoids driver/DB type mismatch)
+    const orgIdParam = String(orgIdStr);
 
-    const rows = await db
-      .select({
-        assessmentId: assessments.id,
-        type: assessments.type,
-        status: assessments.status,
-        createdAt: assessments.created_at,
-        updatedAt: assessments.updated_at,
-        organizationId: assessments.organization_id,
-        // cots_buyer_assessments (Excel buyer_cots column names) → same API shape for frontend
-        organizationName: cotsBuyerAssessments.organization_name,
-        completedByUserEmail: usersTable.email,
-        completedByUserFirstName: usersTable.user_first_name,
-        completedByUserLastName: usersTable.user_last_name,
-        completedByUserName: usersTable.user_name,
-        industrySector: cotsBuyerAssessments.industry_sector,
-        businessPainPoint: cotsBuyerAssessments.pain_point,
-        expectedOutcomes: cotsBuyerAssessments.business_outcomes,
-        owningDepartment: cotsBuyerAssessments.business_unit,
-        budgetRange: cotsBuyerAssessments.budget_range,
-        targetTimeline: cotsBuyerAssessments.target_timeline,
-        criticality: cotsBuyerAssessments.critical_of_ai_solution,
-        vendorName: cotsBuyerAssessments.vendor_name,
-        productName: cotsBuyerAssessments.specific_product,
-        requirementGaps: cotsBuyerAssessments.gap_requirement_product,
-        integrationSystems: cotsBuyerAssessments.integrate_system,
-        integrationSystemsOther: cotsBuyerAssessments.integrate_system_other,
-        techStack: cotsBuyerAssessments.current_tech_stack,
-        digitalMaturityLevel: cotsBuyerAssessments.digital_maturity,
-        dataGovernanceMaturity: cotsBuyerAssessments.governance_maturity,
-        aiGovernanceBoard: cotsBuyerAssessments.ai_governance_board,
-        aiEthicsPolicy: cotsBuyerAssessments.ai_ethics_policy,
-        implementationTeamComposition: cotsBuyerAssessments.team_composition,
-        dataSensitivity: cotsBuyerAssessments.data_sensitivity_level,
-        regulatoryRequirements: cotsBuyerAssessments.regulatory_requirments,
-        riskAppetite: cotsBuyerAssessments.risk_appetite,
-        decisionStakes: cotsBuyerAssessments.statke_at_ai_decisions,
-        impactedStakeholders: cotsBuyerAssessments.impact_by_ai,
-        vendorValidationApproach: cotsBuyerAssessments.vendor_capabilities,
-        vendorSecurityPosture: cotsBuyerAssessments.vendor_security_posture,
-        vendorCertifications: cotsBuyerAssessments.vendor_compliance_certifications,
-        pilotRolloutPlan: cotsBuyerAssessments.phased_rollout_plan,
-        rollbackCapability: cotsBuyerAssessments.rollback_capability,
-        changeManagementPlan: cotsBuyerAssessments.management_plan,
-        monitoringDataAvailable: cotsBuyerAssessments.vendor_usage_data,
-        auditLogsAvailable: cotsBuyerAssessments.audit_logs,
-        testingResultsAvailable: cotsBuyerAssessments.testing_results,
-        identifiedRisks: cotsBuyerAssessments.identified_risks,
-        riskDomainScores: cotsBuyerAssessments.risk_domain_scores,
-        contextualMultipliers: cotsBuyerAssessments.contextual_multipliers,
-        riskMitigation: cotsBuyerAssessments.buyer_risk_mitigation,
-        riskMitigationMappingIds: cotsBuyerAssessments.risk_mitigation_mapping_ids,
-        cotsCreatedAt: cotsBuyerAssessments.created_at,
-        cotsUpdatedAt: cotsBuyerAssessments.updated_at,
-        // cots_vendor_assessments (for vendor COTS rows)
-        customerOrganizationName: cotsVendorAssessments.customer_organization_name,
-        customerSector: cotsVendorAssessments.customer_sector,
-        primaryPainPoint: cotsVendorAssessments.primary_pain_point,
-        vendorExpectedOutcomes: cotsVendorAssessments.expected_outcomes,
-        customerBudgetRange: cotsVendorAssessments.customer_budget_range,
-        implementationTimeline: cotsVendorAssessments.implementation_timeline,
-        productFeatures: cotsVendorAssessments.product_features,
-        implementationApproach: cotsVendorAssessments.implementation_approach,
-        customizationLevel: cotsVendorAssessments.customization_level,
-        integrationComplexity: cotsVendorAssessments.integration_complexity,
-        vendorRegulatoryRequirements: cotsVendorAssessments.regulatory_requirements,
-        regulatoryRequirementsOther: cotsVendorAssessments.regulatory_requirements_other,
-        vendorDataSensitivity: cotsVendorAssessments.data_sensitivity,
-        customerRiskTolerance: cotsVendorAssessments.customer_risk_tolerance,
-        alternativesConsidered: cotsVendorAssessments.alternatives_considered,
-        keyAdvantages: cotsVendorAssessments.key_advantages,
-        customerSpecificRisks: cotsVendorAssessments.customer_specific_risks,
-        customerSpecificRisksOther: cotsVendorAssessments.customer_specific_risks_other,
-        vendorIdentifiedRisks: cotsVendorAssessments.identified_risks,
-        vendorRiskDomainScores: cotsVendorAssessments.risk_domain_scores,
-        vendorContextualMultipliers: cotsVendorAssessments.contextual_multipliers,
-        vendorRiskMitigation: cotsVendorAssessments.risk_mitigation,
-        vendorCotsCreatedAt: cotsVendorAssessments.created_at,
-        vendorCotsUpdatedAt: cotsVendorAssessments.updated_at,
-      })
-      .from(assessments)
-      .leftJoin(
-        cotsBuyerAssessments,
-        eq(assessments.id, cotsBuyerAssessments.assessment_id)
-      )
-      .leftJoin(
-        cotsVendorAssessments,
-        eq(assessments.id, cotsVendorAssessments.assessment_id)
-      )
-      .leftJoin(usersTable, eq(cotsBuyerAssessments.user_id, usersTable.id))
-      .where(isSystemAdmin ? sql`1 = 1` : eq(assessments.organization_id, orgIdStr))
-      .orderBy(desc(assessments.created_at));
+    // Use raw SQL to avoid Drizzle query builder errors (e.g. param binding) on this endpoint
+    const whereClause = isSystemAdmin ? "1 = 1" : 'a.organization_id = $1';
+    const queryParams = isSystemAdmin ? [] : [orgIdParam];
+    const { rows } = await pool.query<Record<string, unknown>>(
+      `SELECT
+        a.id AS "assessmentId",
+        a.type,
+        a.status,
+        a.created_at AS "createdAt",
+        a.updated_at AS "updatedAt",
+        a.expiry_at AS "expiryAt",
+        a.organization_id AS "organizationId",
+        b.organization_name AS "organizationName",
+        b.user_id AS "completedByUserId",
+        u.email AS "completedByUserEmail",
+        u.user_first_name AS "completedByUserFirstName",
+        u.user_last_name AS "completedByUserLastName",
+        u.user_name AS "completedByUserName",
+        v.user_id AS "vendorCompletedByUserId",
+        u2.email AS "vendorCompletedByUserEmail",
+        u2.user_first_name AS "vendorCompletedByUserFirstName",
+        u2.user_last_name AS "vendorCompletedByUserLastName",
+        u2.user_name AS "vendorCompletedByUserName",
+        b.industry_sector AS "industrySector",
+        b.pain_point AS "businessPainPoint",
+        b.business_outcomes AS "expectedOutcomes",
+        b.business_unit AS "owningDepartment",
+        b.budget_range AS "budgetRange",
+        b.target_timeline AS "targetTimeline",
+        b.critical_of_ai_solution AS "criticality",
+        b.vendor_name AS "vendorName",
+        b.specific_product AS "productName",
+        b.gap_requirement_product AS "requirementGaps",
+        b.integrate_system AS "integrationSystems",
+        b.integrate_system_other AS "integrationSystemsOther",
+        b.current_tech_stack AS "techStack",
+        b.digital_maturity AS "digitalMaturityLevel",
+        b.governance_maturity AS "dataGovernanceMaturity",
+        b.ai_governance_board AS "aiGovernanceBoard",
+        b.ai_ethics_policy AS "aiEthicsPolicy",
+        b.team_composition AS "implementationTeamComposition",
+        b.data_sensitivity_level AS "dataSensitivity",
+        b.regulatory_requirments AS "regulatoryRequirements",
+        b.risk_appetite AS "riskAppetite",
+        b.statke_at_ai_decisions AS "decisionStakes",
+        b.impact_by_ai AS "impactedStakeholders",
+        b.vendor_capabilities AS "vendorValidationApproach",
+        b.vendor_security_posture AS "vendorSecurityPosture",
+        b.vendor_compliance_certifications AS "vendorCertifications",
+        b.phased_rollout_plan AS "pilotRolloutPlan",
+        b.rollback_capability AS "rollbackCapability",
+        b.management_plan AS "changeManagementPlan",
+        b.vendor_usage_data AS "monitoringDataAvailable",
+        b.audit_logs AS "auditLogsAvailable",
+        b.testing_results AS "testingResultsAvailable",
+        b.identified_risks AS "identifiedRisks",
+        b.risk_domain_scores AS "riskDomainScores",
+        b.contextual_multipliers AS "contextualMultipliers",
+        b.buyer_risk_mitigation AS "riskMitigation",
+        b.risk_mitigation_mapping_ids AS "riskMitigationMappingIds",
+        b.created_at AS "cotsCreatedAt",
+        b.updated_at AS "cotsUpdatedAt",
+        v.vendor_attestation_id::text AS "vendorAttestationId",
+        v.customer_organization_name AS "customerOrganizationName",
+        v.customer_sector AS "customerSector",
+        v.primary_pain_point AS "primaryPainPoint",
+        v.expected_outcomes AS "vendorExpectedOutcomes",
+        v.customer_budget_range AS "customerBudgetRange",
+        v.implementation_timeline AS "implementationTimeline",
+        v.product_features AS "productFeatures",
+        v.implementation_approach AS "implementationApproach",
+        v.customization_level AS "customizationLevel",
+        v.integration_complexity AS "integrationComplexity",
+        v.regulatory_requirements AS "vendorRegulatoryRequirements",
+        v.regulatory_requirements_other AS "regulatoryRequirementsOther",
+        v.data_sensitivity AS "vendorDataSensitivity",
+        v.customer_risk_tolerance AS "customerRiskTolerance",
+        v.alternatives_considered AS "alternativesConsidered",
+        v.key_advantages AS "keyAdvantages",
+        v.customer_specific_risks AS "customerSpecificRisks",
+        v.customer_specific_risks_other AS "customerSpecificRisksOther",
+        v.identified_risks AS "vendorIdentifiedRisks",
+        v.risk_domain_scores AS "vendorRiskDomainScores",
+        v.contextual_multipliers AS "vendorContextualMultipliers",
+        v.risk_mitigation AS "vendorRiskMitigation",
+        v.created_at AS "vendorCotsCreatedAt",
+        v.updated_at AS "vendorCotsUpdatedAt",
+        vsa.product_name AS "attestationProductName"
+      FROM assessments a
+      LEFT JOIN cots_buyer_assessments b ON a.id = b.assessment_id
+      LEFT JOIN cots_vendor_assessments v ON a.id = v.assessment_id
+      LEFT JOIN vendor_self_attestations vsa ON (v.vendor_attestation_id = vsa.vendor_self_attestation_id OR v.vendor_attestation_id = vsa.id)
+      LEFT JOIN users u ON b.user_id = u.id
+      LEFT JOIN users u2 ON v.user_id = u2.id
+      WHERE ${whereClause}
+      ORDER BY a.created_at DESC`,
+      queryParams
+    );
 
     const list = rows.map((r) => ({
       assessmentId: r.assessmentId,
@@ -137,12 +144,29 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       status: r.status,
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
+      expiryAt: r.expiryAt ?? null,
       organizationId: r.organizationId,
       organizationName: r.organizationName ?? null,
-      completedByUserEmail: r.completedByUserEmail ?? null,
-      completedByUserFirstName: r.completedByUserFirstName ?? null,
-      completedByUserLastName: r.completedByUserLastName ?? null,
-      completedByUserName: r.completedByUserName ?? null,
+      completedByUserId:
+        r.type === "cots_vendor"
+          ? (r.vendorCompletedByUserId ?? null)
+          : (r.completedByUserId ?? null),
+      completedByUserEmail:
+        r.type === "cots_vendor"
+          ? (r.vendorCompletedByUserEmail ?? null)
+          : (r.completedByUserEmail ?? null),
+      completedByUserFirstName:
+        r.type === "cots_vendor"
+          ? (r.vendorCompletedByUserFirstName ?? null)
+          : (r.completedByUserFirstName ?? null),
+      completedByUserLastName:
+        r.type === "cots_vendor"
+          ? (r.vendorCompletedByUserLastName ?? null)
+          : (r.completedByUserLastName ?? null),
+      completedByUserName:
+        r.type === "cots_vendor"
+          ? (r.vendorCompletedByUserName ?? null)
+          : (r.completedByUserName ?? null),
       industrySector: r.industrySector ?? null,
       businessPainPoint: r.businessPainPoint ?? null,
       expectedOutcomes: r.expectedOutcomes ?? null,
@@ -151,7 +175,10 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       targetTimeline: r.targetTimeline ?? null,
       criticality: r.criticality ?? null,
       vendorName: r.vendorName ?? null,
-      productName: r.productName ?? null,
+      productName:
+        r.type === "cots_vendor"
+          ? (r.attestationProductName ?? r.productName ?? null)
+          : (r.productName ?? null),
       requirementGaps: r.requirementGaps ?? null,
       integrationSystems: r.integrationSystems ?? null,
       integrationSystemsOther: r.integrationSystemsOther ?? null,
@@ -183,6 +210,7 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       cotsCreatedAt: r.cotsCreatedAt ?? null,
       cotsUpdatedAt: r.cotsUpdatedAt ?? null,
       // Vendor COTS fields (populated when type === "cots_vendor")
+      vendorAttestationId: r.vendorAttestationId ?? null,
       customerOrganizationName: r.customerOrganizationName ?? null,
       customerSector: r.customerSector ?? null,
       primaryPainPoint: r.primaryPainPoint ?? null,
@@ -214,16 +242,20 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       data: { assessments: list, organizationId: isSystemAdmin ? undefined : orgIdStr },
     });
   } catch (error) {
-    const err = error as Error & { code?: string; detail?: string };
+    const err = error as Error & { code?: string; detail?: string; hint?: string; cause?: unknown };
+    const pgErr = err.cause as { code?: string; detail?: string } | undefined;
+    const code = err.code ?? pgErr?.code;
+    const detail = err.detail ?? pgErr?.detail;
     console.error("listAssessmentsByOrganization: Failed query:", err.message);
-    if (err.detail) console.error("listAssessmentsByOrganization: Detail:", err.detail);
-    if (err.code) console.error("listAssessmentsByOrganization: Code:", err.code);
+    if (detail) console.error("listAssessmentsByOrganization: Detail:", detail);
+    if (code) console.error("listAssessmentsByOrganization: Code:", code);
+    const isColumnMissing = err.message?.includes("does not exist") || code === "42703";
     return res.status(500).json({
       message: "Internal server error",
-      hint:
-        err.message?.includes("does not exist") || err.code === "42703"
-          ? "A table column may be missing. From backend folder run: node migrations/run-migration-0024.js then node migrations/run-migration-0026.js"
-          : undefined,
+      ...(process.env.NODE_ENV !== "production" && { code, detail, rawMessage: err.message }),
+      hint: isColumnMissing
+        ? "A table column may be missing. From backend folder run: node migrations/run-migration-0024.js then node migrations/run-migration-0026.js"
+        : undefined,
     });
   }
 };

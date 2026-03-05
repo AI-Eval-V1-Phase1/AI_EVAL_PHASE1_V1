@@ -14,6 +14,7 @@ import {
   FileText,
   CheckCircle2,
   Search,
+  Trash2,
 } from "lucide-react";
 import DataTable from "react-data-table-component";
 import Button from "../../UI/Button";
@@ -23,6 +24,8 @@ import PreviewTable from "../../preview/PreviewTable";
 import type { PreviewField } from "../../../types/preview";
 import { BUYER_COTS_FIELD_KEYS } from "../../../constants/buyerCotsAssessmentKeys";
 import { formatPreviewValue } from "../../../utils/formatPreviewValue";
+import { formatDateDDMMMYYYY } from "../../../utils/formatDate.js";
+import "../../../styles/page_tabs.css";
 import "../Organizations/organization.css";
 import "../UserManagement/user_management.css";
 import "../../preview/preview_table.css";
@@ -82,23 +85,13 @@ function getBuyerAssessmentProgress(row) {
   return Math.round((filled / BUYER_COTS_PROGRESS_KEYS.length) * 100);
 }
 
-const formatDate = (d) => {
-  if (!d) return "—";
-  const date = new Date(d);
-  if (Number.isNaN(date.getTime())) return "—";
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = date.toLocaleDateString("en-GB", { month: "short" });
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
-
 const truncate = (str, max = 40) => {
   if (str == null || str === "") return "—";
   const s = String(str);
   return s.length <= max ? s : `${s.slice(0, max)}…`;
 };
 
-/** Display name of buyer who completed the assessment (from list API completedBy* fields). */
+/** Display name of user who completed/updated the assessment (from list API completedBy* and completedByUserId from db). */
 function getCompletedByDisplay(row) {
   if (!row) return "";
   const first = (row.completedByUserFirstName ?? "").toString().trim();
@@ -109,17 +102,60 @@ function getCompletedByDisplay(row) {
   if (userName) return userName;
   const email = (row.completedByUserEmail ?? "").toString().trim();
   if (email) return email;
+  const userId = row.completedByUserId;
+  if (userId != null && userId !== "") return `User #${userId}`;
   return "";
 }
 
-/** Title for assessment row (used for display and search filter). */
-function getAssessmentTitle(row, isBuyerRow) {
-  if (isBuyerRow) {
-    const v = row.owningDepartment != null && String(row.owningDepartment).trim() !== "" ? String(row.owningDepartment).trim() : null;
-    return v ?? "Draft";
+/** True when assessment has an expiry date and it has passed (expiry date is before today). */
+function isAssessmentExpired(row) {
+  const expiryStr = row?.expiryAt;
+  if (expiryStr == null || String(expiryStr).trim() === "") return false;
+  try {
+    const expiry = new Date(expiryStr);
+    if (Number.isNaN(expiry.getTime())) return false;
+    const today = new Date();
+    expiry.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return expiry.getTime() < today.getTime();
+  } catch {
+    return false;
   }
-  const v = row.customerSector != null && String(row.customerSector).trim() !== "" ? String(row.customerSector).trim() : null;
-  return v ?? "Draft";
+}
+
+/** Display status: Draft, Expired (when past expiryAt), Completed, or raw status. */
+function getAssessmentStatusLabel(row) {
+  if (!row) return "—";
+  const s = (row.status ?? "").toLowerCase();
+  if (s === "draft") return "Draft";
+  if (s === "submitted" || s === "completed") {
+    return isAssessmentExpired(row) ? "Expired" : "Completed";
+  }
+  return row.status ?? "—";
+}
+
+/** Title for assessment row (used for search filter). Uses organization name and product name. */
+function getAssessmentTitle(row, isBuyerRow) {
+  const org = isBuyerRow
+    ? (row.organizationName != null && String(row.organizationName).trim() !== "" ? String(row.organizationName).trim() : null)
+    : (row.customerOrganizationName != null && String(row.customerOrganizationName).trim() !== "" ? String(row.customerOrganizationName).trim() : null);
+  const product = row.productName != null && String(row.productName).trim() !== "" ? String(row.productName).trim() : null;
+  const parts = [org, product].filter(Boolean);
+  return parts.length > 0 ? parts.join(" ") : "Draft";
+}
+
+/** Organization and product name from that assessment form (buyer: org = organizationName; vendor: org = customerOrganizationName). */
+function getAssessmentOrgAndProduct(row, isBuyerRow) {
+  const org = isBuyerRow ? (row.organizationName ?? "") : (row.customerOrganizationName ?? "");
+  const product = row.productName ?? "";
+  return { orgName: String(org).trim(), productName: String(product).trim() };
+}
+
+/** Single-line card title: "Organization Name - Product Name" from that assessment form, or "Draft" if both empty. */
+function getAssessmentDisplayTitle(row, isBuyerRow) {
+  const { orgName, productName } = getAssessmentOrgAndProduct(row, isBuyerRow);
+  if (orgName === "" && productName === "") return "Draft";
+  return `${orgName || "—"} - ${productName || "—"}`;
 }
 
 /** Parse COTS assessment points from risk domain scores (buyer: riskDomainScores, vendor: vendorRiskDomainScores). Returns total points or null. */
@@ -158,7 +194,7 @@ function getRowPreviewValue(row, key) {
   if (row == null) return undefined;
   const v = row[key];
   if (v == null || (typeof v === "string" && v.trim() === "")) return undefined;
-  if (key === "createdAt" || key === "cotsUpdatedAt") return formatDate(v);
+  if (key === "createdAt" || key === "cotsUpdatedAt" || key === "expiryAt") return formatDateDDMMMYYYY(v);
   return v;
 }
 
@@ -198,8 +234,9 @@ const ASSESSMENT_PREVIEW_SECTIONS = [
               ? "COTS Vendor"
               : (r.type ?? undefined),
       },
-      { label: "Status", value: (r) => r.status ?? undefined },
-      { label: "Created", value: (r) => formatDate(r.createdAt) },
+      { label: "Status", value: (r) => getAssessmentStatusLabel(r) },
+      { label: "Created on", value: (r) => formatDateDDMMMYYYY(r.createdAt) },
+      { label: "Expires on", value: (r) => formatDateDDMMMYYYY(r.expiryAt) },
     ],
   },
   {
@@ -282,7 +319,7 @@ const Assessments = () => {
   const isBuyer = systemRole === "buyer";
   const isVendor = systemRole === "vendor";
   const isSystemUser = SYSTEM_ROLES.some((r) => r === systemRole);
-  const [activeTab, setActiveTab] = useState<"vendor" | "buyer" | "my">(
+  const [activeTab, setActiveTab] = useState<"vendor" | "buyer" | "my" | "archived">(
     "vendor",
   );
   // const titlesForPage = [
@@ -302,6 +339,8 @@ const Assessments = () => {
   const [vendorCotsPreviewDetail, setVendorCotsPreviewDetail] = useState(null);
   const [vendorCotsPreviewLoading, setVendorCotsPreviewLoading] = useState(false);
   const [assessmentSearch, setAssessmentSearch] = useState("");
+  const [showArchivedBuyer, setShowArchivedBuyer] = useState(false);
+  const [showArchivedVendor, setShowArchivedVendor] = useState(false);
 
   const LOADER_MIN_MS = 2500; // show loader at least 2–3 seconds
 
@@ -323,13 +362,19 @@ const Assessments = () => {
         Authorization: `Bearer ${token}`,
       },
     })
-      .then((res) => res.json())
-      .then((result) => {
-        if (result?.data?.assessments != null) {
-          setAssessmentsList(result.data.assessments);
-        } else {
-          setAssessmentsList([]);
-        }
+      .then((res) => {
+        return res.json().then((result) => {
+          if (!res.ok) {
+            setFetchError(result?.message || "Failed to load assessments.");
+            setAssessmentsList([]);
+            return;
+          }
+          if (result?.data?.assessments != null) {
+            setAssessmentsList(result.data.assessments);
+          } else {
+            setAssessmentsList([]);
+          }
+        });
       })
       .catch(() => {
         setFetchError("Failed to load assessments.");
@@ -415,6 +460,20 @@ const Assessments = () => {
       )
     )
       return;
+    await doDeleteAssessment(assessmentId);
+  };
+
+  const handleDeleteExpired = async (assessmentId) => {
+    if (
+      !window.confirm(
+        "Permanently delete this expired assessment? This cannot be undone.",
+      )
+    )
+      return;
+    await doDeleteAssessment(assessmentId);
+  };
+
+  async function doDeleteAssessment(assessmentId) {
     const token = sessionStorage.getItem("bearerToken");
     if (!token) return;
     try {
@@ -431,7 +490,7 @@ const Assessments = () => {
     } catch {
       alert("Failed to delete assessment");
     }
-  };
+  }
 
   const showNewAssessment = isBuyer || isVendor;
   const organizationId = sessionStorage.getItem("organizationId") ?? "";
@@ -451,6 +510,25 @@ const Assessments = () => {
         (a) => String(a.organizationId ?? "") === String(myOrgId),
       )
     : [];
+
+  const archivedAssessments = (isSystemUser ? myAssessments : orgScopedList).filter(
+    (row) => isAssessmentExpired(row),
+  );
+  const archivedBuyerAssessments = buyerAssessments.filter((row) =>
+    isAssessmentExpired(row),
+  );
+  const archivedVendorAssessments = vendorAssessments.filter((row) =>
+    isAssessmentExpired(row),
+  );
+  const nonExpiredVendor = vendorAssessments.filter(
+    (row) => !isAssessmentExpired(row),
+  );
+  const nonExpiredBuyer = buyerAssessments.filter(
+    (row) => !isAssessmentExpired(row),
+  );
+  const nonExpiredMy = myAssessments.filter(
+    (row) => !isAssessmentExpired(row),
+  );
 
   const customStyles = {
     table: {
@@ -488,14 +566,7 @@ const Assessments = () => {
     },
     {
       name: <div className="tableHeader">Status</div>,
-      selector: (row) => {
-        const s = (row.status ?? "").toLowerCase();
-        return s === "draft"
-          ? "Draft"
-          : s === "submitted" || s === "completed"
-            ? "Completed"
-            : (row.status ?? "—");
-      },
+      selector: (row) => getAssessmentStatusLabel(row),
       sortable: true,
     },
     {
@@ -529,8 +600,18 @@ const Assessments = () => {
       sortable: true,
     },
     {
-      name: <div className="tableHeader">Created</div>,
-      selector: (row) => formatDate(row.createdAt),
+      name: <div className="tableHeader">Created on</div>,
+      selector: (row) => formatDateDDMMMYYYY(row.createdAt),
+      sortable: true,
+    },
+    {
+      name: <div className="tableHeader">Expires on</div>,
+      selector: (row) => formatDateDDMMMYYYY(row.expiryAt),
+      cell: (row) => (
+        <span className="vendor_overview_attestation_date_expiry">
+          {formatDateDDMMMYYYY(row.expiryAt)}
+        </span>
+      ),
       sortable: true,
     },
     {
@@ -606,27 +687,34 @@ const Assessments = () => {
 
       {isSystemUser && (
         <div className="ai_assessments_page">
-          <div className="assessment_tabs">
+          <div className="page_tabs">
             <button
               type="button"
-              className={`assessment_tab ${activeTab === "vendor" ? "active" : ""}`}
+              className={`page_tab ${activeTab === "vendor" ? "page_tab_active" : ""}`}
               onClick={() => setActiveTab("vendor")}
             >
               Vendor
             </button>
             <button
               type="button"
-              className={`assessment_tab ${activeTab === "buyer" ? "active" : ""}`}
+              className={`page_tab ${activeTab === "buyer" ? "page_tab_active" : ""}`}
               onClick={() => setActiveTab("buyer")}
             >
               Buyer
             </button>
             <button
               type="button"
-              className={`assessment_tab ${activeTab === "my" ? "active" : ""}`}
+              className={`page_tab ${activeTab === "my" ? "page_tab_active" : ""}`}
               onClick={() => setActiveTab("my")}
             >
               My Assessments
+            </button>
+            <button
+              type="button"
+              className={`page_tab ${activeTab === "archived" ? "page_tab_active" : ""}`}
+              onClick={() => setActiveTab("archived")}
+            >
+              Archived
             </button>
           </div>
           {activeTab === "vendor" && (
@@ -670,23 +758,17 @@ const Assessments = () => {
                 <div className="assessment_list_rows">
                   {(() => {
                     const q = assessmentSearch.trim().toLowerCase();
-                    const filtered = q === "" ? vendorAssessments : vendorAssessments.filter((row) => getAssessmentTitle(row, false).toLowerCase().includes(q));
+                    const filtered = q === "" ? nonExpiredVendor : nonExpiredVendor.filter((row) => getAssessmentTitle(row, false).toLowerCase().includes(q));
                     return filtered.length === 0 ? (
                       <p className="assessment_search_no_results">
-                        {vendorAssessments.length === 0 ? "No vendor assessments yet." : "No assessments match your search."}
+                        {nonExpiredVendor.length === 0 ? "No vendor assessments yet." : "No assessments match your search."}
                       </p>
                     ) : (
                       filtered.map((row) => {
                     const isDraft =
                       (row.status || "").toLowerCase() === "draft";
-                    const customerSectorVal =
-                      row.customerSector != null &&
-                      String(row.customerSector).trim() !== ""
-                        ? String(row.customerSector).trim()
-                        : null;
-                    const title = customerSectorVal ?? "Draft";
-                    const statusLabel = isDraft ? "Draft" : "Completed";
-                    const submittedDisplay = formatDate(
+                    const statusLabel = getAssessmentStatusLabel(row);
+                    const submittedDisplay = formatDateDDMMMYYYY(
                       row.vendorCotsUpdatedAt ?? row.updatedAt,
                     );
                     const completedBy = getCompletedByDisplay(row) || "—";
@@ -694,17 +776,17 @@ const Assessments = () => {
                     return (
                       <div key={row.assessmentId} className="vendor_overview_attestation_row">
                         {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
-                        {!isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />}
+                        {!isDraft && <FileText size={24} className={`vendor_overview_attestation_icon ${statusLabel === "Expired" ? "vendor_overview_attestation_icon_expired" : "vendor_overview_attestation_icon_check"}`} aria-hidden />}
                         <div className="vendor_overview_attestation_content">
-                          <p className="vendor_overview_attestation_name">{truncate(title, 60)}</p>
-                          <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}`}>
+                          <p className="vendor_overview_attestation_name">{truncate(getAssessmentDisplayTitle(row, false), 60)}</p>
+                          <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}${statusLabel === "Expired" ? " vendor_overview_attestation_status_label_expired" : ""}`}>
                             {statusLabel}
                           </p>
                           <p className="vendor_overview_attestation_by">
                             {isDraft ? "Updated by:" : "Completed by:"} {completedBy}
                           </p>
                           <p className="vendor_overview_attestation_date">
-                            {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
+                            {isDraft ? "Drafted on" : "Created on"}: {formatDateDDMMMYYYY(row.createdAt)}
                           </p>
                           <p className="vendor_overview_attestation_points">
                             COTS points: {vendorPoints != null ? vendorPoints : "—"}
@@ -787,40 +869,34 @@ const Assessments = () => {
                 <div className="assessment_list_rows">
                   {(() => {
                     const q = assessmentSearch.trim().toLowerCase();
-                    const filtered = q === "" ? buyerAssessments : buyerAssessments.filter((row) => getAssessmentTitle(row, true).toLowerCase().includes(q));
-                    if (filtered.length === 0) return <p className="assessment_search_no_results">{buyerAssessments.length === 0 ? "No assessments yet." : "No assessments match your search."}</p>;
+                    const filtered = q === "" ? nonExpiredBuyer : nonExpiredBuyer.filter((row) => getAssessmentTitle(row, true).toLowerCase().includes(q));
+                    if (filtered.length === 0) return <p className="assessment_search_no_results">{nonExpiredBuyer.length === 0 ? "No assessments yet." : "No assessments match your search."}</p>;
                     return filtered.map((row) => {
                     const isDraft =
                       (row.status || "").toLowerCase() === "draft";
-                    const owningDept =
-                      row.owningDepartment != null &&
-                      String(row.owningDepartment).trim() !== ""
-                        ? String(row.owningDepartment).trim()
-                        : null;
-                    const title = owningDept ?? "Draft";
-                    const statusLabel = isDraft ? "Draft" : "Completed";
-                    const updatedAtDisplay = formatDate(
+                    const statusLabel = getAssessmentStatusLabel(row);
+                    const updatedAtDisplay = formatDateDDMMMYYYY(
                       row.updatedAt ?? row.cotsUpdatedAt ?? row.submittedDate,
                     );
                     const submittedDisplay = isDraft
                       ? updatedAtDisplay
-                      : formatDate(row.submittedDate ?? row.updatedAt);
+                      : formatDateDDMMMYYYY(row.submittedDate ?? row.updatedAt);
                     const completedBy = getCompletedByDisplay(row) || "—";
                     const buyerPoints = getCotsAssessmentPoints(row, true);
                     return (
                       <div key={row.assessmentId} className="vendor_overview_attestation_row">
                         {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
-                        {!isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />}
+                        {!isDraft && <FileText size={24} className={`vendor_overview_attestation_icon ${statusLabel === "Expired" ? "vendor_overview_attestation_icon_expired" : "vendor_overview_attestation_icon_check"}`} aria-hidden />}
                         <div className="vendor_overview_attestation_content">
-                          <p className="vendor_overview_attestation_name">{truncate(title, 60)}</p>
-                          <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}`}>
+                          <p className="vendor_overview_attestation_name">{truncate(getAssessmentDisplayTitle(row, true), 60)}</p>
+                          <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}${statusLabel === "Expired" ? " vendor_overview_attestation_status_label_expired" : ""}`}>
                             {statusLabel}
                           </p>
                           <p className="vendor_overview_attestation_by">
                             {isDraft ? "Updated by:" : "Completed by:"} {completedBy}
                           </p>
                           <p className="vendor_overview_attestation_date">
-                            {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
+                            {isDraft ? "Drafted on" : "Created on"}: {formatDateDDMMMYYYY(row.createdAt)}
                           </p>
                           <p className="vendor_overview_attestation_points">
                             COTS points: {buyerPoints != null ? buyerPoints : "—"}
@@ -888,38 +964,29 @@ const Assessments = () => {
                 <div className="assessment_list_rows">
                   {(() => {
                     const q = assessmentSearch.trim().toLowerCase();
-                    const filtered = q === "" ? myAssessments : myAssessments.filter((row) => {
+                    const filtered = q === "" ? nonExpiredMy : nonExpiredMy.filter((row) => {
                       const isBuyerRow = (row.type || "").toLowerCase() === "cots_buyer";
                       return getAssessmentTitle(row, isBuyerRow).toLowerCase().includes(q);
                     });
-                    if (filtered.length === 0) return <p className="assessment_search_no_results">{myAssessments.length === 0 ? "No assessments yet." : "No assessments match your search."}</p>;
+                    if (filtered.length === 0) return <p className="assessment_search_no_results">{nonExpiredMy.length === 0 ? "No assessments yet." : "No assessments match your search."}</p>;
                     return filtered.map((row) => {
                     const isBuyerRow =
                       (row.type || "").toLowerCase() === "cots_buyer";
                     const isDraft =
                       (row.status || "").toLowerCase() === "draft";
-                    const title = isBuyerRow
-                      ? ((row.owningDepartment != null &&
-                        String(row.owningDepartment).trim() !== ""
-                          ? String(row.owningDepartment).trim()
-                          : null) ?? "Draft")
-                      : ((row.customerSector != null &&
-                        String(row.customerSector).trim() !== ""
-                          ? String(row.customerSector).trim()
-                          : null) ?? "Draft");
-                    const statusLabel = isDraft ? "Draft" : "Completed";
+                    const statusLabel = getAssessmentStatusLabel(row);
                     const statusClass = isDraft
                       ? "assessment_status_draft"
                       : "assessment_status_completed";
                     const typeLabel = isBuyerRow ? "COTS Buyer" : "COTS Vendor";
-                    const updatedAtDisplay = formatDate(
+                    const updatedAtDisplay = formatDateDDMMMYYYY(
                       isBuyerRow
                         ? (row.updatedAt ?? row.cotsUpdatedAt)
                         : (row.vendorCotsUpdatedAt ?? row.updatedAt),
                     );
                     const submittedDisplay = isDraft
                       ? updatedAtDisplay
-                      : formatDate(
+                      : formatDateDDMMMYYYY(
                           isBuyerRow
                             ? (row.submittedDate ?? row.updatedAt)
                             : (row.vendorCotsUpdatedAt ?? row.updatedAt),
@@ -928,18 +995,29 @@ const Assessments = () => {
                     return (
                       <div key={row.assessmentId} className="vendor_overview_attestation_row">
                         {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
-                        {!isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />}
+                        {!isDraft && <FileText size={24} className={`vendor_overview_attestation_icon ${statusLabel === "Expired" ? "vendor_overview_attestation_icon_expired" : "vendor_overview_attestation_icon_check"}`} aria-hidden />}
                         <div className="vendor_overview_attestation_content">
-                          <p className="vendor_overview_attestation_name">{truncate(title, 60)}</p>
-                          <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}`}>
+                          <p className="vendor_overview_attestation_name">{truncate(getAssessmentDisplayTitle(row, isBuyerRow), 60)}</p>
+                          <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}${statusLabel === "Expired" ? " vendor_overview_attestation_status_label_expired" : ""}`}>
                             {statusLabel}
                           </p>
                           <p className="vendor_overview_attestation_by">
                             {isDraft ? "Updated by:" : "Completed by:"} {completedBy}
                           </p>
-                          <p className="vendor_overview_attestation_date">
-                            {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
-                          </p>
+                          {isDraft ? (
+                            <p className="vendor_overview_attestation_date">
+                              Drafted on: {formatDateDDMMMYYYY(row.createdAt)}
+                            </p>
+                          ) : (
+                            <div className="vendor_overview_attestation_date_row">
+                              <p className="vendor_overview_attestation_date">
+                                Created on: {formatDateDDMMMYYYY(row.createdAt)}
+                              </p>
+                              <p className="vendor_overview_attestation_date vendor_overview_attestation_date_expiry">
+                                Expires on: {formatDateDDMMMYYYY(row.expiryAt)}
+                              </p>
+                            </div>
+                          )}
                         </div>
                         <div className="vendor_overview_attestation_actions">
                           {isDraft && (
@@ -977,6 +1055,95 @@ const Assessments = () => {
               )}
             </div>
           )}
+          {activeTab === "archived" && (
+            <div className="ai_assessments_section">
+              <h2>Archived</h2>
+              <p className="section_desc">
+                Expired assessments. You can delete them permanently.
+              </p>
+              <div className="assessment_list_header_row">
+                <p className="your_assessments_title">YOUR ASSESSMENTS</p>
+                <div className="assessment_search_wrap">
+                  <Search size={18} className="assessment_search_icon" aria-hidden />
+                  <input
+                    type="search"
+                    placeholder="Search archived…"
+                    value={assessmentSearch}
+                    onChange={(e) => setAssessmentSearch(e.target.value)}
+                    className="assessment_search_input"
+                    aria-label="Search archived assessments"
+                  />
+                </div>
+              </div>
+              {loading && <LoadingMessage message="Loading assessments…" />}
+              {fetchError && (
+                <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>
+                  {fetchError}
+                </p>
+              )}
+              {!loading && !fetchError && (
+                <div className="assessment_list_rows">
+                  {(() => {
+                    const q = assessmentSearch.trim().toLowerCase();
+                    const filtered =
+                      q === ""
+                        ? archivedAssessments
+                        : archivedAssessments.filter((row) => {
+                            const isBuyerRow = (row.type || "").toLowerCase() === "cots_buyer";
+                            return getAssessmentTitle(row, isBuyerRow).toLowerCase().includes(q);
+                          });
+                    if (filtered.length === 0)
+                      return (
+                        <p className="assessment_search_no_results">
+                          {archivedAssessments.length === 0
+                            ? "No archived assessments."
+                            : "No archived assessments match your search."}
+                        </p>
+                      );
+                    return filtered.map((row) => {
+                      const isBuyerRow = (row.type || "").toLowerCase() === "cots_buyer";
+                      const completedBy = getCompletedByDisplay(row) || "—";
+                      return (
+                        <div key={row.assessmentId} className="vendor_overview_attestation_row">
+                          <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_expired" aria-hidden />
+                          <div className="vendor_overview_attestation_content">
+                            <p className="vendor_overview_attestation_name">
+                              {truncate(getAssessmentDisplayTitle(row, isBuyerRow), 60)}
+                            </p>
+                            <p className="vendor_overview_attestation_status_label vendor_overview_attestation_status_label_expired">
+                              Expired
+                            </p>
+                            <p className="vendor_overview_attestation_by">
+                              Completed by: {completedBy}
+                            </p>
+                            <div className="vendor_overview_attestation_date_row">
+                              <p className="vendor_overview_attestation_date">
+                                Created on: {formatDateDDMMMYYYY(row.createdAt)}
+                              </p>
+                              <p className="vendor_overview_attestation_date vendor_overview_attestation_date_expiry">
+                                Expires on: {formatDateDDMMMYYYY(row.expiryAt)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="vendor_overview_attestation_actions">
+                            <button
+                              type="button"
+                              className="vendor_overview_btn_view vendor_overview_btn_danger"
+                              onClick={() => handleDeleteExpired(row.assessmentId)}
+                              aria-label="Delete assessment"
+                            >
+                              <Trash2 size={16} aria-hidden />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1003,16 +1170,34 @@ const Assessments = () => {
             </ul>
             <div className="assessment_list_header_row">
               <p className="your_assessments_title">YOUR ASSESSMENTS</p>
-              <div className="assessment_search_wrap">
-                <Search size={18} className="assessment_search_icon" aria-hidden />
-                <input
-                  type="search"
-                  placeholder="Search assessments…"
-                  value={assessmentSearch}
-                  onChange={(e) => setAssessmentSearch(e.target.value)}
-                  className="assessment_search_input"
-                  aria-label="Search assessments by name"
-                />
+              <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                <div className="page_tabs" style={{ marginBottom: 0, border: "none", gap: "0.25rem" }}>
+                  <button
+                    type="button"
+                    className={`page_tab ${!showArchivedBuyer ? "page_tab_active" : ""}`}
+                    onClick={() => setShowArchivedBuyer(false)}
+                  >
+                    Current
+                  </button>
+                  <button
+                    type="button"
+                    className={`page_tab ${showArchivedBuyer ? "page_tab_active" : ""}`}
+                    onClick={() => setShowArchivedBuyer(true)}
+                  >
+                    Archived
+                  </button>
+                </div>
+                <div className="assessment_search_wrap">
+                  <Search size={18} className="assessment_search_icon" aria-hidden />
+                  <input
+                    type="search"
+                    placeholder="Search assessments…"
+                    value={assessmentSearch}
+                    onChange={(e) => setAssessmentSearch(e.target.value)}
+                    className="assessment_search_input"
+                    aria-label="Search assessments by name"
+                  />
+                </div>
               </div>
             </div>
             {loading && <LoadingMessage message="Loading assessments…" />}
@@ -1021,43 +1206,48 @@ const Assessments = () => {
                 {fetchError}
               </p>
             )}
-            {!loading && !fetchError && (
+            {!loading && !fetchError && !showArchivedBuyer && (
               <div className="assessment_list_rows">
                 {(() => {
                   const q = assessmentSearch.trim().toLowerCase();
-                  const filtered = q === "" ? buyerAssessments : buyerAssessments.filter((row) => getAssessmentTitle(row, true).toLowerCase().includes(q));
-                  if (filtered.length === 0) return <p className="assessment_search_no_results">{buyerAssessments.length === 0 ? "No assessments yet." : "No assessments match your search."}</p>;
+                  const filtered = q === "" ? nonExpiredBuyer : nonExpiredBuyer.filter((row) => getAssessmentTitle(row, true).toLowerCase().includes(q));
+                  if (filtered.length === 0) return <p className="assessment_search_no_results">{nonExpiredBuyer.length === 0 ? "No assessments yet." : "No assessments match your search."}</p>;
                   return filtered.map((row) => {
                   const isDraft = (row.status || "").toLowerCase() === "draft";
-                  const owningDept =
-                    row.owningDepartment != null &&
-                    String(row.owningDepartment).trim() !== ""
-                      ? String(row.owningDepartment).trim()
-                      : null;
-                  const title = owningDept ?? "Draft";
-                  const statusLabel = isDraft ? "Draft" : "Completed";
-                  const updatedAtDisplay = formatDate(
+                  const statusLabel = getAssessmentStatusLabel(row);
+                  const updatedAtDisplay = formatDateDDMMMYYYY(
                     row.updatedAt ?? row.cotsUpdatedAt ?? row.submittedDate,
                   );
                   const submittedDisplay = isDraft
                     ? updatedAtDisplay
-                    : formatDate(row.submittedDate ?? row.updatedAt);
+                    : formatDateDDMMMYYYY(row.submittedDate ?? row.updatedAt);
                   const completedBy = getCompletedByDisplay(row) || "—";
                   return (
                     <div key={row.assessmentId} className="vendor_overview_attestation_row">
                       {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
-                      {!isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />}
+                      {!isDraft && <FileText size={24} className={`vendor_overview_attestation_icon ${statusLabel === "Expired" ? "vendor_overview_attestation_icon_expired" : "vendor_overview_attestation_icon_check"}`} aria-hidden />}
                       <div className="vendor_overview_attestation_content">
-                        <p className="vendor_overview_attestation_name">{truncate(title, 60)}</p>
-                        <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}`}>
+                        <p className="vendor_overview_attestation_name">{truncate(getAssessmentDisplayTitle(row, true), 60)}</p>
+                        <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}${statusLabel === "Expired" ? " vendor_overview_attestation_status_label_expired" : ""}`}>
                           {statusLabel}
                         </p>
                         <p className="vendor_overview_attestation_by">
                           {isDraft ? "Updated by:" : "Completed by:"} {completedBy}
                         </p>
-                        <p className="vendor_overview_attestation_date">
-                          {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
-                        </p>
+                        {isDraft ? (
+                          <p className="vendor_overview_attestation_date">
+                            Drafted on: {formatDateDDMMMYYYY(row.createdAt)}
+                          </p>
+                        ) : (
+                          <div className="vendor_overview_attestation_date_row">
+                            <p className="vendor_overview_attestation_date">
+                              Created on: {formatDateDDMMMYYYY(row.createdAt)}
+                            </p>
+                            <p className="vendor_overview_attestation_date vendor_overview_attestation_date_expiry">
+                              Expires on: {formatDateDDMMMYYYY(row.expiryAt)}
+                            </p>
+                          </div>
+                        )}
                       </div>
                       <div className="vendor_overview_attestation_actions">
                         {isDraft && (
@@ -1086,6 +1276,63 @@ const Assessments = () => {
                     </div>
                   );
                 });
+                })()}
+              </div>
+            )}
+            {!loading && !fetchError && showArchivedBuyer && (
+              <div className="assessment_list_rows">
+                {(() => {
+                  const q = assessmentSearch.trim().toLowerCase();
+                  const filtered =
+                    q === ""
+                      ? archivedBuyerAssessments
+                      : archivedBuyerAssessments.filter((row) =>
+                          getAssessmentTitle(row, true).toLowerCase().includes(q)
+                        );
+                  if (filtered.length === 0)
+                    return (
+                      <p className="assessment_search_no_results">
+                        {archivedBuyerAssessments.length === 0
+                          ? "No archived assessments."
+                          : "No archived assessments match your search."}
+                      </p>
+                    );
+                  return filtered.map((row) => {
+                    const completedBy = getCompletedByDisplay(row) || "—";
+                    return (
+                      <div key={row.assessmentId} className="vendor_overview_attestation_row">
+                        <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_expired" aria-hidden />
+                        <div className="vendor_overview_attestation_content">
+                          <p className="vendor_overview_attestation_name">
+                            {truncate(getAssessmentDisplayTitle(row, true), 60)}
+                          </p>
+                          <p className="vendor_overview_attestation_status_label vendor_overview_attestation_status_label_expired">
+                            Expired
+                          </p>
+                          <p className="vendor_overview_attestation_by">Completed by: {completedBy}</p>
+                          <div className="vendor_overview_attestation_date_row">
+                            <p className="vendor_overview_attestation_date">
+                              Created on: {formatDateDDMMMYYYY(row.createdAt)}
+                            </p>
+                            <p className="vendor_overview_attestation_date vendor_overview_attestation_date_expiry">
+                              Expires on: {formatDateDDMMMYYYY(row.expiryAt)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="vendor_overview_attestation_actions">
+                          <button
+                            type="button"
+                            className="vendor_overview_btn_view vendor_overview_btn_danger"
+                            onClick={() => handleDeleteExpired(row.assessmentId)}
+                            aria-label="Delete assessment"
+                          >
+                            <Trash2 size={16} aria-hidden />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  });
                 })()}
               </div>
             )}
@@ -1143,16 +1390,34 @@ const Assessments = () => {
           <div className="ai_assessments_section">
             <div className="assessment_list_header_row">
               <p className="your_assessments_title">YOUR ASSESSMENTS</p>
-              <div className="assessment_search_wrap">
-                <Search size={18} className="assessment_search_icon" aria-hidden />
-                <input
-                  type="search"
-                  placeholder="Search assessments…"
-                  value={assessmentSearch}
-                  onChange={(e) => setAssessmentSearch(e.target.value)}
-                  className="assessment_search_input"
-                  aria-label="Search assessments by name"
-                />
+              <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                <div className="page_tabs" style={{ marginBottom: 0, border: "none", gap: "0.25rem" }}>
+                  <button
+                    type="button"
+                    className={`page_tab ${!showArchivedVendor ? "page_tab_active" : ""}`}
+                    onClick={() => setShowArchivedVendor(false)}
+                  >
+                    Current
+                  </button>
+                  <button
+                    type="button"
+                    className={`page_tab ${showArchivedVendor ? "page_tab_active" : ""}`}
+                    onClick={() => setShowArchivedVendor(true)}
+                  >
+                    Archived
+                  </button>
+                </div>
+                <div className="assessment_search_wrap">
+                  <Search size={18} className="assessment_search_icon" aria-hidden />
+                  <input
+                    type="search"
+                    placeholder="Search assessments…"
+                    value={assessmentSearch}
+                    onChange={(e) => setAssessmentSearch(e.target.value)}
+                    className="assessment_search_input"
+                    aria-label="Search assessments by name"
+                  />
+                </div>
               </div>
             </div>
             {loading && <LoadingMessage message="Loading assessments…" />}
@@ -1161,43 +1426,48 @@ const Assessments = () => {
                 {fetchError}
               </p>
             )}
-            {!loading && !fetchError && (
+            {!loading && !fetchError && !showArchivedVendor && (
               <div className="assessment_list_rows">
                 {(() => {
                   const q = assessmentSearch.trim().toLowerCase();
-                  const filtered = q === "" ? vendorAssessments : vendorAssessments.filter((row) => getAssessmentTitle(row, false).toLowerCase().includes(q));
-                  if (filtered.length === 0) return <p className="assessment_search_no_results">{vendorAssessments.length === 0 ? "No vendor assessments yet." : "No assessments match your search."}</p>;
+                  const filtered = q === "" ? nonExpiredVendor : nonExpiredVendor.filter((row) => getAssessmentTitle(row, false).toLowerCase().includes(q));
+                  if (filtered.length === 0) return <p className="assessment_search_no_results">{nonExpiredVendor.length === 0 ? "No vendor assessments yet." : "No assessments match your search."}</p>;
                   return filtered.map((row) => {
                   const isDraft = (row.status || "").toLowerCase() === "draft";
-                  const customerSectorVal =
-                    row.customerSector != null &&
-                    String(row.customerSector).trim() !== ""
-                      ? String(row.customerSector).trim()
-                      : null;
-                  const title = customerSectorVal ?? "Draft";
-                  const statusLabel = isDraft ? "Draft" : "Completed";
-                  const updatedAtDisplay = formatDate(
+                  const statusLabel = getAssessmentStatusLabel(row);
+                  const updatedAtDisplay = formatDateDDMMMYYYY(
                     row.vendorCotsUpdatedAt ?? row.updatedAt,
                   );
                   const submittedDisplay = isDraft
                     ? updatedAtDisplay
-                    : formatDate(row.vendorCotsUpdatedAt ?? row.updatedAt);
+                    : formatDateDDMMMYYYY(row.vendorCotsUpdatedAt ?? row.updatedAt);
                   const completedBy = getCompletedByDisplay(row) || "—";
                   return (
                     <div key={row.assessmentId} className="vendor_overview_attestation_row">
                       {isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_draft" aria-hidden />}
-                      {!isDraft && <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />}
+                      {!isDraft && <FileText size={24} className={`vendor_overview_attestation_icon ${statusLabel === "Expired" ? "vendor_overview_attestation_icon_expired" : "vendor_overview_attestation_icon_check"}`} aria-hidden />}
                       <div className="vendor_overview_attestation_content">
-                        <p className="vendor_overview_attestation_name">{truncate(title, 60)}</p>
-                        <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}`}>
+                        <p className="vendor_overview_attestation_name">{truncate(getAssessmentDisplayTitle(row, false), 60)}</p>
+                        <p className={`vendor_overview_attestation_status_label${isDraft ? " vendor_overview_attestation_status_label_draft" : ""}${statusLabel === "Expired" ? " vendor_overview_attestation_status_label_expired" : ""}`}>
                           {statusLabel}
                         </p>
                         <p className="vendor_overview_attestation_by">
                           {isDraft ? "Updated by:" : "Completed by:"} {completedBy}
                         </p>
-                        <p className="vendor_overview_attestation_date">
-                          {isDraft ? "Updated" : "Submitted"}: {submittedDisplay}
-                        </p>
+                        {isDraft ? (
+                          <p className="vendor_overview_attestation_date">
+                            Drafted on: {formatDateDDMMMYYYY(row.createdAt)}
+                          </p>
+                        ) : (
+                          <div className="vendor_overview_attestation_date_row">
+                            <p className="vendor_overview_attestation_date">
+                              Created on: {formatDateDDMMMYYYY(row.createdAt)}
+                            </p>
+                            <p className="vendor_overview_attestation_date vendor_overview_attestation_date_expiry">
+                              Expires on: {formatDateDDMMMYYYY(row.expiryAt)}
+                            </p>
+                          </div>
+                        )}
                       </div>
                       <div className="vendor_overview_attestation_actions">
                         {isDraft && (
@@ -1226,6 +1496,63 @@ const Assessments = () => {
                     </div>
                   );
                 });
+                })()}
+              </div>
+            )}
+            {!loading && !fetchError && showArchivedVendor && (
+              <div className="assessment_list_rows">
+                {(() => {
+                  const q = assessmentSearch.trim().toLowerCase();
+                  const filtered =
+                    q === ""
+                      ? archivedVendorAssessments
+                      : archivedVendorAssessments.filter((row) =>
+                          getAssessmentTitle(row, false).toLowerCase().includes(q)
+                        );
+                  if (filtered.length === 0)
+                    return (
+                      <p className="assessment_search_no_results">
+                        {archivedVendorAssessments.length === 0
+                          ? "No archived assessments."
+                          : "No archived assessments match your search."}
+                      </p>
+                    );
+                  return filtered.map((row) => {
+                    const completedBy = getCompletedByDisplay(row) || "—";
+                    return (
+                      <div key={row.assessmentId} className="vendor_overview_attestation_row">
+                        <FileText size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_expired" aria-hidden />
+                        <div className="vendor_overview_attestation_content">
+                          <p className="vendor_overview_attestation_name">
+                            {truncate(getAssessmentDisplayTitle(row, false), 60)}
+                          </p>
+                          <p className="vendor_overview_attestation_status_label vendor_overview_attestation_status_label_expired">
+                            Expired
+                          </p>
+                          <p className="vendor_overview_attestation_by">Completed by: {completedBy}</p>
+                          <div className="vendor_overview_attestation_date_row">
+                            <p className="vendor_overview_attestation_date">
+                              Created on: {formatDateDDMMMYYYY(row.createdAt)}
+                            </p>
+                            <p className="vendor_overview_attestation_date vendor_overview_attestation_date_expiry">
+                              Expires on: {formatDateDDMMMYYYY(row.expiryAt)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="vendor_overview_attestation_actions">
+                          <button
+                            type="button"
+                            className="vendor_overview_btn_view vendor_overview_btn_danger"
+                            onClick={() => handleDeleteExpired(row.assessmentId)}
+                            aria-label="Delete assessment"
+                          >
+                            <Trash2 size={16} aria-hidden />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  });
                 })()}
               </div>
             )}
@@ -1317,18 +1644,27 @@ const Assessments = () => {
                               <div className="vendor_preview_row">
                                 <dt className="vendor_preview_label">Status</dt>
                                 <dd className="vendor_preview_value">
-                                  {formatPreviewValue(
-                                    (vendorCotsPreviewDetail || previewRow)?.status,
-                                    "Status",
-                                  )}
+                                  {getAssessmentStatusLabel(vendorCotsPreviewDetail || previewRow)}
                                 </dd>
                               </div>
                               <div className="vendor_preview_row">
-                                <dt className="vendor_preview_label">Created</dt>
+                                <dt className="vendor_preview_label">
+                                  {(vendorCotsPreviewDetail || previewRow)?.status?.toLowerCase() === "draft"
+                                    ? "Drafted on"
+                                    : "Created on"}
+                                </dt>
                                 <dd className="vendor_preview_value">
-                                  {formatDate(previewRow.createdAt)}
+                                  {formatDateDDMMMYYYY(previewRow.createdAt)}
                                 </dd>
                               </div>
+                              {(vendorCotsPreviewDetail || previewRow)?.status?.toLowerCase() !== "draft" && (
+                                <div className="vendor_preview_row">
+                                  <dt className="vendor_preview_label">Expires on</dt>
+                                  <dd className="vendor_preview_value vendor_preview_value_expiry">
+                                    {formatDateDDMMMYYYY(previewRow.expiryAt)}
+                                  </dd>
+                                </div>
+                              )}
                             </dl>
                           </section>
                           <section className="vendor_preview_card">
@@ -1386,6 +1722,14 @@ const Assessments = () => {
                                     vendorCotsPreviewDetail || previewRow,
                                     "implementationTimeline",
                                   ),
+                                },
+                                {
+                                  label: "Product name",
+                                  value:
+                                    (vendorCotsPreviewDetail || previewRow)?.attestationProductName != null &&
+                                    String((vendorCotsPreviewDetail || previewRow).attestationProductName).trim() !== ""
+                                      ? String((vendorCotsPreviewDetail || previewRow).attestationProductName).trim()
+                                      : undefined,
                                 },
                                 {
                                   label: "Product features",
@@ -1508,22 +1852,36 @@ const Assessments = () => {
                           {section.title}
                         </h3>
                         <dl className="vendor_preview_list">
-                          {section.fields.map((field) => (
-                            <div
-                              key={field.label}
-                              className="vendor_preview_row"
-                            >
-                              <dt className="vendor_preview_label">
-                                {field.label}
-                              </dt>
-                              <dd className="vendor_preview_value">
-                                {formatPreviewValue(
-                                  field.value(previewRow),
-                                  field.label,
-                                )}
-                              </dd>
-                            </div>
-                          ))}
+                          {section.fields
+                            .filter(
+                              (field) =>
+                                !(
+                                  field.label === "Expires on" &&
+                                  (previewRow?.status ?? "").toLowerCase() === "draft"
+                                )
+                            )
+                            .map((field) => {
+                              const isDraftPreview = (previewRow?.status ?? "").toLowerCase() === "draft";
+                              const label =
+                                field.label === "Created on" && isDraftPreview ? "Drafted on" : field.label;
+                              const isExpiry = field.label === "Expires on";
+                              return (
+                                <div
+                                  key={field.label}
+                                  className="vendor_preview_row"
+                                >
+                                  <dt className="vendor_preview_label">
+                                    {label}
+                                  </dt>
+                                  <dd className={`vendor_preview_value${isExpiry ? " vendor_preview_value_expiry" : ""}`}>
+                                    {formatPreviewValue(
+                                      field.value(previewRow),
+                                      field.label,
+                                    )}
+                                  </dd>
+                                </div>
+                              );
+                            })}
                         </dl>
                       </section>
                     ))

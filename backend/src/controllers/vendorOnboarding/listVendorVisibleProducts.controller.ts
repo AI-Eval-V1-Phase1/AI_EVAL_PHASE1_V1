@@ -76,6 +76,7 @@ const listVendorVisibleProducts = async (req: Request, res: Response): Promise<v
               status: vendorSelfAttestations.status,
               updated_at: vendorSelfAttestations.updated_at,
               visible_to_buyer: vendorSelfAttestations.visible_to_buyer,
+              target_industries: vendorSelfAttestations.target_industries,
             })
             .from(vendorSelfAttestations)
             .where(eq(vendorSelfAttestations.user_id, vendorUserId))
@@ -87,6 +88,7 @@ const listVendorVisibleProducts = async (req: Request, res: Response): Promise<v
               status: vendorSelfAttestations.status,
               updated_at: vendorSelfAttestations.updated_at,
               visible_to_buyer: vendorSelfAttestations.visible_to_buyer,
+              target_industries: vendorSelfAttestations.target_industries,
             })
             .from(vendorSelfAttestations)
             .where(
@@ -138,12 +140,25 @@ const listVendorVisibleProducts = async (req: Request, res: Response): Promise<v
       const status = apiStatus === "COMPLETED" ? "Completed" : apiStatus === "REJECTED" ? "Rejected" : "Draft";
       const idStr = r.id != null ? String(r.id) : "";
       const trustScore = idStr ? (trustScoreByAttestation[idStr] ?? null) : null;
+      const sectorRaw = r.target_industries;
+      let sector: Record<string, unknown> | string | null = null;
+      if (sectorRaw != null && typeof sectorRaw === "object" && !Array.isArray(sectorRaw)) {
+        sector = sectorRaw as Record<string, unknown>;
+      } else if (typeof sectorRaw === "string" && sectorRaw.trim()) {
+        try {
+          const p = JSON.parse(sectorRaw) as Record<string, unknown>;
+          sector = typeof p === "object" && p !== null ? p : null;
+        } catch {
+          sector = sectorRaw;
+        }
+      }
       return {
         id: r.id,
         productName: (r.product_name ?? "").trim() || "Product",
         status,
         updated_at: r.updated_at ?? null,
         trustScore,
+        sector: sector ?? undefined,
       };
     });
 

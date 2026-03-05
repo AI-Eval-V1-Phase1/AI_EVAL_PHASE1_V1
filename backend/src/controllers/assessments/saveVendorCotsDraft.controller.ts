@@ -106,10 +106,10 @@ const saveVendorCotsDraft = async (req: Request, res: Response) => {
         if (existingCots) {
           await tx
             .update(cotsVendorAssessments)
-            .set({ ...payloadCots, updated_at: new Date() })
+            .set({ ...payloadCots, user_id: Number(userId), updated_at: new Date() })
             .where(eq(cotsVendorAssessments.assessment_id, assessmentId));
         } else {
-          await tx.insert(cotsVendorAssessments).values({ assessment_id: assessmentId, ...payloadCots });
+          await tx.insert(cotsVendorAssessments).values({ assessment_id: assessmentId, user_id: Number(userId), ...payloadCots });
         }
       });
       return res.status(200).json({ message: "Draft saved", assessmentId: String(assessmentId) });
@@ -121,7 +121,7 @@ const saveVendorCotsDraft = async (req: Request, res: Response) => {
         .values({ type: "cots_vendor", organization_id: orgIdStr, status: "draft" })
         .returning({ id: assessments.id });
       if (!a?.id) throw new Error("Failed to create assessment");
-      await tx.insert(cotsVendorAssessments).values({ assessment_id: a.id, ...payloadCots });
+      await tx.insert(cotsVendorAssessments).values({ assessment_id: a.id, user_id: Number(userId), ...payloadCots });
       return [a];
     });
     const newId = assessment?.id != null ? String(assessment.id) : null;

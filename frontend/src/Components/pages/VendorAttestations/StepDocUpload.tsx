@@ -17,6 +17,10 @@ interface StepDocUploadProps {
   data: Record<string, { label: string; placeholder?: string; required?: boolean }>;
   documentUpload: DocumentUploadState;
   setDocumentUpload: React.Dispatch<React.SetStateAction<DocumentUploadState>>;
+  /** When set, selected files are uploaded to the server; stored file names are added to state. */
+  attestationId?: string | null;
+  /** Upload one file for this attestation; returns the stored file name. */
+  onUploadDocument?: (attestationId: string, file: File) => Promise<string>;
   title?: string;
   subTitle?: string;
   icon?: ReactNode;
@@ -26,6 +30,8 @@ const StepDocUpload = ({
   data,
   documentUpload,
   setDocumentUpload,
+  attestationId,
+  onUploadDocument,
   title = "Document Upload",
   subTitle,
   icon,
@@ -35,6 +41,29 @@ const StepDocUpload = ({
 
   const setSlot = (slot: "0" | "1", fileNames: string[]) => {
     setDocumentUpload((prev) => ({ ...prev, [slot]: fileNames }));
+  };
+
+  const handleFilesChange = async (
+    slot: "0" | "1",
+    fileNames: string[],
+    selectedFiles?: File[],
+  ) => {
+    const current = slot === "0" ? slot0 : slot1;
+    if (attestationId && onUploadDocument && selectedFiles?.length) {
+      const uploaded: string[] = [];
+      for (const file of selectedFiles) {
+        try {
+          const storedName = await onUploadDocument(attestationId, file);
+          uploaded.push(storedName);
+        } catch {
+          // keep client name if upload fails
+          uploaded.push(file.name);
+        }
+      }
+      setSlot(slot, [...current, ...uploaded]);
+    } else {
+      setSlot(slot, fileNames);
+    }
   };
 
   const label0 = data["0"]?.label ?? "Marketing and Product Material";
@@ -51,6 +80,11 @@ const StepDocUpload = ({
       <p className="document-upload-helper" style={{ marginBottom: "1rem", fontSize: "0.875rem", color: "#6b7280" }}>
         {DOCUMENT_UPLOAD_HELPER_TEXT}
       </p>
+      {!attestationId && (
+        <p className="document-upload-draft-hint" style={{ marginBottom: "0.5rem", fontSize: "0.8125rem", color: "#92400e" }}>
+          Save draft first to upload documents to the server.
+        </p>
+      )}
 
       {/* Section 0: Marketing and Product Material */}
       <div className="form_fields_vendor" style={{ marginBottom: "1rem" }}>
@@ -59,7 +93,7 @@ const StepDocUpload = ({
             accept=".pdf,.doc,.docx,.ppt,.pptx"
             maxSizeBytes={MAX_FILE_SIZE_BYTES}
             value={slot0}
-            onFilesChange={(fileNames) => setSlot("0", fileNames)}
+            onFilesChange={(fileNames, selectedFiles) => handleFilesChange("0", fileNames, selectedFiles)}
           />
         </FormField>
       </div>
@@ -71,7 +105,7 @@ const StepDocUpload = ({
             accept=".pdf,.doc,.docx,.ppt,.pptx"
             maxSizeBytes={MAX_FILE_SIZE_BYTES}
             value={slot1}
-            onFilesChange={(fileNames) => setSlot("1", fileNames)}
+            onFilesChange={(fileNames, selectedFiles) => handleFilesChange("1", fileNames, selectedFiles)}
           />
         </FormField>
       </div>

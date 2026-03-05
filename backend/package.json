@@ -17,6 +17,10 @@
     "db:run-0007": "node migrations/run-migration-0007.js",
     "db:run-0008": "node migrations/run-migration-0008.js",
     "db:run-0020": "node migrations/run-migration-0020.js",
+    "db:run-0044": "node migrations/run-migration-0044.js",
+    "db:run-0045": "node migrations/run-migration-0045.js",
+    "db:run-0046": "node migrations/run-migration-0046.js",
+    "db:run-0050": "node migrations/run-migration-0050.js",
     "dump-excel": "node scripts/dump-excel-schema.js",
     "sync-excel-to-db": "node scripts/sync-excel-to-db.js",
     "seed-risk-mappings": "node scripts/seed-risk-mappings.js"
@@ -44,6 +48,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
     "@types/node": "^25.0.10",
     "@types/nodemailer": "^7.0.5",
     "@types/pg": "^8.16.0",

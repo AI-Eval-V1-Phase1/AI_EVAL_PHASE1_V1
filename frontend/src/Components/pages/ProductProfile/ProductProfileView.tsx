@@ -2,7 +2,7 @@
  * Product Profile view for vendors: summary cards (Trust Score, No of products, Company, Regions),
  * product cards with trust score and View details, and View Product modal with attestation details.
  */
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Shield,
   FileCheck,
@@ -23,6 +23,7 @@ import type {
 } from "../DirectoryListing/DirectoryListing";
 import "../UserManagement/user_management.css";
 import "./product_profile.css";
+import { formatDateDDMMMYYYY } from "../../../utils/formatDate.js";
 
 function formatVal(val: unknown): string {
   if (val == null || val === "") return "Not specified.";
@@ -40,6 +41,44 @@ function productInitials(name: string): string {
   const s = (name || "Draft").trim();
   if (s.length >= 2) return s.slice(0, 2).toUpperCase();
   return s ? s.toUpperCase() : "Dr";
+}
+
+const SECTOR_KEYS_ORDER = ["public_sector", "private_sector", "non_profit_sector"] as const;
+
+/** Format sector for display: only the values from arrays that have data (e.g. "Defense & Military"). Handles object or JSON string. */
+function formatSector(sector: string | Record<string, unknown> | null | undefined): string {
+  if (sector == null) return "";
+  let obj: Record<string, unknown> | null = null;
+  if (typeof sector === "string") {
+    const t = sector.trim();
+    if (!t) return "";
+    if (t.startsWith("{") || t.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(t) as Record<string, unknown>;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) obj = parsed;
+      } catch {
+        return "";
+      }
+    } else {
+      return t;
+    }
+  } else if (typeof sector === "object" && sector !== null) {
+    obj = sector;
+  }
+  if (obj) {
+    const parts: string[] = [];
+    for (const key of SECTOR_KEYS_ORDER) {
+      const val = obj[key];
+      if (Array.isArray(val) && val.length > 0) {
+        const items = val.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean);
+        if (items.length > 0) parts.push(items.join(", "));
+      }
+    }
+    if (parts.length > 0) return parts.join(" • ");
+    const name = (obj.name ?? obj.sectorName ?? obj.industryName) as string | undefined;
+    if (typeof name === "string" && name.trim()) return name.trim();
+  }
+  return "";
 }
 
 /** Parse trust score 0–100 from text (e.g. "62 (Moderate)" or "Overall Trust Score: 62"). */
@@ -190,33 +229,33 @@ function ProductProfileView({
         ?.generated_profile_report,
     );
 
+  /** Average Trust Score = rounded average of each product's trust score (only products with a score count). */
+  const averageTrustScore = useMemo(() => {
+    const scores: number[] = [];
+    products.forEach((p) => {
+      const report = asGeneratedReport(p.generated_profile_report);
+      const score =
+        report?.trustScore?.overallScore ??
+        getOverallScoreFromReport(p.generated_profile_report);
+      if (typeof score === "number" && !Number.isNaN(score)) {
+        scores.push(Math.min(100, Math.max(0, score)));
+      }
+    });
+    if (scores.length === 0) return null;
+    const sum = scores.reduce((a, b) => a + b, 0);
+    return Math.round(sum / scores.length);
+  }, [products]);
+
   const company = formState?.companyProfile;
   const attestation = formState?.attestation ?? {};
 
-  const companyName = company?.companyDescription
-    ? truncate(formatVal(company.companyDescription), 40)
-    : "Not specified.";
   const vendorType = formatVal(company?.vendorType) || "SaaS Provider";
   const operatingRegions =
     Array.isArray(company?.operatingRegions) &&
     company.operatingRegions.length > 0
       ? company.operatingRegions.join(", ")
       : "Not specified.";
-  const headquarters = formatVal(company?.headquartersLocation);
-
-  const formatDate = (dateStr: string | null | undefined) => {
-    if (!dateStr || String(dateStr).trim() === "") return "—";
-    try {
-      const d = new Date(dateStr);
-      if (Number.isNaN(d.getTime())) return "—";
-      const day = d.getDate().toString().padStart(2, "0");
-      const month = d.toLocaleDateString("en-GB", { month: "short" });
-      const year = d.getFullYear();
-      return `${day}-${month}-${year}`;
-    } catch {
-      return "—";
-    }
-  };
+  const headquarters = formatVal(company?.headquartersLocation) || "—";
 
   const handleViewProduct = async (product: ProductProfileProduct) => {
     if (!fetchProductDetail) return;
@@ -225,7 +264,7 @@ function ProductProfileView({
     setViewProductMeta({
       productName: product.productName,
       status: product.status,
-      completedDate: formatDate(product.updated_at),
+      completedDate: formatDateDDMMMYYYY(product.updated_at),
       productId: product.id,
       visibleToBuyer: product.visibleToBuyer ?? false,
     });
@@ -367,14 +406,25 @@ function ProductProfileView({
           title="Average Trust Score"
           icon={<Shield size={24} />}
           primary={
-            reportToShow?.trustScore
-              ? `${reportToShow.trustScore.overallScore}%`
-              : trustScore
+            averageTrustScore != null
+              ? `${averageTrustScore}%`
+              : reportToShow?.trustScore
+                ? `${reportToShow.trustScore.overallScore}%`
+                : trustScore
           }
           secondary={
-            reportToShow?.trustScore?.summary
-              ? truncate((reportToShow.trustScore.summary || "").replace(/\s*-+\s*$/, "").trim(), 60)
-              : `${compliancePercent} compliance`
+            averageTrustScore != null
+              ? (() => {
+                  const withScore = products.filter(
+                    (p) =>
+                      asGeneratedReport(p.generated_profile_report)?.trustScore?.overallScore != null ||
+                      getOverallScoreFromReport(p.generated_profile_report) != null,
+                  ).length;
+                  return withScore === 1 ? "1 product" : `Across ${withScore} products`;
+                })()
+              : reportToShow?.trustScore?.summary
+                ? truncate((reportToShow.trustScore.summary || "").replace(/\s*-+\s*$/, "").trim(), 60)
+                : `${compliancePercent} compliance`
           }
           iconColor="blue"
           primaryVariant="trustScore"
@@ -389,7 +439,7 @@ function ProductProfileView({
         <ProductProfileSummaryCard
           title="Company"
           icon={<Building2 size={24} />}
-          primary={companyName}
+          primary={headquarters}
           secondary={vendorType}
           iconColor="blue"
         />
@@ -397,7 +447,7 @@ function ProductProfileView({
           title="Operating Regions"
           icon={<Globe size={24} />}
           primary={operatingRegions}
-          secondary={headquarters || "—"}
+          secondary=""
           iconColor="blue"
         />
       </section>

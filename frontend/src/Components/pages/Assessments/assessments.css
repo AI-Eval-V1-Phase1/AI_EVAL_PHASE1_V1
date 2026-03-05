@@ -386,9 +386,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 1;
-  min-width: 200px;
-  max-width: 320px;
+  width: 400px;
 }
 .assessment_search_icon {
   color: #6b7280;
@@ -421,7 +419,7 @@
 /* YOUR ASSESSMENTS – row layout (same as vendor dashboard attestation rows) */
 .assessment_list_rows .vendor_overview_attestation_row {
   display: flex;
-  align-items: center;
+  align-items: start;
   gap: 1rem;
   flex-wrap: wrap;
   background: #f8fafc;
@@ -452,6 +450,11 @@
   color: #111827;
   margin: 0 0 0.25rem 0;
 }
+.assessment_list_rows .vendor_overview_attestation_product {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0 0 0.25rem 0;
+}
 .assessment_list_rows .vendor_overview_attestation_status_label {
   font-size: 0.75rem;
   font-weight: 600;
@@ -463,15 +466,39 @@
 .assessment_list_rows .vendor_overview_attestation_status_label_draft {
   color: #6b7280;
 }
+.assessment_list_rows .vendor_overview_attestation_status_label_expired {
+  color: tomato;
+}
+.assessment_list_rows .vendor_overview_attestation_icon_expired {
+  color: tomato;
+}
 .assessment_list_rows .vendor_overview_attestation_by {
   font-size: 0.8125rem;
   color: #6b7280;
   margin: 0 0 0.15rem 0;
 }
+.assessment_list_rows .vendor_overview_attestation_date_row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.25rem;
+  margin: 0;
+  margin-top: 10px;
+}
+.assessment_list_rows .vendor_overview_attestation_date_row .vendor_overview_attestation_date {
+  margin: 0;
+}
 .assessment_list_rows .vendor_overview_attestation_date {
   font-size: 0.8125rem;
   color: #6b7280;
   margin: 0;
+  margin-top: 10px;
+}
+.vendor_overview_attestation_date.vendor_overview_attestation_date_expiry,
+.assessment_list_rows .vendor_overview_attestation_date.vendor_overview_attestation_date_expiry {
+  color: tomato;
+}
+.vendor_preview_value_expiry {
+  color: tomato;
 }
 .assessment_list_rows .vendor_overview_attestation_points {
   font-size: 0.8125rem;
@@ -483,6 +510,7 @@
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
+  align-self: center;
 }
 /* Edit and View – same colour and width */
 .assessment_list_rows .vendor_overview_btn_view,
@@ -511,4 +539,14 @@ background: var(--main-auth-button-color, #2463eb);
   background: #f9fafb;
   color: var(--main-auth-button-color);
   border: 1px solid var(--main-auth-button-color);
+}
+.assessment_list_rows .vendor_overview_btn_danger {
+  background: tomato;
+  color: white;
+  border-color: tomato;
+}
+.assessment_list_rows .vendor_overview_btn_danger:hover {
+  background: tomato;
+  color: white;
+  border-color: tomato;
 }

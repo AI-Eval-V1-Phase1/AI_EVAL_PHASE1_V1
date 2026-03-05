@@ -19,7 +19,6 @@ import {
   Shield,
   Sparkles,
   FileCheck,
-  CheckCircle,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { VENDOR_COTS_DATA } from "../../../../constants/vendorCotsData";
@@ -31,6 +30,7 @@ import { VENDOR_COTS_FORM_SECTIONS } from "../../../../constants/vendorCotsFormS
 import { VENDOR_COTS_TAB_STEPS } from "./vendorCotsTabs";
 import "../../../../styles/card.css";
 import "../../VendorOnboarding/vendor_onboarding.css";
+import "../../UserManagement/user_management.css";
 import "../../VendorAttestations/vendor_attestation_preview.css";
 
 const BASE_URL =
@@ -108,7 +108,6 @@ const VendorCOTSMain = () => {
   }, []);
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [allStepsFilled, setAllStepsFilled] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({
     ...VENDOR_COTS_INITIAL_STATE,
   });
@@ -304,8 +303,7 @@ const VendorCOTSMain = () => {
         }
         throw new Error(result.message || "Failed to submit assessment");
       }
-      setAllStepsFilled(true);
-      navigate("/reports");
+      navigate("/reports", { replace: true });
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : "Failed to submit assessment",
@@ -450,7 +448,7 @@ const VendorCOTSMain = () => {
   );
 
   return (
-    <div className="form_card_centered">
+    <div className="sec_user_page org_settings_page">
       {submitting && (
         <div
           className="vendor_attestation_submit_overlay"
@@ -464,6 +462,7 @@ const VendorCOTSMain = () => {
           </div>
         </div>
       )}
+      <div className="form_card_centered">
       <CardContainerOnBoarding>
         <button
           type="button"
@@ -492,29 +491,8 @@ const VendorCOTSMain = () => {
             className="vendor_onboarding_tabs"
           />
           <CardOnBoarding className="card_vendor">
-            {allStepsFilled ? (
-              <div className="vendor_self_attestation_confirmation_center">
-                <CardContainerOnBoarding>
-                  <div className="onboarding_setup_card">
-                    <CheckCircle className="confirm_onboarding" />
-                    <h2>Submission successful</h2>
-                    <p>Your assessment has been submitted.</p>
-                    <p style={{ marginTop: "1rem" }}>
-                      <button
-                        type="button"
-                        className="report_detail_back_link"
-                        onClick={() => navigate("/reports")}
-                        style={{ background: "none", border: "none", cursor: "pointer", font: "inherit", color: "var(--color-link, #2563eb)", padding: 0 }}
-                      >
-                        View reports
-                      </button>
-                    </p>
-                  </div>
-                </CardContainerOnBoarding>
-              </div>
-            ) : (
-              <>
-                {submitError && (
+            <>
+              {submitError && (
                   <p
                     className="vendor_form_block_error"
                     role="alert"
@@ -583,10 +561,10 @@ const VendorCOTSMain = () => {
                   </div>
                 </div>
               </>
-            )}
           </CardOnBoarding>
         </form>
       </CardContainerOnBoarding>
+      </div>
     </div>
   );
 };

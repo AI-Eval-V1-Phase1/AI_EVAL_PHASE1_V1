@@ -15,7 +15,6 @@ import {
 import { toast } from "react-toastify";
 import MultiStepTabs from "../../UI/MultiStepTabs";
 import StepVendorSelfAttestationPrev from "./StepVendorSelfAttestationPrev";
-import VendorSelfAttestationConfirmation from "./VendorSelfAttestationConfirmation";
 import { VENDOR_SELF_ATTESTATION } from "../../../constants/vendorAttestionData";
 import { ATTESTATION_SECTION_FIELDS } from "../../../constants/vendorAttestationFields";
 import type {
@@ -391,6 +390,30 @@ const VendorAttestationsMainForm = () => {
     [attestationId, BASE_URL, urlToken]
   );
 
+  const uploadDocument = useCallback(
+    async (attId: string, file: File): Promise<string> => {
+      const token =
+        sessionStorage.getItem("bearerToken") ??
+        sessionStorage.getItem("onboardingToken") ??
+        (typeof urlToken === "string" ? urlToken : null);
+      if (!token) throw new Error("Not authenticated");
+      const url = `${BASE_URL}/vendorSelfAttestation/upload/${encodeURIComponent(attId)}`;
+      const form = new FormData();
+      form.append("document", file);
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message ?? "Upload failed");
+      const fileName = data?.fileName;
+      if (typeof fileName !== "string") throw new Error("Invalid response");
+      return fileName;
+    },
+    [BASE_URL, urlToken]
+  );
+
   // Load vendor self attestation from vendor_self_attestations (GET /vendorSelfAttestation).
   // With editId: load that draft; without editId: treat as new (empty attestation).
   const [fetchDone, setFetchDone] = useState(false);
@@ -715,6 +738,8 @@ const VendorAttestationsMainForm = () => {
                   }
                   setDocumentUpload={setDocumentUpload}
                   documentUploadConfig={VENDOR_SELF_ATTESTATION.document_upload}
+                  attestationId={attestationId}
+                  onUploadDocument={uploadDocument}
                   title={stepHeaderProps.title}
                   subTitle={stepHeaderProps.subTitle}
                   icon={stepHeaderProps.icon}
@@ -759,6 +784,8 @@ const VendorAttestationsMainForm = () => {
                   icon={stepHeaderProps.icon}
                   documentUpload={formState.documentUpload ?? defaultDocumentUpload}
                   setDocumentUpload={setDocumentUpload}
+                  attestationId={attestationId}
+                  onUploadDocument={uploadDocument}
                 />
               );
             }
@@ -823,6 +850,8 @@ const VendorAttestationsMainForm = () => {
                     formState.documentUpload ?? defaultDocumentUpload
                   }
                   setDocumentUpload={setDocumentUpload}
+                  attestationId={attestationId}
+                  onUploadDocument={uploadDocument}
                   data={
                     VENDOR_SELF_ATTESTATION.evidence_supporting_documentation
                   }
@@ -834,9 +863,7 @@ const VendorAttestationsMainForm = () => {
               );
             }
             // index === 10: Review
-            return allStepsFilled ? (
-              <VendorSelfAttestationConfirmation />
-            ) : (
+            return (
               <StepVendorSelfAttestationPrev
                 formState={formState}
                 attestationId={attestationId}
@@ -858,6 +885,7 @@ const VendorAttestationsMainForm = () => {
       allStepsFilled,
       attestationId,
       handleOpenDocument,
+      uploadDocument,
     ],
   );
 
@@ -976,9 +1004,8 @@ const VendorAttestationsMainForm = () => {
     // Full submit only: is_draft: false → backend sets status COMPLETED and generates product profile report
     const ok = await saveDraftOrSubmit(false);
     if (ok) {
-      setAllStepsFilled(true);
       toast.success("Attestation submitted. Product profile report has been generated.");
-      navigate("/product_profile");
+      navigate("/product_profile", { replace: true });
     }
   };
 

@@ -140,6 +140,12 @@
   margin-bottom: 2rem;
 }
 
+/* Trust Score card spans full width (single metric, same as Product Profile display) */
+.vendor_overview_metrics .vendor_overview_metric_card_trust_score_full {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
 .vendor_overview_metrics.vendor_overview_metrics_four {
   grid-template-columns: repeat(4, 1fr);
 }
@@ -179,6 +185,28 @@
   color: #16a34a;
 }
 
+.vendor_overview_metric_card_icon_blue {
+  color: #2563eb;
+}
+
+/* Icon in front of title (same as Product Profile Trust Score) */
+.vendor_overview_metric_card_title_row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vendor_overview_metric_card_title_row .vendor_overview_metric_title {
+  margin-bottom: 1em;
+}
+
+.vendor_overview_metric_card_icon_left {
+  position: static;
+  top: auto;
+  right: auto;
+  flex-shrink: 0;
+}
+
 .vendor_overview_metric_title {
   font-size: 0.875rem;
   font-weight: 500;
@@ -202,6 +230,16 @@
   color: #16a34a;
 }
 
+.vendor_overview_metric_value_loading .vendor_overview_metric_loader {
+  display: inline-block;
+  animation: vendor_overview_loader_pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes vendor_overview_loader_pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
 .vendor_overview_metric_desc {
   font-size: 0.8125rem;
   color: #6b7280;
@@ -223,7 +261,7 @@
   transition: width 0.2s;
 }
 
-/* Section: My Attestations / Recent Self-Attestations */
+/* Section: Security & Compliance / Assessments */
 .vendor_overview_section {
   /* background: #f9fafb; */
   /* border: 1px solid #e5e7eb; */
@@ -249,7 +287,7 @@
 
 .vendor_overview_attestation_row {
   display: flex;
-  align-items: center;
+  align-items: start;
   gap: 1rem;
   flex-wrap: wrap;
   background: #f8fafc;
@@ -304,10 +342,80 @@
   color: #6b7280;
 }
 
+.vendor_overview_attestation_status_label_expired {
+  color: tomato;
+}
+
+.vendor_overview_attestation_icon_expired {
+  color: tomato;
+}
+
+.vendor_overview_attestation_by {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0 0 0.15rem 0;
+}
+
+.vendor_overview_attestation_date_row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.25rem;
+  margin: 0;
+  margin-top: 10px;
+}
+
+.vendor_overview_attestation_date_row .vendor_overview_attestation_date {
+  margin: 0;
+}
+
+/* Assessment list rows – same card look as Assessments page */
+.assessment_list_rows .vendor_overview_attestation_row {
+  display: flex;
+  align-items: start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.assessment_list_rows .vendor_overview_attestation_row:last-child {
+  margin-bottom: 0;
+}
+.assessment_list_rows .vendor_overview_attestation_icon_check {
+  color: #16a34a;
+}
+.assessment_list_rows .vendor_overview_attestation_icon_expired {
+  color: tomato;
+}
+.assessment_list_rows .vendor_overview_attestation_actions {
+  align-self: center;
+}
+
+/* View Report on dashboard: same style as View Document (override assessments page blue button) */
+.vendor_overview_page .assessment_list_rows .vendor_overview_btn_view {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  min-width: unset;
+  width: auto;
+}
+.vendor_overview_page .assessment_list_rows .vendor_overview_btn_view:hover {
+  background: #f9fafb;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
 .vendor_overview_attestation_date {
   font-size: 0.8125rem;
   color: #6b7280;
   margin: 0;
+  margin-top: 10px;
+}
+.vendor_overview_attestation_date.vendor_overview_attestation_date_expiry,
+.assessment_list_rows .vendor_overview_attestation_date.vendor_overview_attestation_date_expiry {
+  color: tomato;
 }
 
 .vendor_overview_attestation_date_with_icon .vendor_overview_attestation_date_icon_wrap {
@@ -326,6 +434,7 @@
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
+  align-self: center;
 }
 
 .vendor_overview_badge_verified {
@@ -378,7 +487,7 @@
   background: #f9fafb;
 }
 
-/* My Attestations – dropdown to pick completed attestation, then documents list */
+/* Security & Compliance – dropdown to pick completed attestation, then documents list */
 .vendor_overview_my_attestations_dropdown {
   margin-bottom: 1.25rem;
   max-width: 360px;

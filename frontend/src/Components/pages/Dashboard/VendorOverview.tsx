@@ -2,21 +2,24 @@ import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   Eye,
-  CheckCircle2,
+  FileText,
   LayoutDashboard,
-  ClipboardCheck,
-  Info,
+  Shield,
   ShieldCheck,
 } from "lucide-react";
 import DashboardMetricCard from "../../UI/DashboardMetricCard";
 import Select from "../../UI/Select";
-import type { AttestationItem } from "./types";
-import { BASE_URL, formatUpdatedDate, formatCompletedDate, formatDisplayDate } from "./utils";
+import type { AttestationItem, VendorAssessmentItem } from "./types";
+import { BASE_URL, formatDisplayDate, getCompletedByDisplay } from "./utils";
+import { formatDateDDMMMYYYY } from "../../../utils/formatDate";
 import "./dashboard.css";
 
 const VendorOverview = () => {
   const [attestations, setAttestations] = useState<AttestationItem[]>([]);
+  const [assessments, setAssessments] = useState<VendorAssessmentItem[]>([]);
+  const [reportsByAssessmentId, setReportsByAssessmentId] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [assessmentsLoading, setAssessmentsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCompletedId, setSelectedCompletedId] = useState<string>("");
 
@@ -38,10 +41,20 @@ const VendorOverview = () => {
         },
       });
       const text = await response.text();
+      type AttestationRow = {
+        id?: string;
+        vendor_self_attestation_id?: string | null;
+        status?: string;
+        created_at?: string;
+        updated_at?: string;
+        product_name?: string | null;
+        certificates?: Array<{ name: string; expiryDate: string | null }>;
+        generated_profile_report?: { trustScore?: { overallScore?: number; summary?: string; label?: string }; sections?: unknown[] };
+      };
       let result: {
         success?: boolean;
-        attestation?: { id?: string; status?: string; created_at?: string; updated_at?: string; product_name?: string | null; certificates?: Array<{ name: string; expiryDate: string | null }> };
-        attestations?: Array<{ id?: string; status?: string; created_at?: string; updated_at?: string; product_name?: string | null; certificates?: Array<{ name: string; expiryDate: string | null }> }>;
+        attestation?: AttestationRow;
+        attestations?: AttestationRow[];
         message?: string;
       } = {};
       try {
@@ -62,11 +75,13 @@ const VendorOverview = () => {
           if (a?.id) {
             list.push({
               id: String(a.id),
+              vendor_self_attestation_id: a.vendor_self_attestation_id != null ? String(a.vendor_self_attestation_id) : undefined,
               status: (a.status ?? "").toUpperCase(),
               createdAt: a.created_at,
               updatedAt: a.updated_at,
               productName: a.product_name ?? undefined,
               certificates: Array.isArray(a.certificates) ? a.certificates : undefined,
+              generated_profile_report: a.generated_profile_report,
             });
           }
         });
@@ -74,11 +89,13 @@ const VendorOverview = () => {
         const a = result.attestation;
         list.push({
           id: String(a.id),
+          vendor_self_attestation_id: a.vendor_self_attestation_id != null ? String(a.vendor_self_attestation_id) : undefined,
           status: (a.status ?? "").toUpperCase(),
           createdAt: a.created_at,
           updatedAt: a.updated_at,
           productName: a.product_name ?? undefined,
           certificates: Array.isArray(a.certificates) ? a.certificates : undefined,
+          generated_profile_report: a.generated_profile_report,
         });
       }
       setAttestations(list);
@@ -89,9 +106,45 @@ const VendorOverview = () => {
     }
   }, []);
 
+  /** Fetch assessments and customer risk reports (for View Report links). */
+  const fetchAssessmentsAndReports = useCallback(async () => {
+    const token = sessionStorage.getItem("bearerToken");
+    if (!token) return;
+    setAssessmentsLoading(true);
+    try {
+      const [assessmentsRes, reportsRes] = await Promise.all([
+        fetch(`${BASE_URL}/assessments`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${BASE_URL}/customerRiskReports`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      const assessmentsData = await assessmentsRes.json().catch(() => ({}));
+      const reportsData = await reportsRes.json().catch(() => ({}));
+      const list: VendorAssessmentItem[] = Array.isArray(assessmentsData?.data?.assessments)
+        ? assessmentsData.data.assessments
+        : [];
+      setAssessments(list);
+      const byAssessmentId: Record<string, string> = {};
+      if (reportsData?.success && Array.isArray(reportsData?.data?.reports)) {
+        reportsData.data.reports.forEach((r: { id: string; assessmentId?: string }): void => {
+          const aid = r.assessmentId != null ? String(r.assessmentId) : "";
+          if (aid && r.id) byAssessmentId[aid] = String(r.id);
+        });
+      }
+      setReportsByAssessmentId(byAssessmentId);
+    } catch {
+      setAssessments([]);
+      setReportsByAssessmentId({});
+    } finally {
+      setAssessmentsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchAttestations();
   }, [fetchAttestations]);
+
+  useEffect(() => {
+    fetchAssessmentsAndReports();
+  }, [fetchAssessmentsAndReports]);
 
   /** Default dropdown to latest completed attestation when data loads */
   useEffect(() => {
@@ -106,9 +159,6 @@ const VendorOverview = () => {
     }
   }, [attestations]);
 
-  const draftAttestations = attestations.filter(
-    (a) => (a.status ?? "").toUpperCase() === "DRAFT"
-  );
   const completedAttestations = attestations.filter(
     (a) => (a.status ?? "").toUpperCase() === "COMPLETED"
   );
@@ -118,7 +168,22 @@ const VendorOverview = () => {
     const bDate = b.updatedAt ?? b.createdAt ?? "";
     return new Date(bDate).getTime() - new Date(aDate).getTime();
   });
-  const latestCompletedId = completedAttestationsSorted[0]?.id ?? "";
+
+  /** Selected attestation (product) – used for trust score and filtering assessments */
+  const selectedAttestation = selectedCompletedId
+    ? completedAttestations.find((a) => a.id === selectedCompletedId)
+    : null;
+  const trustScoreNum = selectedAttestation?.generated_profile_report?.trustScore?.overallScore;
+  const trustScoreLabel = selectedAttestation?.generated_profile_report?.trustScore?.label;
+  const trustScoreValue =
+    trustScoreNum != null ? `${trustScoreNum}%` : "—";
+  const trimmedLabel = trustScoreLabel ? String(trustScoreLabel).trim() : "";
+  const trustScoreDescription =
+    trustScoreNum != null
+      ? (trimmedLabel && trimmedLabel !== "Not specified" ? trimmedLabel : "Product trust score")
+      : selectedCompletedId
+        ? "No trust score for this product yet."
+        : "Select an attestation to see product trust score.";
 
   /** Certificates from the selected completed attestation only */
   const certificateListToShow = selectedCompletedId
@@ -128,9 +193,22 @@ const VendorOverview = () => {
       }))
     : [];
 
-  const profileCompleteness = completedAttestations.length > 0 ? 100 : draftAttestations.length > 0 ? 50 : 0;
-  const profileCompleteLabel = profileCompleteness >= 100 ? "Profile complete!" : "Complete your attestation to improve.";
-  const activeRequests = 0;
+  /** Assessments for the selected attestation/product (vendor COTS where vendor_attestation_id matches product/attestation id) */
+  const selectedAttestationIds: string[] = selectedAttestation
+    ? [
+        String(selectedAttestation.id).trim(),
+        selectedAttestation.vendor_self_attestation_id != null
+          ? String(selectedAttestation.vendor_self_attestation_id).trim()
+          : null,
+      ].filter((x): x is string => x != null && x !== "")
+    : [];
+  const assessmentsForSelectedAttestation = selectedCompletedId && selectedAttestationIds.length > 0
+    ? assessments.filter((a) => {
+        if (a.type !== "cots_vendor") return false;
+        const vid = (a.vendorAttestationId ?? "").toString().trim();
+        return selectedAttestationIds.some((sid) => sid === vid);
+      })
+    : [];
 
   return (
     <div className="vendor_overview_page sec_user_page org_settings_page">
@@ -164,30 +242,19 @@ const VendorOverview = () => {
 
       <div className="vendor_overview_metrics">
         <DashboardMetricCard
-          title="Profile Completeness"
-          icon={<ClipboardCheck size={22} />}
-          value={`${profileCompleteness}%`}
-          description={profileCompleteLabel}
-          progress={profileCompleteness}
-        />
-        {/* Active Request is not needed since there is no buyer to request */}
-        {/* <DashboardMetricCard
-          title="Active Requests"
-          icon={<Info size={22} />}
-          value={activeRequests}
-          description="Customers requesting assessment"
-        /> */}
-        <DashboardMetricCard
           title="Trust Score"
-          icon={<CheckCircle2 size={22} className="vendor_overview_metric_card_icon_green" />}
-          value="A+"
-          description="92% - Top tier AI vendor"
+          icon={<Shield size={24} className="vendor_overview_metric_card_icon_blue" />}
+          value={trustScoreValue}
+          description={trustScoreDescription}
           valueVariant="grade"
+          className="vendor_overview_metric_card_trust_score_full"
+          iconPosition="left"
+          loading={loading}
         />
       </div>
 
       <div className="vendor_overview_section">
-        <h2 className="vendor_overview_section_title">My Attestations</h2>
+        <h2 className="vendor_overview_section_title">Security & Compliance</h2>
         <p className="vendor_overview_section_subtitle">
           Security documents and compliance evidence.
         </p>
@@ -220,7 +287,7 @@ const VendorOverview = () => {
                       className="vendor_overview_btn_view"
                     >
                       <Eye size={16} aria-hidden />
-                      View Report
+                      View Document
                     </Link>
                   </div>
                 </div>
@@ -239,55 +306,95 @@ const VendorOverview = () => {
 
       <div className="vendor_overview_section">
         <h2 className="vendor_overview_section_title">
-          Recent Self-Attestations
+          Assessments
         </h2>
         <p className="vendor_overview_section_subtitle">
-          Your completed assessments and trust evaluations.
+          Assessments completed for the selected attestation or product.
         </p>
-        {loading && (
-          <div className="vendor_overview_loading">Loading…</div>
-        )}
-        {!loading && completedAttestations.length === 0 && (
+        {!selectedCompletedId && completedAttestations.length > 0 && (
           <div className="vendor_overview_empty">
-            No completed self-attestations yet.
+            Select an attestation above to see its assessments.
           </div>
         )}
-        {!loading && completedAttestations.length > 0 && (
-          <>
-            {completedAttestations.map((item) => (
-              <div
-                key={item.id}
-                className="vendor_overview_attestation_row"
-              >
-                <CheckCircle2
-                  size={24}
-                  className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check"
-                  aria-hidden
-                />
-                <div className="vendor_overview_attestation_content">
-                  <p className="vendor_overview_attestation_name">
-                    {(item.productName ?? "").trim() || "Vendor Self-Attestation"}
-                  </p>
-                  <p className="vendor_overview_attestation_status_label">
-                    Completed
-                  </p>
-                  <p className="vendor_overview_attestation_date">
-                    {formatCompletedDate(item.updatedAt ?? item.createdAt)}
-                  </p>
+        {selectedCompletedId && assessmentsLoading && (
+          <div className="vendor_overview_loading">Loading assessments…</div>
+        )}
+        {selectedCompletedId && !assessmentsLoading && assessmentsForSelectedAttestation.length === 0 && (
+          <div className="vendor_overview_empty">
+            No assessments yet for this attestation or product.
+          </div>
+        )}
+        {selectedCompletedId && !assessmentsLoading && assessmentsForSelectedAttestation.length > 0 && (
+          <div className="assessment_list_rows">
+            {assessmentsForSelectedAttestation.map((item) => {
+              const reportId = reportsByAssessmentId[String(item.assessmentId)];
+              const org = (item.customerOrganizationName ?? "").toString().trim() || "—";
+              const product = (item.productName ?? "").toString().trim() || "—";
+              const title =
+                org !== "—" || product !== "—"
+                  ? `${org} - ${product}`
+                  : `Assessment #${item.assessmentId}`;
+              const isExpired =
+                item.expiryAt != null &&
+                String(item.expiryAt).trim() !== "" &&
+                !Number.isNaN(new Date(item.expiryAt).getTime()) &&
+                new Date(item.expiryAt).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0);
+              const statusLabel = isExpired ? "Expired" : "Completed";
+              const completedBy = getCompletedByDisplay(item) || "—";
+              return (
+                <div
+                  key={item.assessmentId}
+                  className="vendor_overview_attestation_row"
+                >
+                  <FileText
+                    size={24}
+                    className={
+                      isExpired
+                        ? "vendor_overview_attestation_icon vendor_overview_attestation_icon_expired"
+                        : "vendor_overview_attestation_icon vendor_overview_attestation_icon_check"
+                    }
+                    aria-hidden
+                  />
+                  <div className="vendor_overview_attestation_content">
+                    <p className="vendor_overview_attestation_name">{title}</p>
+                    <p
+                      className={
+                        isExpired
+                          ? "vendor_overview_attestation_status_label vendor_overview_attestation_status_label_expired"
+                          : "vendor_overview_attestation_status_label"
+                      }
+                    >
+                      {statusLabel}
+                    </p>
+                    <p className="vendor_overview_attestation_by">
+                      Completed by: {completedBy}
+                    </p>
+                    <div className="vendor_overview_attestation_date_row">
+                      <p className="vendor_overview_attestation_date">
+                        Created on: {formatDateDDMMMYYYY(item.createdAt)}
+                      </p>
+                      <p className="vendor_overview_attestation_date vendor_overview_attestation_date_expiry">
+                        Expires on: {formatDateDDMMMYYYY(item.expiryAt)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="vendor_overview_attestation_actions">
+                    {reportId ? (
+                      <Link
+                        to={`/reports/${reportId}`}
+                        className="vendor_overview_btn_view"
+                      >
+                        <Eye size={16} aria-hidden />
+                        View Report
+                      </Link>
+                    ) : (
+                      <span className="vendor_overview_attestation_date">No report yet</span>
+                    )}
+                  </div>
                 </div>
-                <div className="vendor_overview_attestation_actions">
-                  <Link
-                    to="/reports"
-                    state={{ attestationId: item.id }}
-                    className="vendor_overview_btn_view"
-                  >
-                    <Eye size={16} aria-hidden />
-                    View Report
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

@@ -16,6 +16,7 @@ import UserManagement from "./Components/pages/UserManagement/UserManagement";
 import { DirectoryListing } from "./Components/pages/DirectoryListing/DirectoryListing";
 import Reports from "./Components/pages/Reports/Reports";
 import ReportDetail from "./Components/pages/Reports/ReportDetail";
+import GeneralReportDetail from "./Components/pages/Reports/GeneralReportDetail";
 import MyVendors from "./Components/pages/MyVendors/MyVendors";
 import Organizations from "./Components/pages/Organizations/Organizations";
 import Toaster from "./Components/Toaster/Toaster";
@@ -70,6 +71,7 @@ function App() {
                   element={<DirectoryListing />}
                 />
                 <Route path="/reports" element={<Reports />} />
+                <Route path="/reports/general/:reportId" element={<GeneralReportDetail />} />
                 <Route path="/reports/:reportId" element={<ReportDetail />} />
                 <Route
                   path="/attestation_details"

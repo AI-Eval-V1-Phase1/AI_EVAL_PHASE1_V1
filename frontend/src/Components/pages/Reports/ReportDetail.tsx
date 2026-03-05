@@ -1,63 +1,111 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { ArrowLeft, CheckCircle2, AlertTriangle, ChevronDown } from "lucide-react"
+import { CircleChevronLeft, CheckCircle2, AlertTriangle, XCircle, Download, FileText, Building2, TrendingUp, Shield, BarChart3, Eye, List } from "lucide-react"
+import { formatDateDDMMMYYYY } from "../../../utils/formatDate.js"
 import "../UserManagement/user_management.css"
 import "./reports.css"
 
 const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1"
 
-/** Labels for report fields (camelCase keys from backend). */
-const REPORT_FIELD_LABELS: Record<string, string> = {
-  customerOrganizationName: "Customer organization",
-  customerSector: "Industry sector",
-  primaryPainPoint: "Primary pain point",
-  expectedOutcomes: "Expected outcomes",
-  customerBudgetRange: "Budget range",
-  implementationTimeline: "Implementation timeline",
-  productFeatures: "Product features",
-  implementationApproach: "Implementation approach",
-  customizationLevel: "Customization level",
-  integrationComplexity: "Integration complexity",
-  regulatoryRequirements: "Regulatory requirements",
-  regulatoryRequirementsOther: "Regulatory requirements (other)",
-  dataSensitivity: "Data sensitivity",
-  customerRiskTolerance: "Customer risk tolerance",
-  alternativesConsidered: "Alternatives considered",
-  keyAdvantages: "Key advantages",
-  customerSpecificRisks: "Customer-specific risks",
-  customerSpecificRisksOther: "Customer-specific risks (other)",
-  identifiedRisks: "Identified risks",
-  riskDomainScores: "Risk domain scores",
-  contextualMultipliers: "Contextual multipliers",
-  riskMitigation: "Risk mitigation",
+type DbRisk = {
+  risk_mapping_id: number
+  risk_id: string | null
+  risk_title: string | null
+  domains: string | null
+  intent: string | null
+  timing: string | null
+  primary_risk: string | null
+  description: string | null
+  executive_summary: string | null
 }
 
-/** Risk categories for the detailed sections (reference UI). */
-const RISK_CATEGORIES = [
-  { id: "financial", label: "Financial risk", level: "Medium", levelClass: "risk_medium" },
-  { id: "operational", label: "Operational risk", level: "Low", levelClass: "risk_low" },
-  { id: "reputational", label: "Reputational risk", level: "Low", levelClass: "risk_low" },
-  { id: "infosec", label: "Information security risk", level: "Medium", levelClass: "risk_medium" },
-  { id: "compliance", label: "Compliance risk", level: "Low", levelClass: "risk_low" },
-  { id: "esg", label: "ESG risk", level: "Low", levelClass: "risk_low" },
-]
+type Mitigation = {
+  mapping_id: number
+  risk_id: string
+  mitigation_action_name: string
+  mitigation_category: string
+  mitigation_definition: string | null
+}
 
-function formatReportSubtitle(createdAt: string): string {
-  if (!createdAt) return "Customer Risk Assessment"
-  try {
-    const d = new Date(createdAt)
-    if (Number.isNaN(d.getTime())) return "Customer Risk Assessment"
-    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "/")
-  } catch {
-    return "Customer Risk Assessment"
-  }
+type DeploymentOverview = {
+  useCase?: string
+  productTier?: string
+  targetUsers?: string
+  infrastructure?: string
+  deploymentTimeline?: string
+  annualContractValue?: string
+}
+
+type RecommendationWithPriority = {
+  priority: "High" | "Medium" | "Low"
+  title: string
+  description: string
+  timeline: string
+}
+
+type RoiAnalysis = {
+  timeSavedPerEmployee?: string
+  timeSavedSource?: string
+  annualHoursRecovered?: string
+  annualHoursRecoveredCalculation?: string
+  productivityValue?: string
+  productivityValueCalculation?: string
+  annualCost?: string
+  annualCostCalculation?: string
+  roiMultiple?: string
+  roiMultipleCalculation?: string
+  paybackPeriod?: string
+  paybackSource?: string
+  comparisonAlternatives?: { alternative: string; annualCost: string; roi: string; notes: string }[]
+}
+
+type RiskCategoryBlock = {
+  name?: string
+  level?: string
+  initialRisk?: string
+  score?: string
+  risks?: string[]
+  mitigations?: string[]
+  residualRisk?: string
+}
+
+type ComplianceRequirement = { name: string; description: string; status: string }
+type FrameworkRow = { framework: string; coverage: string; controls: string; notes: string }
+type ImplementationPhase = {
+  title: string
+  timeline: string
+  status: string
+  activities: string[]
+  deliverables: string[]
+}
+
+type FullReport = {
+  roiAnalysis?: RoiAnalysis
+  securityPosture?: RiskCategoryBlock
+  complianceAlignment?: { summary?: string; requirements?: ComplianceRequirement[] }
+  frameworkMapping?: { rows?: FrameworkRow[] }
+  implementationPlan?: { phases?: ImplementationPhase[] }
+  competitivePositioning?: string
+  appendix?: { methodology?: string; preparedBy?: string; reviewedBy?: string; confidentiality?: string; dataSources?: string[] }
 }
 
 function formatReportValue(val: unknown): string {
   if (val == null || val === "") return "—"
-  if (Array.isArray(val)) return val.join(", ")
+  if (Array.isArray(val)) return val.map((v) => stripMarkdownBold(String(v))).join(", ")
   if (typeof val === "object") return JSON.stringify(val)
-  return String(val)
+  return stripMarkdownBold(String(val))
+}
+
+/** Remove markdown bold markers (**) from report text so they are not shown in the UI. */
+function stripMarkdownBold(s: string): string {
+  return String(s).replace(/\*\*/g, "")
+}
+
+function riskLevelClass(level: string): string {
+  const l = String(level).toLowerCase()
+  if (l.includes("low") || l.includes("very")) return "risk_low"
+  if (l.includes("high") || l.includes("medium")) return "risk_medium"
+  return "risk_low"
 }
 
 function ReportDetail() {
@@ -69,10 +117,10 @@ function ReportDetail() {
     title: string
     report: Record<string, unknown>
     createdAt: string
+    expiryAt?: string | null
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
-  const [expandedRisk, setExpandedRisk] = useState<string | null>(null)
 
   useEffect(() => {
     if (!reportId?.trim()) {
@@ -106,6 +154,7 @@ function ReportDetail() {
             title: data.data.title,
             report: data.data.report ?? {},
             createdAt: data.data.createdAt ?? "",
+            expiryAt: data.data.expiryAt ?? null,
           })
           setNotFound(false)
         } else {
@@ -115,6 +164,20 @@ function ReportDetail() {
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
   }, [reportId])
+
+  useEffect(() => {
+    if (loading) {
+      document.title = "AI Eval | Report"
+      return () => { document.title = "AI Eval" }
+    }
+    if (notFound || !report) {
+      document.title = "AI Eval | Report not found"
+      return () => { document.title = "AI Eval" }
+    }
+    const title = report.title || "Analysis Report"
+    document.title = `AI Eval | ${title}`
+    return () => { document.title = "AI Eval" }
+  }, [loading, notFound, report])
 
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -136,12 +199,9 @@ function ReportDetail() {
       <div className="sec_user_page org_settings_page reports_page report_detail_page">
         <div className="report_detail_empty">
           <h2 className="report_detail_empty_title">Report not found</h2>
-          <p className="report_detail_empty_text">
-            This report does not exist or has been removed. Please check the report ID or return to the library.
-          </p>
+          <p className="report_detail_empty_text">This report does not exist or has been removed.</p>
           <a href="/reports" className="report_detail_back_link report_detail_empty_back" onClick={handleBack}>
-            <ArrowLeft size={18} />
-            Back to Reports Library
+            <CircleChevronLeft size={18} /> Back to Reports
           </a>
         </div>
       </div>
@@ -149,311 +209,363 @@ function ReportDetail() {
   }
 
   const data = report.report as Record<string, unknown>
-  const assessmentId = (data.assessmentId ?? report.assessmentId ?? report.id) as string
-  const assessmentDate = report.createdAt
-    ? new Date(report.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "/")
-    : "—"
+  const assessmentDate = formatDateDDMMMYYYY(report.createdAt)
+  const title = report.title || "Analysis Report"
+  const orgName = formatReportValue(data.customerOrganizationName)
+  const sector = formatReportValue(data.customerSector)
 
-  const displayKeys = Object.keys(REPORT_FIELD_LABELS).filter(
-    (k) => data[k] != null && data[k] !== "" && (Array.isArray(data[k]) ? (data[k] as unknown[]).length > 0 : true),
-  )
+  const dbTop5 = data.dbTop5Risks as { top5Risks?: DbRisk[]; mitigationsByRiskId?: Record<string, Mitigation[]> } | undefined
+  const top5Risks: DbRisk[] = dbTop5?.top5Risks ?? []
+  const mitigationsByRiskId: Record<string, Mitigation[]> = dbTop5?.mitigationsByRiskId ?? {}
+
+  const generated = data.generatedAnalysis as {
+    overallRiskScore?: number
+    riskLevel?: string
+    summary?: string
+    executiveSummary?: string
+    keyRisks?: string[]
+    recommendations?: string[]
+    recommendationsWithPriority?: RecommendationWithPriority[]
+    fullReport?: FullReport
+  } | undefined
+  const fullReport = generated?.fullReport
+
+  const deployment = data.deploymentOverview as DeploymentOverview | undefined
+  const overallScore = generated?.overallRiskScore ?? 0
+  const overallLevel = generated?.riskLevel ?? "Low"
+  const grade = overallScore <= 20 ? "A+" : overallScore <= 40 ? "A" : overallScore <= 60 ? "B" : overallScore <= 80 ? "C" : "D"
+
+  const risksByDomain = top5Risks.reduce<Record<string, DbRisk[]>>((acc, r) => {
+    const domain = r.domains?.trim() || "Other"
+    if (!acc[domain]) acc[domain] = []
+    acc[domain].push(r)
+    return acc
+  }, {})
+  const domainOrder = [...new Set(top5Risks.map((r) => r.domains?.trim() || "Other"))]
+
+  const recsWithPriority = generated?.recommendationsWithPriority ?? []
+  const recsSimple = generated?.recommendations ?? []
 
   return (
-    <div className="sec_user_page org_settings_page reports_page report_detail_page report_detail_full">
+    <div className="sec_user_page org_settings_page reports_page report_detail_page report_assessment_layout">
       {/* Header */}
-      <div className="report_detail_header">
-        <div className="report_detail_back_title">
-          <a href="/reports" className="report_detail_back_link" onClick={handleBack}>
-            <ArrowLeft size={18} />
-            Back to Reports
-          </a>
-          <nav className="report_detail_breadcrumb" aria-label="Breadcrumb">
-            <a href="/">Home</a>
-            <span className="report_detail_breadcrumb_sep"> &gt; </span>
-            <a href="/reports">Reports</a>
-            <span className="report_detail_breadcrumb_sep"> &gt; </span>
-            <span aria-current="page">{report.title}</span>
-          </nav>
-          <h1 className="report_detail_title">Customer Risk Assessment Report</h1>
-          <p className="report_detail_subtitle">{report.title} • {formatReportSubtitle(report.createdAt)}</p>
-        </div>
-      </div>
-
-      {/* 1. Assessment Information */}
-      <section className="report_section_card">
-        <h2 className="report_section_heading">Assessment information</h2>
-        <dl className="report_detail_dl report_detail_info_grid">
-          <div className="report_detail_row">
-            <dt className="report_detail_dt">Assessment ID</dt>
-            <dd className="report_detail_dd">{assessmentId ?? "—"}</dd>
-          </div>
-          <div className="report_detail_row">
-            <dt className="report_detail_dt">Assessment name</dt>
-            <dd className="report_detail_dd">{report.title}</dd>
-          </div>
-          <div className="report_detail_row">
-            <dt className="report_detail_dt">Assessment date</dt>
-            <dd className="report_detail_dd">{assessmentDate}</dd>
-          </div>
-          <div className="report_detail_row">
-            <dt className="report_detail_dt">Assessment status</dt>
-            <dd className="report_detail_dd"><span className="report_status_badge report_status_completed">Completed</span></dd>
-          </div>
-          <div className="report_detail_row">
-            <dt className="report_detail_dt">Assessment version</dt>
-            <dd className="report_detail_dd">1.0</dd>
-          </div>
-        </dl>
-      </section>
-
-      {/* 2. Overall summary */}
-      <section className="report_section_card">
-        <h2 className="report_section_heading">Overall summary</h2>
-        <p className="report_summary_body">
-          {data.riskMitigation
-            ? formatReportValue(data.riskMitigation)
-            : "This Customer Risk Assessment was generated when the vendor COTS assessment was completed. Review the assessment details and risk sections below."}
-        </p>
-      </section>
-
-      {/* 3. Assessment result summary */}
-      <section className="report_section_card">
-        <h2 className="report_section_heading">Assessment result summary</h2>
-        <div className="report_table_wrap">
-          <table className="report_table" aria-label="Risk levels">
-            <thead>
-              <tr>
-                <th>Assessment item</th>
-                <th>Risk level</th>
-                <th>Response status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Overall</td>
-                <td><span className="report_risk_badge risk_low">Low</span></td>
-                <td>Completed</td>
-              </tr>
-              {RISK_CATEGORIES.map((cat) => (
-                <tr key={cat.id}>
-                  <td>{cat.label}</td>
-                  <td><span className={`report_risk_badge ${cat.levelClass}`}>{cat.level}</span></td>
-                  <td>Completed</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="report_table_wrap" style={{ marginTop: "1rem" }}>
-          <table className="report_table" aria-label="Scores">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Score</th>
-                <th>Max</th>
-                <th>Rate</th>
-                <th>Comment</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Overall</td>
-                <td>—</td>
-                <td>—</td>
-                <td>{data.riskDomainScores ? formatReportValue(data.riskDomainScores) : "—"}</td>
-                <td>—</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* 4. Detailed risk category sections */}
-      {RISK_CATEGORIES.map((cat) => (
-        <section key={cat.id} className="report_section_card report_risk_section">
-          <h2 className="report_section_heading">
-            {cat.label}
-            <span className={`report_risk_badge ${cat.levelClass}`}>{cat.level}</span>
-          </h2>
-          <p className="report_risk_intro">
-            This section summarises {cat.label.toLowerCase()} considerations from the assessment.
-          </p>
-          <ul className="report_risk_list">
-            <li><span className="report_risk_item_text">Assessment completed</span><CheckCircle2 size={16} className="report_risk_icon_ok" aria-hidden /></li>
-            <li><span className="report_risk_item_text">Findings documented</span><CheckCircle2 size={16} className="report_risk_icon_ok" aria-hidden /></li>
-            <li><span className="report_risk_item_text">Follow-up where applicable</span><AlertTriangle size={16} className="report_risk_icon_warn" aria-hidden /></li>
-          </ul>
-          <button
-            type="button"
-            className="report_show_details_btn"
-            onClick={() => setExpandedRisk(expandedRisk === cat.id ? null : cat.id)}
-            aria-expanded={expandedRisk === cat.id}
-          >
-            {expandedRisk === cat.id ? "Hide details" : "Show details"}
-            <ChevronDown size={16} className={expandedRisk === cat.id ? "report_chevron_open" : ""} />
+      <header className="report_assessment_header">
+        <a href="/reports" className="report_assessment_back" onClick={handleBack}>
+          <CircleChevronLeft size={20} /> Back to Reports
+        </a>
+        <div className="report_assessment_title_row">
+          <h1 className="report_assessment_title">{title}</h1>
+          <button type="button" className="report_detail_export_btn">
+            <Download size={18} /> Export PDF
           </button>
-          {expandedRisk === cat.id && (
-            <div className="report_risk_expanded">
-              <p>Additional detail for {cat.label} can be included here when available.</p>
+        </div>
+        <p className="report_assessment_subtitle">Analysis Report • {assessmentDate} • AI Generated</p>
+      </header>
+
+      {/* Vendor-Side Assessment Context Panel */}
+      <section className="report_context_panel">
+        <span className="report_context_pill">Customer-Specific Risk Assessment (Vendor-Side)</span>
+        <div className="report_context_inner">
+          <div className="report_context_left">
+            <h2 className="report_context_entity">{orgName !== "—" ? orgName : "Customer"}</h2>
+            <p className="report_context_meta">{sector !== "—" ? sector : ""} {sector !== "—" && orgName !== "—" ? "•" : ""} {formatReportValue(data.customerSector)}</p>
+            <p className="report_context_desc">
+              {formatReportValue(generated?.summary || generated?.executiveSummary) !== "—" ? formatReportValue(generated?.summary || generated?.executiveSummary) : "Assessment context and risk evaluation for this customer engagement."}
+            </p>
+          </div>
+          <div className="report_context_right">
+            <p className="report_context_vendor">Vendor: {title.includes(" - ") ? title.split(" - ")[1]?.trim() || "—" : "—"}</p>
+            <div className="report_context_rating">
+              <span className="report_context_grade">{grade}</span>
+              <span className="report_context_score">({100 - overallScore}/100)</span>
             </div>
-          )}
-        </section>
-      ))}
-
-      {/* 5. Recommended actions */}
-      <section className="report_section_card">
-        <h2 className="report_section_heading">Recommended actions</h2>
-        <div className="report_table_wrap">
-          <table className="report_table" aria-label="Recommended actions">
-            <thead>
-              <tr>
-                <th>Recommendation</th>
-                <th>Content</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.riskMitigation ? (
-                <tr>
-                  <td>Risk mitigation</td>
-                  <td>{formatReportValue(data.riskMitigation)}</td>
-                  <td>Noted</td>
-                </tr>
-              ) : (
-                <tr>
-                  <td colSpan={3} className="report_table_empty">No recommended actions recorded.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          </div>
         </div>
       </section>
 
-      {/* 6. Assessment history */}
+      {/* Executive Summary */}
       <section className="report_section_card">
-        <h2 className="report_section_heading">Assessment history</h2>
-        <div className="report_table_wrap">
-          <table className="report_table" aria-label="Assessment history">
-            <thead>
-              <tr>
-                <th>Assessment date</th>
-                <th>Assessment ID</th>
-                <th>Assessment name</th>
-                <th>Risk level</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>{assessmentDate}</td>
-                <td>{assessmentId ?? "—"}</td>
-                <td>{report.title}</td>
-                <td><span className="report_risk_badge risk_low">Low</span></td>
-              </tr>
-            </tbody>
-          </table>
+        <h2 className="report_section_heading">
+          <FileText size={20} aria-hidden /> Executive Summary
+        </h2>
+        <div className="report_summary_body report_exec_summary">
+          {generated?.executiveSummary
+            ? (() => {
+                const text = stripMarkdownBold(generated.executiveSummary)
+                  .replace(/\s*---+\s*/g, " ")
+                  .trim();
+                return text
+                  ? text
+                      .split(/\n\n/)
+                      .map((p) => stripMarkdownBold(p).replace(/\s*---+\s*/g, " ").trim())
+                      .filter((p) => p.length > 0 && !/^\s*-{2,}\s*$/.test(p))
+                      .map((p, i) => <p key={i}>{p}</p>)
+                  : <p>No executive summary generated.</p>;
+              })()
+            : (generated?.summary ? <p>{stripMarkdownBold(String(generated.summary)).replace(/\s*---+\s*/g, " ").trim()}</p> : <p>No executive summary generated.</p>)}
         </div>
       </section>
 
-      {/* 7. Attachments */}
+      {/* Deployment Overview */}
       <section className="report_section_card">
-        <h2 className="report_section_heading">Attachments</h2>
-        <p className="report_attachment_empty">No attachments for this report.</p>
+        <h2 className="report_section_heading">
+          <Building2 size={20} aria-hidden /> Deployment Overview
+        </h2>
+        <div className="report_deployment_grid">
+          <div className="report_deployment_item"><span className="report_deployment_label">USE CASE</span><span className="report_deployment_value">{formatReportValue(deployment?.useCase || data.expectedOutcomes || data.primaryPainPoint)}</span></div>
+          <div className="report_deployment_item"><span className="report_deployment_label">PRODUCT TIER</span><span className="report_deployment_value">{formatReportValue(deployment?.productTier)}</span></div>
+          <div className="report_deployment_item"><span className="report_deployment_label">TARGET USERS</span><span className="report_deployment_value">{formatReportValue(deployment?.targetUsers)}</span></div>
+          <div className="report_deployment_item"><span className="report_deployment_label">INFRASTRUCTURE</span><span className="report_deployment_value">{formatReportValue(deployment?.infrastructure || data.integrationComplexity)}</span></div>
+          <div className="report_deployment_item"><span className="report_deployment_label">DEPLOYMENT TIMELINE</span><span className="report_deployment_value">{formatReportValue(deployment?.deploymentTimeline || data.implementationTimeline)}</span></div>
+          <div className="report_deployment_item"><span className="report_deployment_label">ANNUAL CONTRACT VALUE</span><span className="report_deployment_value">{formatReportValue(deployment?.annualContractValue || data.customerBudgetRange)}</span></div>
+        </div>
       </section>
 
-      {/* 8. Comments */}
+      {/* ROI Analysis */}
       <section className="report_section_card">
-        <h2 className="report_section_heading">Comments</h2>
-        <p className="report_summary_body report_comments_placeholder">
-          Additional comments or supplementary information regarding this assessment can be added here when available.
+        <h2 className="report_section_heading">
+          <TrendingUp size={20} aria-hidden /> ROI Analysis
+        </h2>
+        <p className="report_roi_heading">
+          {fullReport?.roiAnalysis?.roiMultiple && formatReportValue(fullReport.roiAnalysis.roiMultiple) !== "—"
+            ? `Projected ${formatReportValue(fullReport.roiAnalysis.roiMultiple)} Return on Investment`
+            : "Projected Return on Investment"}
         </p>
+        <div className="report_roi_grid">
+          <div className="report_roi_card">
+            <span className="report_roi_value">{formatReportValue(fullReport?.roiAnalysis?.timeSavedPerEmployee)}</span>
+            <span className="report_roi_label">TIME SAVED PER EMPLOYEE</span>
+            <span className="report_roi_sub">{formatReportValue(fullReport?.roiAnalysis?.timeSavedSource)}</span>
+          </div>
+          <div className="report_roi_card">
+            <span className="report_roi_value">{formatReportValue(fullReport?.roiAnalysis?.annualHoursRecovered)}</span>
+            <span className="report_roi_label">ANNUAL HOURS RECOVERED</span>
+            <span className="report_roi_sub">{formatReportValue(fullReport?.roiAnalysis?.annualHoursRecoveredCalculation)}</span>
+          </div>
+          <div className="report_roi_card">
+            <span className="report_roi_value">{formatReportValue(fullReport?.roiAnalysis?.productivityValue)}</span>
+            <span className="report_roi_label">PRODUCTIVITY VALUE</span>
+            <span className="report_roi_sub">{formatReportValue(fullReport?.roiAnalysis?.productivityValueCalculation)}</span>
+          </div>
+          <div className="report_roi_card">
+            <span className="report_roi_value">{formatReportValue(fullReport?.roiAnalysis?.annualCost || deployment?.annualContractValue || data.customerBudgetRange)}</span>
+            <span className="report_roi_label">ANNUAL COST</span>
+            <span className="report_roi_sub">{formatReportValue(fullReport?.roiAnalysis?.annualCostCalculation)}</span>
+          </div>
+          <div className="report_roi_card">
+            <span className="report_roi_value">{formatReportValue(fullReport?.roiAnalysis?.roiMultiple)}</span>
+            <span className="report_roi_label">ROI MULTIPLE</span>
+            <span className="report_roi_sub">{formatReportValue(fullReport?.roiAnalysis?.roiMultipleCalculation)}</span>
+          </div>
+          <div className="report_roi_card">
+            <span className="report_roi_value">{formatReportValue(fullReport?.roiAnalysis?.paybackPeriod)}</span>
+            <span className="report_roi_label">PAYBACK PERIOD</span>
+            <span className="report_roi_sub">{formatReportValue(fullReport?.roiAnalysis?.paybackSource)}</span>
+          </div>
+        </div>
+        <h3 className="report_subheading">Comparison to Alternatives</h3>
+        <div className="report_table_wrap">
+          <table className="report_table">
+            <thead><tr><th>Alternative</th><th>Annual Cost</th><th>ROI</th><th>Notes</th></tr></thead>
+            <tbody>
+              {fullReport?.roiAnalysis?.comparisonAlternatives && fullReport.roiAnalysis.comparisonAlternatives.length > 0
+                ? fullReport.roiAnalysis.comparisonAlternatives.map((row, i) => (
+                    <tr key={i}><td>{formatReportValue(row.alternative)}</td><td>{formatReportValue(row.annualCost)}</td><td>{formatReportValue(row.roi)}</td><td>{formatReportValue(row.notes)}</td></tr>
+                  ))
+                : <tr><td colSpan={4} className="report_table_empty">No comparison data.</td></tr>}
+            </tbody>
+          </table>
+        </div>
       </section>
 
-      {/* 9. Customer basic information */}
+      {/* Risk Assessment – all 5 risks by domain, then Security Posture block */}
       <section className="report_section_card">
-        <h2 className="report_section_heading">Customer basic information</h2>
-        <dl className="report_detail_dl">
-          {displayKeys.filter((k) =>
-            ["customerOrganizationName", "customerSector", "customerBudgetRange", "implementationTimeline"].includes(k),
-          ).map((key) => (
-            <div key={key} className="report_detail_row">
-              <dt className="report_detail_dt">{REPORT_FIELD_LABELS[key]}</dt>
-              <dd className="report_detail_dd">{formatReportValue(data[key])}</dd>
-            </div>
-          ))}
-          {displayKeys.filter((k) =>
-            ["customerOrganizationName", "customerSector", "customerBudgetRange", "implementationTimeline"].includes(k),
-          ).length === 0 && (
-            <div className="report_detail_row">
-              <dd className="report_detail_dd" style={{ gridColumn: "1 / -1" }}>No customer basic information recorded.</dd>
-            </div>
-          )}
-        </dl>
+        <h2 className="report_section_heading">
+          <Shield size={20} aria-hidden /> Risk Assessment
+        </h2>
+        <p className="report_overall_risk">Overall Risk: <span className={`report_risk_badge ${riskLevelClass(overallLevel)}`}>{overallLevel}</span> (Score: {overallScore}/100)</p>
+        {domainOrder.length === 0 ? null : (
+          domainOrder.map((domain) => {
+            const risks = risksByDomain[domain] ?? []
+            const initialRisk = risks[0]?.primary_risk ?? "Low"
+            const riskList = risks.map((r) => r.description || r.risk_title || r.risk_id).filter(Boolean)
+            const mitigList: string[] = []
+            risks.forEach((r) => {
+              if (r.risk_id && mitigationsByRiskId[r.risk_id]) {
+                mitigationsByRiskId[r.risk_id].forEach((m) => mitigList.push(m.mitigation_action_name + (m.mitigation_definition ? ` — ${String(m.mitigation_definition).slice(0, 80)}` : "")))
+              }
+            })
+            return (
+              <div key={domain} className="report_risk_category_block">
+                <div className="report_risk_category_header">
+                  <h3 className="report_risk_category_title">{domain}</h3>
+                  <span className={`report_risk_badge ${riskLevelClass(initialRisk)}`}>{initialRisk || "Low"}</span>
+                  <span className="report_risk_category_score">{(risks.length * 10)}/100</span>
+                </div>
+                <div className="report_risks_list">
+                  <h4>RISKS</h4>
+                  <ul>
+                    {riskList.map((t, i) => (
+                      <li key={i}><AlertTriangle size={14} className="report_icon_warn" /> {t}</li>
+                    ))}
+                    {riskList.length === 0 && <li>—</li>}
+                  </ul>
+                </div>
+                <div className="report_mitigations_list">
+                  <h4>MITIGATIONS</h4>
+                  <ul>
+                    {mitigList.map((t, i) => (
+                      <li key={i}><CheckCircle2 size={14} className="report_icon_ok" /> {t}</li>
+                    ))}
+                    {mitigList.length === 0 && <li>—</li>}
+                  </ul>
+                </div>
+                <p className="report_residual_risk">Residual Risk: <span className={`report_risk_badge risk_low`}>Very Low</span></p>
+              </div>
+            )
+          })
+        )}
+        {domainOrder.length === 0 && <p className="report_no_risks">No risk categories identified.</p>}
+        {/* Security Posture – same block style, after risk category blocks */}
+        <div className="report_risk_category_block">
+          <div className="report_risk_category_header">
+            <h3 className="report_risk_category_title">Security Posture</h3>
+            <span className={`report_risk_badge ${riskLevelClass((fullReport?.securityPosture?.level ?? fullReport?.securityPosture?.initialRisk) ?? "Very Low")}`}>{formatReportValue(fullReport?.securityPosture?.level ?? fullReport?.securityPosture?.initialRisk) !== "—" ? formatReportValue(fullReport?.securityPosture?.level ?? fullReport?.securityPosture?.initialRisk) : "Very Low"}</span>
+            <span className="report_risk_category_score">{formatReportValue(fullReport?.securityPosture?.score) !== "—" ? formatReportValue(fullReport?.securityPosture?.score) : "8/100"}</span>
+          </div>
+          <div className="report_risks_list">
+            <h4>RISKS</h4>
+            <ul>
+              {(fullReport?.securityPosture?.risks?.length ? fullReport.securityPosture.risks : ["—"]).map((r, i) => (
+                <li key={i}><AlertTriangle size={14} className="report_icon_warn" /> {formatReportValue(r)}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="report_mitigations_list">
+            <h4>MITIGATIONS</h4>
+            <ul>
+              {(fullReport?.securityPosture?.mitigations?.length ? fullReport.securityPosture.mitigations : ["—"]).map((m, i) => (
+                <li key={i}><CheckCircle2 size={14} className="report_icon_ok" /> {formatReportValue(m)}</li>
+              ))}
+            </ul>
+          </div>
+          <p className="report_residual_risk">Residual Risk: <span className={`report_risk_badge ${riskLevelClass(fullReport?.securityPosture?.residualRisk ?? "Very Low")}`}>{formatReportValue(fullReport?.securityPosture?.residualRisk) !== "—" ? formatReportValue(fullReport?.securityPosture?.residualRisk) : "Very Low"}</span></p>
+        </div>
       </section>
 
-      {/* 10. Business overview */}
+      {/* Compliance Alignment */}
       <section className="report_section_card">
-        <h2 className="report_section_heading">Business overview</h2>
-        <dl className="report_detail_dl">
-          {displayKeys.filter((k) =>
-            ["primaryPainPoint", "expectedOutcomes", "keyAdvantages", "alternativesConsidered"].includes(k),
-          ).map((key) => (
-            <div key={key} className="report_detail_row">
-              <dt className="report_detail_dt">{REPORT_FIELD_LABELS[key]}</dt>
-              <dd className="report_detail_dd">{formatReportValue(data[key])}</dd>
-            </div>
-          ))}
-          {displayKeys.filter((k) =>
-            ["primaryPainPoint", "expectedOutcomes", "keyAdvantages", "alternativesConsidered"].includes(k),
-          ).length === 0 && (
-            <div className="report_detail_row">
-              <dd className="report_detail_dd" style={{ gridColumn: "1 / -1" }}>No business overview recorded.</dd>
-            </div>
-          )}
-        </dl>
+        <h2 className="report_section_heading"><Shield size={18} aria-hidden /> Compliance Alignment</h2>
+        <p className="report_compliance_summary">{formatReportValue(fullReport?.complianceAlignment?.summary)}</p>
+        <div className="report_compliance_list">
+          {fullReport?.complianceAlignment?.requirements && fullReport.complianceAlignment.requirements.length > 0
+            ? fullReport.complianceAlignment.requirements.map((req, i) => (
+                <div key={i} className="report_compliance_row">
+                  <span><strong>{formatReportValue(req.name)}</strong> — {formatReportValue(req.description)}</span>
+                  <span className={`report_pill report_pill_${req.status === "Met" ? "met" : req.status === "Deferred" ? "deferred" : "pending"}`}>{req.status}</span>
+                </div>
+              ))
+            : <div className="report_compliance_row"><span>—</span><span className="report_pill report_pill_pending">—</span></div>}
+        </div>
       </section>
 
-      {/* 11. Main products / solution fit */}
+      {/* Framework Mapping */}
       <section className="report_section_card">
-        <h2 className="report_section_heading">Main products & solution fit</h2>
-        <dl className="report_detail_dl">
-          {displayKeys.filter((k) =>
-            ["productFeatures", "implementationApproach", "customizationLevel", "integrationComplexity"].includes(k),
-          ).map((key) => (
-            <div key={key} className="report_detail_row">
-              <dt className="report_detail_dt">{REPORT_FIELD_LABELS[key]}</dt>
-              <dd className="report_detail_dd">{formatReportValue(data[key])}</dd>
-            </div>
-          ))}
-          {displayKeys.filter((k) =>
-            ["productFeatures", "implementationApproach", "customizationLevel", "integrationComplexity"].includes(k),
-          ).length === 0 && (
-            <div className="report_detail_row">
-              <dd className="report_detail_dd" style={{ gridColumn: "1 / -1" }}>No product or solution fit details recorded.</dd>
-            </div>
-          )}
-        </dl>
+        <h2 className="report_section_heading">Framework Mapping</h2>
+        <div className="report_table_wrap">
+          <table className="report_table">
+            <thead><tr><th>Framework</th><th>Coverage</th><th>Controls</th><th>Notes</th></tr></thead>
+            <tbody>
+              {fullReport?.frameworkMapping?.rows && fullReport.frameworkMapping.rows.length > 0
+                ? fullReport.frameworkMapping.rows.map((row, i) => (
+                    <tr key={i}><td>{formatReportValue(row.framework)}</td><td>{formatReportValue(row.coverage)}</td><td>{formatReportValue(row.controls)}</td><td>{formatReportValue(row.notes)}</td></tr>
+                  ))
+                : <tr><td colSpan={4} className="report_table_empty">—</td></tr>}
+            </tbody>
+          </table>
+        </div>
       </section>
 
-      {/* 12. Regulatory & risk */}
+      {/* Implementation Plan */}
       <section className="report_section_card">
-        <h2 className="report_section_heading">Regulatory requirements & risk</h2>
-        <dl className="report_detail_dl">
-          {displayKeys.filter((k) =>
-            ["regulatoryRequirements", "regulatoryRequirementsOther", "dataSensitivity", "customerRiskTolerance", "customerSpecificRisks", "customerSpecificRisksOther", "identifiedRisks", "riskDomainScores", "contextualMultipliers", "riskMitigation"].includes(k),
-          ).map((key) => (
-            <div key={key} className="report_detail_row">
-              <dt className="report_detail_dt">{REPORT_FIELD_LABELS[key]}</dt>
-              <dd className="report_detail_dd">{formatReportValue(data[key])}</dd>
-            </div>
-          ))}
-          {displayKeys.filter((k) =>
-            ["regulatoryRequirements", "regulatoryRequirementsOther", "dataSensitivity", "customerRiskTolerance", "customerSpecificRisks", "customerSpecificRisksOther", "identifiedRisks", "riskDomainScores", "contextualMultipliers", "riskMitigation"].includes(k),
-          ).length === 0 && (
-            <div className="report_detail_row">
-              <dd className="report_detail_dd" style={{ gridColumn: "1 / -1" }}>No regulatory or risk details recorded.</dd>
-            </div>
-          )}
-        </dl>
+        <h2 className="report_section_heading"><List size={20} aria-hidden /> Implementation Plan</h2>
+        <div className="report_phase_list">
+          {fullReport?.implementationPlan?.phases && fullReport.implementationPlan.phases.length > 0
+            ? fullReport.implementationPlan.phases.map((phase, i) => (
+                <div key={i} className="report_phase_card">
+                  <div className="report_phase_header">
+                    <h3>{formatReportValue(phase.title)}</h3><span className="report_phase_timeline">{formatReportValue(phase.timeline)}</span>
+                    <span className={`report_pill report_pill_${phase.status === "Complete" ? "complete" : phase.status === "In Progress" ? "progress" : "planned"}`}>{phase.status}</span>
+                  </div>
+                  <h4>ACTIVITIES</h4><ul>{phase.activities?.length ? phase.activities.map((a, j) => <li key={j}>{formatReportValue(a)}</li>) : <li>—</li>}</ul>
+                  <h4>DELIVERABLES</h4><div className="report_tags">{phase.deliverables?.length ? phase.deliverables.map((d, j) => formatReportValue(d)).join(", ") : "—"}</div>
+                </div>
+              ))
+            : (
+              <>
+                <div className="report_phase_card">
+                  <div className="report_phase_header"><h3>Phase 1: Pilot</h3><span className="report_phase_timeline">Weeks 1-6</span><span className="report_pill report_pill_complete">Complete</span></div>
+                  <h4>ACTIVITIES</h4><ul><li>—</li></ul><h4>DELIVERABLES</h4><div className="report_tags">—</div>
+                </div>
+                <div className="report_phase_card">
+                  <div className="report_phase_header"><h3>Phase 2: Expansion</h3><span className="report_phase_timeline">Weeks 7-16</span><span className="report_pill report_pill_progress">In Progress</span></div>
+                  <h4>ACTIVITIES</h4><ul><li>—</li></ul><h4>DELIVERABLES</h4><div className="report_tags">—</div>
+                </div>
+                <div className="report_phase_card">
+                  <div className="report_phase_header"><h3>Phase 3: Statewide</h3><span className="report_phase_timeline">Months 5-12</span><span className="report_pill report_pill_planned">Planned</span></div>
+                  <h4>ACTIVITIES</h4><ul><li>—</li></ul><h4>DELIVERABLES</h4><div className="report_tags">—</div>
+                </div>
+              </>
+            )}
+        </div>
+      </section>
+
+      {/* Competitive Positioning */}
+      <section className="report_section_card">
+        <h2 className="report_section_heading"><BarChart3 size={20} aria-hidden /> Competitive Positioning</h2>
+        <p className="report_summary_body">{fullReport?.competitivePositioning ? formatReportValue(fullReport.competitivePositioning) : (formatReportValue(data.keyAdvantages) !== "—" ? formatReportValue(data.keyAdvantages) : "No competitive positioning data.")}</p>
+      </section>
+
+      {/* Recommendations */}
+      <section className="report_section_card">
+        <h2 className="report_section_heading"><Eye size={20} aria-hidden /> Recommendations</h2>
+        {recsWithPriority.length > 0 ? (
+          <ul className="report_recommendations_list">
+            {recsWithPriority.map((r, i) => (
+              <li key={i} className="report_rec_item">
+                <span className={`report_pill report_pill_priority_${r.priority.toLowerCase()}`}>{r.priority}</span>
+                <div>
+                  <strong>{formatReportValue(r.title)}</strong>
+                  <p>{formatReportValue(r.description)}</p>
+                  <span className="report_rec_timeline">Timeline: {formatReportValue(r.timeline)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : recsSimple.length > 0 ? (
+          <ul className="report_policy_list">
+            {recsSimple.map((rec, i) => (
+              <li key={i}>{formatReportValue(rec)}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="report_attachment_empty">No recommendations.</p>
+        )}
+      </section>
+
+      {/* Appendix */}
+      <section className="report_section_card report_appendix">
+        <h2 className="report_section_heading">Appendix</h2>
+        <p className="report_appendix_line"><strong>Methodology:</strong> {formatReportValue(fullReport?.appendix?.methodology) !== "—" ? formatReportValue(fullReport?.appendix?.methodology) : "AI EVAL 3-Layer Risk Assessment Framework v2.1 — Customer-Specific Analysis"}</p>
+        <p className="report_appendix_line"><strong>Prepared By:</strong> {formatReportValue(fullReport?.appendix?.preparedBy) !== "—" ? formatReportValue(fullReport?.appendix?.preparedBy) : "AI EVAL Platform — Automated Analysis Report Engine"}</p>
+        <p className="report_appendix_line"><strong>Reviewed By:</strong> {formatReportValue(fullReport?.appendix?.reviewedBy)}</p>
+        <p className="report_appendix_line"><strong>Confidentiality:</strong> {formatReportValue(fullReport?.appendix?.confidentiality) !== "—" ? formatReportValue(fullReport?.appendix?.confidentiality) : "Confidential — For internal sales team use only"}</p>
+        <p className="report_appendix_line"><strong>Data Sources:</strong></p>
+        <ul className="report_appendix_sources">
+          {(fullReport?.appendix?.dataSources && fullReport.appendix.dataSources.length > 0)
+            ? fullReport.appendix.dataSources.map((s, i) => <li key={i}>{formatReportValue(s)}</li>)
+            : (<><li>Vendor COTS assessment submission data</li><li>Risk mappings database (assessment context match)</li></>)}
+        </ul>
       </section>
     </div>
   )

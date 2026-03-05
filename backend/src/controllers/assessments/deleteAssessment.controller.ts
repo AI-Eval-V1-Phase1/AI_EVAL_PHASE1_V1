@@ -6,7 +6,7 @@ import { cotsBuyerAssessments } from "../../schema/assessments/cotsBuyerAssessme
 import { cotsVendorAssessments } from "../../schema/assessments/cotsVendorAssessments.js";
 import { eq, and } from "drizzle-orm";
 
-/** DELETE /assessments/:id - delete draft only (same org). Permanently removes assessment and its COTS row. */
+/** DELETE /assessments/:id - delete draft or expired (same org). Permanently removes assessment and its COTS row. */
 const deleteAssessment = async (req: Request, res: Response) => {
   try {
     const decoded = req.user as { id?: number } | undefined;
@@ -21,14 +21,33 @@ const deleteAssessment = async (req: Request, res: Response) => {
     if (!orgId) return res.status(400).json({ message: "User has no organization" });
 
     const [row] = await db
-      .select({ id: assessments.id, status: assessments.status, type: assessments.type })
+      .select({
+        id: assessments.id,
+        status: assessments.status,
+        type: assessments.type,
+        expiry_at: assessments.expiry_at,
+      })
       .from(assessments)
       .where(and(eq(assessments.id, id), eq(assessments.organization_id, orgId)))
       .limit(1);
     if (!row) return res.status(404).json({ message: "Assessment not found" });
     const status = String((row as { status?: string }).status ?? "").toLowerCase();
-    if (status !== "draft") {
-      return res.status(403).json({ message: "Only draft assessments can be deleted. Completed assessments cannot be deleted." });
+    const expiryAt = (row as { expiry_at?: Date | string | null }).expiry_at;
+    const isExpired =
+      expiryAt != null &&
+      (() => {
+        try {
+          const d = new Date(expiryAt);
+          return !Number.isNaN(d.getTime()) && d.getTime() < Date.now();
+        } catch {
+          return false;
+        }
+      })();
+    const canDelete = status === "draft" || isExpired;
+    if (!canDelete) {
+      return res.status(403).json({
+        message: "Only draft or expired assessments can be deleted.",
+      });
     }
 
     const assessmentType = String((row as { type?: string }).type ?? "");

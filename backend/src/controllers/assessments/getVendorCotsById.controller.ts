@@ -3,7 +3,8 @@ import { db } from "../../database/db.js";
 import { usersTable } from "../../schema/schema.js";
 import { assessments } from "../../schema/assessments/assessments.js";
 import { cotsVendorAssessments } from "../../schema/assessments/cotsVendorAssessments.js";
-import { eq, and } from "drizzle-orm";
+import { vendorSelfAttestations } from "../../schema/assessments/vendorSelfAttestations.js";
+import { eq, and, or } from "drizzle-orm";
 
 /** GET /vendorCotsAssessment/:id - return one vendor COTS assessment for view/edit. User must belong to same org. */
 const getVendorCotsById = async (req: Request, res: Response) => {
@@ -31,6 +32,7 @@ const getVendorCotsById = async (req: Request, res: Response) => {
         status: assessments.status,
         organizationId: assessments.organization_id,
         vendor_attestation_id: cotsVendorAssessments.vendor_attestation_id,
+        attestation_product_name: vendorSelfAttestations.product_name,
         customer_organization_name: cotsVendorAssessments.customer_organization_name,
         customer_sector: cotsVendorAssessments.customer_sector,
         primary_pain_point: cotsVendorAssessments.primary_pain_point,
@@ -56,6 +58,13 @@ const getVendorCotsById = async (req: Request, res: Response) => {
       })
       .from(assessments)
       .leftJoin(cotsVendorAssessments, eq(assessments.id, cotsVendorAssessments.assessment_id))
+      .leftJoin(
+        vendorSelfAttestations,
+        or(
+          eq(cotsVendorAssessments.vendor_attestation_id, vendorSelfAttestations.vendor_self_attestation_id),
+          eq(cotsVendorAssessments.vendor_attestation_id, vendorSelfAttestations.id)
+        )
+      )
       .where(and(eq(assessments.id, id), eq(assessments.organization_id, orgId), eq(assessments.type, "cots_vendor")))
       .limit(1);
 
@@ -70,6 +79,7 @@ const getVendorCotsById = async (req: Request, res: Response) => {
       status: r.status,
       organizationId: r.organizationId,
       selectedProductId: r.vendor_attestation_id ?? "",
+      attestationProductName: (r as { attestation_product_name?: string | null }).attestation_product_name ?? "",
       customerOrganizationName: r.customer_organization_name ?? "",
       customerSector: r.customer_sector ?? "",
       primaryPainPoint: r.primary_pain_point ?? "",

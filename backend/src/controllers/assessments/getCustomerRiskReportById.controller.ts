@@ -3,10 +3,11 @@ import { eq, and } from "drizzle-orm";
 import { db } from "../../database/db.js";
 import { usersTable } from "../../schema/schema.js";
 import { customerRiskAssessmentReports } from "../../schema/assessments/customerRiskAssessmentReports.js";
+import { assessments } from "../../schema/assessments/assessments.js";
 
 /**
  * GET /customerRiskReports/:id
- * Returns a single Customer Risk Assessment report by id; user must belong to same organization.
+ * Returns a single Analysis Report by id; user must belong to same organization.
  */
 const getCustomerRiskReportById = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -42,8 +43,10 @@ const getCustomerRiskReportById = async (req: Request, res: Response): Promise<v
         title: customerRiskAssessmentReports.title,
         report: customerRiskAssessmentReports.report,
         createdAt: customerRiskAssessmentReports.created_at,
+        expiryAt: assessments.expiry_at,
       })
       .from(customerRiskAssessmentReports)
+      .innerJoin(assessments, eq(customerRiskAssessmentReports.assessment_id, assessments.id))
       .where(
         and(
           eq(customerRiskAssessmentReports.id, id),
@@ -65,6 +68,7 @@ const getCustomerRiskReportById = async (req: Request, res: Response): Promise<v
         title: row.title,
         report: row.report,
         createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+        expiryAt: row.expiryAt instanceof Date ? row.expiryAt.toISOString() : (row.expiryAt != null ? String(row.expiryAt) : null),
       },
     });
   } catch (error) {

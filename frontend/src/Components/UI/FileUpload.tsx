@@ -14,8 +14,8 @@ interface FileUploadProps {
   maxSizeBytes?: number;
   /** Controlled: list of file names to display. */
   value?: string[];
-  /** Called with updated list of file names when user adds valid files. */
-  onFilesChange?: (fileNames: string[]) => void;
+  /** Called with updated list of file names when user adds valid files. Second arg is the newly selected File[] when available (for server upload). */
+  onFilesChange?: (fileNames: string[], selectedFiles?: File[]) => void;
   /** Called when validation fails (e.g. file too large or wrong type). */
   onValidationError?: (message: string) => void;
   /** Preview/read-only: show file names and size only; no upload, replace, or delete. */
@@ -89,7 +89,8 @@ const FileUpload = ({
     }
 
     const combined = [...value, ...validNames].slice(0, maxFiles);
-    onFilesChange?.(combined);
+    const validFiles = selectedFiles.filter((f) => validNames.includes(f.name));
+    onFilesChange?.(combined, validFiles.length > 0 ? validFiles : undefined);
     e.target.value = "";
   };
 

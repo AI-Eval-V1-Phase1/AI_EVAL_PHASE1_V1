@@ -34,6 +34,8 @@ export interface ProductProfileProduct {
   visibleToBuyer?: boolean;
   /** Generated product profile report (trust score + sections) after attestation submit. */
   generated_profile_report?: { trustScore: unknown; sections: unknown[] };
+  /** Product target sectors (public_sector, private_sector, non_profit_sector) for display. */
+  sector?: string | Record<string, unknown> | null;
 }
 
 /** One item from GET /vendorSelfAttestation/generated-reports */
@@ -103,14 +105,15 @@ export const DirectoryListing = () => {
     }
   }, []);
 
-  const fetchProductProfileData = useCallback(async () => {
+  const fetchProductProfileData = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent === true;
     const token = sessionStorage.getItem("bearerToken");
     if (!token) {
-      setLoading(false);
+      if (!silent) setLoading(false);
       return;
     }
     setSessionExpired(false);
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const organizationId = sessionStorage.getItem("organizationId") ?? "";
       const query = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : "";
@@ -124,24 +127,24 @@ export const DirectoryListing = () => {
       const text = await response.text();
       let result: {
         success?: boolean;
-        attestation?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean; generated_profile_report?: unknown };
-        attestations?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean; generated_profile_report?: unknown }[];
+        attestation?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean; generated_profile_report?: unknown; sector?: unknown };
+        attestations?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean; generated_profile_report?: unknown; sector?: unknown }[];
         companyProfile?: Record<string, unknown>;
         message?: string;
       } = {};
       try {
         result = text ? JSON.parse(text) : {};
       } catch {
-        setLoading(false);
+        if (!silent) setLoading(false);
         return;
       }
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
           setSessionExpired(true);
-          setLoading(false);
+          if (!silent) setLoading(false);
           return;
         }
-        setLoading(false);
+        if (!silent) setLoading(false);
         return;
       }
 
@@ -171,6 +174,7 @@ export const DirectoryListing = () => {
             /** Default off when not set; only on when API explicitly sends true. */
             visibleToBuyer: a.visible_to_buyer === true,
             generated_profile_report: a.generated_profile_report,
+            sector: a.sector ?? undefined,
           };
         })
         .filter((p) => p.status !== "Draft");
@@ -193,7 +197,7 @@ export const DirectoryListing = () => {
         try {
           detailResult = detailText ? JSON.parse(detailText) : {};
         } catch {
-          setLoading(false);
+          if (!silent) setLoading(false);
           return;
         }
         if (detailRes.ok && detailResult.success && (detailResult.attestation || detailResult.companyProfile)) {
@@ -206,7 +210,7 @@ export const DirectoryListing = () => {
     } catch {
       // leave formState null
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -384,6 +388,28 @@ export const DirectoryListing = () => {
     fetchVendorPublicListing();
     fetchGeneratedReports();
   }, [fetchProductProfileData, fetchVendorPublicListing, fetchGeneratedReports]);
+
+  /** Refetch products after a short delay so that when user lands from attestation submit,
+   *  we pick up the newly generated profile and the average trust score updates without refresh. */
+  useEffect(() => {
+    const t = setTimeout(() => {
+      fetchProductProfileData({ silent: true });
+      fetchGeneratedReports();
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [fetchProductProfileData, fetchGeneratedReports]);
+
+  /** Refetch when user returns to this tab so the average updates if a profile was generated elsewhere. */
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        fetchProductProfileData({ silent: true });
+        fetchGeneratedReports();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [fetchProductProfileData, fetchGeneratedReports]);
 
   useEffect(() => {
     const prevTitle = document.title;

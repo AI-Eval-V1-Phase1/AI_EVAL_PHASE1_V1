@@ -10,6 +10,7 @@ import {
   CircleX,
   ChevronRight,
 } from "lucide-react";
+import "../../../styles/page_tabs.css";
 import "./VendorDirectory.css";
 import "../ProductProfile/product_profile.css";
 import GeneratedProductProfileCards from "../ProductProfile/GeneratedProductProfileCards";
@@ -81,6 +82,8 @@ interface VendorProduct {
   status: string;
   updated_at: string | null;
   trustScore?: number;
+  /** Product target sectors/industries (same format as vendor sector for formatSector). */
+  sector?: string | Record<string, unknown> | null;
 }
 
 /** One product in the directory grid (product + vendor info for display). */
@@ -92,6 +95,8 @@ interface DirectoryProduct {
   vendor: PublicVendor;
   /** Product trust score 0–100 from generated profile report (optional). */
   trustScore?: number;
+  /** Product target sectors/industries (optional; falls back to vendor sector when missing). */
+  sector?: string | Record<string, unknown> | null;
 }
 
 function formatVal(val: unknown): string {
@@ -122,35 +127,39 @@ function productInitials(name: string): string {
 }
 
 const SECTOR_KEYS_ORDER = ["public_sector", "private_sector", "non_profit_sector"] as const;
-const SECTOR_LABELS: Record<string, string> = {
-  public_sector: "Public sector",
-  private_sector: "Private sector",
-  non_profit_sector: "Non-profit sector",
-};
 
-/** Format sector for display. If object has public_sector/private_sector/non_profit_sector arrays, show only the first non-empty one. */
+/** Format sector for display: only the values from arrays that have data (e.g. "Defense & Military"). Handles object or JSON string. */
 function formatSector(sector: string | Record<string, unknown> | null | undefined): string {
   if (sector == null) return "";
-  if (typeof sector === "string") return sector.trim() || "";
-  if (typeof sector === "object" && sector !== null) {
+  let obj: Record<string, unknown> | null = null;
+  if (typeof sector === "string") {
+    const t = sector.trim();
+    if (!t) return "";
+    if (t.startsWith("{") || t.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(t) as Record<string, unknown>;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) obj = parsed;
+      } catch {
+        return "";
+      }
+    } else {
+      return t;
+    }
+  } else if (typeof sector === "object" && sector !== null) {
+    obj = sector;
+  }
+  if (obj) {
+    const parts: string[] = [];
     for (const key of SECTOR_KEYS_ORDER) {
-      const val = sector[key];
+      const val = obj[key];
       if (Array.isArray(val) && val.length > 0) {
         const items = val.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean);
-        if (items.length > 0) {
-          const label = SECTOR_LABELS[key] ?? key.replace(/_/g, " ");
-          return `${label}: ${items.join(", ")}`;
-        }
+        if (items.length > 0) parts.push(items.join(", "));
       }
     }
-    const name = (sector.name ?? sector.sectorName ?? sector.industryName) as string | undefined;
+    if (parts.length > 0) return parts.join(" • ");
+    const name = (obj.name ?? obj.sectorName ?? obj.industryName) as string | undefined;
     if (typeof name === "string" && name.trim()) return name.trim();
-    try {
-      const s = JSON.stringify(sector);
-      return s.length > 80 ? s.slice(0, 77) + "..." : s;
-    } catch {
-      return "";
-    }
   }
   return "";
 }
@@ -353,6 +362,7 @@ const VendorDirectory = () => {
             vendorId: v.id,
             vendor: v,
             trustScore: p.trustScore,
+            sector: p.sector,
           }));
         })
       );
@@ -455,6 +465,8 @@ const VendorDirectory = () => {
     const lower = q.trim().toLowerCase();
     if (dp.productName.toLowerCase().includes(lower)) return true;
     if (displayName(dp.vendor).toLowerCase().includes(lower)) return true;
+    const sectorText = formatSector(dp.sector ?? dp.vendor.sector);
+    if (sectorText && sectorText.toLowerCase().includes(lower)) return true;
     return false;
   };
 
@@ -476,14 +488,14 @@ const VendorDirectory = () => {
         </div>
       </div>
 
-      <div className="vendor_directory_tabs" role="tablist" aria-label="Vendor list type">
+      <div className="page_tabs" role="tablist" aria-label="Vendor list type">
         <button
           type="button"
           role="tab"
           aria-selected={vendorTab === "all"}
           aria-controls="vendor-directory-panel-all"
           id="vendor-tab-all"
-          className={`vendor_directory_tab ${vendorTab === "all" ? "vendor_directory_tab_active" : ""}`}
+          className={`page_tab ${vendorTab === "all" ? "page_tab_active" : ""}`}
           onClick={() => setVendorTab("all")}
         >
           All Products
@@ -495,7 +507,7 @@ const VendorDirectory = () => {
             aria-selected={vendorTab === "listed"}
             aria-controls="vendor-directory-panel-listed"
             id="vendor-tab-listed"
-            className={`vendor_directory_tab ${vendorTab === "listed" ? "vendor_directory_tab_active" : ""}`}
+            className={`page_tab ${vendorTab === "listed" ? "page_tab_active" : ""}`}
             onClick={() => setVendorTab("listed")}
           >
             Listed Products
@@ -507,7 +519,7 @@ const VendorDirectory = () => {
           aria-selected={vendorTab === "my"}
           aria-controls="vendor-directory-panel-my"
           id="vendor-tab-my"
-          className={`vendor_directory_tab ${vendorTab === "my" ? "vendor_directory_tab_active" : ""}`}
+          className={`page_tab ${vendorTab === "my" ? "page_tab_active" : ""}`}
           onClick={() => setVendorTab("my")}
         >
           My Products
@@ -522,10 +534,10 @@ const VendorDirectory = () => {
               <input
                 type="search"
                 className="vendor_directory_search_input"
-                placeholder="Search by product name or organization…"
+                placeholder="Search by product name and industry"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                aria-label="Search by product name or organization"
+                aria-label="Search by product name and industry"
               />
             </div>
           )}
@@ -581,9 +593,9 @@ const VendorDirectory = () => {
                     <span className="product_profile_product_card_trust_label">Trust score</span>
                     <span className="product_profile_product_card_trust_value">{dp.trustScore != null ? `${dp.trustScore}%` : "—"}</span>
                   </div>
-                  {formatSector(dp.vendor.sector) && (
-                    <span className="vendor_directory_card_sector">{formatSector(dp.vendor.sector)}</span>
-                  )}
+                  <span className="vendor_directory_card_sector" title="Sectors">
+                    {formatSector(dp.sector ?? dp.vendor.sector) || "—"}
+                  </span>
                 </div>
               </div>
               <div className="vendor_directory_card_body">
@@ -626,10 +638,10 @@ const VendorDirectory = () => {
               <input
                 type="search"
                 className="vendor_directory_search_input"
-                placeholder="Search by product name or organization…"
+                placeholder="Search by product name and industry"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                aria-label="Search by product name or organization"
+                aria-label="Search by product name and industry"
               />
             </div>
           )}
@@ -678,9 +690,9 @@ const VendorDirectory = () => {
                     <span className="product_profile_product_card_trust_label">Trust score</span>
                     <span className="product_profile_product_card_trust_value">{dp.trustScore != null ? `${dp.trustScore}%` : "—"}</span>
                   </div>
-                  {formatSector(dp.vendor.sector) && (
-                    <span className="vendor_directory_card_sector">{formatSector(dp.vendor.sector)}</span>
-                  )}
+                  <span className="vendor_directory_card_sector" title="Sectors">
+                    {formatSector(dp.sector ?? dp.vendor.sector) || "—"}
+                  </span>
                 </div>
               </div>
               <div className="vendor_directory_card_body">
@@ -763,6 +775,9 @@ const VendorDirectory = () => {
                       <div className="vendor_directory_product_card_content">
                         <span className="vendor_directory_product_card_name">{p.productName}</span>
                         <span className="vendor_directory_product_card_status">Completed</span>
+                        {formatSector(p.sector) ? (
+                          <span className="vendor_directory_product_card_sector">{formatSector(p.sector)}</span>
+                        ) : null}
                       </div>
                       {p.trustScore != null && (
                         <div className="vendor_directory_product_card_trust_badge" aria-label={`Trust score ${p.trustScore}%`}>
@@ -833,7 +848,7 @@ const VendorDirectory = () => {
                   if (filteredSections.length === 0) {
                     return (
                       <p className="vendor_directory_empty_products">
-                        No detail sections are currently visible for this product. The vendor can make sections visible from Product Profile → View Product.
+                        No detail sections are currently visible for this product.
                       </p>
                     );
                   }

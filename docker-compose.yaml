@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 # Backend and frontend. Ensure backend/.env.local exists (copy from backend/.env.example).
 # Frontend: http://localhost:3001  |  Backend API: http://localhost:5003
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 version: "3.9"
 
 services:
@@ -12,11 +9,8 @@ services:
       - "3001:5173"
     depends_on:
       - backend
-<<<<<<< HEAD
     environment:
       - VITE_BASE_URL=http://localhost:5003/api/v1
-=======
->>>>>>> d489068cfa70d9e03e76d61725aed9495ad2eba8
 
   backend:
     build: ./backend

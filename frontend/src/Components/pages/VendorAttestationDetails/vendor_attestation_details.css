@@ -785,7 +785,7 @@
 /* YOUR ATTESTATIONS – row layout (same as vendor dashboard) */
 .attestation_list_rows .vendor_overview_attestation_row {
   display: flex;
-  align-items: center;
+  align-items: start;
   gap: 1rem;
   flex-wrap: wrap;
   background: #f8fafc;
@@ -845,12 +845,14 @@
   font-size: 0.8125rem;
   color: #6b7280;
   margin: 0;
+  margin-top: 10px;
 }
 .attestation_list_rows .vendor_overview_attestation_actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
+  align-self: center;
 }
 .attestation_list_rows .vendor_overview_btn_view,
 .attestation_list_rows .vendor_overview_btn_update {

@@ -1,20 +1,26 @@
-import { pgTable, uuid, integer, varchar, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, text } from "drizzle-orm/pg-core";
 
 /**
- * risk_mappings – stores data from "Shared Enhanced Risk Database Jan 2026.xlsx".
- * Holds both risk rows (risk_id, title, domain, description) and mapping rows
- * (mapping_id, risk_id, mitigation_action_*, mitigation_category, mitigation_definition).
+ * risk_mappings – risk_mapping_id (integer PK), risk_id (Excel value as-is), plus Excel columns.
+ * Headers: Risk_id, Risk_Title, Domains, Description, Technical_Description, Executive_Summary,
+ * Attack_Vector, Observable_Indicators, Data_to_Identify_Risk, Evidence_Sources,
+ * Intent, Timing, Risk_Type_Detected, Primary_Risk, Secondary_Risks.
  */
 export const riskMappings = pgTable("risk_mappings", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  mapping_id: integer("mapping_id"),
-  risk_id: varchar("risk_id", { length: 50 }).notNull(),
-  risk_title: varchar("risk_title", { length: 500 }),
-  risk_domain: varchar("risk_domain", { length: 100 }),
-  risk_description: text("risk_description"),
-  mitigation_action_id: varchar("mitigation_action_id", { length: 100 }),
-  mitigation_action_name: varchar("mitigation_action_name", { length: 500 }),
-  mitigation_category: varchar("mitigation_category", { length: 200 }),
-  mitigation_definition: text("mitigation_definition"),
-  created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  risk_mapping_id: serial("risk_mapping_id").primaryKey(),
+  risk_id: varchar("risk_id", { length: 255 }),
+  risk_title: varchar("risk_title", { length: 255 }),
+  domains: varchar("domains", { length: 255 }),
+  description: text("description"),
+  technical_description: text("technical_description"),
+  executive_summary: text("executive_summary"),
+  attack_vector: varchar("attack_vector", { length: 255 }),
+  observable_indicators: text("observable_indicators"),
+  data_to_identify_risk: text("data_to_identify_risk"),
+  evidence_sources: text("evidence_sources"),
+  intent: varchar("intent", { length: 255 }),
+  timing: varchar("timing", { length: 255 }),
+  risk_type_detected: varchar("risk_type_detected", { length: 255 }),
+  primary_risk: varchar("primary_risk", { length: 255 }),
+  secondary_risks: varchar("secondary_risks", { length: 255 }),
 });

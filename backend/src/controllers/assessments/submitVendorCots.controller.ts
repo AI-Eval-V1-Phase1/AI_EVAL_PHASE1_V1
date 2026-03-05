@@ -7,12 +7,20 @@ import { customerRiskAssessmentReports } from "../../schema/assessments/customer
 import { vendorSelfAttestations } from "../../schema/assessments/vendorSelfAttestations.js";
 import { eq, and, or } from "drizzle-orm";
 import { generateVendorCotsReport } from "../agents/vendorCotsReportAgent.js";
+import { getTop5RisksWithMitigations } from "../../services/getTop5RisksFromAssessmentContext.js";
+import { calculateRoiFromAssessment } from "../../services/roiCalculator.js";
+
+/** Fixed appendix text for all reports; only reviewedBy is set from the user who submitted. */
+const APPENDIX_METHODOLOGY = "AI EVAL 3-Layer Risk Assessment Framework v2.1 — Customer-Specific Analysis";
+const APPENDIX_PREPARED_BY = "AI EVAL Platform — Automated Analysis Report Engine";
+const APPENDIX_CONFIDENTIALITY = "Confidential — For internal sales team use only";
 
 /** POST /vendorCotsAssessment - submit: create or update assessment. Save draft = status "draft", Submit = status "submitted" (DB enum has draft/submitted). */
 async function createCustomerRiskReport(
   assessmentId: string,
   orgIdStr: string,
   payloadCots: Record<string, unknown>,
+  reviewedByUser: string,
 ): Promise<void> {
   const vendorAttestationId = payloadCots.vendor_attestation_id != null ? String(payloadCots.vendor_attestation_id).trim() : null;
   let productName = "";
@@ -32,7 +40,7 @@ async function createCustomerRiskReport(
     productName = "Product";
   }
   const orgName = (payloadCots.customer_organization_name != null ? String(payloadCots.customer_organization_name).trim() : "") || "Organization";
-  const title = `Customer Risk Assessment: ${orgName} - ${productName}`;
+  const title = `Analysis Report: ${orgName} - ${productName}`;
   const toJson = (v: unknown) =>
     v != null ? (Array.isArray(v) ? v : typeof v === "object" ? JSON.stringify(v) : String(v)) : "";
   const report: Record<string, unknown> = {
@@ -79,14 +87,66 @@ async function createCustomerRiskReport(
     riskMitigation: payloadCots.risk_mitigation ?? "",
   };
 
-  const generated = await generateVendorCotsReport(payloadCots);
+  let top5RisksWithMitigations: Awaited<ReturnType<typeof getTop5RisksWithMitigations>> | null = null;
+  try {
+    top5RisksWithMitigations = await getTop5RisksWithMitigations(payloadCots);
+  } catch (err) {
+    console.error("getTop5RisksWithMitigations failed:", err);
+  }
+
+  if (top5RisksWithMitigations) {
+    report.dbTop5Risks = {
+      top5Risks: top5RisksWithMitigations.top5Risks.map((r) => ({
+        risk_mapping_id: r.risk_mapping_id,
+        risk_id: r.risk_id,
+        risk_title: r.risk_title,
+        domains: r.domains,
+        intent: r.intent,
+        timing: r.timing,
+        primary_risk: r.primary_risk,
+        description: r.description,
+        executive_summary: r.executive_summary,
+      })),
+      mitigationsByRiskId: top5RisksWithMitigations.mitigationsByRiskId,
+    };
+  }
+
+  report.deploymentOverview = {
+    useCase: payloadCots.expected_outcomes ?? payloadCots.primary_pain_point ?? "",
+    productTier: productName,
+    targetUsers: "",
+    infrastructure: payloadCots.integration_complexity ?? "",
+    deploymentTimeline: payloadCots.implementation_timeline ?? "",
+    annualContractValue: payloadCots.customer_budget_range ?? "",
+  };
+
+  const generated = await generateVendorCotsReport(payloadCots, top5RisksWithMitigations);
   if (generated) {
+    const fullReport = generated.fullReport as Record<string, unknown> | undefined;
+    const appendix = (fullReport?.appendix && typeof fullReport.appendix === "object")
+      ? (fullReport.appendix as Record<string, unknown>)
+      : {};
+    const calculatedRoi = calculateRoiFromAssessment(payloadCots);
     report.generatedAnalysis = {
       overallRiskScore: generated.overallRiskScore,
       riskLevel: generated.riskLevel,
       summary: generated.summary,
+      executiveSummary: generated.executiveSummary,
       keyRisks: generated.keyRisks,
       recommendations: generated.recommendations,
+      recommendationsWithPriority: generated.recommendationsWithPriority,
+      fullReport: {
+        ...fullReport,
+        roiAnalysis: calculatedRoi,
+        appendix: {
+          ...appendix,
+          methodology: APPENDIX_METHODOLOGY,
+          preparedBy: APPENDIX_PREPARED_BY,
+          reviewedBy: reviewedByUser.trim() || "—",
+          confidentiality: APPENDIX_CONFIDENTIALITY,
+          dataSources: Array.isArray(appendix.dataSources) ? appendix.dataSources : undefined,
+        },
+      },
     };
   }
 
@@ -117,6 +177,14 @@ const submitVendorCotsAssessment = async (req: Request, res: Response) => {
     if (!orgIdStr) {
       return res.status(400).json({ message: "User has no organization. Complete onboarding or contact admin." });
     }
+
+    const u = user as Record<string, unknown>;
+    const firstName = typeof u.user_first_name === "string" ? u.user_first_name.trim() : "";
+    const lastName = typeof u.user_last_name === "string" ? u.user_last_name.trim() : "";
+    const userName = typeof u.user_name === "string" ? u.user_name.trim() : "";
+    const email = typeof u.email === "string" ? u.email.trim() : "";
+    const reviewedByUser =
+      [firstName, lastName].filter(Boolean).join(" ") || userName || email || "—";
 
     const body = req.body ?? {};
     const get = (key: string) => body[key] ?? body[key.replace(/_([a-z])/g, (_, c) => c.toUpperCase())];
@@ -188,10 +256,10 @@ const submitVendorCotsAssessment = async (req: Request, res: Response) => {
             .where(eq(assessments.id, assessmentId));
           await tx
             .update(cotsVendorAssessments)
-            .set({ ...payloadCots, updated_at: new Date() })
+            .set({ ...payloadCots, user_id: Number(userId), updated_at: new Date() })
             .where(eq(cotsVendorAssessments.assessment_id, assessmentId));
         });
-        await createCustomerRiskReport(assessmentId, orgIdStr, payloadCots);
+        await createCustomerRiskReport(assessmentId, orgIdStr, payloadCots, reviewedByUser);
         return res.status(200).json({
           message: "Vendor COTS assessment submitted successfully",
           assessmentId,
@@ -215,13 +283,14 @@ const submitVendorCotsAssessment = async (req: Request, res: Response) => {
 
       await tx.insert(cotsVendorAssessments).values({
         assessment_id: a.id,
+        user_id: Number(userId),
         ...payloadCots,
       });
 
       return [a];
     });
 
-    await createCustomerRiskReport(assessment.id, orgIdStr, payloadCots);
+    await createCustomerRiskReport(assessment.id, orgIdStr, payloadCots, reviewedByUser);
 
     return res.status(201).json({
       message: "Vendor COTS assessment submitted successfully",

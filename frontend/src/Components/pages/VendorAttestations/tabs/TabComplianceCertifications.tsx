@@ -27,6 +27,8 @@ export interface TabComplianceCertificationsProps {
   icon?: ReactNode;
   documentUpload?: DocumentUploadState;
   setDocumentUpload?: React.Dispatch<React.SetStateAction<DocumentUploadState>>;
+  attestationId?: string | null;
+  onUploadDocument?: (attestationId: string, file: File) => Promise<string>;
 }
 
 const REGULATORY_LABEL = "Regulatory and Compliance Certification Material";
@@ -43,6 +45,8 @@ function TabComplianceCertifications({
   icon,
   documentUpload,
   setDocumentUpload,
+  attestationId,
+  onUploadDocument,
 }: TabComplianceCertificationsProps) {
   const regulatory = documentUpload?.["2"] ?? { categories: [], byCategory: {} };
   const categories = regulatory.categories ?? [];
@@ -75,6 +79,27 @@ function TabComplianceCertifications({
         },
       };
     });
+  };
+
+  const handleFilesChangeForCategory = async (
+    category: string,
+    fileNames: string[],
+    selectedFiles?: File[],
+  ) => {
+    const current = byCategory[category] ?? [];
+    if (attestationId && onUploadDocument && selectedFiles?.length) {
+      const uploaded: string[] = [];
+      for (const file of selectedFiles) {
+        try {
+          uploaded.push(await onUploadDocument(attestationId, file));
+        } catch {
+          uploaded.push(file.name);
+        }
+      }
+      setFilesForCategory(category, [...current, ...uploaded]);
+    } else {
+      setFilesForCategory(category, fileNames);
+    }
   };
 
   return (
@@ -127,7 +152,9 @@ function TabComplianceCertifications({
                       accept=".pdf,.doc,.docx,.ppt,.pptx"
                       maxSizeBytes={MAX_FILE_SIZE_BYTES}
                       value={byCategory[category] ?? []}
-                      onFilesChange={(fileNames) => setFilesForCategory(category, fileNames)}
+                      onFilesChange={(fileNames, selectedFiles) =>
+                        handleFilesChangeForCategory(category, fileNames, selectedFiles)
+                      }
                     />
                   </FormField>
                 </div>

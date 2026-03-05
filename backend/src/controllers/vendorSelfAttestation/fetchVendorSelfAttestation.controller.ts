@@ -48,19 +48,38 @@ function buildCertificatesFromDocumentUploads(docUploads: unknown): Array<{ name
   return list;
 }
 
+/** Parse sector (target_industries) for API response. */
+function parseSectorFromRow(row: Record<string, unknown>): Record<string, unknown> | null {
+  const sectorRaw = row.target_industries;
+  if (sectorRaw == null) return null;
+  if (typeof sectorRaw === "object" && !Array.isArray(sectorRaw)) return sectorRaw as Record<string, unknown>;
+  if (typeof sectorRaw === "string" && sectorRaw.trim()) {
+    try {
+      const p = JSON.parse(sectorRaw) as Record<string, unknown>;
+      return typeof p === "object" && p !== null ? p : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 /** Map one attestation row to API shape (attestation section only). completedByName is optional from join. */
 function mapAttestationRow(attestRow: Record<string, unknown>, completedByName?: string): Record<string, unknown> {
   const raw = String(attestRow.status ?? "").toUpperCase();
   const rowStatus = raw === "DRAFT" ? "DRAFT" : "COMPLETED";
   const document_uploads = attestRow.document_uploads;
   const certificates = buildCertificatesFromDocumentUploads(document_uploads);
+  const sector = parseSectorFromRow(attestRow);
   const base: Record<string, unknown> = {
     id: attestRow.id,
+    vendor_self_attestation_id: attestRow.vendor_self_attestation_id ?? undefined,
     status: rowStatus,
     created_at: attestRow.created_at ?? undefined,
     updated_at: attestRow.updated_at ?? undefined,
     submitted_at: attestRow.submitted_at ?? undefined,
     product_name: attestRow.product_name ?? undefined,
+    sector: sector ?? undefined,
     visible_to_buyer: attestRow.visible_to_buyer === true || attestRow.visible_to_buyer === 1,
     visible_ai_governance: attestRow.visible_ai_governance === true,
     visible_security_posture: attestRow.visible_security_posture === true,

@@ -23,6 +23,7 @@ const pool = new Pool({
 
 // Create Drizzle ORM instance
 export const db = drizzle({ client: pool });
+export { pool };
 
 // Optional: function to check connection
 export async function initDB() {

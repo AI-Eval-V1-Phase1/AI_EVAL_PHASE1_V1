@@ -148,12 +148,12 @@
   margin-top: 1rem;
 }
 
-/* Full-page overlay while attestation is submitting – blocks all interaction */
+/* Full-page overlay while attestation/assessment is submitting – above top_nav, covers entire screen */
 .vendor_attestation_submit_overlay {
   position: fixed;
   inset: 0;
-  z-index: 10000;
-  background: rgba(255, 255, 255, 0.85);
+  z-index: 10003;
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,8 +161,12 @@
 }
 .vendor_attestation_submit_overlay_content {
   text-align: center;
-  padding: 2rem;
+  padding: 2rem 2.5rem;
   max-width: 20rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
 }
 .vendor_attestation_submit_overlay_hint {
   margin-top: 0.75rem;

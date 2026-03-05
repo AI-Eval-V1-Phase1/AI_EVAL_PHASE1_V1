@@ -13,6 +13,7 @@ import {
   Info,
 } from "lucide-react";
 import Button from "../../UI/Button";
+import "../../../styles/page_tabs.css";
 import "./user_management.css";
 import { useState, useEffect } from "react";
 import Modal from "../../UI/Modal";
@@ -173,10 +174,10 @@ const UserManagement = () => {
         </div>
       </div>
 
-      <div className="org_settings_tabs">
+      <div className="page_tabs">
         <button
           type="button"
-          className={`org_settings_tab ${activeTab === "users" ? "org_settings_tab_active" : ""}`}
+          className={`page_tab ${activeTab === "users" ? "page_tab_active" : ""}`}
           onClick={() => setActiveTab("users")}
         >
           <Users size={18} />
@@ -184,7 +185,7 @@ const UserManagement = () => {
         </button>
         <button
           type="button"
-          className={`org_settings_tab ${activeTab === "general" ? "org_settings_tab_active" : ""}`}
+          className={`page_tab ${activeTab === "general" ? "page_tab_active" : ""}`}
           onClick={() => setActiveTab("general")}
         >
           <Info size={18} />

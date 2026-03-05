@@ -16,6 +16,8 @@ export interface TabEvidenceSupportingDocProps {
   setAttestation: React.Dispatch<React.SetStateAction<VendorSelfAttestationPayload>>;
   documentUpload: DocumentUploadState;
   setDocumentUpload: React.Dispatch<React.SetStateAction<DocumentUploadState>>;
+  attestationId?: string | null;
+  onUploadDocument?: (attestationId: string, file: File) => Promise<string>;
   data: Record<string, { label: string; placeholder?: string; required?: boolean }>;
   fieldErrors?: Record<string, string>;
   title?: string;
@@ -28,12 +30,31 @@ function TabEvidenceSupportingDoc({
   setAttestation,
   documentUpload,
   setDocumentUpload,
+  attestationId,
+  onUploadDocument,
   data,
   fieldErrors,
   title = "Evidence & Supporting Documentation",
   subTitle,
   icon,
 }: TabEvidenceSupportingDocProps) {
+  const current = documentUpload?.evidenceTestingPolicy ?? [];
+  const handleFilesChange = async (fileNames: string[], selectedFiles?: File[]) => {
+    if (attestationId && onUploadDocument && selectedFiles?.length) {
+      const uploaded: string[] = [];
+      for (const file of selectedFiles) {
+        try {
+          uploaded.push(await onUploadDocument(attestationId, file));
+        } catch {
+          uploaded.push(file.name);
+        }
+      }
+      setDocumentUpload((prev) => ({ ...prev, evidenceTestingPolicy: [...current, ...uploaded] }));
+    } else {
+      setDocumentUpload((prev) => ({ ...prev, evidenceTestingPolicy: fileNames }));
+    }
+  };
+
   return (
     <>
       <AttestationDynamicStep
@@ -59,16 +80,10 @@ function TabEvidenceSupportingDoc({
             {EVIDENCE_TESTING_POLICY_HELPER_TEXT}
           </p>
           <FileUpload
-            multiple
             accept=".pdf,.doc,.docx,.ppt,.pptx"
             maxSizeBytes={MAX_FILE_SIZE_BYTES}
             value={documentUpload?.evidenceTestingPolicy ?? []}
-            onFilesChange={(fileNames) =>
-              setDocumentUpload((prev) => ({
-                ...prev,
-                evidenceTestingPolicy: fileNames,
-              }))
-            }
+            onFilesChange={(fileNames, selectedFiles) => handleFilesChange(fileNames, selectedFiles)}
           />
         </FormField>
       </div>

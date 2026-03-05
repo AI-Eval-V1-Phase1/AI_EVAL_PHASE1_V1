@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import "../../../styles/page_tabs.css";
 import "./organization.css";
 import "../UserManagement/user_management.css";
 import "../VendorOnboarding/StepVendorOnboardingPreview.css";
@@ -8,6 +9,7 @@ import OrganizationDataTable from "./OrganizationDataTable";
 import StepVendorSelfAttestationPrev from "../VendorAttestations/StepVendorSelfAttestationPrev";
 // import { buildFormStateFromApi } from "../../utils/vendorAttestationState";
 import { buildFormStateFromApi } from "../../../utils/vendorAttestationState";
+import { formatDateDDMMMYYYY } from "../../../utils/formatDate.js";
 import { Landmark, Plus, User, FileCheck, ClipboardList, Eye, CircleX } from "lucide-react";
 import Button from "../../UI/Button";
 import Breadcrumbs from "../../UI/Breadcrumbs";
@@ -85,16 +87,8 @@ function formatPreviewValue(value, label) {
 
 function formatOnboardingDate(isoString) {
   if (!isoString) return null;
-  try {
-    const d = new Date(isoString);
-    if (Number.isNaN(d.getTime())) return null;
-    const day = d.getDate().toString().padStart(2, "0");
-    const month = d.toLocaleDateString("en-GB", { month: "short" });
-    const year = d.getFullYear();
-    return `${day}-${month}-${year}`;
-  } catch {
-    return null;
-  }
+  const s = formatDateDDMMMYYYY(isoString);
+  return s === "—" ? null : s;
 }
 
 const TAB_ONBOARDING = "onboarding";
@@ -287,19 +281,7 @@ const Organizations = () => {
     [orgIdForFetch, BASE_URL]
   );
 
-  const formatAttestationDate = (isoString) => {
-    if (!isoString) return "—";
-    try {
-      const d = new Date(isoString);
-      if (Number.isNaN(d.getTime())) return "—";
-      const day = d.getDate().toString().padStart(2, "0");
-      const month = d.toLocaleDateString("en-GB", { month: "short" });
-      const year = d.getFullYear();
-      return `${day}-${month}-${year}`;
-    } catch {
-      return "—";
-    }
-  };
+  const formatAttestationDate = formatDateDDMMMYYYY;
 
   return (
     <>
@@ -402,10 +384,10 @@ const Organizations = () => {
 
               {/* Tabs: Onboarding | Attestation */}
               <div className="org_preview_tabs_wrap">
-                <div className="org_settings_tabs org_preview_tabs">
+                <div className="page_tabs org_preview_tabs">
                   <button
                     type="button"
-                    className={`org_settings_tab ${activeTab === TAB_ONBOARDING ? "org_settings_tab_active" : ""}`}
+                    className={`page_tab ${activeTab === TAB_ONBOARDING ? "page_tab_active" : ""}`}
                     onClick={() => setActiveTab(TAB_ONBOARDING)}
                   >
                     <ClipboardList size={18} />
@@ -413,7 +395,7 @@ const Organizations = () => {
                   </button>
                   <button
                     type="button"
-                    className={`org_settings_tab ${activeTab === TAB_ATTESTATION ? "org_settings_tab_active" : ""}`}
+                    className={`page_tab ${activeTab === TAB_ATTESTATION ? "page_tab_active" : ""}`}
                     onClick={() => setActiveTab(TAB_ATTESTATION)}
                   >
                     <FileCheck size={18} />

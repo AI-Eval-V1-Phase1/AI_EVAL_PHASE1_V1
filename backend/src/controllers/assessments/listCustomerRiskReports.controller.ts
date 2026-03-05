@@ -3,10 +3,11 @@ import { eq, desc } from "drizzle-orm";
 import { db } from "../../database/db.js";
 import { usersTable } from "../../schema/schema.js";
 import { customerRiskAssessmentReports } from "../../schema/assessments/customerRiskAssessmentReports.js";
+import { assessments } from "../../schema/assessments/assessments.js";
 
 /**
  * GET /customerRiskReports
- * Returns Customer Risk Assessment reports for the current user's organization, newest first.
+ * Returns Analysis Report records for the current user's organization, newest first.
  */
 const listCustomerRiskReports = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -40,8 +41,10 @@ const listCustomerRiskReports = async (req: Request, res: Response): Promise<voi
         title: customerRiskAssessmentReports.title,
         report: customerRiskAssessmentReports.report,
         createdAt: customerRiskAssessmentReports.created_at,
+        expiryAt: assessments.expiry_at,
       })
       .from(customerRiskAssessmentReports)
+      .innerJoin(assessments, eq(customerRiskAssessmentReports.assessment_id, assessments.id))
       .where(eq(customerRiskAssessmentReports.organization_id, orgId))
       .orderBy(desc(customerRiskAssessmentReports.created_at))
       .limit(100);
@@ -52,6 +55,7 @@ const listCustomerRiskReports = async (req: Request, res: Response): Promise<voi
       title: r.title,
       report: r.report,
       createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+      expiryAt: r.expiryAt instanceof Date ? r.expiryAt.toISOString() : (r.expiryAt != null ? String(r.expiryAt) : null),
     }));
 
     res.status(200).json({
