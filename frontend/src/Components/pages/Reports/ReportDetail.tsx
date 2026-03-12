@@ -2,10 +2,11 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { CircleChevronLeft, CheckCircle2, AlertTriangle, XCircle, Download, FileText, Building2, TrendingUp, Shield, BarChart3, Eye, List } from "lucide-react"
 import { formatDateDDMMMYYYY } from "../../../utils/formatDate.js"
+import LoadingMessage from "../../UI/LoadingMessage"
 import "../UserManagement/user_management.css"
 import "./reports.css"
 
-const BASE_URL = import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1"
+const BASE_URL = import.meta.env.VITE_BASE_URL
 
 type DbRisk = {
   risk_mapping_id: number
@@ -118,9 +119,12 @@ function ReportDetail() {
     report: Record<string, unknown>
     createdAt: string
     expiryAt?: string | null
+    attestationExpiryAt?: string | null
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+
+  const LOADER_MIN_MS = 2500 // same as Assessments page
 
   useEffect(() => {
     if (!reportId?.trim()) {
@@ -136,6 +140,12 @@ function ReportDetail() {
     }
     setLoading(true)
     setNotFound(false)
+    const loadStart = Date.now()
+    const finishLoading = () => {
+      const elapsed = Date.now() - loadStart
+      const remaining = Math.max(0, LOADER_MIN_MS - elapsed)
+      setTimeout(() => setLoading(false), remaining)
+    }
     fetch(`${BASE_URL}/customerRiskReports/${encodeURIComponent(reportId)}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -155,6 +165,7 @@ function ReportDetail() {
             report: data.data.report ?? {},
             createdAt: data.data.createdAt ?? "",
             expiryAt: data.data.expiryAt ?? null,
+            attestationExpiryAt: data.data.attestationExpiryAt ?? null,
           })
           setNotFound(false)
         } else {
@@ -162,7 +173,7 @@ function ReportDetail() {
         }
       })
       .catch(() => setNotFound(true))
-      .finally(() => setLoading(false))
+      .finally(() => finishLoading())
   }, [reportId])
 
   useEffect(() => {
@@ -187,9 +198,7 @@ function ReportDetail() {
   if (loading) {
     return (
       <div className="sec_user_page org_settings_page reports_page report_detail_page">
-        <div className="report_detail_empty">
-          <p className="report_detail_empty_text">Loading report…</p>
-        </div>
+        <LoadingMessage message="Loading report…" />
       </div>
     )
   }
@@ -211,6 +220,19 @@ function ReportDetail() {
   const data = report.report as Record<string, unknown>
   const assessmentDate = formatDateDDMMMYYYY(report.createdAt)
   const title = report.title || "Analysis Report"
+  const expiryAt = report.expiryAt
+  const attestationExpiryAt = report.attestationExpiryAt
+  const isAssessmentExpired =
+    expiryAt != null &&
+    String(expiryAt).trim() !== "" &&
+    !Number.isNaN(new Date(expiryAt).getTime()) &&
+    new Date(expiryAt).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)
+  const isAttestationExpired =
+    attestationExpiryAt != null &&
+    String(attestationExpiryAt).trim() !== "" &&
+    !Number.isNaN(new Date(attestationExpiryAt).getTime()) &&
+    new Date(attestationExpiryAt).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)
+  const isArchived = isAssessmentExpired || isAttestationExpired
   const orgName = formatReportValue(data.customerOrganizationName)
   const sector = formatReportValue(data.customerSector)
 
@@ -255,9 +277,11 @@ function ReportDetail() {
         </a>
         <div className="report_assessment_title_row">
           <h1 className="report_assessment_title">{title}</h1>
-          <button type="button" className="report_detail_export_btn">
-            <Download size={18} /> Export PDF
-          </button>
+          {!isArchived && (
+            <button type="button" className="report_detail_export_btn">
+              <Download size={18} /> Export PDF
+            </button>
+          )}
         </div>
         <p className="report_assessment_subtitle">Analysis Report • {assessmentDate} • AI Generated</p>
       </header>

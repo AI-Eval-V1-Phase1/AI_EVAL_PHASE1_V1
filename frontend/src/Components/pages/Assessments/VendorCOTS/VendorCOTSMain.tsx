@@ -19,6 +19,7 @@ import {
   Shield,
   Sparkles,
   FileCheck,
+  Loader2,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { VENDOR_COTS_DATA } from "../../../../constants/vendorCotsData";
@@ -457,6 +458,7 @@ const VendorCOTSMain = () => {
           aria-label="Submitting assessment"
         >
           <div className="vendor_attestation_submit_overlay_content">
+            <Loader2 size={32} className="vendor_attestation_submit_overlay_loader" aria-hidden />
             <p>Submitting assessment…</p>
             <p className="vendor_attestation_submit_overlay_hint">Please wait. Do not close or refresh.</p>
           </div>

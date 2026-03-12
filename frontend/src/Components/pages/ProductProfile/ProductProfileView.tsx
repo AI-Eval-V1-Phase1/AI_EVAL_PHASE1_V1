@@ -1,8 +1,8 @@
 /**
  * Product Profile view for vendors: summary cards (Trust Score, No of products, Company, Regions),
- * product cards with trust score and View details, and View Product modal with attestation details.
+ * product cards with trust score and View details; details open on the page (no modal).
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Shield,
   FileCheck,
@@ -10,18 +10,22 @@ import {
   Globe,
   FileText,
   Package,
-  CircleX,
+  CircleChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
 import type { VendorSelfAttestationFormState } from "../../../types/vendorSelfAttestation";
 import type { GeneratedProductProfileReport } from "../../../types/generatedProductProfile";
+import LoadingMessage from "../../UI/LoadingMessage";
 import ProductProfileSummaryCard from "./ProductProfileSummaryCard";
 import GeneratedProductProfileCards from "./GeneratedProductProfileCards";
 import type {
   ProductProfileProduct,
   StoredGeneratedReport,
 } from "../DirectoryListing/DirectoryListing";
+import { ReportsPagination } from "../Reports/ReportsPagination";
 import "../UserManagement/user_management.css";
+import "../../../styles/page_tabs.css";
 import "./product_profile.css";
 import { formatDateDDMMMYYYY } from "../../../utils/formatDate.js";
 
@@ -134,10 +138,26 @@ function asGeneratedReport(raw: unknown): GeneratedProductProfileReport | null {
   };
 }
 
+/** True when attestation expiry date is set and in the past. */
+function isAttestationExpired(product: ProductProfileProduct): boolean {
+  const exp = product.attestationExpiryAt;
+  if (exp == null || String(exp).trim() === "") return false;
+  const expiry = new Date(exp);
+  if (Number.isNaN(expiry.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  expiry.setHours(0, 0, 0, 0);
+  return expiry.getTime() < today.getTime();
+}
+
 export interface ProductProfileViewProps {
   formState: VendorSelfAttestationFormState | null;
   /** List of products (attestations) for product cards */
   products?: ProductProfileProduct[];
+  /** Current tab: "current" (non-expired) or "archived" (expired attestation) */
+  productTab?: "current" | "archived";
+  /** Called when user switches product tab */
+  onProductTabChange?: (tab: "current" | "archived") => void;
   /** Fetch full attestation detail by id for View Product modal */
   fetchProductDetail?: (
     id: string,
@@ -173,6 +193,8 @@ export interface ProductProfileViewProps {
   onVendorDataInputChange?: (value: string) => void;
   onUseAttestationData?: () => void;
   onGenerateProfile?: () => void;
+  /** When true, hide edit controls (public listing toggle, generate profile, visibility toggles). */
+  viewOnly?: boolean;
 }
 
 export type SectionVisibilityKey =
@@ -189,6 +211,8 @@ export type SectionVisibilityKey =
 function ProductProfileView({
   formState,
   products = [],
+  productTab = "current",
+  onProductTabChange,
   fetchProductDetail,
   trustScore = "A+",
   compliancePercent = "92%",
@@ -208,8 +232,54 @@ function ProductProfileView({
   onVendorDataInputChange,
   onUseAttestationData,
   onGenerateProfile,
+  viewOnly = false,
 }: ProductProfileViewProps) {
-  const [viewProductModalOpen, setViewProductModalOpen] = useState(false);
+  const currentProducts = products.filter((p) => !isAttestationExpired(p));
+  const archivedProducts = products.filter((p) => isAttestationExpired(p));
+  const showVisibilityToggle = productTab === "current";
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+
+  /** Get trust score number (0–100) for a product for search/filter. */
+  const getProductTrustScore = (product: ProductProfileProduct): number | null => {
+    const report = asGeneratedReport(product.generated_profile_report);
+    const fromReport = report?.trustScore?.overallScore;
+    const fromRaw = getOverallScoreFromReport(product.generated_profile_report);
+    const n = typeof fromReport === "number" ? fromReport : fromRaw;
+    return typeof n === "number" && !Number.isNaN(n) ? Math.min(100, Math.max(0, n)) : null;
+  };
+
+  const matchesProductSearch = (product: ProductProfileProduct, q: string): boolean => {
+    const trim = q.trim().toLowerCase();
+    if (!trim) return true;
+    const nameMatch = product.productName.trim().toLowerCase().includes(trim);
+    const score = getProductTrustScore(product);
+    const scoreMatch = score != null && (String(score).includes(trim) || (trim === "0" && score === 0));
+    return nameMatch || scoreMatch;
+  };
+
+  const filteredCurrentProducts = currentProducts.filter((p) => matchesProductSearch(p, productSearchQuery));
+  const filteredArchivedProducts = archivedProducts.filter((p) => matchesProductSearch(p, productSearchQuery));
+
+  const [currentProductPage, setCurrentProductPage] = useState(1);
+  const [archivedProductPage, setArchivedProductPage] = useState(1);
+  const [productPageSize, setProductPageSize] = useState(10);
+
+  const paginatedCurrentProducts = filteredCurrentProducts.slice(
+    (currentProductPage - 1) * productPageSize,
+    currentProductPage * productPageSize,
+  );
+  const paginatedArchivedProducts = filteredArchivedProducts.slice(
+    (archivedProductPage - 1) * productPageSize,
+    archivedProductPage * productPageSize,
+  );
+
+  useEffect(() => {
+    setCurrentProductPage(1);
+    setArchivedProductPage(1);
+  }, [productSearchQuery]);
+
+  /** When set, product details are shown on the page instead of in a modal. */
+  const [selectedProductIdForDetail, setSelectedProductIdForDetail] = useState<string | null>(null);
   const [viewProductDetail, setViewProductDetail] =
     useState<VendorSelfAttestationFormState | null>(null);
   const [viewProductMeta, setViewProductMeta] = useState<{
@@ -220,6 +290,7 @@ function ProductProfileView({
     visibleToBuyer: boolean;
   } | null>(null);
   const [viewProductLoading, setViewProductLoading] = useState(false);
+  const LOADER_MIN_MS = 2500; // same as Assessments page
 
   /** Report to show on main page: from manual generate, selected stored report, or first product that has a report. */
   const reportToShow =
@@ -229,10 +300,11 @@ function ProductProfileView({
         ?.generated_profile_report,
     );
 
-  /** Average Trust Score = rounded average of each product's trust score (only products with a score count). */
+  /** Average Trust Score = rounded average of current (non-archived) products' trust scores only. */
   const averageTrustScore = useMemo(() => {
+    const currentOnly = products.filter((p) => !isAttestationExpired(p));
     const scores: number[] = [];
-    products.forEach((p) => {
+    currentOnly.forEach((p) => {
       const report = asGeneratedReport(p.generated_profile_report);
       const score =
         report?.trustScore?.overallScore ??
@@ -259,7 +331,7 @@ function ProductProfileView({
 
   const handleViewProduct = async (product: ProductProfileProduct) => {
     if (!fetchProductDetail) return;
-    setViewProductModalOpen(true);
+    setSelectedProductIdForDetail(product.id);
     setViewProductDetail(null);
     setViewProductMeta({
       productName: product.productName,
@@ -268,13 +340,22 @@ function ProductProfileView({
       productId: product.id,
       visibleToBuyer: product.visibleToBuyer ?? false,
     });
+    const loadStart = Date.now();
     setViewProductLoading(true);
     try {
       const detail = await fetchProductDetail(product.id);
       setViewProductDetail(detail);
     } finally {
-      setViewProductLoading(false);
+      const elapsed = Date.now() - loadStart;
+      const remaining = Math.max(0, LOADER_MIN_MS - elapsed);
+      setTimeout(() => setViewProductLoading(false), remaining);
     }
+  };
+
+  const handleBackToProducts = () => {
+    setSelectedProductIdForDetail(null);
+    setViewProductDetail(null);
+    setViewProductMeta(null);
   };
 
   const attRecord = viewProductDetail?.attestation as
@@ -322,41 +403,43 @@ function ProductProfileView({
 
   return (
     <div className="sec_user_page attestation_page org_settings_page product_profile_page">
-      <div className="heading_user_page page_header_align">
-        <div className="headers page_header_row">
-          <span className="icon_size_header" aria-hidden>
-            <FileText size={24} className="header_icon_svg" />
-          </span>
-          <div className="page_header_title_block">
-            <h1 className="page_header_title">Product Profile</h1>
-            <p className="sub_title page_header_subtitle">
-              Your AI product attestation data and compliance posture.
-            </p>
+      {!selectedProductIdForDetail && (
+        <div className="heading_user_page page_header_align">
+          <div className="headers page_header_row">
+            <span className="icon_size_header" aria-hidden>
+              <FileText size={24} className="header_icon_svg" />
+            </span>
+            <div className="page_header_title_block">
+              <h1 className="page_header_title">Product Profile</h1>
+              <p className="sub_title page_header_subtitle">
+                Your AI product attestation data and compliance posture.
+              </p>
+            </div>
+          </div>
+          <div className="btn_user_page product_profile_header_actions">
+            {onPublicListingToggle != null && (
+              <>
+                <div className="product_profile_toggle_wrap">
+                  <button
+                    type="button"
+                    className="product_profile_toggle"
+                    aria-pressed={publicListing}
+                    onClick={onPublicListingToggle}
+                    disabled={publicListingUpdating}
+                    aria-label="Public Directory Listing"
+                  />
+                  <span>Public Directory Listing</span>
+                </div>
+                {publicListingError != null && publicListingError !== "" && (
+                  <p className="product_profile_toggle_error" role="alert">
+                    {publicListingError}
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </div>
-        <div className="btn_user_page product_profile_header_actions">
-          {onPublicListingToggle != null && (
-            <>
-              <div className="product_profile_toggle_wrap">
-                <button
-                  type="button"
-                  className="product_profile_toggle"
-                  aria-pressed={publicListing}
-                  onClick={onPublicListingToggle}
-                  disabled={publicListingUpdating}
-                  aria-label="Public Directory Listing"
-                />
-                <span>Public Directory Listing</span>
-              </div>
-              {publicListingError != null && publicListingError !== "" && (
-                <p className="product_profile_toggle_error" role="alert">
-                  {publicListingError}
-                </p>
-              )}
-            </>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Generate profile: vendor data input + generate button; generated data in cards (no file) */}
       {/* {onGenerateProfile && (
@@ -401,6 +484,7 @@ function ProductProfileView({
         </section>
       )} */}
 
+      {!selectedProductIdForDetail && (
       <section className="product_profile_summary_cards">
         <ProductProfileSummaryCard
           title="Average Trust Score"
@@ -415,7 +499,8 @@ function ProductProfileView({
           secondary={
             averageTrustScore != null
               ? (() => {
-                  const withScore = products.filter(
+                  const currentOnly = products.filter((p) => !isAttestationExpired(p));
+                  const withScore = currentOnly.filter(
                     (p) =>
                       asGeneratedReport(p.generated_profile_report)?.trustScore?.overallScore != null ||
                       getOverallScoreFromReport(p.generated_profile_report) != null,
@@ -451,12 +536,158 @@ function ProductProfileView({
           iconColor="blue"
         />
       </section>
+      )}
 
-      {products.length > 0 && (
+      {(currentProducts.length > 0 || archivedProducts.length > 0) && (
         <section className="product_profile_products_section">
-          <h2 className="product_profile_products_heading">Products</h2>
-          <div className="product_profile_product_cards">
-            {products.map((product) => {
+          {selectedProductIdForDetail ? (
+            <div className="product_profile_detail_on_page">
+              <button
+                type="button"
+                className="product_profile_back_to_products_btn"
+                onClick={handleBackToProducts}
+                aria-label="Back to products"
+              >
+                <CircleChevronLeft size={20} aria-hidden />
+                Back to products
+              </button>
+              <h2 className="product_profile_detail_on_page_title">
+                {viewProductMeta?.productName ?? "Product details"}
+              </h2>
+              <div className="product_profile_detail_on_page_body">
+                {viewProductLoading && <LoadingMessage message="Loading…" />}
+                {!viewProductLoading && viewProductMeta && (
+                  <>
+                    <div className="attestation_visible_status">
+                      <div className="product_profile_modal_status_row">
+                        <span className="product_profile_modal_status_label">
+                          Attestation status
+                        </span>
+                        <span
+                          className={`product_profile_product_card_status product_profile_product_card_status_${viewProductMeta.status.toLowerCase()}`}
+                        >
+                          {viewProductMeta.status}
+                        </span>
+                        <span className="product_profile_modal_status_sub">
+                          {viewProductMeta.completedDate !== "—"
+                            ? `Completed: ${viewProductMeta.completedDate}`
+                            : "—"}
+                        </span>
+                      </div>
+                      {viewProductMeta.status === "Completed" &&
+                        onProductVisibilityToggle &&
+                        showVisibilityToggle && (
+                          <div className="product_profile_modal_visibility">
+                            <button
+                              type="button"
+                              className="product_profile_toggle product_profile_product_toggle"
+                              aria-pressed={viewProductMeta.visibleToBuyer}
+                              onClick={() => {
+                                const next = !viewProductMeta.visibleToBuyer;
+                                onProductVisibilityToggle(
+                                  viewProductMeta.productId,
+                                  next,
+                                );
+                                setViewProductMeta((prev) =>
+                                  prev ? { ...prev, visibleToBuyer: next } : null,
+                                );
+                              }}
+                              aria-label={`${viewProductMeta.visibleToBuyer ? "Hide" : "Show"} this product to buyers`}
+                            />
+                            <span className="product_profile_modal_visibility_label">
+                              Visible to buyers
+                            </span>
+                          </div>
+                        )}
+                    </div>
+
+                    {(() => {
+                      const viewedProduct = products.find(
+                        (p) => p.id === viewProductMeta.productId,
+                      );
+                      const pageReport =
+                        asGeneratedReport(
+                          viewedProduct?.generated_profile_report,
+                        ) ??
+                        asGeneratedReport(
+                          (
+                            viewProductDetail?.attestation as Record<
+                              string,
+                              unknown
+                            >
+                          )?.generated_profile_report,
+                        );
+                      return pageReport ? (
+                        <div
+                          className="product_profile_modal_generated_wrap"
+                          style={{ marginTop: "1rem" }}
+                        >
+                          <GeneratedProductProfileCards
+                            report={pageReport}
+                            sectionVisibility={showVisibilityToggle ? getSectionVisibility : undefined}
+                          />
+                        </div>
+                      ) : null;
+                    })()}
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+          <div className="product_profile_products_header_row">
+            <h2 className="product_profile_products_heading">Products</h2>
+            <div className="product_profile_products_search_wrap">
+              <Search size={18} className="product_profile_products_search_icon" aria-hidden />
+              <input
+                type="search"
+                placeholder="Search by product name or trust score…"
+                className="product_profile_products_search_input"
+                aria-label="Search products by name or trust score"
+                value={productSearchQuery}
+                onChange={(e) => setProductSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          {onProductTabChange && (
+            <div className="product_profile_products_tabs_row">
+              <div className="page_tabs" role="tablist" aria-label="Product list">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={productTab === "current"}
+                  aria-controls="product_profile_current_panel"
+                  id="product_profile_current_tab"
+                  className={`page_tab ${productTab === "current" ? "page_tab_active" : ""}`}
+                  onClick={() => onProductTabChange("current")}
+                >
+                  Current
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={productTab === "archived"}
+                  aria-controls="product_profile_archived_panel"
+                  id="product_profile_archived_tab"
+                  className={`page_tab ${productTab === "archived" ? "page_tab_active" : ""}`}
+                  onClick={() => onProductTabChange("archived")}
+                >
+                  Archived
+                </button>
+              </div>
+            </div>
+          )}
+          <div
+            id="product_profile_current_panel"
+            role="tabpanel"
+            aria-labelledby="product_profile_current_tab"
+            hidden={productTab !== "current"}
+            className="product_profile_product_cards_wrap"
+          >
+            {productTab === "current" && (
+              <>
+                <div className="product_profile_product_cards">
+                  {paginatedCurrentProducts.map((product) => {
               const productReport = asGeneratedReport(product.generated_profile_report);
               const overallFromReport = getOverallScoreFromReport(product.generated_profile_report);
               const trustScoreDisplay =
@@ -507,125 +738,100 @@ function ProductProfileView({
               </div>
               );
             })}
+                </div>
+                <ReportsPagination
+                  totalItems={filteredCurrentProducts.length}
+                  currentPage={currentProductPage}
+                  pageSize={productPageSize}
+                  onPageChange={setCurrentProductPage}
+                  onPageSizeChange={(size) => {
+                    setProductPageSize(size);
+                    setCurrentProductPage(1);
+                  }}
+                />
+              </>
+            )}
           </div>
+          <div
+            id="product_profile_archived_panel"
+            role="tabpanel"
+            aria-labelledby="product_profile_archived_tab"
+            hidden={productTab !== "archived"}
+            className="product_profile_product_cards_wrap"
+          >
+            {productTab === "archived" && (
+              <>
+                <div className="product_profile_product_cards">
+                  {paginatedArchivedProducts.map((product) => {
+              const productReport = asGeneratedReport(product.generated_profile_report);
+              const overallFromReport = getOverallScoreFromReport(product.generated_profile_report);
+              const trustScoreDisplay =
+                productReport?.trustScore != null
+                  ? `${productReport.trustScore.overallScore}%`
+                  : overallFromReport != null
+                    ? `${overallFromReport}%`
+                    : "—";
+              return (
+              <div key={product.id} className="product_profile_product_card">
+                <div className="product_profile_product_card_top">
+                  <div className="product_profile_product_card_content">
+                    <div className="product_profile_product_card_title_row">
+                      <span
+                        className="product_profile_product_card_icon"
+                        aria-hidden
+                      >
+                        {productInitials(product.productName)}
+                      </span>
+                      <div className="product_status_Data">
+                        <h3 className="product_profile_product_card_title">
+                          {product.productName}
+                        </h3>
+                        <span
+                          className={`product_profile_product_card_status product_profile_product_card_status_${product.status.toLowerCase()}`}
+                        >
+                          {product.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="product_profile_product_card_trust_badge">
+                    <span className="product_profile_product_card_trust_label">Trust score</span>
+                    <span className="product_profile_product_card_trust_value">{trustScoreDisplay}</span>
+                  </div>
+                </div>
+                <div className="product_profile_product_card_footer">
+                  <button
+                    type="button"
+                    className="product_profile_product_card_view_btn"
+                    onClick={() => handleViewProduct(product)}
+                    aria-label={`View details for ${product.productName}`}
+                  >
+                    View details
+                    <ChevronRight size={16} aria-hidden />
+                  </button>
+                </div>
+              </div>
+              );
+            })}
+                </div>
+                <ReportsPagination
+                  totalItems={filteredArchivedProducts.length}
+                  currentPage={archivedProductPage}
+                  pageSize={productPageSize}
+                  onPageChange={setArchivedProductPage}
+                  onPageSizeChange={(size) => {
+                    setProductPageSize(size);
+                    setArchivedProductPage(1);
+                  }}
+                />
+              </>
+            )}
+          </div>
+            </>
+          )}
         </section>
       )}
 
-      {viewProductModalOpen && (
-        <div
-          className="product_profile_modal_overlay"
-          onClick={() => setViewProductModalOpen(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="product_profile_modal_title"
-        >
-          <div
-            className="product_profile_modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="product_profile_modal_header">
-              <h2
-                id="product_profile_modal_title"
-                className="product_profile_modal_title"
-              >
-                {viewProductMeta?.productName ?? "Product details"}
-              </h2>
-              <button
-                type="button"
-                className="modal_close_btn"
-                onClick={() => setViewProductModalOpen(false)}
-                aria-label="Close"
-              >
-                <CircleX size={20} />
-              </button>
-            </div>
-            <div className="product_profile_modal_body">
-              {viewProductLoading && (
-                <div
-                  className="product_profile_loading"
-                  style={{ padding: "2rem", textAlign: "center" }}
-                >
-                  Loading…
-                </div>
-              )}
-              {!viewProductLoading && viewProductMeta && (
-                <>
-                  <div className="attestation_visible_status">
-                    <div className="product_profile_modal_status_row">
-                      <span className="product_profile_modal_status_label">
-                        Attestation status
-                      </span>
-                      <span
-                        className={`product_profile_product_card_status product_profile_product_card_status_${viewProductMeta.status.toLowerCase()}`}
-                      >
-                        {viewProductMeta.status}
-                      </span>
-                      <span className="product_profile_modal_status_sub">
-                        {viewProductMeta.completedDate !== "—"
-                          ? `Completed: ${viewProductMeta.completedDate}`
-                          : "—"}
-                      </span>
-                    </div>
-                    {viewProductMeta.status === "Completed" &&
-                      onProductVisibilityToggle && (
-                        <div className="product_profile_modal_visibility">
-                          <button
-                            type="button"
-                            className="product_profile_toggle product_profile_product_toggle"
-                            aria-pressed={viewProductMeta.visibleToBuyer}
-                            onClick={() => {
-                              const next = !viewProductMeta.visibleToBuyer;
-                              onProductVisibilityToggle(
-                                viewProductMeta.productId,
-                                next,
-                              );
-                              setViewProductMeta((prev) =>
-                                prev ? { ...prev, visibleToBuyer: next } : null,
-                              );
-                            }}
-                            aria-label={`${viewProductMeta.visibleToBuyer ? "Hide" : "Show"} this product to buyers`}
-                          />
-                          <span className="product_profile_modal_visibility_label">
-                            Visible to buyers
-                          </span>
-                        </div>
-                      )}
-                  </div>
-
-                  {(() => {
-                    const viewedProduct = products.find(
-                      (p) => p.id === viewProductMeta.productId,
-                    );
-                    const modalReport =
-                      asGeneratedReport(
-                        viewedProduct?.generated_profile_report,
-                      ) ??
-                      asGeneratedReport(
-                        (
-                          viewProductDetail?.attestation as Record<
-                            string,
-                            unknown
-                          >
-                        )?.generated_profile_report,
-                      );
-                    return modalReport ? (
-                      <div
-                        className="product_profile_modal_generated_wrap"
-                        style={{ marginTop: "1rem" }}
-                      >
-                        <GeneratedProductProfileCards
-                          report={modalReport}
-                          sectionVisibility={getSectionVisibility}
-                        />
-                      </div>
-                    ) : null;
-                  })()}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

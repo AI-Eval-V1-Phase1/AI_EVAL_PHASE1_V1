@@ -96,6 +96,12 @@ const TAB_ATTESTATION = "attestation";
 
 const Organizations = () => {
   document.title = "AI Eval | Organizations";
+  const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim();
+  const isViewOnly =
+    systemRole === "system manager" ||
+    systemRole === "system_manager" ||
+    systemRole === "system viewer" ||
+    systemRole === "system_viewer";
   const [isOrganization, setIsOrganization] = useState(false);
   const [isPreview, setIsPreview] = useState(true);
   const [previewOrg, setPreviewOrg] = useState(null);
@@ -299,7 +305,7 @@ const Organizations = () => {
             </div>
           </div>
 
-          {isOrganization && (
+          {isOrganization && !isViewOnly && (
             <CreateOrganization setIsOrganization={setIsOrganization} />
           )}
 
@@ -307,18 +313,22 @@ const Organizations = () => {
             <div className="team_members_card_header">
               <div>
                 <h2 className="org_settings_card_title">Organizations</h2>
-                <p className="org_settings_card_subtitle">View and manage organizations, status, and onboarding.</p>
+                <p className="org_settings_card_subtitle">
+                  {isViewOnly ? "View organizations, status, and onboarding." : "View and manage organizations, status, and onboarding."}
+                </p>
               </div>
-              <Button
-                className="invite_user_btn org_invite_btn"
-                onClick={createOrganization}
-              >
-                <Plus size={20} />
-                Add Organization
-              </Button>
+              {!isViewOnly && (
+                <Button
+                  className="invite_user_btn org_invite_btn"
+                  onClick={createOrganization}
+                >
+                  <Plus size={20} />
+                  Add Organization
+                </Button>
+              )}
             </div>
             <div className="team_members_table_wrapper">
-              <OrganizationDataTable openPreview={openPreview} />
+              <OrganizationDataTable openPreview={openPreview} viewOnly={isViewOnly} />
             </div>
           </div>
         </div>

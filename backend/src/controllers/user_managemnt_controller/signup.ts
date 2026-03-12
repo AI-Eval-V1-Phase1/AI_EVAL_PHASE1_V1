@@ -95,8 +95,8 @@ const userSignup = async (req: Request, res: Response) => {
     const orgId = existingRow.organization_id;
     const isAiEvalOrg = orgId === 1;
 
-    // Get org's platform role: use invited user's role if set (system admin/user/manager/viewer), else fall back to org role
-    const systemRoles = ["system admin", "system user", "system manager", "system viewer"];
+    // Get org's platform role: use invited user's role if set (system admin/user/manager/viewer/ai directory curator), else fall back to org role
+    const systemRoles = ["system admin", "system user", "system manager", "system viewer", "ai directory curator"];
     const invitedPlatformRole = existingRow.user_platform_role != null
       ? String(existingRow.user_platform_role).trim().toLowerCase()
       : "";
@@ -128,13 +128,30 @@ const userSignup = async (req: Request, res: Response) => {
       }
     }
 
+    const userNameTrimmed = userData.userName != null ? String(userData.userName).trim() : "";
+    if (userNameTrimmed !== "") {
+      const existingByUsername = await db
+        .select({ id: usersTable.id })
+        .from(usersTable)
+        .where(
+          and(
+            eq(usersTable.user_name, userNameTrimmed),
+            ne(usersTable.id, existingRow.id),
+          ),
+        )
+        .limit(1);
+      if (existingByUsername.length > 0) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+    }
+
     // Initial signup update: do not set user_onboarding_completed here (stays schema default "false").
     // It is set later only for: (1) non-admins (skip onboarding), or (2) admins when org already onboarded.
     const signupUpdatePayload = {
       email,
       user_first_name: userData.firstName != null ? String(userData.firstName) : null,
       user_last_name: userData.lastName != null ? String(userData.lastName) : null,
-      user_name: userData.userName != null ? String(userData.userName) : null,
+      user_name: userData.userName != null ? String(userData.userName).trim() || null : null,
       user_password: hashedPassword,
       account_status: "confirmed" as const,
       user_signup_completed: "true" as const,

@@ -11,7 +11,10 @@ import {
   Save,
   FileCheck,
   Info,
+  X,
+  Loader2,
 } from "lucide-react";
+import Modal from "../../UI/Modal";
 import { toast } from "react-toastify";
 import MultiStepTabs from "../../UI/MultiStepTabs";
 import StepVendorSelfAttestationPrev from "./StepVendorSelfAttestationPrev";
@@ -364,28 +367,104 @@ const VendorAttestationsMainForm = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [attestationId, setAttestationId] = useState<string | null>(null);
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
+  const [documentViewerLoading, setDocumentViewerLoading] = useState(false);
+  const [documentViewerUrl, setDocumentViewerUrl] = useState<string | null>(null);
+  const [documentViewerFileName, setDocumentViewerFileName] = useState<string | null>(null);
   const formStateRef = useRef(formState);
   formStateRef.current = formState;
+  const documentViewerUrlRef = useRef<string | null>(null);
+  documentViewerUrlRef.current = documentViewerUrl;
+
+  /** When user adds files before attestationId exists, we store File objects here and upload them on Save Draft / Continue. */
+  type PendingDocFiles = {
+    "0": File[];
+    "1": File[];
+    "2": Record<string, File[]>;
+    evidenceTestingPolicy: File[];
+  };
+  const defaultPending: PendingDocFiles = {
+    "0": [],
+    "1": [],
+    "2": {},
+    evidenceTestingPolicy: [],
+  };
+  const pendingFilesRef = useRef<PendingDocFiles>({ ...defaultPending });
+  const storePendingFiles = useCallback(
+    (slot: "0" | "1" | "evidenceTestingPolicy", files: File[], category?: string) => {
+      if (slot === "2" && category != null) {
+        const arr = pendingFilesRef.current["2"][category] ?? [];
+        arr.push(...files);
+        pendingFilesRef.current["2"][category] = arr;
+      } else if (slot === "0" || slot === "1" || slot === "evidenceTestingPolicy") {
+        pendingFilesRef.current[slot].push(...files);
+      }
+    },
+    [],
+  );
+  const hasPendingFiles = useCallback(() => {
+    const p = pendingFilesRef.current;
+    if (p["0"].length > 0 || p["1"].length > 0 || p.evidenceTestingPolicy.length > 0) return true;
+    return Object.values(p["2"]).some((arr) => arr.length > 0);
+  }, []);
+  const clearPendingFiles = useCallback(() => {
+    pendingFilesRef.current = {
+      "0": [],
+      "1": [],
+      "2": {},
+      evidenceTestingPolicy: [],
+    };
+  }, []);
+
+  const closeDocumentViewer = useCallback(() => {
+    const url = documentViewerUrlRef.current;
+    if (url) {
+      URL.revokeObjectURL(url);
+      documentViewerUrlRef.current = null;
+    }
+    setDocumentViewerUrl(null);
+    setDocumentViewerOpen(false);
+    setDocumentViewerLoading(false);
+    setDocumentViewerFileName(null);
+  }, []);
 
   const handleOpenDocument = useCallback(
-    async (fileName: string) => {
+    (fileName: string) => {
       const token =
         sessionStorage.getItem("bearerToken") ??
         sessionStorage.getItem("onboardingToken") ??
         (typeof urlToken === "string" ? urlToken : null);
-      if (!token || !attestationId) return;
-      const url = `${BASE_URL}/vendorSelfAttestation/document/${encodeURIComponent(attestationId)}/${encodeURIComponent(fileName)}`;
-      try {
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) return;
-        const blob = await res.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const w = window.open(blobUrl, "_blank", "noopener,noreferrer");
-        if (w) setTimeout(() => URL.revokeObjectURL(blobUrl), 3000);
-        else URL.revokeObjectURL(blobUrl);
-      } catch {
-        // ignore
+      if (!token || !attestationId) {
+        toast.error("Cannot open document. Save draft first if you have not yet.");
+        return;
       }
+      setDocumentViewerOpen(true);
+      setDocumentViewerLoading(true);
+      setDocumentViewerFileName(fileName);
+      setDocumentViewerUrl(null);
+      const base = (BASE_URL ?? "").toString().replace(/\/$/, "");
+      const url = `${base}/vendorSelfAttestation/document/${encodeURIComponent(attestationId)}/${encodeURIComponent(fileName)}`;
+      (async () => {
+        try {
+          const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+          if (!res.ok) {
+            setDocumentViewerOpen(false);
+            setDocumentViewerLoading(false);
+            setDocumentViewerFileName(null);
+            toast.error(res.status === 404 ? "Document not found." : "Failed to open document.");
+            return;
+          }
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          setDocumentViewerUrl(blobUrl);
+          setDocumentViewerLoading(false);
+        } catch {
+          setDocumentViewerOpen(false);
+          setDocumentViewerLoading(false);
+          setDocumentViewerFileName(null);
+          toast.error("Failed to open document.");
+        }
+      })();
     },
     [attestationId, BASE_URL, urlToken]
   );
@@ -740,6 +819,7 @@ const VendorAttestationsMainForm = () => {
                   documentUploadConfig={VENDOR_SELF_ATTESTATION.document_upload}
                   attestationId={attestationId}
                   onUploadDocument={uploadDocument}
+                  onStorePendingFiles={storePendingFiles}
                   title={stepHeaderProps.title}
                   subTitle={stepHeaderProps.subTitle}
                   icon={stepHeaderProps.icon}
@@ -786,6 +866,8 @@ const VendorAttestationsMainForm = () => {
                   setDocumentUpload={setDocumentUpload}
                   attestationId={attestationId}
                   onUploadDocument={uploadDocument}
+                  onStorePendingFiles={storePendingFiles}
+                  onOpenDocument={handleOpenDocument}
                 />
               );
             }
@@ -852,6 +934,7 @@ const VendorAttestationsMainForm = () => {
                   setDocumentUpload={setDocumentUpload}
                   attestationId={attestationId}
                   onUploadDocument={uploadDocument}
+                  onStorePendingFiles={storePendingFiles}
                   data={
                     VENDOR_SELF_ATTESTATION.evidence_supporting_documentation
                   }
@@ -905,34 +988,31 @@ const VendorAttestationsMainForm = () => {
     }
     const latestState = formStateRef.current;
     const endpoint = `${BASE_URL}/vendorSelfAttestation`;
-    const documentUpload = latestState.documentUpload ?? defaultDocumentUpload;
+    let documentUpload = latestState.documentUpload ?? defaultDocumentUpload;
     const attestation = latestState.attestation ?? {};
-    const payload: Record<string, unknown> = {
-      ...attestation,
-      document_uploads: documentUpload,
-      is_draft: isDraft,
-      companyProfile: latestState.companyProfile,
-    };
-    // const endpoint = `${BASE_URL}/vendorSelfAttestation`;
-    // const documentUpload = formState.documentUpload ?? defaultDocumentUpload;
-    // const payload: Record<string, unknown> = {
-    //   ...formState.attestation,
-    //   document_uploads: documentUpload,
-    //   is_draft: isDraft,
-    //   companyProfile: formState.companyProfile,
-    // };
-    // Ensure product_name is always sent (avoids stale closure + JSON.stringify omits undefined)
-    const productName = attestation.product_name;
-    payload.product_name =
-      productName != null && String(productName).trim() !== ""
-        ? String(productName).trim()
-        : null;
-    if (attestationId) {
-      payload.attestationId = attestationId;
-    } else {
-      payload.newAttestation = true;
-    }
-    try {
+    let currentAttestationId = attestationId;
+    const pending = pendingFilesRef.current;
+
+    const doPost = async (
+      attId: string | null,
+      docUpload: DocumentUploadState,
+    ): Promise<{ ok: boolean; savedId?: string }> => {
+      const payload: Record<string, unknown> = {
+        ...attestation,
+        document_uploads: docUpload,
+        is_draft: isDraft,
+        companyProfile: latestState.companyProfile,
+      };
+      const productName = attestation.product_name;
+      payload.product_name =
+        productName != null && String(productName).trim() !== ""
+          ? String(productName).trim()
+          : null;
+      if (attId) {
+        payload.attestationId = attId;
+      } else {
+        payload.newAttestation = true;
+      }
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -951,8 +1031,7 @@ const VendorAttestationsMainForm = () => {
         result = text ? JSON.parse(text) : {};
       } catch {
         setSubmitError("Invalid response from server");
-        if (!isDraft) setSubmitting(false);
-        return false;
+        return { ok: false };
       }
       if (!response.ok) {
         const msg =
@@ -965,17 +1044,106 @@ const VendorAttestationsMainForm = () => {
         } else {
           setSubmitError(msg);
         }
+        return { ok: false };
+      }
+      const savedId = result.success && result.attestation?.id
+        ? String(result.attestation.id)
+        : undefined;
+      return { ok: true, savedId };
+    };
+
+    try {
+      if (!currentAttestationId && hasPendingFiles()) {
+        const first = await doPost(null, defaultDocumentUpload);
+        if (!first.ok) {
+          if (!isDraft) setSubmitting(false);
+          return false;
+        }
+        if (first.savedId) {
+          currentAttestationId = first.savedId;
+          setAttestationId(first.savedId);
+          if (isDraft) setFetchError(null);
+          if (window.history.replaceState) {
+            const params = new URLSearchParams(window.location.search);
+            params.delete("new");
+            params.set("edit", first.savedId);
+            const url =
+              window.location.pathname +
+              `?${params.toString()}` +
+              (window.location.hash || "");
+            window.history.replaceState(null, "", url);
+          }
+        }
+      }
+
+      if (hasPendingFiles() && currentAttestationId) {
+        const merged: DocumentUploadState = {
+          "0": [],
+          "1": [],
+          "2": {
+            categories: documentUpload["2"]?.categories ?? [],
+            byCategory: { ...(documentUpload["2"]?.byCategory ?? {}) },
+          },
+          evidenceTestingPolicy: [],
+        };
+        for (const file of pending["0"]) {
+          try {
+            const name = await uploadDocument(currentAttestationId, file);
+            merged["0"].push(name);
+          } catch {
+            merged["0"].push(file.name);
+          }
+        }
+        for (const file of pending["1"]) {
+          try {
+            const name = await uploadDocument(currentAttestationId, file);
+            merged["1"].push(name);
+          } catch {
+            merged["1"].push(file.name);
+          }
+        }
+        for (const [cat, files] of Object.entries(pending["2"])) {
+          merged["2"].byCategory[cat] = [];
+          for (const file of files) {
+            try {
+              const name = await uploadDocument(currentAttestationId, file);
+              merged["2"].byCategory[cat].push(name);
+            } catch {
+              merged["2"].byCategory[cat].push(file.name);
+            }
+          }
+        }
+        for (const file of pending.evidenceTestingPolicy) {
+          try {
+            const name = await uploadDocument(currentAttestationId, file);
+            merged.evidenceTestingPolicy.push(name);
+          } catch {
+            merged.evidenceTestingPolicy.push(file.name);
+          }
+        }
+        clearPendingFiles();
+        documentUpload = merged;
+        setDocumentUpload(merged);
+        const second = await doPost(currentAttestationId, merged);
+        if (!second.ok) {
+          if (!isDraft) setSubmitting(false);
+          return false;
+        }
+        return true;
+      }
+
+      const single = await doPost(currentAttestationId ?? null, documentUpload);
+      if (!single.ok) {
         if (!isDraft) setSubmitting(false);
         return false;
       }
-      if (result.success && result.attestation?.id) {
-        const savedId = String(result.attestation.id);
-        setAttestationId(savedId);
+      if (single.savedId && !currentAttestationId) {
+        setAttestationId(single.savedId);
         if (isDraft) setFetchError(null);
         if (window.history.replaceState) {
           const params = new URLSearchParams(window.location.search);
           params.delete("new");
-          params.set("edit", savedId);
+          params.set("edit", single.savedId);
           const url =
             window.location.pathname +
             `?${params.toString()}` +
@@ -983,7 +1151,7 @@ const VendorAttestationsMainForm = () => {
           window.history.replaceState(null, "", url);
         }
       }
-      return result.success === true;
+      return true;
     } catch {
       setSubmitError("Network or server error");
       if (!isDraft) setSubmitting(false);
@@ -1016,14 +1184,53 @@ const VendorAttestationsMainForm = () => {
           className="vendor_attestation_submit_overlay"
           role="status"
           aria-live="polite"
-          aria-label="Submitting attestation"
+          aria-label="Submitting attestation and generating product profile"
         >
           <div className="vendor_attestation_submit_overlay_content">
-            <p>Submitting attestation…</p>
+            <Loader2 size={32} className="vendor_attestation_submit_overlay_loader" aria-hidden />
+            <p>Submitting attestation and generating product profile…</p>
             <p className="vendor_attestation_submit_overlay_hint">Please wait. Do not close or refresh.</p>
           </div>
         </div>
       )}
+
+      <Modal
+        isOpen={documentViewerOpen}
+        onClose={closeDocumentViewer}
+        overlayClassName="vendor_attestation_doc_viewer_overlay"
+        popupClassName="vendor_attestation_doc_viewer_modal"
+      >
+        <div className="vendor_attestation_doc_viewer_content">
+          <div className="vendor_attestation_doc_viewer_header">
+            <span className="vendor_attestation_doc_viewer_title">
+              {documentViewerFileName ?? "Document"}
+            </span>
+            <button
+              type="button"
+              className="vendor_attestation_doc_viewer_close"
+              onClick={closeDocumentViewer}
+              aria-label="Close document viewer"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <div className="vendor_attestation_doc_viewer_body">
+            {documentViewerLoading ? (
+              <div className="vendor_attestation_doc_viewer_loading">
+                <Loader2 size={32} className="spin" aria-hidden />
+                <p>Loading document…</p>
+              </div>
+            ) : documentViewerUrl ? (
+              <iframe
+                title={documentViewerFileName ?? "Document"}
+                src={documentViewerUrl}
+                className="vendor_attestation_doc_viewer_iframe"
+              />
+            ) : null}
+          </div>
+        </div>
+      </Modal>
+
       <div className="org_settings_header page_header_align">
         <div className="org_settings_headers page_header_row">
           <span className="icon_size_header" aria-hidden>

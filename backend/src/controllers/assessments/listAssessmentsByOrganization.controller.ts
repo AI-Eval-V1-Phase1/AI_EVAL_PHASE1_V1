@@ -39,6 +39,11 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
     // Ensure string for varchar column (avoids driver/DB type mismatch)
     const orgIdParam = String(orgIdStr);
 
+    // Mark assessments as expired in DB when expiry_at has passed
+    await pool.query(
+      `UPDATE assessments SET status = 'expired' WHERE expiry_at IS NOT NULL AND expiry_at < now() AND status = 'submitted'`,
+    );
+
     // Use raw SQL to avoid Drizzle query builder errors (e.g. param binding) on this endpoint
     const whereClause = isSystemAdmin ? "1 = 1" : 'a.organization_id = $1';
     const queryParams = isSystemAdmin ? [] : [orgIdParam];
@@ -126,7 +131,8 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
         v.risk_mitigation AS "vendorRiskMitigation",
         v.created_at AS "vendorCotsCreatedAt",
         v.updated_at AS "vendorCotsUpdatedAt",
-        vsa.product_name AS "attestationProductName"
+        vsa.product_name AS "attestationProductName",
+        vsa.expiry_at AS "attestationExpiryAt"
       FROM assessments a
       LEFT JOIN cots_buyer_assessments b ON a.id = b.assessment_id
       LEFT JOIN cots_vendor_assessments v ON a.id = v.assessment_id
@@ -209,6 +215,8 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       riskMitigationMappingIds: r.riskMitigationMappingIds ?? null,
       cotsCreatedAt: r.cotsCreatedAt ?? null,
       cotsUpdatedAt: r.cotsUpdatedAt ?? null,
+      // Vendor COTS: linked attestation expiry (when attestation expires, assessment is archived too)
+      attestationExpiryAt: r.attestationExpiryAt instanceof Date ? r.attestationExpiryAt.toISOString() : (r.attestationExpiryAt != null ? String(r.attestationExpiryAt) : null),
       // Vendor COTS fields (populated when type === "cots_vendor")
       vendorAttestationId: r.vendorAttestationId ?? null,
       customerOrganizationName: r.customerOrganizationName ?? null,

@@ -1,7 +1,18 @@
+/* 4 cards per row; responsive: 2 on medium screens, 1 on small */
 .general_rpr_cards_sec {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
+}
+@media (max-width: 1200px) {
+  .general_rpr_cards_sec {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .general_rpr_cards_sec {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* General reports css */
@@ -9,9 +20,19 @@
 .gen_reports_assessment_select {
   width: 100%;
   display: flex;
-  align-content: center;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 0.4em;
+}
+/* Label on top so dropdown starts at same left edge as content below (no label indent) */
+.gen_reports_assessment_select .select_label {
+  width: 100%;
+  margin: 0;
+}
+.gen_reports_assessment_select .select_input,
+#vendor_assessment {
+  width: 100%;
+  box-sizing: border-box;
 }
 .gen_reports_search_wrap {
   width: 50%;
@@ -196,12 +217,15 @@
   background-color: #f3f4f6;
   color: #374151;
   border: 1px solid #d1d5db;
+  cursor: pointer;
 }
 
-.report_types_popup_actions .orgCancelBtn:hover {
-  background-color: #e5e7eb;
-  border-color: #9ca3af;
-}
+/* .report_types_popup_actions .orgCancelBtn:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+  cursor: pointer;
+} */
 
 .report_types_popup_actions .orgCreateBtn {
   background-color: var(--main-auth-button-color, #2563eb);
@@ -488,9 +512,44 @@
   color: lightslategray;
 }
 
+/* Archived state (assessment or attestation expired – same as Complete Reports) */
+.general_rpr_card_status_archived {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #fff;
+  background: #6b7280;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+}
+
+.general_rpr_card_archived {
+  opacity: 0.85;
+}
+
+.general_rpr_card_archived .view_rpr_btn {
+  /* cursor: not-allowed; */
+  /* opacity: 0.8; */
+}
+
 /* Allow tooltips to extend outside the card (avoid clipping) */
 .general_rpr_card.vendor_directory_card {
   overflow: visible;
+}
+
+/* Keep Expires on and View Report at same level across all cards: title area grows, footer pinned to bottom */
+.general_rpr_card .general_report_card_header {
+  flex-shrink: 0;
+}
+.general_rpr_card .general_rpr_title {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.general_rpr_card .general_rpr_card_footer {
+  flex-shrink: 0;
+  margin-top: auto;
 }
 
 /* General report card: title two lines + ellipsis, hover tooltip shows full name */

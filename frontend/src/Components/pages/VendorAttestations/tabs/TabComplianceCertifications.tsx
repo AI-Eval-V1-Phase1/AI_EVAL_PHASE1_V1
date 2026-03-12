@@ -1,9 +1,10 @@
 /**
  * Vendor Self Attestation – Compliance & Certifications tab content.
  * Includes Regulatory and Compliance Certification Material upload (moved from Document Upload).
- * Heading, subheading, and icon from step config (Vendor Onboarding UI pattern).
+ * Uses standard FileUpload UI per certification (one file, max 10MB).
  */
 import type { ReactNode } from "react";
+import { toast } from "react-toastify";
 import AttestationDynamicStep from "../AttestationDynamicStep";
 import FormField from "../../../UI/FormField";
 import FileUpload from "../../../UI/FileUpload";
@@ -29,11 +30,13 @@ export interface TabComplianceCertificationsProps {
   setDocumentUpload?: React.Dispatch<React.SetStateAction<DocumentUploadState>>;
   attestationId?: string | null;
   onUploadDocument?: (attestationId: string, file: File) => Promise<string>;
+  onStorePendingFiles?: (slot: "0" | "1" | "evidenceTestingPolicy", files: File[], category?: string) => void;
+  onOpenDocument?: (fileName: string) => void;
 }
 
 const REGULATORY_LABEL = "Regulatory and Compliance Certification Material";
 const REGULATORY_PLACEHOLDER =
-  "Ability to upload the documents and be parsed to pull necessary information for aspects of the assessment";
+  "Select certification types; for each certificate you can upload one file (max 10MB). Documents are parsed for assessment information.";
 
 function TabComplianceCertifications({
   attestation,
@@ -47,6 +50,8 @@ function TabComplianceCertifications({
   setDocumentUpload,
   attestationId,
   onUploadDocument,
+  onStorePendingFiles,
+  onOpenDocument,
 }: TabComplianceCertificationsProps) {
   const regulatory = documentUpload?.["2"] ?? { categories: [], byCategory: {} };
   const categories = regulatory.categories ?? [];
@@ -98,6 +103,9 @@ function TabComplianceCertifications({
       }
       setFilesForCategory(category, [...current, ...uploaded]);
     } else {
+      if (!attestationId && selectedFiles?.length && onStorePendingFiles) {
+        onStorePendingFiles("2", selectedFiles, category);
+      }
       setFilesForCategory(category, fileNames);
     }
   };
@@ -129,7 +137,7 @@ function TabComplianceCertifications({
             tooltipText={REGULATORY_PLACEHOLDER}
           >
             <p style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "0.5rem" }}>
-              Select certification types and upload files for each. Accepted: PDF, DOCX, PPT. Max 10MB per file.
+              Select certification types and upload one file per certification. Max 10MB per file.
             </p>
             <ChipMultiSelect
               id="regulatory-document-categories-compliance"
@@ -140,25 +148,31 @@ function TabComplianceCertifications({
             />
           </FormField>
           {categories.length > 0 && (
-            <div style={{ marginTop: "1rem" }}>
-              {categories.map((category) => (
-                <div key={category} className="form_fields_vendor" style={{ marginBottom: "1rem" }}>
-                  <FormField
-                    label={category}
-                    mandatory={false}
-                    tooltipText={`Upload files for ${category}. Accepted: PDF, DOCX, PPT. Max 10MB per file.`}
-                  >
-                    <FileUpload
-                      accept=".pdf,.doc,.docx,.ppt,.pptx"
-                      maxSizeBytes={MAX_FILE_SIZE_BYTES}
-                      value={byCategory[category] ?? []}
-                      onFilesChange={(fileNames, selectedFiles) =>
-                        handleFilesChangeForCategory(category, fileNames, selectedFiles)
-                      }
-                    />
-                  </FormField>
-                </div>
-              ))}
+            <div style={{ marginTop: "1rem" }} className="compliance_cert_categories">
+              {categories.map((category) => {
+                const docs = byCategory[category] ?? [];
+                return (
+                  <div key={category} className="form_fields_vendor compliance_cert_category_block" style={{ marginBottom: "1rem" }}>
+                    <FormField
+                      label={category}
+                      mandatory={false}
+                      tooltipText={`Upload one file for ${category}. Max 10MB.`}
+                    >
+                      <FileUpload
+                        accept=".pdf,.doc,.docx,.ppt,.pptx"
+                        maxSizeBytes={MAX_FILE_SIZE_BYTES}
+                        maxFiles={1}
+                        value={byCategory[category] ?? []}
+                        onFilesChange={(fileNames, selectedFiles) =>
+                          handleFilesChangeForCategory(category, fileNames, selectedFiles)
+                        }
+                        onValidationError={(msg) => msg && toast.error(msg)}
+                        disabled={(byCategory[category] ?? []).length >= 1}
+                      />
+                    </FormField>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

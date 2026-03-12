@@ -42,6 +42,7 @@ function ReportCard({
     if ((e.target as HTMLElement).closest(".report_card_download") || (e.target as HTMLElement).closest(".report_card_delete")) {
       return
     }
+    // if (archived) return
     if (onSelect) {
       e.preventDefault()
       onSelect(reportId)
@@ -80,10 +81,10 @@ function ReportCard({
             <Download size={20} />
           </button>
         )}
-        {archived && onDelete && (
+        {/* {archived && onDelete && (
           <button
             type="button"
-            className="report_card_delete"
+            className="report_card_delete report_card_delete_icon_only report_card_download"
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
@@ -92,9 +93,8 @@ function ReportCard({
             aria-label="Delete report"
           >
             <Trash2 size={18} />
-            Delete
           </button>
-        )}
+        )} */}
       </div>
     </>
   )
@@ -102,16 +102,21 @@ function ReportCard({
   if (onSelect) {
     return (
       <div
-        role="button"
-        tabIndex={0}
-        className="report_card"
+        role={archived ? undefined : "button"}
+        tabIndex={archived ? undefined : 0}
+        className={`report_card`}
+        // className={`report_card${archived ? " report_card_archived" : ""}`}
         onClick={handleClick}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault()
-            onSelect(reportId)
-          }
-        }}
+        onKeyDown={
+          archived
+            ? undefined
+            : (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  onSelect?.(reportId)
+                }
+              }
+        }
       >
         {content}
       </div>

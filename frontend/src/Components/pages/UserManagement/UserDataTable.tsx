@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 import "../UserProfile/user_profile.css";
 import "../../../styles/popovers.css";
 
-const UserDataTable = ({ refreshKey = 0 }: { refreshKey?: number }) => {
+const UserDataTable = ({ refreshKey = 0, viewOnly = false }: { refreshKey?: number; viewOnly?: boolean }) => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const [filterText, setFilterText] = React.useState("");
@@ -230,19 +230,58 @@ const UserDataTable = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     return "—";
   }
 
-  /** Display role label (capitalize, map admin -> Org Admin etc.) */
+  /** Display role label: buyer org -> AI Adoption prefix; vendor org -> T&SA prefix; system roles as-is. */
   function getRoleLabel(row: { role?: string; user_platform_role?: string }): string {
     const r = (row.role ?? row.user_platform_role ?? "").trim();
     if (!r) return "—";
-    const map: Record<string, string> = {
-      admin: "Org Admin",
+    const platformRole = (row.user_platform_role ?? "").trim().toLowerCase();
+    const roleLower = r.toLowerCase();
+
+    const systemRoleMap: Record<string, string> = {
       "system admin": "System Admin",
+      "system manager": "System Manager",
+      "system viewer": "System Viewer",
+      "system user": "System User",
+      "ai directory curator": "AI Directory Curator",
+    };
+    if (systemRoleMap[platformRole] || systemRoleMap[roleLower]) {
+      return systemRoleMap[platformRole] ?? systemRoleMap[roleLower] ?? r.replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+
+    const vendorRoleMap: Record<string, string> = {
+      admin: "T&SA Admin",
+      manager: "T&SA Manager",
+      lead: "T&SA Lead",
+      engineer: "T&SA Engineer",
+      viewer: "T&SA Viewer",
+      analyst: "T&SA Lead",
+      user: "T&SA Engineer",
+    };
+    const buyerRoleMap: Record<string, string> = {
+      admin: "AI Adoption Admin",
+      manager: "AI Adoption Manager",
+      lead: "AI Adoption Lead",
+      engineer: "AI Adoption Engineer",
+      viewer: "AI Adoption Viewer",
+      analyst: "AI Adoption Lead",
+      user: "AI Adoption Engineer",
+    };
+
+    if (platformRole === "vendor") {
+      return vendorRoleMap[roleLower] ?? r.replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+    if (platformRole === "buyer") {
+      return buyerRoleMap[roleLower] ?? r.replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+
+    const defaultMap: Record<string, string> = {
+      admin: "Org Admin",
       analyst: "Assessor",
       viewer: "Viewer",
       user: "User",
       manager: "Manager",
     };
-    return map[r.toLowerCase()] ?? r.replace(/\b\w/g, (c) => c.toUpperCase());
+    return defaultMap[roleLower] ?? r.replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
   const columns = [
@@ -355,13 +394,15 @@ const UserDataTable = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         const signupCompleted = (row.user_signup_completed ?? "").toString().toLowerCase() === "true";
         const isExpiredStatus = accountStatus === "expired";
         const isInvitedStatus = accountStatus === "invited";
-        // Edit only when confirmed; disabled for invited and expired.
-        const editEnabled = accountStatus === "confirmed";
-        // Reinvite only when expired; disabled when invited.
-        const reinviteEnabled = isExpiredStatus;
-        // Resend onboarding only when signup completed and onboarding link expired; when account is expired, only reinvite/view.
+        const currentUserId = sessionStorage.getItem("userId") ?? "";
+        const isCurrentUser = currentUserId !== "" && String(row.id) === String(currentUserId);
+        // Edit only when confirmed and not the current user (users cannot edit their own row in the table). Disabled when viewOnly.
+        const editEnabled = !viewOnly && accountStatus === "confirmed" && !isCurrentUser;
+        // Reinvite only when expired; disabled when invited or viewOnly.
+        const reinviteEnabled = !viewOnly && isExpiredStatus;
+        // Resend onboarding only when signup completed and onboarding link expired; when account is expired, only reinvite/view. Disabled when viewOnly.
         const resendOnboardingEnabled =
-          !isExpiredStatus && signupCompleted && onboardingStatus === "expired";
+          !viewOnly && !isExpiredStatus && signupCompleted && onboardingStatus === "expired";
         return (
           <div className="user_table_actions">
             <button
@@ -373,39 +414,43 @@ const UserDataTable = ({ refreshKey = 0 }: { refreshKey?: number }) => {
             >
               <Eye size={16} />
             </button>
-            <button
-              type="button"
-              className="user_table_action_btn user_table_action_btn_icon"
-              onClick={() => editEnabled && updateUser(row)}
-              title="Edit"
-              aria-label="Edit user"
-              disabled={!editEnabled}
-              aria-disabled={!editEnabled}
-            >
-              <SquarePen size={16} />
-            </button>
-            <button
-              type="button"
-              className="user_table_action_btn user_table_action_btn_icon"
-              onClick={() => reinviteEnabled && openReinviteConfirm(row)}
-              title="Re-Invite"
-              aria-label="Resend signup link"
-              disabled={!reinviteEnabled}
-              aria-disabled={!reinviteEnabled}
-            >
-              <Send size={16} />
-            </button>
-            <button
-              type="button"
-              className="user_table_action_btn user_table_action_btn_icon"
-              onClick={() => resendOnboardingEnabled && openResendOnboardingConfirm(row)}
-              title="Resend - Onboarding"
-              aria-label="Resend onboarding"
-              disabled={!resendOnboardingEnabled}
-              aria-disabled={!resendOnboardingEnabled}
-            >
-              <RefreshCw size={16} />
-            </button>
+            {!viewOnly && (
+              <>
+                <button
+                  type="button"
+                  className="user_table_action_btn user_table_action_btn_icon"
+                  onClick={() => editEnabled && updateUser(row)}
+                  title="Edit"
+                  aria-label="Edit user"
+                  disabled={!editEnabled}
+                  aria-disabled={!editEnabled}
+                >
+                  <SquarePen size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="user_table_action_btn user_table_action_btn_icon"
+                  onClick={() => reinviteEnabled && openReinviteConfirm(row)}
+                  title="Re-Invite"
+                  aria-label="Resend signup link"
+                  disabled={!reinviteEnabled}
+                  aria-disabled={!reinviteEnabled}
+                >
+                  <Send size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="user_table_action_btn user_table_action_btn_icon"
+                  onClick={() => resendOnboardingEnabled && openResendOnboardingConfirm(row)}
+                  title="Resend - Onboarding"
+                  aria-label="Resend onboarding"
+                  disabled={!resendOnboardingEnabled}
+                  aria-disabled={!resendOnboardingEnabled}
+                >
+                  <RefreshCw size={16} />
+                </button>
+              </>
+            )}
           </div>
         );
       },

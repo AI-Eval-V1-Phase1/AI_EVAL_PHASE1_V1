@@ -35,11 +35,15 @@ interface AssessmentRow {
   status: string;
   organizationId?: string | null;
   productName?: string | null;
+  vendorProductName?: string | null;
   vendorName?: string | null;
   customerOrganizationName?: string | null;
   customerSector?: string | null;
   product_in_scope?: string | null;
   productInScope?: string | null;
+  expiryAt?: string | null;
+  /** When in the past, linked attestation is expired (exclude from dropdown). */
+  attestationExpiryAt?: string | null;
   [key: string]: unknown;
 }
 
@@ -73,19 +77,41 @@ interface ChatMessageItem {
   battleCard?: BattleCardData;
 }
 
-function getVendorAssessmentLabel(a: AssessmentRow): string {
-  const org = (a.customerOrganizationName ?? "").toString().trim();
-  const productInScope =
-    (a.product_in_scope ?? a.productInScope ?? "").toString().trim();
-  if (org && productInScope) return `${org} and ${productInScope}`;
-  if (org) return org;
-  if (productInScope) return productInScope;
-  const product = (a.productName ?? "").toString().trim();
-  const vendor = (a.vendorName ?? "").toString().trim();
-  if (product && vendor) return `${product} – ${vendor}`;
-  if (product) return product;
-  if (vendor) return vendor;
+/** Dropdown label: "Org Name - Product Name" (customer org + attestation product name) */
+function getSalesAgentAssessmentLabel(a: AssessmentRow): string {
+  const orgName = (a.customerOrganizationName ?? "").toString().trim();
+  const productName = (a.vendorProductName ?? a.productName ?? "").toString().trim();
+  if (orgName && productName) return `${orgName} - ${productName}`;
+  if (productName) return productName;
+  if (orgName) return orgName;
   return `Vendor assessment #${a.assessmentId}`;
+}
+
+function isAssessmentExpired(row: AssessmentRow): boolean {
+  const expiryAt = row.expiryAt;
+  if (expiryAt == null || String(expiryAt).trim() === "") return false;
+  const expiry = new Date(expiryAt);
+  if (Number.isNaN(expiry.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  expiry.setHours(0, 0, 0, 0);
+  return expiry.getTime() < today.getTime();
+}
+
+/** True when the linked attestation has an expiry date and it has passed. */
+function isAttestationExpired(row: AssessmentRow): boolean {
+  const attestationExpiryAt = row?.attestationExpiryAt;
+  if (attestationExpiryAt == null || String(attestationExpiryAt).trim() === "") return false;
+  try {
+    const expiry = new Date(attestationExpiryAt);
+    if (Number.isNaN(expiry.getTime())) return false;
+    const today = new Date();
+    expiry.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return expiry.getTime() < today.getTime();
+  } catch {
+    return false;
+  }
 }
 
 const GREETING =
@@ -164,7 +190,7 @@ const BATTLE_CARD_QUESTION = "Create a battle card for my sales positioning.";
 export function SalesEnablement() {
   useEffect(() => {
     document.title = "AI Eval | Sales Agent";
-  },[]);
+  }, []);
   const [assessmentsList, setAssessmentsList] = useState<AssessmentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAssessmentId, setSelectedAssessmentId] = useState("");
@@ -211,15 +237,26 @@ export function SalesEnablement() {
   const completedVendorAssessments = assessmentsList.filter(
     (a) =>
       (a.type ?? "").toLowerCase() === "cots_vendor" &&
-      (a.status ?? "").toLowerCase() !== "draft",
+      (a.status ?? "").toLowerCase() !== "draft" &&
+      !isAssessmentExpired(a) &&
+      !isAttestationExpired(a),
   );
-
-  console.log("assesments", completedVendorAssessments)
 
   const selectOptions = completedVendorAssessments.map((a) => ({
     value: String(a.assessmentId),
-    label: getVendorAssessmentLabel(a),
+    label: getSalesAgentAssessmentLabel(a),
   }));
+
+  useEffect(() => {
+    if (
+      selectedAssessmentId &&
+      !completedVendorAssessments.some(
+        (a) => String(a.assessmentId) === String(selectedAssessmentId),
+      )
+    ) {
+      setSelectedAssessmentId("");
+    }
+  }, [selectedAssessmentId, completedVendorAssessments]);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedAssessmentId(e.target.value);
@@ -574,7 +611,7 @@ export function SalesEnablement() {
                       <span className="chat_message_icon sales_enablement_agent_icon">
                         <BotIcon size={18} />
                       </span>
-                      <div className="bot_answer_sec">
+                      <div className="bot_answer_sec" style={msg.text && msg.text.length > 300 ? { whiteSpace: "pre-wrap" } : undefined}>
                         {msg.text}
                       </div>
                     </div>

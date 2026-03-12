@@ -1,13 +1,16 @@
 import type { Request, Response } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, or } from "drizzle-orm";
 import { db } from "../../database/db.js";
 import { usersTable } from "../../schema/schema.js";
 import { customerRiskAssessmentReports } from "../../schema/assessments/customerRiskAssessmentReports.js";
 import { assessments } from "../../schema/assessments/assessments.js";
+import { cotsVendorAssessments } from "../../schema/assessments/cotsVendorAssessments.js";
+import { vendorSelfAttestations } from "../../schema/assessments/vendorSelfAttestations.js";
 
 /**
  * GET /customerRiskReports
  * Returns Analysis Report records for the current user's organization, newest first.
+ * System Manager and System Viewer: use user's organization_id, or optional query param organizationId when user's org is not set.
  */
 const listCustomerRiskReports = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -24,11 +27,22 @@ const listCustomerRiskReports = async (req: Request, res: Response): Promise<voi
     }
 
     const [user] = await db
-      .select({ organization_id: usersTable.organization_id })
+      .select({
+        organization_id: usersTable.organization_id,
+        user_platform_role: usersTable.user_platform_role,
+      })
       .from(usersTable)
       .where(eq(usersTable.id, userId))
       .limit(1);
-    const orgId = user?.organization_id != null ? String(user.organization_id).trim() : "";
+    let orgId = user?.organization_id != null ? String(user.organization_id).trim() : "";
+    const platformRole = (user?.user_platform_role ?? "").toString().trim().toLowerCase().replace(/_/g, " ");
+    const isSystemManagerOrViewer =
+      platformRole === "system manager" || platformRole === "system viewer";
+    if (!orgId && isSystemManagerOrViewer) {
+      const fromQuery =
+        typeof req.query?.organizationId === "string" ? req.query.organizationId.trim() || "" : "";
+      if (fromQuery) orgId = fromQuery;
+    }
     if (!orgId) {
       res.status(200).json({ success: true, data: { reports: [] } });
       return;
@@ -42,9 +56,18 @@ const listCustomerRiskReports = async (req: Request, res: Response): Promise<voi
         report: customerRiskAssessmentReports.report,
         createdAt: customerRiskAssessmentReports.created_at,
         expiryAt: assessments.expiry_at,
+        attestationExpiryAt: vendorSelfAttestations.expiry_at,
       })
       .from(customerRiskAssessmentReports)
       .innerJoin(assessments, eq(customerRiskAssessmentReports.assessment_id, assessments.id))
+      .leftJoin(cotsVendorAssessments, eq(assessments.id, cotsVendorAssessments.assessment_id))
+      .leftJoin(
+        vendorSelfAttestations,
+        or(
+          eq(cotsVendorAssessments.vendor_attestation_id, vendorSelfAttestations.id),
+          eq(cotsVendorAssessments.vendor_attestation_id, vendorSelfAttestations.vendor_self_attestation_id),
+        ),
+      )
       .where(eq(customerRiskAssessmentReports.organization_id, orgId))
       .orderBy(desc(customerRiskAssessmentReports.created_at))
       .limit(100);
@@ -56,6 +79,7 @@ const listCustomerRiskReports = async (req: Request, res: Response): Promise<voi
       report: r.report,
       createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
       expiryAt: r.expiryAt instanceof Date ? r.expiryAt.toISOString() : (r.expiryAt != null ? String(r.expiryAt) : null),
+      attestationExpiryAt: r.attestationExpiryAt instanceof Date ? r.attestationExpiryAt.toISOString() : (r.attestationExpiryAt != null ? String(r.attestationExpiryAt) : null),
     }));
 
     res.status(200).json({

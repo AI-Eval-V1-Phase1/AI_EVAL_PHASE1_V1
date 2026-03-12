@@ -9,7 +9,7 @@ import FormField from "../../../UI/FormField";
 import FileUpload from "../../../UI/FileUpload";
 import type { VendorSelfAttestationPayload } from "../../../../types/vendorSelfAttestation";
 import type { DocumentUploadState } from "../../../../types/vendorSelfAttestation";
-import { EVIDENCE_TESTING_POLICY_HELPER_TEXT, MAX_FILE_SIZE_BYTES } from "../../../../constants/vendorAttestationDocumentConstants";
+import { EVIDENCE_TESTING_POLICY_HELPER_TEXT, MAX_FILE_SIZE_BYTES, MAX_FILES_PER_UPLOAD } from "../../../../constants/vendorAttestationDocumentConstants";
 
 export interface TabEvidenceSupportingDocProps {
   attestation: VendorSelfAttestationPayload;
@@ -18,6 +18,7 @@ export interface TabEvidenceSupportingDocProps {
   setDocumentUpload: React.Dispatch<React.SetStateAction<DocumentUploadState>>;
   attestationId?: string | null;
   onUploadDocument?: (attestationId: string, file: File) => Promise<string>;
+  onStorePendingFiles?: (slot: "0" | "1" | "evidenceTestingPolicy", files: File[], category?: string) => void;
   data: Record<string, { label: string; placeholder?: string; required?: boolean }>;
   fieldErrors?: Record<string, string>;
   title?: string;
@@ -32,6 +33,7 @@ function TabEvidenceSupportingDoc({
   setDocumentUpload,
   attestationId,
   onUploadDocument,
+  onStorePendingFiles,
   data,
   fieldErrors,
   title = "Evidence & Supporting Documentation",
@@ -51,6 +53,9 @@ function TabEvidenceSupportingDoc({
       }
       setDocumentUpload((prev) => ({ ...prev, evidenceTestingPolicy: [...current, ...uploaded] }));
     } else {
+      if (!attestationId && selectedFiles?.length && onStorePendingFiles) {
+        onStorePendingFiles("evidenceTestingPolicy", selectedFiles);
+      }
       setDocumentUpload((prev) => ({ ...prev, evidenceTestingPolicy: fileNames }));
     }
   };
@@ -82,6 +87,7 @@ function TabEvidenceSupportingDoc({
           <FileUpload
             accept=".pdf,.doc,.docx,.ppt,.pptx"
             maxSizeBytes={MAX_FILE_SIZE_BYTES}
+            maxFiles={MAX_FILES_PER_UPLOAD}
             value={documentUpload?.evidenceTestingPolicy ?? []}
             onFilesChange={(fileNames, selectedFiles) => handleFilesChange(fileNames, selectedFiles)}
           />

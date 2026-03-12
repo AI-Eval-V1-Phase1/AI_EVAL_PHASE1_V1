@@ -18,6 +18,7 @@ import {
 import { Chart } from "react-google-charts";
 import { MetricCard, KPICard, RiskCard } from "../../UI/Card";
 import Button from "../../UI/Button";
+import LoadingMessage from "../../UI/LoadingMessage";
 import type { AssessmentRow } from "./types";
 import { BASE_URL, formatGovDate, getAssessmentLabel } from "./utils";
 import "./dashboard.css";
@@ -29,6 +30,8 @@ const RISK_BREAKDOWN = [
   { category: "Technical", level: "Medium", variant: "medium" as const },
   { category: "Compliance", level: "Low", variant: "low" as const },
 ];
+
+const LOADER_MIN_MS = 2000;
 
 const BuyerOverview = () => {
   const navigate = useNavigate();
@@ -46,6 +49,11 @@ const BuyerOverview = () => {
     }
     setFetchError(null);
     setLoading(true);
+    const loadStart = Date.now();
+    const finishLoading = () => {
+      const remaining = Math.max(0, LOADER_MIN_MS - (Date.now() - loadStart));
+      setTimeout(() => setLoading(false), remaining);
+    };
     const organizationId = sessionStorage.getItem("organizationId");
     const query = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : "";
     fetch(`${BASE_URL}/assessments${query}`, {
@@ -75,7 +83,7 @@ const BuyerOverview = () => {
         setFetchError("Failed to load assessments.");
         setAssessmentsList([]);
       })
-      .finally(() => setLoading(false));
+      .finally(() => finishLoading());
   }, []);
 
   useEffect(() => {
@@ -136,7 +144,7 @@ const BuyerOverview = () => {
         </div>
       </div>
 
-      {loading && <div className="vendor_overview_loading">Loading assessments…</div>}
+      {loading && <LoadingMessage message="Loading assessments…" />}
       {fetchError && <div className="vendor_overview_error">{fetchError}</div>}
 
       {!loading && (

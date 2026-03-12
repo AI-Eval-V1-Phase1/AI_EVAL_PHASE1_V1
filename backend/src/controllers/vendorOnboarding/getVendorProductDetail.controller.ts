@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
 import { vendors, vendorSelfAttestations, usersTable, generatedProfileReports } from "../../schema/schema.js";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { mergeSummaryIntoReport } from "../../utils/mergeProfileReportSummary.js";
 
 function mapAttestationRow(attestRow: Record<string, unknown>): Record<string, unknown> {
@@ -56,8 +56,8 @@ function mapAttestationRow(attestRow: Record<string, unknown>): Record<string, u
 
 /**
  * GET /vendorDirectory/:vendorId/products/:productId
- * Returns full attestation detail for one product. Only if vendor has public listing
- * and this product is COMPLETED and visible_to_buyer = true.
+ * Returns full attestation detail for one product. Only if vendor has public listing,
+ * product is COMPLETED, visible_to_buyer = true, and not archived (expiry_at null or in future).
  * Query ?all=true (system admin only): returns product regardless of status/visibility.
  */
 const getVendorProductDetail = async (req: Request, res: Response): Promise<void> => {
@@ -126,7 +126,8 @@ const getVendorProductDetail = async (req: Request, res: Response): Promise<void
             eq(vendorSelfAttestations.id, productId),
             eq(vendorSelfAttestations.user_id, vendorUserId),
             eq(vendorSelfAttestations.status, "COMPLETED"),
-            eq(vendorSelfAttestations.visible_to_buyer, true)
+            eq(vendorSelfAttestations.visible_to_buyer, true),
+            sql`(${vendorSelfAttestations.expiry_at} IS NULL OR ${vendorSelfAttestations.expiry_at} >= now())`
           );
     const [row] = await db.select().from(vendorSelfAttestations).where(whereClause).limit(1);
 

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import ProductProfileView from "../ProductProfile/ProductProfileView";
+import LoadingMessage from "../../UI/LoadingMessage";
 import { buildFormStateFromApi } from "../../../utils/vendorAttestationState";
 import { buildVendorDataFromFormState } from "../../../utils/buildVendorDataFromFormState";
 import type { VendorSelfAttestationFormState } from "../../../types/vendorSelfAttestation";
@@ -32,6 +33,8 @@ export interface ProductProfileProduct {
   updated_at: string | null;
   /** When true, this product is visible to buyers when they view the vendor. Only applicable when status is Completed. */
   visibleToBuyer?: boolean;
+  /** Attestation expiry date (ISO string); when in the past, product is archived. */
+  attestationExpiryAt?: string | null;
   /** Generated product profile report (trust score + sections) after attestation submit. */
   generated_profile_report?: { trustScore: unknown; sections: unknown[] };
   /** Product target sectors (public_sector, private_sector, non_profit_sector) for display. */
@@ -48,6 +51,15 @@ export interface StoredGeneratedReport {
 }
 
 export const DirectoryListing = () => {
+  const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim();
+  const userRole = (sessionStorage.getItem("userRole") ?? "").toLowerCase().trim();
+  const isProductProfileViewOnlyRole =
+    systemRole === "system manager" ||
+    systemRole === "system_manager" ||
+    systemRole === "system viewer" ||
+    systemRole === "system_viewer" ||
+    (systemRole === "vendor" && (userRole === "engineer" || userRole === "viewer"));
+  const viewOnly = isProductProfileViewOnlyRole;
   const [formState, setFormState] = useState<VendorSelfAttestationFormState | null>(null);
   const [products, setProducts] = useState<ProductProfileProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +76,8 @@ export const DirectoryListing = () => {
   /** Selected stored report to display (when user clicks one in the list) */
   const [selectedStoredReport, setSelectedStoredReport] = useState<GeneratedProductProfileReport | null>(null);
   const [selectedStoredReportId, setSelectedStoredReportId] = useState<string | null>(null);
+  /** Product list tab: current (non-expired attestation) vs archived (expired attestation) */
+  const [productTab, setProductTab] = useState<"current" | "archived">("current");
 
   const fetchVendorPublicListing = useCallback(async () => {
     const token = sessionStorage.getItem("bearerToken");
@@ -105,6 +119,8 @@ export const DirectoryListing = () => {
     }
   }, []);
 
+  const LOADER_MIN_MS = 2500; // same as Assessments page
+
   const fetchProductProfileData = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent === true;
     const token = sessionStorage.getItem("bearerToken");
@@ -114,6 +130,12 @@ export const DirectoryListing = () => {
     }
     setSessionExpired(false);
     if (!silent) setLoading(true);
+    const loadStart = Date.now();
+    const finishLoading = () => {
+      const elapsed = Date.now() - loadStart;
+      const remaining = Math.max(0, LOADER_MIN_MS - elapsed);
+      setTimeout(() => setLoading(false), remaining);
+    };
     try {
       const organizationId = sessionStorage.getItem("organizationId") ?? "";
       const query = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : "";
@@ -127,24 +149,24 @@ export const DirectoryListing = () => {
       const text = await response.text();
       let result: {
         success?: boolean;
-        attestation?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean; generated_profile_report?: unknown; sector?: unknown };
-        attestations?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean; generated_profile_report?: unknown; sector?: unknown }[];
+        attestation?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean; expiry_at?: string | null; generated_profile_report?: unknown; sector?: unknown };
+        attestations?: { id?: string; status?: string; product_name?: string; created_at?: string; updated_at?: string; visible_to_buyer?: boolean; expiry_at?: string | null; generated_profile_report?: unknown; sector?: unknown }[];
         companyProfile?: Record<string, unknown>;
         message?: string;
       } = {};
       try {
         result = text ? JSON.parse(text) : {};
       } catch {
-        if (!silent) setLoading(false);
+        if (!silent) finishLoading();
         return;
       }
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
           setSessionExpired(true);
-          if (!silent) setLoading(false);
+          if (!silent) finishLoading();
           return;
         }
-        if (!silent) setLoading(false);
+        if (!silent) finishLoading();
         return;
       }
 
@@ -164,15 +186,19 @@ export const DirectoryListing = () => {
         .map((a) => {
           const apiStatus = (a.status ?? "").toUpperCase();
           const status: ProductProfileProduct["status"] =
-            apiStatus === "COMPLETED" ? "Completed" : apiStatus === "REJECTED" ? "Rejected" : "Draft";
+            apiStatus === "COMPLETED" || apiStatus === "EXPIRED"
+              ? "Completed"
+              : apiStatus === "REJECTED"
+                ? "Rejected"
+                : "Draft";
           const productName = (a.product_name ?? "").trim() || "Draft";
           return {
             id: a.id,
             productName,
             status,
             updated_at: a.updated_at ?? a.created_at ?? null,
-            /** Default off when not set; only on when API explicitly sends true. */
             visibleToBuyer: a.visible_to_buyer === true,
+            attestationExpiryAt: a.expiry_at ?? null,
             generated_profile_report: a.generated_profile_report,
             sector: a.sector ?? undefined,
           };
@@ -197,7 +223,7 @@ export const DirectoryListing = () => {
         try {
           detailResult = detailText ? JSON.parse(detailText) : {};
         } catch {
-          if (!silent) setLoading(false);
+          if (!silent) finishLoading();
           return;
         }
         if (detailRes.ok && detailResult.success && (detailResult.attestation || detailResult.companyProfile)) {
@@ -210,7 +236,7 @@ export const DirectoryListing = () => {
     } catch {
       // leave formState null
     } finally {
-      if (!silent) setLoading(false);
+      if (!silent) finishLoading();
     }
   }, []);
 
@@ -420,11 +446,7 @@ export const DirectoryListing = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="product_profile_loading" style={{ padding: "2rem", textAlign: "center", color: "#6b7280" }}>
-        Loading product profile…
-      </div>
-    );
+    return <LoadingMessage message="Loading product profile…" />;
   }
 
   if (sessionExpired) {
@@ -458,15 +480,17 @@ export const DirectoryListing = () => {
     <ProductProfileView
       formState={formState}
       products={products}
+      productTab={productTab}
+      onProductTabChange={setProductTab}
       fetchProductDetail={fetchProductDetail}
       trustScore="A+"
       compliancePercent="92%"
       publicListing={publicListing}
-      onPublicListingToggle={handlePublicListingToggle}
+      onPublicListingToggle={viewOnly ? undefined : handlePublicListingToggle}
       publicListingUpdating={publicListingUpdating}
       publicListingError={publicListingError}
-      onProductVisibilityToggle={handleProductVisibilityToggle}
-      onSectionVisibilityChange={handleSectionVisibilityChange}
+      onProductVisibilityToggle={viewOnly ? undefined : handleProductVisibilityToggle}
+      onSectionVisibilityChange={viewOnly ? undefined : handleSectionVisibilityChange}
       generatedReport={reportToShow}
       storedReports={storedReports}
       selectedStoredReportId={selectedStoredReportId}
@@ -479,7 +503,8 @@ export const DirectoryListing = () => {
       vendorDataInput={vendorDataInput}
       onVendorDataInputChange={setVendorDataInput}
       onUseAttestationData={handleUseAttestationData}
-      onGenerateProfile={handleGenerateProfile}
+      onGenerateProfile={viewOnly ? undefined : handleGenerateProfile}
+      viewOnly={viewOnly}
     />
   );
 };

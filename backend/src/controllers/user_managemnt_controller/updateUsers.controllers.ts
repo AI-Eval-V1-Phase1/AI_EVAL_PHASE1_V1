@@ -75,13 +75,30 @@ const updatesUsers = async (req: Request, res: Response) => {
     const onboardingStatus =
       raw && validOnboardingStatuses.includes(raw) ? raw : undefined;
 
-    // Only update editable fields: role, userStatus, optional onboarding_status (email and organization are immutable).
+    const systemRoles = [
+      "system admin",
+      "system user",
+      "system manager",
+      "system viewer",
+      "ai directory curator",
+    ];
+    const newRole = data.role != null ? String(data.role).toLowerCase().trim() : "";
+    const isAiEval = organizationId === 1;
+    const platformRoleToSet =
+      isAiEval && systemRoles.includes(newRole)
+        ? newRole
+        : isAiEval
+          ? "" // clear platform role when switching to non-system role
+          : undefined; // do not change for non-AI-Eval orgs
+
+    // Only update editable fields: role, userStatus, optional onboarding_status, user_platform_role for AI Eval system roles (email and organization are immutable).
     await db
       .update(usersTable)
       .set({
         role: data.role,
         userStatus: data.isStatus,
         ...(onboardingStatus != null && { onboarding_status: onboardingStatus }),
+        ...(platformRoleToSet != null && { user_platform_role: platformRoleToSet }),
       })
       .where(eq(usersTable.id, user_Id));
 

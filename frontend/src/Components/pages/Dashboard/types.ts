@@ -43,6 +43,8 @@ export interface AttestationItem {
   status: string;
   createdAt?: string;
   updatedAt?: string;
+  /** Expiry date (3 months from created); used to hide expired from dropdown. */
+  expiryDate?: string | null;
   /** Product name from attestation (display label); fallback "Vendor Self-Attestation" when empty */
   productName?: string | null;
   /** Certificates uploaded in self-attestation (from backend) */

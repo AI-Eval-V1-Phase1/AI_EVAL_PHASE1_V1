@@ -1,9 +1,5 @@
 /* Reports Library – layout matches Attestation (sec_user_page, org_settings_page) */
 
-.reports_page .page_header_title_block .page_header_subtitle {
-  margin: 0.25rem 0 0 0;
-}
-
 .reports_tabs_section {
   display: flex;
   flex-wrap: wrap;
@@ -107,6 +103,88 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  padding-right: 10px;
+}
+
+/* Pagination for reports cards – same UI as DataTable pagination (react-data-table-component) */
+.reports_pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  padding: 0.75rem 0;
+  margin-top: 0.5rem;
+  min-height: 2.5rem;
+  font-size: 13px;
+  color: #6b7280;
+  justify-content: end;
+}
+.reports_pagination > * {
+  display: inline-flex;
+  align-items: center;
+  gap: 2em;
+}
+.reports_pagination_rows_label {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+.reports_pagination_select {
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  vertical-align: middle;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  min-height: 2rem;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+}
+.reports_pagination_select:hover,
+.reports_pagination_select:focus {
+  border-color: #94a3b8;
+  outline: none;
+}
+.reports_pagination_range,
+.reports_pagination_page {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+.reports_pagination_buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+/* Match DataTable pagination buttons: circular, 40px, transparent, hover background */
+.reports_pagination_btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.4s, color 0.4s;
+}
+.reports_pagination_btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.04);
+  color: #111827;
+}
+.reports_pagination_btn:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+.reports_pagination_btn svg {
+  flex-shrink: 0;
 }
 
 .report_card {
@@ -189,9 +267,14 @@
   color: #fff;
 }
 
+.report_card.report_card_archived {
+  cursor: not-allowed;
+}
+
 .report_card_delete {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   padding: 0.4rem 0.75rem;
   font-size: 0.875rem;
@@ -204,9 +287,54 @@
   font-family: inherit;
 }
 
+.report_card_delete.report_card_delete_icon_only {
+  padding: 0.4em;
+  min-width: 18px;
+  min-height: 18px;
+}
+
 .report_card_delete:hover {
   background: tomato;
   color: white;
+}
+
+/* Report delete confirmation modal */
+.report_delete_modal_content.profile_modal_content {
+  min-width: 380px;
+}
+.report_delete_modal_subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: black;
+  margin: 0 0 0.5rem 0;
+}
+.report_delete_modal_message {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+  line-height: 1.45;
+}
+.report_delete_modal_content .settings_form_actions .report_delete_confirm_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.report_delete_modal_content .report_delete_confirm_btn {
+  background: tomato;
+  color: white;
+  border: none;
+}
+.report_delete_modal_content .report_delete_confirm_btn:hover:not(:disabled) {
+  background: tomato;
+  color: white;
+}
+
+.report_delete_modal_content .settings_form_actions .orgCancelBtn,
+.report_delete_modal_content .settings_form_actions .orgCancelBtn:hover {
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  cursor: pointer;
 }
 
 .report_card_download {
@@ -569,6 +697,49 @@
   line-height: 1.6;
   margin: 0;
   white-space: pre-line;
+}
+
+/* Executive Stakeholder Brief – parsed sections */
+.report_exec_brief_body {
+  white-space: normal;
+}
+.report_exec_brief_section {
+  margin-bottom: 1.5rem;
+}
+.report_exec_brief_section:last-child {
+  margin-bottom: 0;
+}
+.report_exec_brief_section_title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.report_exec_brief_section_title .report_exec_brief_section_icon {
+  flex-shrink: 0;
+  color: #2563eb;
+}
+.report_exec_brief_section_body {
+  font-size: 0.9375rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+}
+.report_exec_brief_para {
+  margin: 0 0 0.5rem 0;
+}
+.report_exec_brief_list {
+  margin: 0.25rem 0 0.75rem 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.report_exec_brief_bullet {
+  margin-bottom: 0.25rem;
 }
 
 /* Assessment details key-value list */

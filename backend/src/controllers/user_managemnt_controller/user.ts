@@ -106,12 +106,13 @@ export const inviteUser = async (req: Request, res: Response) => {
       }
     }
 
-    // When system admin invites to AI EVAL, store the selected system role (system admin, system user, system manager, system viewer)
+    // When system admin invites to AI EVAL, store the selected system role (system admin, system user, system manager, system viewer, ai directory curator)
     const systemRoles = [
       "system admin",
       "system user",
       "system manager",
       "system viewer",
+      "ai directory curator",
     ];
     const isAiEval = orgIdNum === 1;
     let platform_role: string;

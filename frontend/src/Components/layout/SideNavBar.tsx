@@ -26,6 +26,9 @@ const SideNavBar = () => {
   const userRole = String(rawUserRole).toLowerCase().trim();
   let systemRole = String(rawSystemRole).toLowerCase().trim();
   if (systemRole === "system_admin") systemRole = "system admin";
+  if (systemRole === "system_manager") systemRole = "system manager";
+  if (systemRole === "system_viewer") systemRole = "system viewer";
+  if (systemRole === "ai_directory_curator") systemRole = "ai directory curator";
   const normalizedUserRole =
     userRole && userRole !== "null" && userRole !== "undefined" ? userRole : "";
   const normalizedSystemRole =
@@ -36,6 +39,10 @@ const SideNavBar = () => {
   const isSystemAdminForBoth =
     normalizedSystemRole === "system admin" &&
     (normalizedUserRole === "system admin" || normalizedUserRole === "admin");
+
+  const isSystemManager = normalizedSystemRole === "system manager";
+  const isSystemViewer = normalizedSystemRole === "system viewer";
+  const isAiDirectoryCurator = normalizedSystemRole === "ai directory curator";
 
   const filterItems = (requireRole: boolean, requireSystem: boolean) =>
     NAVIGATION.admin.filter((item) => {
@@ -50,9 +57,12 @@ const SideNavBar = () => {
       return roleMatch && systemMatch;
     });
 
-  let navItems = isSystemAdminForBoth
-    ? NAVIGATION.admin
-    : filterItems(true, true);
+  let navItems =
+    isSystemAdminForBoth
+      ? NAVIGATION.admin
+      : isSystemManager || isSystemViewer || isAiDirectoryCurator
+        ? filterItems(false, true)
+        : filterItems(true, true);
 
   if (navItems.length === 0 && !isSystemAdminForBoth) {
     navItems = filterItems(false, true);

@@ -43,13 +43,14 @@ function toStr(v: unknown): string {
 }
 
 /**
- * Extract assessment context for matching risk_mappings (domain, intent, timing, primary_risk).
+ * Extract assessment context for matching risk_mappings table on domain, timing, intent, primary_risk, secondary_risks.
  */
 function extractContext(payload: Record<string, unknown>): {
   domain: string;
   intent: string;
   timing: string;
   primary_risk: string;
+  secondary_risks: string;
 } {
   const domain =
     toStr(payload.customer_sector ?? payload.customerSector) ||
@@ -62,22 +63,29 @@ function extractContext(payload: Record<string, unknown>): {
     toStr(payload.primary_pain_point ?? payload.primaryPainPoint) ||
     toStr(payload.identified_risks ?? payload.identifiedRisks).slice(0, 200) ||
     toStr(payload.customer_specific_risks ?? payload.customerSpecificRisks).slice(0, 200);
-  return { domain, intent, timing, primary_risk };
+  const secondary_risks =
+    toStr(payload.identified_risks ?? payload.identifiedRisks).slice(0, 200) ||
+    toStr(payload.customer_specific_risks ?? payload.customerSpecificRisks).slice(0, 200) ||
+    "";
+  return { domain, intent, timing, primary_risk, secondary_risks };
 }
 
 /**
- * Match vendor COTS assessment context to risk_mappings on domains, intent, timing, primary_risk,
- * return top 5 risks and their mitigations from risk_top5_mitigations (joined by risk_id).
+ * 1. Query risk_mappings table: compare assessment context (domain, timing, intent, primary_risk, secondary_risks)
+ *    and get the top 5 matching rows by match score.
+ * 2. Compare that data to risk_top5_mitigations table: fetch mitigations for those top 5 risk_ids
+ *    and return risks with mitigations by risk_id.
  */
 export async function getTop5RisksWithMitigations(
   payload: Record<string, unknown>
 ): Promise<Top5RisksWithMitigations> {
-  const { domain, intent, timing, primary_risk } = extractContext(payload);
+  const { domain, intent, timing, primary_risk, secondary_risks } = extractContext(payload);
 
   const domainPattern = domain ? `%${domain}%` : null;
   const intentPattern = intent ? `%${intent}%` : null;
   const timingPattern = timing ? `%${timing}%` : null;
   const primaryRiskPattern = primary_risk ? `%${primary_risk}%` : null;
+  const secondaryRisksPattern = secondary_risks ? `%${secondary_risks}%` : null;
 
   type QueryResult = { rows: RiskMappingRow[] };
   const top5Result = await db.execute(sql`
@@ -86,7 +94,8 @@ export async function getTop5RisksWithMitigations(
         (CASE WHEN ${domainPattern}::text IS NOT NULL AND domains IS NOT NULL AND domains ILIKE ${domainPattern} THEN 1 ELSE 0 END +
          CASE WHEN ${intentPattern}::text IS NOT NULL AND intent IS NOT NULL AND intent ILIKE ${intentPattern} THEN 1 ELSE 0 END +
          CASE WHEN ${timingPattern}::text IS NOT NULL AND timing IS NOT NULL AND timing ILIKE ${timingPattern} THEN 1 ELSE 0 END +
-         CASE WHEN ${primaryRiskPattern}::text IS NOT NULL AND primary_risk IS NOT NULL AND primary_risk ILIKE ${primaryRiskPattern} THEN 1 ELSE 0 END) AS match_score
+         CASE WHEN ${primaryRiskPattern}::text IS NOT NULL AND primary_risk IS NOT NULL AND primary_risk ILIKE ${primaryRiskPattern} THEN 1 ELSE 0 END +
+         CASE WHEN ${secondaryRisksPattern}::text IS NOT NULL AND secondary_risks IS NOT NULL AND secondary_risks ILIKE ${secondaryRisksPattern} THEN 1 ELSE 0 END) AS match_score
       FROM public.risk_mappings
     )
     SELECT risk_mapping_id, risk_id, risk_title, domains, description, technical_description,

@@ -86,14 +86,16 @@ function GeneralReportsTypesPopup({
           <span><Ban size={16} /></span>
           Cancel
         </Button>
-        <Button
-          type="button"
-          className="orgCreateBtn"
-          onClick={handleGenerateReport}
-        >
-          <span><FileText size={16} /></span>
-          Generate Report
-        </Button>
+        {onGenerateReport && (
+          <Button
+            type="button"
+            className="orgCreateBtn"
+            onClick={handleGenerateReport}
+          >
+            <span><FileText size={16} /></span>
+            Generate Report
+          </Button>
+        )}
       </div>
     </>
   );

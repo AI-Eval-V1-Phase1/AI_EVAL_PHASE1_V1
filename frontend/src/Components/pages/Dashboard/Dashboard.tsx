@@ -6,12 +6,17 @@ const Dashboard = () => {
   document.title = "AI Eval | Dashboard"
   let systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim();
   if (systemRole === "system_admin") systemRole = "system admin";
+  if (systemRole === "ai_directory_curator") systemRole = "ai directory curator";
 
   if (systemRole === "system admin") {
     return <SystemAdminOverview />;
   }
   if (systemRole === "vendor") {
     return <VendorOverview />;
+  }
+  // AI Directory Curator: dashboard view only (metrics, no create/edit actions)
+  if (systemRole === "ai directory curator") {
+    return <SystemAdminOverview viewOnly />;
   }
 
   return <BuyerOverview />;

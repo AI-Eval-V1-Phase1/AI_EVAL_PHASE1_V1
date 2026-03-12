@@ -5,10 +5,9 @@ import type { Request, Response } from "express";
 
 const insertOrganization = async (req: Request, res: Response) => {
   try {
-    let organizationName = req.body.isOrganizationName?.trim();
+    const organizationName = req.body.isOrganizationName?.trim();
     const userId = req.body.user;
 
-console.log("userId",userId)
     if (!organizationName) {
       return res
         .status(400)
@@ -19,13 +18,12 @@ console.log("userId",userId)
       return res.status(400).json({ message: "User ID is required" });
     }
 
-    const lowerCaseOrgName = organizationName.toLowerCase();
-
+    // Duplicate check: case-insensitive; store and display name exactly as entered (no lowercase/uppercase)
     const organizationDuplicates = await db
       .select()
       .from(createOrganization)
       .where(
-        sql`${createOrganization.organizationName} = ${lowerCaseOrgName}`
+        sql`LOWER(TRIM("organizationName")) = LOWER(${organizationName})`
       )
       .limit(1);
 
@@ -35,11 +33,10 @@ console.log("userId",userId)
         .json({ message: "Organization already exists" });
     }
 
-
     const [organization] = await db
       .insert(createOrganization)
       .values({
-        organizationName: lowerCaseOrgName,
+        organizationName,
         organizationStatus: "active",
         created_by: String(userId),
       })

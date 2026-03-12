@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { db } from "../../database/db.js";
 import { createOrganization, vendors, vendorSelfAttestations, usersTable, generatedProfileReports } from "../../schema/schema.js";
-import { and, desc, eq, inArray, or } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { mergeSummaryIntoReport } from "../../utils/mergeProfileReportSummary.js";
 
 function userDisplayName(u: { user_name?: string | null; user_first_name?: string | null; user_last_name?: string | null; email?: string | null }): string {
@@ -48,6 +48,16 @@ function buildCertificatesFromDocumentUploads(docUploads: unknown): Array<{ name
   return list;
 }
 
+/** Expiry is 3 months from created date. Returns ISO string or undefined. */
+function expiryFromCreatedAt(createdAt: unknown): string | undefined {
+  if (createdAt == null) return undefined;
+  const d = createdAt instanceof Date ? createdAt : new Date(String(createdAt));
+  if (Number.isNaN(d.getTime())) return undefined;
+  const expiry = new Date(d);
+  expiry.setMonth(expiry.getMonth() + 3);
+  return expiry.toISOString();
+}
+
 /** Parse sector (target_industries) for API response. */
 function parseSectorFromRow(row: Record<string, unknown>): Record<string, unknown> | null {
   const sectorRaw = row.target_industries;
@@ -67,17 +77,20 @@ function parseSectorFromRow(row: Record<string, unknown>): Record<string, unknow
 /** Map one attestation row to API shape (attestation section only). completedByName is optional from join. */
 function mapAttestationRow(attestRow: Record<string, unknown>, completedByName?: string): Record<string, unknown> {
   const raw = String(attestRow.status ?? "").toUpperCase();
-  const rowStatus = raw === "DRAFT" ? "DRAFT" : "COMPLETED";
+  const rowStatus = raw === "DRAFT" ? "DRAFT" : raw === "EXPIRED" ? "EXPIRED" : "COMPLETED";
   const document_uploads = attestRow.document_uploads;
   const certificates = buildCertificatesFromDocumentUploads(document_uploads);
   const sector = parseSectorFromRow(attestRow);
   const base: Record<string, unknown> = {
     id: attestRow.id,
+    user_id: attestRow.user_id ?? undefined,
+    organization_id: attestRow.organization_id ?? undefined,
     vendor_self_attestation_id: attestRow.vendor_self_attestation_id ?? undefined,
     status: rowStatus,
     created_at: attestRow.created_at ?? undefined,
     updated_at: attestRow.updated_at ?? undefined,
     submitted_at: attestRow.submitted_at ?? undefined,
+    expiry_at: attestRow.expiry_at != null ? (typeof attestRow.expiry_at === "string" ? attestRow.expiry_at : (attestRow.expiry_at instanceof Date ? attestRow.expiry_at.toISOString() : String(attestRow.expiry_at))) : expiryFromCreatedAt(attestRow.created_at),
     product_name: attestRow.product_name ?? undefined,
     sector: sector ?? undefined,
     visible_to_buyer: attestRow.visible_to_buyer === true || attestRow.visible_to_buyer === 1,
@@ -201,6 +214,13 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       return;
     }
 
+    // Mark attestations as EXPIRED in DB when expiry_at has passed
+    await db.execute(sql`
+      UPDATE vendor_self_attestations
+      SET status = 'EXPIRED'
+      WHERE expiry_at IS NOT NULL AND expiry_at < now() AND status = 'COMPLETED'
+    `);
+
     const [currentUserRow] = await db
       .select({
         user_platform_role: usersTable.user_platform_role,
@@ -220,9 +240,9 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       platformRole === "systemadmin" ||
       (Number(orgId) === 1 && role === "admin");
 
-    // For system admin: resolve org name so we can filter attestations by org (organization_id may be id or name in vendor_self_attestations)
+    // Resolve org name for filtering by organization (system admin or org admin); organization_id in vendor_self_attestations may be id or name
     let orgNameForFilter: string | null = null;
-    if (isSystemAdmin && orgId != null) {
+    if (orgId != null) {
       const numOrgId = Number(orgId);
       if (Number.isInteger(numOrgId) && numOrgId >= 1) {
         const [orgRow] = await db
@@ -323,6 +343,7 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       created_at: vendorSelfAttestations.created_at,
       updated_at: vendorSelfAttestations.updated_at,
       submitted_at: vendorSelfAttestations.submitted_at,
+      expiry_at: vendorSelfAttestations.expiry_at,
       generated_profile_report: vendorSelfAttestations.generated_profile_report,
       user_name: usersTable.user_name,
       user_first_name: usersTable.user_first_name,
@@ -369,16 +390,16 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
     }
 
     if (attestationId) {
-      // System admin: allow access if attestation belongs to their org; otherwise require own user_id
+      // System admin or any same-org user: allow access if attestation belongs to their org; otherwise require own user_id
+      const orgFilter =
+        orgIdStr && orgNameForFilter
+          ? or(
+              eq(vendorSelfAttestations.organization_id, orgIdStr),
+              eq(vendorSelfAttestations.organization_id, orgNameForFilter),
+            )
+          : eq(vendorSelfAttestations.organization_id, orgIdStr || orgNameForFilter || "");
       const orgCondition =
-        isSystemAdmin && (orgIdStr || orgNameForFilter)
-          ? orgIdStr && orgNameForFilter
-            ? or(
-                eq(vendorSelfAttestations.organization_id, orgIdStr),
-                eq(vendorSelfAttestations.organization_id, orgNameForFilter),
-              )
-            : eq(vendorSelfAttestations.organization_id, orgIdStr || orgNameForFilter || "")
-          : eq(vendorSelfAttestations.user_id, userId);
+        (orgIdStr || orgNameForFilter) ? orgFilter : eq(vendorSelfAttestations.user_id, userId);
       const whereSingle = and(
         eq(vendorSelfAttestations.id, attestationId),
         orgCondition,
@@ -438,9 +459,9 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       return;
     }
 
-    // System admin: fetch attestations for their organization; others: fetch by user_id
+    // System admin: fetch by their org; vendor/buyer with org: fetch by organization so same-org users can see and edit each other's drafts; no org: fetch by user_id
     const listWhere =
-      isSystemAdmin && (orgIdStr || orgNameForFilter)
+      (orgIdStr || orgNameForFilter)
         ? orgIdStr && orgNameForFilter
           ? or(
               eq(vendorSelfAttestations.organization_id, orgIdStr),

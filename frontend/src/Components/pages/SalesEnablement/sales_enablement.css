@@ -6,6 +6,7 @@
 
 .sales_enablement_select_wrapper {
   min-width: 220px;
+  /* width: 100%; */
 }
 
 .sales_enablement_select_wrapper .select_label {
@@ -22,8 +23,12 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 } */
 
-.sales_enablement_select_wrapper .select_input {
+.sales_enablement_select_wrapper .select_input,
+#vendor_assessment {
   width: 100%;
+  box-sizing: border-box;
+}
+.sales_enablement_select_wrapper .select_input {
   min-height: 40px;
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   border-radius: 5px;

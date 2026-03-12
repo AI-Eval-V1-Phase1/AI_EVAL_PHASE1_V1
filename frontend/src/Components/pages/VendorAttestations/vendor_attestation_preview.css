@@ -87,6 +87,57 @@
   flex-wrap: wrap;
 }
 
+/* Regulatory and Compliance Certification Material – ordered list in preview/review tab */
+.vendor-attestation-preview .vendor_preview_value_regulatory_list {
+  margin: 0;
+}
+
+.vendor-attestation-preview .preview_regulatory_doc_list {
+  margin: 0.25rem 0 0 0;
+  padding-left: 1.5rem;
+  list-style: decimal;
+}
+
+.vendor-attestation-preview .preview_regulatory_doc_item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.vendor-attestation-preview .preview_regulatory_doc_item:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.vendor-attestation-preview .preview_regulatory_doc_name {
+  font-size: 0.9375rem;
+  color: #374151;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.vendor-attestation-preview .preview_regulatory_doc_line {
+  display: inline;
+}
+
+.vendor-attestation-preview .preview_regulatory_doc_category {
+  font-weight: 600;
+  color: #374151;
+}
+
+.vendor-attestation-preview .preview_regulatory_doc_uploaded {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.vendor-attestation-preview .preview_regulatory_doc_item .preview-doc-actions {
+  margin-left: 0;
+}
+
 .vendor-attestation-preview .vendor_preview_doc_uploaded_label {
   color: #6b7280;
   font-weight: 500;
@@ -102,7 +153,7 @@
   color: var(--color-link, #2563eb);
   background: none;
   border: none;
-  border-bottom: 1px solid currentColor;
+  /* border-bottom: 1px solid currentColor; */
   cursor: pointer;
   text-align: left;
 }
@@ -154,6 +205,7 @@
   inset: 0;
   z-index: 10003;
   background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -168,8 +220,129 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
 }
+.vendor_attestation_submit_overlay_loader {
+  display: block;
+  margin: 0 auto 1rem;
+  animation: vendor_attestation_doc_spin 0.9s linear infinite;
+  color: var(--main-dark-color, #2463eb);
+}
 .vendor_attestation_submit_overlay_hint {
   margin-top: 0.75rem;
   font-size: 0.875rem;
   color: #6b7280;
+}
+
+/* Document viewer modal – no popup, opens in-page to avoid popup blocker */
+.vendor_attestation_doc_viewer_overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10004;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.vendor_attestation_doc_viewer_modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 90vw;
+  height: 85vh;
+  max-height: 85vh;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.vendor_attestation_doc_viewer_modal .modal_content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+}
+
+.vendor_attestation_doc_viewer_content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.vendor_attestation_doc_viewer_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.vendor_attestation_doc_viewer_title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vendor_attestation_doc_viewer_close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.vendor_attestation_doc_viewer_close:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.vendor_attestation_doc_viewer_body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+}
+
+.vendor_attestation_doc_viewer_loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.vendor_attestation_doc_viewer_loading .spin {
+  animation: vendor_attestation_doc_spin 0.9s linear infinite;
+  color: var(--main-dark-color, #2463eb);
+}
+
+@keyframes vendor_attestation_doc_spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vendor_attestation_doc_viewer_iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #fff;
 }

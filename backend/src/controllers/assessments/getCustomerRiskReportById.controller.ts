@@ -1,9 +1,11 @@
 import type { Request, Response } from "express";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { db } from "../../database/db.js";
 import { usersTable } from "../../schema/schema.js";
 import { customerRiskAssessmentReports } from "../../schema/assessments/customerRiskAssessmentReports.js";
 import { assessments } from "../../schema/assessments/assessments.js";
+import { cotsVendorAssessments } from "../../schema/assessments/cotsVendorAssessments.js";
+import { vendorSelfAttestations } from "../../schema/assessments/vendorSelfAttestations.js";
 
 /**
  * GET /customerRiskReports/:id
@@ -44,9 +46,18 @@ const getCustomerRiskReportById = async (req: Request, res: Response): Promise<v
         report: customerRiskAssessmentReports.report,
         createdAt: customerRiskAssessmentReports.created_at,
         expiryAt: assessments.expiry_at,
+        attestationExpiryAt: vendorSelfAttestations.expiry_at,
       })
       .from(customerRiskAssessmentReports)
       .innerJoin(assessments, eq(customerRiskAssessmentReports.assessment_id, assessments.id))
+      .leftJoin(cotsVendorAssessments, eq(assessments.id, cotsVendorAssessments.assessment_id))
+      .leftJoin(
+        vendorSelfAttestations,
+        or(
+          eq(cotsVendorAssessments.vendor_attestation_id, vendorSelfAttestations.id),
+          eq(cotsVendorAssessments.vendor_attestation_id, vendorSelfAttestations.vendor_self_attestation_id),
+        ),
+      )
       .where(
         and(
           eq(customerRiskAssessmentReports.id, id),
@@ -69,6 +80,7 @@ const getCustomerRiskReportById = async (req: Request, res: Response): Promise<v
         report: row.report,
         createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
         expiryAt: row.expiryAt instanceof Date ? row.expiryAt.toISOString() : (row.expiryAt != null ? String(row.expiryAt) : null),
+        attestationExpiryAt: row.attestationExpiryAt instanceof Date ? row.attestationExpiryAt.toISOString() : (row.attestationExpiryAt != null ? String(row.attestationExpiryAt) : null),
       },
     });
   } catch (error) {

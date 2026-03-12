@@ -66,7 +66,7 @@
   padding: 0;
   margin: 0 0 1.5rem 0;
   display: flex;
-  gap: 10em;
+  gap: 2em;
 }
 
 .ai_assessments_checklist li {
@@ -472,6 +472,63 @@
 .assessment_list_rows .vendor_overview_attestation_icon_expired {
   color: tomato;
 }
+
+/* Assessment card header status (COMPLETED / Draft / Expired) – same colors as previous status labels */
+.assessment_list_rows .general_rpr_card .general_report_card_header p.assessment_card_status_completed,
+.assessment_list_rows .general_rpr_card .general_report_card_header p.assessment_card_status_completed .general_rpr_card_report_type_icon {
+  color: #16a34a;
+  font-weight: 600;
+}
+.assessment_list_rows .general_rpr_card .general_report_card_header p.assessment_card_status_draft,
+.assessment_list_rows .general_rpr_card .general_report_card_header p.assessment_card_status_draft .general_rpr_card_report_type_icon {
+  color: #6b7280;
+  font-weight: 600;
+}
+.assessment_list_rows .general_rpr_card .general_report_card_header p.assessment_card_status_expired,
+.assessment_list_rows .general_rpr_card .general_report_card_header p.assessment_card_status_expired .general_rpr_card_report_type_icon {
+  color: tomato;
+  font-weight: 600;
+}
+.assessment_list_rows .general_rpr_card .general_report_card_header p.assessment_card_status_rejected,
+.assessment_list_rows .general_rpr_card .general_report_card_header p.assessment_card_status_rejected .general_rpr_card_report_type_icon {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* Assessment cards: 3 per row (reports use 4) */
+.assessment_list_rows .general_rpr_cards_sec {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 1200px) {
+  .assessment_list_rows .general_rpr_cards_sec {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .assessment_list_rows .general_rpr_cards_sec {
+    grid-template-columns: 1fr;
+  }
+}
+
+.assessment_list_rows .general_rpr_card .general_rpr_card_dates {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.assessment_list_rows .general_rpr_card .assessment_card_header_left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.assessment_list_rows .general_rpr_card .assessment_card_header_expiry {
+  display: block;
+  font-size: 0.8em;
+  font-weight: 400;
+  color: tomato;
+  margin: 0;
+}
+
 .assessment_list_rows .vendor_overview_attestation_by {
   font-size: 0.8125rem;
   color: #6b7280;
@@ -549,4 +606,38 @@ background: var(--main-auth-button-color, #2463eb);
   background: tomato;
   color: white;
   border-color: tomato;
+}
+
+/* Delete assessment modal – uses settings UI (profile_modal_*, settings_form_*); only overrides below */
+.assessment_delete_modal_content.profile_modal_content {
+  min-width: 380px;
+}
+.assessment_delete_modal_subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: black;
+  margin: 0 0 0.5rem 0;
+}
+.assessment_delete_modal_message {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+  line-height: 1.45;
+}
+.assessment_delete_required {
+  color: #dc2626;
+}
+.assessment_delete_modal_content .settings_form_actions .assessment_delete_confirm_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.assessment_delete_modal_content .assessment_delete_confirm_btn {
+  background: tomato;
+  color: white;
+  border: none;
+}
+.assessment_delete_modal_content .assessment_delete_confirm_btn:hover:not(:disabled) {
+  background: tomato;
+  color: white;
 }

@@ -70,9 +70,10 @@ export async function uploadAttestationDocument(req: Request, res: Response): Pr
         cb(null, name);
       },
     });
+    const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB per file
     const upload = multer({
       storage,
-      limits: { fileSize: 15 * 1024 * 1024 },
+      limits: { fileSize: MAX_FILE_SIZE_BYTES },
       fileFilter: (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
         const name = file.originalname || "";
         const ext = path.extname(name).toLowerCase();
@@ -89,7 +90,7 @@ export async function uploadAttestationDocument(req: Request, res: Response): Pr
         if (err) {
           const multerErr = err as { code?: string };
           if (multerErr?.code === "LIMIT_FILE_SIZE") {
-            res.status(400).json({ success: false, message: "File too large (max 15MB)" });
+            res.status(400).json({ success: false, message: "File too large (max 10MB per file)" });
             return;
           }
           res.status(400).json({ success: false, message: err instanceof Error ? err.message : "Upload failed" });

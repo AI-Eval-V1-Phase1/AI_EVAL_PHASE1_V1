@@ -818,6 +818,9 @@
 .attestation_list_rows .vendor_overview_attestation_icon_rejected {
   color: #dc2626;
 }
+.attestation_list_rows .vendor_overview_attestation_icon_expired {
+  color: tomato;
+}
 .attestation_list_rows .vendor_overview_attestation_content {
   flex: 1;
   min-width: 0;
@@ -841,11 +844,27 @@
 .attestation_list_rows .vendor_overview_attestation_status_label_rejected {
   color: #dc2626;
 }
+.attestation_list_rows .vendor_overview_attestation_status_label_expired {
+  color: tomato;
+}
 .attestation_list_rows .vendor_overview_attestation_date {
   font-size: 0.8125rem;
   color: #6b7280;
   margin: 0;
   margin-top: 10px;
+}
+.attestation_list_rows .vendor_overview_attestation_date_row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.25rem;
+  margin: 0;
+  margin-top: 10px;
+}
+.attestation_list_rows .vendor_overview_attestation_date_row .vendor_overview_attestation_date {
+  margin: 0;
+}
+.attestation_list_rows .vendor_overview_attestation_date.vendor_overview_attestation_date_expiry {
+  color: tomato;
 }
 .attestation_list_rows .vendor_overview_attestation_actions {
   display: flex;
@@ -898,6 +917,83 @@
   justify-content: space-between;
 }
 .attestation_list_header_row .your_assessments_title {
+  margin: 0;
+}
+
+/* Tabs and search on same row (like Assessments) */
+.attestation_tabs_and_search_row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.attestation_page_tabs_inline.page_tabs {
+  margin: 0;
+  border: none;
+  gap: 0.25rem;
+  border-bottom: none;
+}
+.attestation_page_tabs_inline .page_tab {
+  margin-bottom: 0;
+  border-bottom: 2px solid transparent;
+}
+/* Active tab – same as assessment (page_tab_active from page_tabs.css) */
+.attestation_page_tabs_inline .page_tab_active {
+  color: var(--main-auth-button-color, #2563eb);
+  border-bottom: 2px solid var(--main-auth-button-color, #2563eb);
+  border-bottom-color: var(--main-auth-button-color, #2563eb);
+  background: #fff;
+  box-shadow: 0 1px 0 0 #fff;
+  border-radius: 0 !important;
+}
+
+/* Match assessment UI: header row + search bar (same as Assessments page) */
+.attestation_section .assessment_list_header_row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  justify-content: space-between;
+}
+.attestation_section .assessment_list_header_row .your_assessments_title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+.attestation_section .assessment_search_wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 400px;
+  max-width: 100%;
+}
+.attestation_section .assessment_search_icon {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+.attestation_section .assessment_search_input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  font-size: 0.875rem;
+  color: #111827;
+}
+.attestation_section .assessment_search_input::placeholder {
+  color: #9ca3af;
+}
+.attestation_section .assessment_search_input:focus {
+  outline: none;
+  border-color: var(--main-auth-button-color, #1e3a8a);
+  box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.2);
+}
+.attestation_section .assessment_search_no_results {
+  padding: 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
   margin: 0;
 }
 .attestation_search_wrap {

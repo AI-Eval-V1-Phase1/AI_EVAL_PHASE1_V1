@@ -73,6 +73,8 @@ export const vendorSelfAttestations = pgTable("vendor_self_attestations", {
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   /** Set when status first becomes COMPLETED; never updated by visibility toggles. */
   submitted_at: timestamp("submitted_at", { withTimezone: true }),
+  /** Expiry date: 3 months from created_at (set by DB trigger on insert; backfilled by migration). */
+  expiry_at: timestamp("expiry_at", { withTimezone: true }),
   /** Generated product profile report (trust score + sections) when attestation is submitted as COMPLETED. */
   generated_profile_report: jsonb("generated_profile_report"),
 });

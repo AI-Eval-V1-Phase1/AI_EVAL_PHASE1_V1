@@ -1,9 +1,13 @@
 import type { Request, Response } from "express";
+import * as path from "path";
+import * as fs from "fs";
 import { db } from "../../database/db.js";
 import { vendorSelfAttestations, usersTable, generatedProfileReports } from "../../schema/schema.js";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { buildVendorDataFromPayload } from "../../utils/buildVendorDataFromPayload.js";
 import { generateVendorAttestationReport, buildReportPayloadAndSummary } from "../agents/vendorAttestation.js";
+
+const UPLOADS_DIR = path.resolve(process.cwd(), "public", "uploads_vendor_attestations");
 
 /** Allowed file extensions for document_uploads (metadata only; actual files validated on frontend). */
 const ALLOWED_DOC_EXTENSIONS = [".pdf", ".doc", ".docx", ".ppt", ".pptx"];
@@ -68,6 +72,51 @@ function normalizeDocumentUploads(raw: unknown): { ok: true; value: Record<strin
     ok: true,
     value: { "0": slot0, "1": slot1, "2": slot2, evidenceTestingPolicy },
   };
+}
+
+/**
+ * Collect all file names from normalized document_uploads (slots 0, 1, 2.byCategory, evidenceTestingPolicy).
+ */
+function getAllDocumentFileNames(docUpload: Record<string, unknown> | null): Set<string> {
+  const names = new Set<string>();
+  if (!docUpload || typeof docUpload !== "object") return names;
+  const add = (arr: unknown[]) => {
+    if (!Array.isArray(arr)) return;
+    for (const x of arr) if (typeof x === "string" && x.trim()) names.add(x.trim());
+  };
+  add((docUpload["0"] as unknown[]) ?? []);
+  add((docUpload["1"] as unknown[]) ?? []);
+  const slot2 = docUpload["2"];
+  if (slot2 != null && typeof slot2 === "object" && !Array.isArray(slot2)) {
+    const byCat = (slot2 as Record<string, unknown>).byCategory;
+    if (byCat != null && typeof byCat === "object")
+      for (const arr of Object.values(byCat)) add((arr as unknown[]) ?? []);
+  }
+  add((docUpload.evidenceTestingPolicy as unknown[]) ?? []);
+  return names;
+}
+
+/**
+ * Delete from disk any files that were removed from document_uploads (only files under attestation dir).
+ */
+function deleteRemovedDocumentFiles(attestationId: string, removedNames: Set<string>): void {
+  if (removedNames.size === 0) return;
+  const dir = path.resolve(UPLOADS_DIR, attestationId);
+  const baseResolved = path.resolve(UPLOADS_DIR);
+  if (!dir.startsWith(baseResolved)) return;
+  if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return;
+  for (const fileName of removedNames) {
+    const base = path.basename(fileName);
+    if (!base || base === "." || base === "..") continue;
+    const filePath = path.resolve(dir, base);
+    const relative = path.relative(dir, filePath);
+    if (relative.startsWith("..") || path.isAbsolute(relative)) continue;
+    try {
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) fs.unlinkSync(filePath);
+    } catch (err) {
+      console.error("deleteRemovedDocumentFiles: failed to unlink", filePath, err);
+    }
+  }
 }
 
 type ReportPayload = { trustScore: unknown; sections: unknown[] };
@@ -145,7 +194,7 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
       return;
     }
 
-    // --- 1b. Resolve user's organization_id for storing with attestation ---
+    // --- 1b. Resolve user's organization_id for storing with attestation and same-org update check ---
     const [userRow] = await db
       .select({ organization_id: usersTable.organization_id })
       .from(usersTable)
@@ -341,12 +390,29 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
       return;
     }
 
-    // --- Update existing by id: only if row belongs to user and is not COMPLETED (immutable) ---
+    // --- Update existing by id: owner can edit draft/rejected; same-org user can edit only DRAFT (not completed/rejected) ---
     if (attestationId) {
+      const updateWhere =
+        organizationIdStr
+          ? and(
+              eq(vendorSelfAttestations.id, attestationId),
+              or(
+                eq(vendorSelfAttestations.user_id, userId),
+                and(
+                  eq(vendorSelfAttestations.organization_id, organizationIdStr),
+                  eq(vendorSelfAttestations.status, "DRAFT"),
+                ),
+              ),
+            )
+          : and(eq(vendorSelfAttestations.id, attestationId), eq(vendorSelfAttestations.user_id, userId));
       const [existingById] = await db
-        .select({ id: vendorSelfAttestations.id, status: vendorSelfAttestations.status })
+        .select({
+          id: vendorSelfAttestations.id,
+          status: vendorSelfAttestations.status,
+          document_uploads: vendorSelfAttestations.document_uploads,
+        })
         .from(vendorSelfAttestations)
-        .where(and(eq(vendorSelfAttestations.id, attestationId), eq(vendorSelfAttestations.user_id, userId)))
+        .where(updateWhere)
         .limit(1);
       if (!existingById) {
         res.status(404).json({ success: false, message: "Attestation not found" });
@@ -360,6 +426,13 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
         });
         return;
       }
+      const oldDocUpload = (existingById as { document_uploads?: Record<string, unknown> | null }).document_uploads;
+      const oldNames = getAllDocumentFileNames(oldDocUpload ?? null);
+      const newNames = getAllDocumentFileNames(docUploadResult.value as Record<string, unknown>);
+      const removed = new Set<string>();
+      for (const n of oldNames) if (!newNames.has(n)) removed.add(n);
+      deleteRemovedDocumentFiles(attestationId, removed);
+
       await db
         .update(vendorSelfAttestations)
         .set({
@@ -367,7 +440,7 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
           updated_at: sql`now()`,
           ...(status === "COMPLETED" ? { submitted_at: sql`now()` } : {}),
         })
-        .where(eq(vendorSelfAttestations.id, attestationId));
+        .where(updateWhere);
       let reportPayload: ReportPayload | null = null;
       if (status === "COMPLETED") {
         const vendorData = buildVendorDataFromPayload(b);

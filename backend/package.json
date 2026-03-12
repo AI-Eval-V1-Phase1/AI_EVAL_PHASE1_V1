@@ -21,6 +21,9 @@
     "db:run-0045": "node migrations/run-migration-0045.js",
     "db:run-0046": "node migrations/run-migration-0046.js",
     "db:run-0050": "node migrations/run-migration-0050.js",
+    "db:run-0051": "node migrations/run-migration-0051.js",
+    "db:run-0052": "node migrations/run-migration-0052.js",
+    "db:run-0053": "node migrations/run-migration-0053.js",
     "dump-excel": "node scripts/dump-excel-schema.js",
     "sync-excel-to-db": "node scripts/sync-excel-to-db.js",
     "seed-risk-mappings": "node scripts/seed-risk-mappings.js"

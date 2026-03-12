@@ -1,8 +1,10 @@
 /**
  * Controlled file upload with optional validation (type, size).
  * Valid files are passed to onFilesChange; invalid ones are reported via onValidationError.
+ * If user selects more than maxFiles in one go, shows a warning toast and adds no files.
  */
 import React, { useRef, useState } from "react";
+import { toast } from "react-toastify";
 import "../../styles/file_upload.css";
 import { UploadIcon } from "lucide-react";
 
@@ -22,6 +24,8 @@ interface FileUploadProps {
   readOnly?: boolean;
   /** Optional file sizes in bytes for read-only display (parallel to value). */
   fileSizes?: (number | undefined)[];
+  /** When true, upload button is disabled and no new files can be added (existing files can still be removed unless readOnly). */
+  disabled?: boolean;
 }
 
 const DEFAULT_ACCEPT = ".pdf,.doc,.docx,.ppt,.pptx";
@@ -41,6 +45,7 @@ const FileUpload = ({
   onValidationError,
   readOnly = false,
   fileSizes = [],
+  disabled = false,
 }: FileUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
@@ -63,8 +68,14 @@ const FileUpload = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files ?? []);
+    e.target.value = "";
     setValidationMessage(null);
     onValidationError?.("");
+
+    if (maxFiles < Infinity && selectedFiles.length > maxFiles) {
+      toast.warning(`Maximum ${maxFiles} file${maxFiles === 1 ? "" : "s"} per section. No files were added.`);
+      return;
+    }
 
     const validNames: string[] = [];
     const errors: string[] = [];
@@ -90,8 +101,9 @@ const FileUpload = ({
 
     const combined = [...value, ...validNames].slice(0, maxFiles);
     const validFiles = selectedFiles.filter((f) => validNames.includes(f.name));
-    onFilesChange?.(combined, validFiles.length > 0 ? validFiles : undefined);
-    e.target.value = "";
+    const numToAdd = Math.max(0, maxFiles - value.length);
+    const filesToPass = validFiles.slice(0, numToAdd);
+    onFilesChange?.(combined, filesToPass.length > 0 ? filesToPass : undefined);
   };
 
   const removeFile = (index: number) => {
@@ -101,14 +113,17 @@ const FileUpload = ({
     onValidationError?.("");
   };
 
+  const uploadDisabled = disabled || (maxFiles < Infinity && value.length >= maxFiles);
+
   return (
-    <div className={`upload-container${readOnly ? " upload-container--readonly" : ""}`}>
+    <div className={`upload-container${readOnly ? " upload-container--readonly" : ""}${uploadDisabled ? " upload-container--disabled" : ""}`}>
       {!readOnly && (
         <>
           <div
             className="custom-file-button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => !uploadDisabled && fileInputRef.current?.click()}
             role="button"
+            aria-disabled={uploadDisabled}
           >
             <UploadIcon size={16} className="upload_icon" /> Upload Files
           </div>
@@ -119,6 +134,7 @@ const FileUpload = ({
             ref={fileInputRef}
             onChange={handleFileChange}
             style={{ display: "none" }}
+            disabled={uploadDisabled}
           />
           {validationMessage && (
             <p className="upload-validation-error" style={{ color: "#b91c1c", fontSize: "0.875rem", marginTop: 4 }}>

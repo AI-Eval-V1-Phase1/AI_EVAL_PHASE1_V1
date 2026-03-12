@@ -4,6 +4,7 @@ import { pgEnum } from "drizzle-orm/pg-core";
 export const assessmentStatusEnum = pgEnum("assessment_status", [
   "draft",
   "submitted",
+  "expired",
 ]);
 
 export const assessmentTypeEnum = pgEnum("assessment_type", [

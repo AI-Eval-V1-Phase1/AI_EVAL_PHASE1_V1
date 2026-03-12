@@ -11,6 +11,15 @@ import {
   ClipboardList,
   Eye,
   Info,
+  Shield,
+  Store,
+  ShoppingCart,
+  ShieldCheck,
+  LayoutDashboard,
+  BookOpen,
+  UserCheck,
+  Wrench,
+  Sparkles,
 } from "lucide-react";
 import Button from "../../UI/Button";
 import "../../../styles/page_tabs.css";
@@ -24,36 +33,130 @@ import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { getOrganizations } from "../../../Context/OrganizationsData";
 
-const ROLE_DEFINITIONS = [
+type RoleCategory = "system" | "vendor" | "buyer";
+
+const ROLE_CATEGORIES: {
+  id: RoleCategory;
+  label: string;
+  icon: React.ComponentType<{ size?: number }>;
+  description: string;
+}[] = [
   {
-    title: "Org Admin",
-    description: "Full access to settings, billing, and user management.",
+    id: "system",
+    label: "System Administrator",
+    icon: Shield,
+    description:
+      "Platform-level roles for system administration and directory curation.",
+  },
+  {
+    id: "vendor",
+    label: "Vendor",
+    icon: Store,
+    description:
+      "Organization roles for vendors: Trust & Sales Acceleration (T&SA) and org administration.",
+  },
+  {
+    id: "buyer",
+    label: "Buyer",
+    icon: ShoppingCart,
+    description:
+      "Organization roles for buyers: AI Adoption and org administration.",
+  },
+];
+
+const ROLE_DEFINITIONS: {
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ size?: number }>;
+  category: RoleCategory;
+}[] = [
+  // System Roles
+  {
+    title: "System Admin",
+    description: "Full access across the platform.",
+    icon: ShieldCheck,
+    category: "system",
+  },
+  {
+    title: "System Manager",
+    description: "Full access to select modules; view-only for others.",
+    icon: LayoutDashboard,
+    category: "system",
+  },
+  {
+    title: "System Viewer",
+    description: "View-only access across platform; no access to Sales Agent .",
+    icon: Eye,
+    category: "system",
+  },
+  {
+    title: "AI Directory Curator",
+    description:
+      "Full access to Attestations and AI Vendor Directory; view-only for dashboard and no access elsewhere.",
+    icon: BookOpen,
+    category: "system",
+  },
+  // Vendor Roles
+  {
+    title: "T&SA Admin",
+    description: "Full access across vendor platform.",
     icon: Settings,
+    category: "vendor",
   },
   {
-    title: "Assessor",
-    description: "Can create and run assessments, view reports, and map risks.",
+    title: "T&SA Manager",
+    description: "Full access across vendor platform; view-only for Reports",
     icon: ClipboardList,
+    category: "vendor",
   },
   {
-    title: "Viewer",
-    description: "Read-only access to published reports and directory.",
-    icon: Eye,
+    title: "T&SA Lead",
+    description: "Full access across vendor platform except user management; view-only for Reports",
+    icon: UserCheck,
+    category: "vendor",
   },
   {
-    title: "Manager",
-    description: "Read-only access to published reports and directory.",
-    icon: Eye,
+    title: "T&SA Engineer",
+    description: "Full access to Dashboard, Attestation and Assessmnet; view-only for Reports and product profile",
+    icon: Wrench,
+    category: "vendor",
   },
   {
-    title: "Analyst",
-    description: "Read-only access to published reports and directory.",
+    title: "T&SA Viewer",
+    description: "Read-only access to Dashboard,Assessments,published reports and Product Profile.",
     icon: Eye,
+    category: "vendor",
+  },
+  // Buyer Roles
+  {
+    title: "AI Adoption Admin",
+    description: "Full access across AI Adoption platform.",
+    icon: Settings,
+    category: "buyer",
   },
   {
-    title: "User",
-    description: "Read-only access to published reports and directory.",
+    title: "AI Adoption Manager",
+    description: "Full access across AI Adoption platform.",
+    icon: Sparkles,
+    category: "buyer",
+  },
+  {
+    title: "AI Adoption Lead",
+    description: "Full access across AI Adoption platform; except for User Managment.",
+    icon: UserCheck,
+    category: "buyer",
+  },
+  {
+    title: "AI Adoption Engineer",
+    description: "Full access across AI Adoption platform; except for User Managment; and limited access for Risk Mapping and Reports.",
+    icon: Wrench,
+    category: "buyer",
+  },
+  {
+    title: "AI Adoption Viewer",
+    description: "Read-only access to Dashboard, AI Vendor Directory, and Reports.",
     icon: Eye,
+    category: "buyer",
   },
 ];
 
@@ -122,7 +225,15 @@ const UserManagement = () => {
     .toLowerCase()
     .trim();
   const isVendorOrBuyer = systemRole === "vendor" || systemRole === "buyer";
+  const isUserManagementViewOnly =
+    systemRole === "system viewer" || systemRole === "system_viewer";
   const userOrgName = (sessionStorage.getItem("organizationName") ?? "").trim();
+
+  // System users with user-management access see all roles; org admins see only their type (vendor or buyer)
+  const isSystemUserWithAccess = !isVendorOrBuyer;
+  const visibleRoleCategories = isSystemUserWithAccess
+    ? ROLE_CATEGORIES
+    : ROLE_CATEGORIES.filter((cat) => cat.id === systemRole);
 
   const baseOrgs = data ?? [];
   const orgsForDropdown =
@@ -137,25 +248,45 @@ const UserManagement = () => {
     value: org.id,
   }));
 
-  const allRoleOptions = [
-    { value: "admin", label: "Org Admin" },
-    { value: "analyst", label: "Assessor" },
+  const baseRoleOptions = [
+    { value: "admin", label: "Admin" },
     { value: "manager", label: "Manager" },
+    { value: "lead", label: "Lead" },
+    { value: "engineer", label: "Engineer" },
     { value: "viewer", label: "Viewer" },
-    { value: "user", label: "User" },
+  ];
+  const vendorRoleOptions = [
+    { value: "admin", label: "T&SA Admin" },
+    { value: "manager", label: "T&SA Manager" },
+    { value: "lead", label: "T&SA Lead" },
+    { value: "engineer", label: "T&SA Engineer" },
+    { value: "viewer", label: "T&SA Viewer" },
+  ];
+  const buyerRoleOptions = [
+    { value: "admin", label: "AI Adoption Admin" },
+    { value: "manager", label: "AI Adoption Manager" },
+    { value: "lead", label: "AI Adoption Lead" },
+    { value: "engineer", label: "AI Adoption Engineer" },
+    { value: "viewer", label: "AI Adoption Viewer" },
   ];
   const selectedOrg = data?.find((o) => String(o.id) === String(organization));
+  const orgRoleOptions =
+    systemRole === "vendor"
+      ? vendorRoleOptions
+      : systemRole === "buyer"
+        ? buyerRoleOptions
+        : baseRoleOptions;
   const roleOptions =
     selectedOrg?.hasAdmin === true
-      ? allRoleOptions.filter((r) => r.value !== "admin")
-      : allRoleOptions;
+      ? orgRoleOptions.filter((r) => r.value !== "admin")
+      : orgRoleOptions;
   const isSystemOrgSelected = organization === "1" || organization === 1;
 
   const systemRoleOptions = [
     { value: "system admin", label: "System Admin" },
     { value: "system manager", label: "System Manager" },
     { value: "system viewer", label: "System Viewer" },
-    { value: "system user", label: "System User" },
+    { value: "ai directory curator", label: "AI Directory Curator" },
   ];
 
   return (
@@ -163,7 +294,7 @@ const UserManagement = () => {
       <div className="org_settings_header page_header_align">
         <div className="org_settings_headers page_header_row">
           <span className="icon_size_header" aria-hidden>
-            <Settings size={24} className="header_icon_svg"/>
+            <Settings size={24} className="header_icon_svg" />
           </span>
           <div className="page_header_title_block">
             <h1 className="org_settings_title">User Management Settings</h1>
@@ -200,19 +331,23 @@ const UserManagement = () => {
               <div>
                 <h2 className="org_settings_card_title">Team Members</h2>
                 <p className="org_settings_card_subtitle">
-                  Manage access and permissions for your organization.
+                  {isUserManagementViewOnly
+                    ? "View users and roles for your organization."
+                    : "Manage access and permissions for your organization."}
                 </p>
               </div>
-              <Button
-                className="invite_user_btn org_invite_btn"
-                onClick={() => setIsModalOpen(true)}
-              >
-                <UserPlus size={18} />
-                Invite User
-              </Button>
+              {!isUserManagementViewOnly && (
+                <Button
+                  className="invite_user_btn org_invite_btn"
+                  onClick={() => setIsModalOpen(true)}
+                >
+                  <UserPlus size={18} />
+                  Invite User
+                </Button>
+              )}
             </div>
             <div className="team_members_table_wrapper">
-              <UserDataTable refreshKey={userListRefreshKey} />
+              <UserDataTable refreshKey={userListRefreshKey} viewOnly={isUserManagementViewOnly} />
             </div>
           </div>
         </>
@@ -220,10 +355,10 @@ const UserManagement = () => {
 
       {activeTab === "general" && (
         <div className="org_settings_card">
-          <h2 className="org_settings_card_title">General</h2>
+          {/* <h2 className="org_settings_card_title">General</h2>
           <p className="org_settings_card_subtitle">
             Organization name and general preferences.
-          </p>
+          </p> */}
           <div className="role_definitions_section">
             <h3
               className="org_settings_card_title"
@@ -239,22 +374,55 @@ const UserManagement = () => {
               className="org_settings_card_subtitle"
               style={{ marginBottom: "1rem" }}
             >
-              Permissions matrix for available roles.
+              {isSystemUserWithAccess
+                ? "Permissions matrix for available roles by user type."
+                : "Permissions matrix for your organization's roles."}
             </p>
-            <div className="role_definitions_grid">
-              {ROLE_DEFINITIONS.map((r) => {
-                const Icon = r.icon;
-                return (
-                  <div key={r.title} className="role_definition_card">
-                    <div className="role_definition_icon">
-                      <Icon size={24} />
+            {visibleRoleCategories.map((cat) => {
+              const CategoryIcon = cat.icon;
+              const rolesInCategory = ROLE_DEFINITIONS.filter(
+                (r) => r.category === cat.id,
+              );
+              return (
+                <div
+                  key={cat.id}
+                  className="role_category_block"
+                  data-category={cat.id}
+                >
+                  <div className="role_category_header">
+                    <div className="role_category_icon_wrapper">
+                      <CategoryIcon size={24} aria-hidden />
                     </div>
-                    <h3 className="role_definition_title">{r.title}</h3>
-                    <p className="role_definition_desc">{r.description}</p>
+                    <div>
+                      <h4 className="role_category_title">{cat.label}</h4>
+                      <p className="role_category_desc">{cat.description}</p>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="role_definitions_grid">
+                    {rolesInCategory.map((r) => {
+                      const Icon = r.icon;
+                      return (
+                        <div
+                          key={`${cat.id}-${r.title}`}
+                          className="role_definition_card"
+                        >
+                          <div className="role_heading_icon">
+                            <div className="role_definition_icon">
+                              <Icon size={18} />
+                            </div>
+                            <h3 className="role_definition_title">{r.title}</h3>
+                          </div>
+
+                          <p className="role_definition_desc">
+                            {r.description}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -267,14 +435,14 @@ const UserManagement = () => {
             </p>
           </div>
           <div className="cancel">
-            <Button
-              className="user_cancel_btn"
+            <button
+              type="button"
+              className="modal_close_btn"
               onClick={() => setIsModalOpen(false)}
+              aria-label="Close"
             >
-              <span>
-                <CircleX />
-              </span>
-            </Button>
+              <CircleX size={20} />
+            </button>
           </div>
         </div>
 

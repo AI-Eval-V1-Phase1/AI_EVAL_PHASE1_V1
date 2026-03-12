@@ -73,7 +73,8 @@ const listPublicVendors = async (req: Request, res: Response): Promise<void> => 
               and(
                 inArray(vendorSelfAttestations.user_id, vendorIds),
                 eq(vendorSelfAttestations.visible_to_buyer, true),
-                sql`upper(${vendorSelfAttestations.status}) = 'COMPLETED'`
+                sql`upper(${vendorSelfAttestations.status}) = 'COMPLETED'`,
+                sql`(${vendorSelfAttestations.expiry_at} IS NULL OR ${vendorSelfAttestations.expiry_at} >= now())`
               )
             )
         : [];

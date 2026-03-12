@@ -8,7 +8,7 @@ import EditOrganization from "./EditOrganization";
 
 const LOADER_MIN_MS = 1500;
 
-const OrganizationDataTable = ({ openPreview }) => {
+const OrganizationDataTable = ({ openPreview, viewOnly = false }) => {
   const [filterText, setFilterText] = React.useState("");
   const [resetPaginationToggle, setResetPaginationToggle] =
     React.useState(false);
@@ -172,7 +172,6 @@ const OrganizationDataTable = ({ openPreview }) => {
           style={{
             width: "100%",
             textAlign: "left",
-            textTransform: "capitalize",
           }}
         >
           <p
@@ -219,15 +218,17 @@ const OrganizationDataTable = ({ openPreview }) => {
             <Eye size={16} />
             View
           </button>
-          <button
-            type="button"
-            className="user_table_action_btn"
-            onClick={() => editOrg(row.id)}
-            title="Edit organization"
-          >
-            <SquarePen size={16} />
-            Edit
-          </button>
+          {!viewOnly && (
+            <button
+              type="button"
+              className="user_table_action_btn"
+              onClick={() => editOrg(row.id)}
+              title="Edit organization"
+            >
+              <SquarePen size={16} />
+              Edit
+            </button>
+          )}
         </div>
       ),
       ignoreRowClick: true,

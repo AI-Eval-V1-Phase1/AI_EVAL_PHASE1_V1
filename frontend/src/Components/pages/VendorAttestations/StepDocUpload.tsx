@@ -10,6 +10,7 @@ import FileUpload from "../../UI/FileUpload";
 import {
   DOCUMENT_UPLOAD_HELPER_TEXT,
   MAX_FILE_SIZE_BYTES,
+  MAX_FILES_PER_UPLOAD,
 } from "../../../constants/vendorAttestationDocumentConstants";
 import type { DocumentUploadState } from "../../../types/vendorSelfAttestation";
 
@@ -21,6 +22,8 @@ interface StepDocUploadProps {
   attestationId?: string | null;
   /** Upload one file for this attestation; returns the stored file name. */
   onUploadDocument?: (attestationId: string, file: File) => Promise<string>;
+  /** When no attestationId, store selected files here so they can be uploaded on Save Draft / Continue. */
+  onStorePendingFiles?: (slot: "0" | "1", files: File[]) => void;
   title?: string;
   subTitle?: string;
   icon?: ReactNode;
@@ -32,6 +35,7 @@ const StepDocUpload = ({
   setDocumentUpload,
   attestationId,
   onUploadDocument,
+  onStorePendingFiles,
   title = "Document Upload",
   subTitle,
   icon,
@@ -56,12 +60,14 @@ const StepDocUpload = ({
           const storedName = await onUploadDocument(attestationId, file);
           uploaded.push(storedName);
         } catch {
-          // keep client name if upload fails
           uploaded.push(file.name);
         }
       }
       setSlot(slot, [...current, ...uploaded]);
     } else {
+      if (!attestationId && selectedFiles?.length && onStorePendingFiles) {
+        onStorePendingFiles(slot, selectedFiles);
+      }
       setSlot(slot, fileNames);
     }
   };
@@ -92,6 +98,7 @@ const StepDocUpload = ({
           <FileUpload
             accept=".pdf,.doc,.docx,.ppt,.pptx"
             maxSizeBytes={MAX_FILE_SIZE_BYTES}
+            maxFiles={MAX_FILES_PER_UPLOAD}
             value={slot0}
             onFilesChange={(fileNames, selectedFiles) => handleFilesChange("0", fileNames, selectedFiles)}
           />
@@ -104,6 +111,7 @@ const StepDocUpload = ({
           <FileUpload
             accept=".pdf,.doc,.docx,.ppt,.pptx"
             maxSizeBytes={MAX_FILE_SIZE_BYTES}
+            maxFiles={MAX_FILES_PER_UPLOAD}
             value={slot1}
             onFilesChange={(fileNames, selectedFiles) => handleFilesChange("1", fileNames, selectedFiles)}
           />

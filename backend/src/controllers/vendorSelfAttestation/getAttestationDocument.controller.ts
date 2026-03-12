@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import * as path from "path";
 import * as fs from "fs";
 
-const UPLOADS_DIR = path.resolve(process.cwd(), "uploads", "vendor-attestations");
+const UPLOADS_DIR = path.resolve(process.cwd(), "public", "uploads_vendor_attestations");
 
 /**
  * Sanitize file name: allow only base name (no path segments) to prevent path traversal.
@@ -22,20 +22,28 @@ function safeFileName(name: string): string {
 const getAttestationDocument = async (req: Request, res: Response): Promise<void> => {
   try {
     const attestationId = String(req.params.attestationId ?? "").trim();
-    const rawFileName = String(req.params.fileName ?? "").trim();
-    const decoded = rawFileName ? decodeURIComponent(rawFileName) : "";
-    const fileName = safeFileName(decoded || rawFileName);
+    let rawFileName = String(req.params.fileName ?? "").trim();
+    try {
+      if (rawFileName && /%[0-9A-Fa-f]{2}/.test(rawFileName)) {
+        rawFileName = decodeURIComponent(rawFileName);
+      }
+    } catch {
+      // use rawFileName as-is if decode fails
+    }
+    const fileName = safeFileName(rawFileName);
 
     if (!attestationId || !fileName) {
       res.status(400).json({ success: false, message: "Attestation ID and file name are required" });
       return;
     }
 
-    const filePath = path.resolve(UPLOADS_DIR, attestationId, fileName);
+    const dir = path.resolve(UPLOADS_DIR, attestationId);
+    const filePath = path.resolve(dir, fileName);
     const uploadsResolved = path.resolve(UPLOADS_DIR);
 
     // Ensure resolved path is under UPLOADS_DIR (no path traversal)
-    if (!filePath.startsWith(uploadsResolved)) {
+    const relative = path.relative(uploadsResolved, filePath);
+    if (relative.startsWith("..") || path.isAbsolute(relative)) {
       res.status(400).json({ success: false, message: "Invalid path" });
       return;
     }

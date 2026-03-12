@@ -87,19 +87,42 @@ const EditUsers = ({ isUserId, setIsEdit, isEdit, isSelectedUser }) => {
     // }
   }, [dispatch]);
 
-  const roleOptions = [
-    { value: "admin", label: "admin" },
-    // { value: "system admin", label: "system admin" },
+  const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim();
+  const isSystemOrg = organization === "1" || organization === 1;
+
+  const baseRoleOptions = [
+    { value: "admin", label: "Admin" },
     { value: "analyst", label: "Analyst" },
-    { value: "manager", label: "manager" },
-    { value: "viewer", label: "viewer" },
-    { value: "user", label: "user" },
+    { value: "manager", label: "Manager" },
+    { value: "viewer", label: "Viewer" },
+    { value: "user", label: "User" },
   ];
+  const vendorRoleOptions = [
+    { value: "admin", label: "T&SA Admin" },
+    { value: "analyst", label: "T&SA Lead" },
+    { value: "manager", label: "T&SA Manager" },
+    { value: "viewer", label: "T&SA Viewer" },
+    { value: "user", label: "T&SA Engineer" },
+  ];
+  const buyerRoleOptions = [
+    { value: "admin", label: "AI Adoption Admin" },
+    { value: "analyst", label: "AI Adoption Lead" },
+    { value: "manager", label: "AI Adoption Manager" },
+    { value: "viewer", label: "AI Adoption Viewer" },
+    { value: "user", label: "AI Adoption Engineer" },
+  ];
+  const roleOptions =
+    systemRole === "vendor"
+      ? vendorRoleOptions
+      : systemRole === "buyer"
+        ? buyerRoleOptions
+        : baseRoleOptions;
+
   const systemRoleOptions = [
-    { value: "system admin", label: "system admin" },
-    { value: "system manager", label: "system manager" },
-    { value: "system viewer", label: "system viewer" },
-    { value: "system user", label: "system user" },
+    { value: "system admin", label: "System Admin" },
+    { value: "system manager", label: "System Manager" },
+    { value: "system viewer", label: "System Viewer" },
+    { value: "system user", label: "System User" },
   ];
 
   const orgOptions = data?.map((org) => ({
@@ -247,7 +270,7 @@ const EditUsers = ({ isUserId, setIsEdit, isEdit, isSelectedUser }) => {
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRole(e.target.value)}
                 >
                   <option value="">Select Role</option>
-                  {(organization === "1" || organization === 1 ? systemRoleOptions : roleOptions).map((opt) => (
+                  {(isSystemOrg ? systemRoleOptions : roleOptions).map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>

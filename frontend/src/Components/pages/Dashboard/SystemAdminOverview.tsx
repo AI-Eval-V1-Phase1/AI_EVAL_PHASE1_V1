@@ -4,10 +4,17 @@ import type { DashboardStats } from "./types";
 import { BASE_URL } from "./utils";
 import "./dashboard.css";
 
-const SystemAdminOverview = () => {
+interface SystemAdminOverviewProps {
+  /** When true, show as view-only dashboard (e.g. for AI Directory Curator). */
+  viewOnly?: boolean;
+}
+
+const SystemAdminOverview = ({ viewOnly = false }: SystemAdminOverviewProps) => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const LOADER_MIN_MS = 2000;
 
   useEffect(() => {
     const token = sessionStorage.getItem("bearerToken");
@@ -18,6 +25,11 @@ const SystemAdminOverview = () => {
     }
     setError(null);
     setLoading(true);
+    const loadStart = Date.now();
+    const finishLoading = () => {
+      const remaining = Math.max(0, LOADER_MIN_MS - (Date.now() - loadStart));
+      setTimeout(() => setLoading(false), remaining);
+    };
     fetch(`${BASE_URL}/dashboardStats`, {
       method: "GET",
       headers: {
@@ -34,7 +46,7 @@ const SystemAdminOverview = () => {
         }
       })
       .catch(() => setError("Network or server error"))
-      .finally(() => setLoading(false));
+      .finally(() => finishLoading());
   }, []);
 
   return (
@@ -45,9 +57,11 @@ const SystemAdminOverview = () => {
             <LayoutDashboard size={24} className="header_icon_svg" />
           </span>
           <div className="page_header_title_block">
-            <h1 className="page_header_title">System Admin Dashboard</h1>
+            <h1 className="page_header_title">
+              {viewOnly ? "Dashboard" : "System Admin Dashboard"}
+            </h1>
             <p className="vendor_overview_subtitle page_header_subtitle">
-              Platform-wide metrics and activity summary.
+              {viewOnly ? "View-only summary of platform metrics." : "Platform-wide metrics and activity summary."}
             </p>
           </div>
         </div>

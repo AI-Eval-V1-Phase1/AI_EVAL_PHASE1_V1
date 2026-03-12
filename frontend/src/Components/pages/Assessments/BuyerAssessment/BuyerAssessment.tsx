@@ -23,6 +23,7 @@ import {
   ChevronRightCircle,
   Send,
   Save,
+  Loader2,
 } from "lucide-react";
 import CardConfirmation from "../../../UI/CardConfirmation";
 import UseCase from "./UseCase";
@@ -679,6 +680,7 @@ const BuyerAssessment = () => {
           aria-label="Submitting assessment"
         >
           <div className="vendor_attestation_submit_overlay_content">
+            <Loader2 size={32} className="vendor_attestation_submit_overlay_loader" aria-hidden />
             <p>Submitting assessment…</p>
             <p className="vendor_attestation_submit_overlay_hint">Please wait. Do not close or refresh.</p>
           </div>

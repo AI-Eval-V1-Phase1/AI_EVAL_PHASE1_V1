@@ -3,7 +3,7 @@
   width: 100%;
   max-width: 100%;
   margin: 0;
- padding: 1.5em 1em 0 0;
+  padding: 1.5em 1em 0 0;
   box-sizing: border-box;
 }
 
@@ -155,53 +155,112 @@
 }
 
 /* User column (col 2) – left align header and cells */
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(2),
-.team_members_table_wrapper .orgDataTable .rdt_TableBodyRow .rdt_TableCell:nth-child(2) {
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(2),
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableBodyRow
+  .rdt_TableCell:nth-child(2) {
   text-align: left !important;
   justify-content: flex-start !important;
 }
 
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(2) .tableHeader {
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(2)
+  .tableHeader {
   display: block;
   text-align: left;
   width: 100%;
 }
 
 /* Organization (col 3) and Role (col 4) – left align header and cells */
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(3),
-.team_members_table_wrapper .orgDataTable .rdt_TableBodyRow .rdt_TableCell:nth-child(3),
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(4),
-.team_members_table_wrapper .orgDataTable .rdt_TableBodyRow .rdt_TableCell:nth-child(4) {
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(3),
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableBodyRow
+  .rdt_TableCell:nth-child(3),
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(4),
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableBodyRow
+  .rdt_TableCell:nth-child(4) {
   text-align: left !important;
   justify-content: flex-start !important;
   padding-left: 12px;
 }
 
 /* Force inner cell content to stay left (override RDT defaults) */
-.team_members_table_wrapper .orgDataTable .rdt_TableBodyRow .rdt_TableCell:nth-child(3) > div,
-.team_members_table_wrapper .orgDataTable .rdt_TableBodyRow .rdt_TableCell:nth-child(4) > div {
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableBodyRow
+  .rdt_TableCell:nth-child(3)
+  > div,
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableBodyRow
+  .rdt_TableCell:nth-child(4)
+  > div {
   justify-content: flex-start !important;
   text-align: left !important;
 }
 
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(3) .tableHeader,
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(4) .tableHeader {
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(3)
+  .tableHeader,
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(4)
+  .tableHeader {
   display: block;
   text-align: left;
   width: 100%;
 }
 
 /* Center headers for Account status, Status, Actions (cols 5–7) */
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(5),
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(6),
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(7) {
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(5),
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(6),
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(7) {
   text-align: center !important;
   justify-content: center !important;
 }
 
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(5) .tableHeader,
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(6) .tableHeader,
-.team_members_table_wrapper .orgDataTable .rdt_TableHeadRow .rdt_TableCol:nth-child(7) .tableHeader {
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(5)
+  .tableHeader,
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(6)
+  .tableHeader,
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableHeadRow
+  .rdt_TableCol:nth-child(7)
+  .tableHeader {
   display: block;
   text-align: center;
   width: 100%;
@@ -252,8 +311,6 @@
 .team_member_email_link {
   text-decoration: none;
 }
-
-
 
 /* Role and status – box style like attestation button (not pill) */
 .pill {
@@ -331,13 +388,20 @@
 }
 
 /* Actions column: use full width, center buttons with even spacing */
-.team_members_table_wrapper .orgDataTable .rdt_TableBodyRow .rdt_TableCell:last-child {
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableBodyRow
+  .rdt_TableCell:last-child {
   padding-left: 12px;
   padding-right: 12px;
   margin-top: 0;
 }
 
-.team_members_table_wrapper .orgDataTable .rdt_TableBodyRow .rdt_TableCell:last-child > div {
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_TableBodyRow
+  .rdt_TableCell:last-child
+  > div {
   width: 100%;
   min-width: 0;
   justify-content: center !important;
@@ -353,6 +417,7 @@
   padding: 0.75rem 0;
   margin-top: 0.5rem;
   min-height: 2.5rem;
+  border-top: none;
 }
 
 .orgDataTable .rdt_Pagination > *,
@@ -375,7 +440,11 @@
 
 /* Rows per page: hide library's duplicate dropdown icon so only the select's arrow shows */
 .orgDataTable .rdt_Pagination div:has(> select) > svg,
-.team_members_table_wrapper .orgDataTable .rdt_Pagination div:has(> select) > svg {
+.team_members_table_wrapper
+  .orgDataTable
+  .rdt_Pagination
+  div:has(> select)
+  > svg {
   display: none;
 }
 
@@ -531,10 +600,65 @@
   border: 1px solid crimson;
 }
 
-/* Role Definitions */
+/* Role Definitions – categories (System User, Vendor, Buyer) */
+.role_category_block {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.role_category_block:first-of-type {
+  margin-top: 1rem;
+  padding-top: 0;
+  border-top: none;
+}
+
+.role_category_header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.role_category_icon_wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: #e0e7ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.role_category_block[data-category="vendor"] .role_category_icon_wrapper {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.role_category_block[data-category="buyer"] .role_category_icon_wrapper {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.role_category_title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.25rem 0;
+}
+
+.role_category_desc {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.45;
+}
+
 .role_definitions_grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
   margin-top: 0.5rem;
 }
@@ -552,22 +676,24 @@
 }
 
 .role_definition_icon {
-  width: 40px;
-  height: 40px;
+  /* width: 40px;
+  height: 40px; */
+   width: 26px;
+  height: 26px;
   border-radius: 5px;
   background: #e0e7ff;
   color: #4f46e5;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.75rem;
+  /* margin-bottom: 0.75rem; */
 }
 
 .role_definition_title {
   font-size: 1rem;
   font-weight: 600;
   color: #0f172a;
-  margin: 0 0 0.35rem 0;
+  /* margin: 0 0 0.35rem 0; */
 }
 
 .role_definition_desc {
@@ -595,7 +721,6 @@
   display: flex;
   justify-content: space-between;
 }
-
 
 .title_for_page {
   font-size: 2em;
@@ -646,8 +771,7 @@
 .user_cancel_btn {
   background: none;
   border: none;
-    cursor: pointer;
-
+  cursor: pointer;
 }
 .header_modal {
   display: flex;
@@ -699,4 +823,12 @@
 
 #edit_user_reason {
   resize: none !important;
+}
+
+.role_heading_icon {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  gap: 1em;
+  margin-bottom: 10px;
 }

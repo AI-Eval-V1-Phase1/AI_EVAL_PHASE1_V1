@@ -90,6 +90,7 @@
   max-width: 900px;
   border-radius: 10px;
   box-shadow: none;
+  background-color: white;
 }
 
 /* Match login page gap between heading and caption (0.2em) */

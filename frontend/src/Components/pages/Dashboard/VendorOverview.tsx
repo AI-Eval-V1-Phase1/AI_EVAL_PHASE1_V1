@@ -8,6 +8,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import DashboardMetricCard from "../../UI/DashboardMetricCard";
+import LoadingMessage from "../../UI/LoadingMessage";
 import Select from "../../UI/Select";
 import type { AttestationItem, VendorAssessmentItem } from "./types";
 import { BASE_URL, formatDisplayDate, getCompletedByDisplay } from "./utils";
@@ -23,6 +24,8 @@ const VendorOverview = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedCompletedId, setSelectedCompletedId] = useState<string>("");
 
+  const LOADER_MIN_MS = 2000;
+
   const fetchAttestations = useCallback(async () => {
     const token = sessionStorage.getItem("bearerToken");
     if (!token) {
@@ -32,6 +35,11 @@ const VendorOverview = () => {
     }
     setError(null);
     setLoading(true);
+    const loadStart = Date.now();
+    const finishLoading = () => {
+      const remaining = Math.max(0, LOADER_MIN_MS - (Date.now() - loadStart));
+      setTimeout(() => setLoading(false), remaining);
+    };
     try {
       const response = await fetch(`${BASE_URL}/vendorSelfAttestation`, {
         method: "GET",
@@ -47,6 +55,7 @@ const VendorOverview = () => {
         status?: string;
         created_at?: string;
         updated_at?: string;
+        expiry_at?: string | null;
         product_name?: string | null;
         certificates?: Array<{ name: string; expiryDate: string | null }>;
         generated_profile_report?: { trustScore?: { overallScore?: number; summary?: string; label?: string }; sections?: unknown[] };
@@ -61,12 +70,12 @@ const VendorOverview = () => {
         result = text ? JSON.parse(text) : {};
       } catch {
         setError("Invalid response from server");
-        setLoading(false);
+        finishLoading();
         return;
       }
       if (!response.ok) {
         setError((result.message as string) || "Failed to load attestations");
-        setLoading(false);
+        finishLoading();
         return;
       }
       const list: AttestationItem[] = [];
@@ -79,6 +88,7 @@ const VendorOverview = () => {
               status: (a.status ?? "").toUpperCase(),
               createdAt: a.created_at,
               updatedAt: a.updated_at,
+              expiryDate: a.expiry_at ?? null,
               productName: a.product_name ?? undefined,
               certificates: Array.isArray(a.certificates) ? a.certificates : undefined,
               generated_profile_report: a.generated_profile_report,
@@ -93,6 +103,7 @@ const VendorOverview = () => {
           status: (a.status ?? "").toUpperCase(),
           createdAt: a.created_at,
           updatedAt: a.updated_at,
+          expiryDate: a.expiry_at ?? null,
           productName: a.product_name ?? undefined,
           certificates: Array.isArray(a.certificates) ? a.certificates : undefined,
           generated_profile_report: a.generated_profile_report,
@@ -102,7 +113,7 @@ const VendorOverview = () => {
     } catch {
       setError("Network or server error");
     } finally {
-      setLoading(false);
+      finishLoading();
     }
   }, []);
 
@@ -111,6 +122,11 @@ const VendorOverview = () => {
     const token = sessionStorage.getItem("bearerToken");
     if (!token) return;
     setAssessmentsLoading(true);
+    const loadStart = Date.now();
+    const finishLoading = () => {
+      const remaining = Math.max(0, LOADER_MIN_MS - (Date.now() - loadStart));
+      setTimeout(() => setAssessmentsLoading(false), remaining);
+    };
     try {
       const [assessmentsRes, reportsRes] = await Promise.all([
         fetch(`${BASE_URL}/assessments`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -134,7 +150,7 @@ const VendorOverview = () => {
       setAssessments([]);
       setReportsByAssessmentId({});
     } finally {
-      setAssessmentsLoading(false);
+      finishLoading();
     }
   }, []);
 
@@ -146,22 +162,40 @@ const VendorOverview = () => {
     fetchAssessmentsAndReports();
   }, [fetchAssessmentsAndReports]);
 
-  /** Default dropdown to latest completed attestation when data loads */
+  /** Completed attestation is expired when expiry date is in the past (exclude from dropdown). */
+  const isAttestationExpired = (item: AttestationItem): boolean => {
+    if ((item.status ?? "").toUpperCase() !== "COMPLETED") return false;
+    const exp = item.expiryDate;
+    if (exp == null || String(exp).trim() === "") return false;
+    const expiry = new Date(exp);
+    if (Number.isNaN(expiry.getTime())) return false;
+    const today = new Date();
+    expiry.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return expiry.getTime() < today.getTime();
+  };
+
+  /** Only completed, non-expired attestations (shown in dropdown). */
+  const completedAttestations = attestations.filter(
+    (a) => (a.status ?? "").toUpperCase() === "COMPLETED" && !isAttestationExpired(a)
+  );
+
+  /** Default dropdown to latest current (non-expired) completed attestation when data loads; clear if selected is expired */
   useEffect(() => {
-    const completed = attestations.filter((a) => (a.status ?? "").toUpperCase() === "COMPLETED");
-    const sorted = [...completed].sort((a, b) => {
+    const current = attestations.filter(
+      (a) => (a.status ?? "").toUpperCase() === "COMPLETED" && !isAttestationExpired(a)
+    );
+    const sorted = [...current].sort((a, b) => {
       const aDate = a.updatedAt ?? a.createdAt ?? "";
       const bDate = b.updatedAt ?? b.createdAt ?? "";
       return new Date(bDate).getTime() - new Date(aDate).getTime();
     });
-    if (sorted.length > 0 && !selectedCompletedId) {
+    if (selectedCompletedId && !current.some((a) => a.id === selectedCompletedId)) {
+      setSelectedCompletedId(sorted[0]?.id ?? "");
+    } else if (sorted.length > 0 && !selectedCompletedId) {
       setSelectedCompletedId(sorted[0].id);
     }
-  }, [attestations]);
-
-  const completedAttestations = attestations.filter(
-    (a) => (a.status ?? "").toUpperCase() === "COMPLETED"
-  );
+  }, [attestations, selectedCompletedId]);
   /** Sorted by latest first (updatedAt desc) for dropdown default */
   const completedAttestationsSorted = [...completedAttestations].sort((a, b) => {
     const aDate = a.updatedAt ?? a.createdAt ?? "";
@@ -258,9 +292,7 @@ const VendorOverview = () => {
         <p className="vendor_overview_section_subtitle">
           Security documents and compliance evidence.
         </p>
-        {loading && (
-          <div className="vendor_overview_loading">Loading attestations…</div>
-        )}
+        {loading && <LoadingMessage message="Loading attestations…" />}
         {error && (
           <div className="vendor_overview_error">{error}</div>
         )}
@@ -282,7 +314,7 @@ const VendorOverview = () => {
                   </div>
                   <div className="vendor_overview_attestation_actions">
                     <Link
-                      to="/reports"
+                      to="/attestation_details"
                       state={{ attestationId: cert.attestationId }}
                       className="vendor_overview_btn_view"
                     >
@@ -317,7 +349,7 @@ const VendorOverview = () => {
           </div>
         )}
         {selectedCompletedId && assessmentsLoading && (
-          <div className="vendor_overview_loading">Loading assessments…</div>
+          <LoadingMessage message="Loading assessments…" />
         )}
         {selectedCompletedId && !assessmentsLoading && assessmentsForSelectedAttestation.length === 0 && (
           <div className="vendor_overview_empty">

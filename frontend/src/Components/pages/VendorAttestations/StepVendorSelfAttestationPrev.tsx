@@ -137,57 +137,80 @@ function StepVendorSelfAttestationPrev({ formState, onNavigateToStep, attestatio
     { label: "Operating Regions", value: formatValue(companyProfile.operatingRegions) },
   ];
 
-  /** Regulatory and Compliance Certification Material rows — shown under Compliance Certifications section in preview */
+  /** Regulatory and Compliance Certification Material — one heading, then list: "1. SOC2 Type 2 document uploaded  verified view update" */
+  const categoriesWithDocs =
+    documentUpload?.["2"]?.categories?.filter(
+      (category) => (documentUpload["2"]?.byCategory?.[category] ?? []).length > 0
+    ) ?? [];
   const regulatoryRows = (
-    <>
-      {documentUpload?.["2"]?.categories
-        ?.filter((category) => (documentUpload["2"]?.byCategory?.[category] ?? []).length > 0)
-        ?.map((category) => {
-          const names = documentUpload["2"]?.byCategory?.[category] ?? [];
-          const regDoc = renderDocumentValue(names);
-          return (
-            <div key={category} className="vendor_preview_row vendor_preview_row_regulatory">
-              <dt className="vendor_preview_label">
-                <span className="vendor_preview_doc_label">
-                  <span>Regulatory and Compliance Certification Material — {category}</span>
-                  <span className="preview-regulatory-verified" title="Document uploaded and verified">
-                    <ShieldCheck size={14} aria-hidden />
-                    <span>Verified</span>
-                  </span>
-                  <DocumentRowActions
-                    step={STEP_COMPLIANCE_CERTIFICATIONS}
-                    show={!regDoc.isNa}
-                    documentNames={names}
-                    showUpdate={Boolean(onNavigateToStep)}
-                    onUpdate={() => onNavigateToStep?.(STEP_COMPLIANCE_CERTIFICATIONS)}
-                  />
-                </span>
-              </dt>
-              <dd className="vendor_preview_value">{regDoc.content}</dd>
-            </div>
-          );
-        })}
-      {(!documentUpload?.["2"]?.categories?.length ||
-        documentUpload["2"]?.categories?.every(
-          (cat) => (documentUpload["2"]?.byCategory?.[cat] ?? []).length === 0
-        )) && (
-        <div className="vendor_preview_row">
-          <dt className="vendor_preview_label">
-            <span className="vendor_preview_doc_label">
-              <span>Regulatory and Compliance Certification Material</span>
-              <DocumentRowActions
-                step={STEP_COMPLIANCE_CERTIFICATIONS}
-                show={false}
-                documentNames={[]}
-                showUpdate={Boolean(onNavigateToStep)}
-                onUpdate={() => onNavigateToStep?.(STEP_COMPLIANCE_CERTIFICATIONS)}
-              />
+    <div className="vendor_preview_row vendor_preview_row_regulatory">
+      <dt className="vendor_preview_label">
+        <span className="vendor_preview_doc_label">
+          <span>Regulatory and Compliance Certification Material</span>
+          {categoriesWithDocs.length === 0 && onNavigateToStep && (
+            <span className="preview-doc-actions">
+              <button
+                type="button"
+                className="preview-update-btn"
+                onClick={() => onNavigateToStep(STEP_COMPLIANCE_CERTIFICATIONS)}
+                title="Add documents"
+              >
+                <CircleArrowUp size={16} aria-hidden />
+                <span style={{ marginLeft: "0.25rem" }}>Update</span>
+              </button>
             </span>
-          </dt>
-          <dd className="vendor_preview_value">N/A</dd>
-        </div>
-      )}
-    </>
+          )}
+        </span>
+      </dt>
+      <dd className="vendor_preview_value vendor_preview_value_regulatory_list">
+        {categoriesWithDocs.length > 0 ? (
+          <ol className="preview_regulatory_doc_list">
+            {categoriesWithDocs.map((category) => {
+              const names = documentUpload!["2"]!.byCategory![category] ?? [];
+              const fileName = names[0];
+              return (
+                <li key={category} className="preview_regulatory_doc_item">
+                  <span className="preview_regulatory_doc_line">
+                    <span className="preview_regulatory_doc_category">{category}</span>
+                    <span className="preview_regulatory_doc_uploaded"> {fileName}</span>
+                  </span>
+                  <span className="preview-doc-actions">
+                    <span className="preview-regulatory-verified" title="Verified">
+                      <ShieldCheck size={14} aria-hidden />
+                      <span>Verified</span>
+                    </span>
+                    {canOpenDocument && fileName && (
+                      <button
+                        type="button"
+                        className="preview-view-btn"
+                        onClick={() => onOpenDocument?.(fileName)}
+                        aria-label={`View ${fileName}`}
+                      >
+                        <Eye size={14} aria-hidden />
+                        <span style={{ marginLeft: "0.25rem" }}>View</span>
+                      </button>
+                    )}
+                    {onNavigateToStep && (
+                      <button
+                        type="button"
+                        className="preview-update-btn"
+                        onClick={() => onNavigateToStep(STEP_COMPLIANCE_CERTIFICATIONS)}
+                        title="Upload document"
+                      >
+                        <CircleArrowUp size={16} aria-hidden />
+                        <span style={{ marginLeft: "0.25rem" }}>Update</span>
+                      </button>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        ) : (
+          <>N/A</>
+        )}
+      </dd>
+    </div>
   );
 
   return (

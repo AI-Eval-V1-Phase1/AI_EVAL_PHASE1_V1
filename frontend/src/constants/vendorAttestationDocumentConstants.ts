@@ -16,13 +16,16 @@ export const DOCUMENT_CATEGORIES = [
   { label: "None", value: "None" },
 ] as const;
 
+/** Max number of files per upload section (each file upload slot allows up to this many files). */
+export const MAX_FILES_PER_UPLOAD = 3;
+
 /** Helper text for the main Document Upload step */
 export const DOCUMENT_UPLOAD_HELPER_TEXT =
-  "Accepted formats: PDF, DOCX, PPT. Max 10MB per file. Multiple files can be uploaded per category.";
+  "Accepted formats: PDF, DOCX, PPT. Max 3 files per section, 10MB per file.";
 
 /** Helper text for Evidence & Supporting Documentation upload (Testing and Policy) */
 export const EVIDENCE_TESTING_POLICY_HELPER_TEXT =
-  "Upload supporting documentation for certifications and security controls. Accepted: PDF, DOCX, PPT. Max 10MB per file.";
+  "Upload supporting documentation for certifications and security controls. Accepted: PDF, DOCX, PPT. Max 3 files, 10MB per file.";
 
 /** Accepted file extensions for validation */
 export const ACCEPTED_DOCUMENT_EXTENSIONS = [".pdf", ".doc", ".docx", ".ppt", ".pptx"];

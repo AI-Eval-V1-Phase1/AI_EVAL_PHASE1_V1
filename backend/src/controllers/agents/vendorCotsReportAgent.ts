@@ -7,7 +7,10 @@ const MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0";
 
 const client = new BedrockRuntimeClient({ region: REGION });
 
-import type { Top5RisksWithMitigations } from "../../services/getTop5RisksFromAssessmentContext.js";
+import {
+  getTop5RisksWithMitigations,
+  type Top5RisksWithMitigations,
+} from "../../services/getTop5RisksFromAssessmentContext.js";
 
 export interface RecommendationWithPriority {
   priority: "High" | "Medium" | "Low";
@@ -409,14 +412,20 @@ async function invokeModel(userInput: string): Promise<string> {
 /**
  * Generate a structured Analysis Report from vendor COTS assessment data.
  * Called when a vendor user completes (submits) a vendor COTS assessment.
- * If top5RisksWithMitigations is provided, the prompt includes DB-matched risks and mitigations for the model to incorporate.
+ * Uses risk_mappings table: compares assessment context (domain, timing, intent, primary_risk, secondary_risks)
+ * to get top 5 risks, then compares that data to risk_top5_mitigations table to attach mitigations.
+ * If top5RisksWithMitigations is not provided, the agent fetches it via getTop5RisksWithMitigations(payload).
  */
 export async function generateVendorCotsReport(
   payload: Record<string, unknown>,
   top5RisksWithMitigations?: Top5RisksWithMitigations | null
 ): Promise<GeneratedVendorCotsReport | null> {
   try {
-    const context = buildAssessmentContext(payload, top5RisksWithMitigations ?? null);
+    let top5: Top5RisksWithMitigations | null = top5RisksWithMitigations ?? null;
+    if (top5 == null) {
+      top5 = await getTop5RisksWithMitigations(payload);
+    }
+    const context = buildAssessmentContext(payload, top5);
     const userInput = VENDOR_COTS_REPORT_PROMPT + "\n\n" + context;
     const rawReply = await invokeModel(userInput);
     if (!rawReply.trim()) return null;

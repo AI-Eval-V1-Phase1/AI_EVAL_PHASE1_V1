@@ -37,6 +37,7 @@ export {
   vendorSelfAttestations,
   generatedProfileReports,
   customerRiskAssessmentReports,
+  generalReports,
   attestations,
 } from "./assessments/index.js";
 
