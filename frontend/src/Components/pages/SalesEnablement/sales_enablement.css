@@ -6,7 +6,28 @@
 
 .sales_enablement_select_wrapper {
   min-width: 220px;
-  /* width: 100%; */
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sales_enablement_loading_label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.sales_enablement_loader_inline {
+  flex-shrink: 0;
+  animation: sales_enablement_spin 0.8s linear infinite;
+}
+
+.sales_enablement_error_label {
+  display: block;
+  font-size: 0.8125rem;
+  color: #b91c1c;
 }
 
 .sales_enablement_select_wrapper .select_label {

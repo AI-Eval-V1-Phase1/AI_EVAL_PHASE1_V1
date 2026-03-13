@@ -25,9 +25,8 @@ import VendorMainForm from "./Components/pages/VendorOnboarding/VendorMainForm";
 import Onboarding from "./Components/pages/OnBoarding/Onboarding";
 import BuyerMainForm from "./Components/pages/BuyerOnboarding/BuyerMainForm";
 import SignUp from "./Components/Authentication/SignUp/SignUp";
-import RouteAccess from "./utils/RouteAccess";
 import PageNotFound from "./Components/PageNotFound/PageNotFound";
-import Authorization from "./utils/Authorization";
+import { AuthGuard, RBACGuard } from "./guards";
 import OnboardingAccess from "./utils/OnboardingVerify";
 import VendorAttestationsMainForm from "./Components/pages/VendorAttestations/VendorAttestationsMainForm";
 import VendorCOTSMain from "./Components/pages/Assessments/VendorCOTS/VendorCOTSMain";
@@ -49,8 +48,8 @@ function App() {
             <Route index element={<VendorAttestationsMainForm />} />
             <Route path=":token" element={<VendorAttestationsMainForm />} />
           </Route>
-          <Route element={<Authorization />}>
-            <Route element={<RouteAccess />}>
+          <Route element={<AuthGuard />}>
+            <Route element={<RBACGuard />}>
               <Route element={<MainLayout />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -96,8 +95,8 @@ function App() {
               element={<BuyerMainForm type="buyer" />}
             />
             <Route path="/vendorcots" element={<VendorCOTSMain />} />
-            <Route element={<Authorization />}>
-              <Route element={<RouteAccess />}>
+            <Route element={<AuthGuard />}>
+              <Route element={<RBACGuard />}>
                 <Route path="/buyerAssessment" element={<BuyerAssessment />} />
               </Route>
             </Route>

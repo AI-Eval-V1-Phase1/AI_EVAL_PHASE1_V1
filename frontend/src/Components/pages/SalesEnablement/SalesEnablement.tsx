@@ -117,65 +117,10 @@ function isAttestationExpired(row: AssessmentRow): boolean {
 const GREETING =
   "Hello! I'm your AI Sales Enablement Agent. Select a vendor assessment from your completed evaluations and I can help you with SWOT analysis, battle card generation, or answer questions about their compliance posture.";
 
-/** Dummy SWOT data for UI pass; replace with API response when backend is ready */
-const DUMMY_SWOT: SwotData = {
-  strengths: [
-    "Established presence in the AI industry with a focus on building safe AGI.",
-    "Offers a suite of products including GPT-4o and ChatGPT Enterprise, catering to a wide range of enterprise needs.",
-    "Strong security and compliance credentials.",
-  ],
-  weaknesses: [
-    "High dependency on cloud infrastructure and partners like Azure, which may limit control over deployment environments.",
-    "Potentially high operational costs associated with maintaining compliance and security standards across multiple certifications.",
-  ],
-  opportunities: [
-    "Growing demand for enterprise AI solutions in regulated sectors.",
-    "Partnership opportunities with government and public sector for compliant AI deployment.",
-  ],
-  threats: [
-    "Evolving regulatory landscape may require continuous compliance updates.",
-    "Competitive pressure from other AI vendors with similar compliance offerings.",
-  ],
-};
-
-/** Dummy battle card for UI pass – matches screenshot layout */
-const DUMMY_BATTLE_CARD: BattleCardData = {
-  title:
-    "Trust and Reliability in AI: Commonwealth of Pennsylvania's Enterprise-Grade Solution",
-  keyDifferentiators: [
-    "Enterprise-grade security with industry certifications",
-    "Strong regulatory compliance with no identified gaps",
-    "High operational reliability backed by strong SLA performance",
-    "Comprehensive data governance with no concerns",
-  ],
-  complianceHighlights: [
-    "Strong regulatory compliance with industry certifications",
-    "No compliance gaps identified, ensuring adherence to all relevant requirements",
-  ],
-  objectionHandling: {
-    question: "How can we be sure of the security of our data?",
-    answer:
-      "Commonwealth of Pennsylvania offers enterprise-grade security with industry certifications, ensuring top-tier protection for your data.",
-  },
-  qaBlocks: [
-    {
-      question: "What if the system becomes unreliable during critical operations?",
-      answer:
-        "The solution boasts high operational reliability with strong SLA performance, ensuring consistent and dependable service.",
-    },
-  ],
-  idealCustomerProfile:
-    "Large enterprises or government agencies requiring robust security, compliance, and reliability in their AI deployments.",
-};
-
 const QUICK_ACTIONS = [
   { label: "Generate SWOT Analysis", icon: BarChart3, key: "swot" as const },
   { label: "Create Battle Card", icon: Swords, key: "battlecard" as const },
-  {
-    label: "View Sales Reports & Briefs",
-    icon: FileText,
-    key: "reports" as const,
-  },
+  // { label: "View Sales Reports & Briefs", icon: FileText, key: "reports" as const },
 ];
 
 const EXAMPLE_QUESTIONS = [
@@ -186,6 +131,38 @@ const EXAMPLE_QUESTIONS = [
 
 const SWOT_QUESTION = "Generate a SWOT analysis for my sales positioning.";
 const BATTLE_CARD_QUESTION = "Create a battle card for my sales positioning.";
+
+/** Detect if user is asking for SWOT (natural language: "swot", "swot analysis", etc.) */
+function isSwotRequest(text: string): boolean {
+  const lower = text.toLowerCase().trim();
+  if (!lower) return false;
+  if (lower.includes("swot") && lower.includes("analysis")) return true;
+  if (/\bswot\b/.test(lower)) return true;
+  return false;
+}
+
+/** Detect if user is asking for Battle Card (natural language: "battle card", "battlecard", etc.) */
+function isBattleCardRequest(text: string): boolean {
+  const lower = text.toLowerCase().trim();
+  if (!lower) return false;
+  if (/\bbattle\s*card\b/.test(lower)) return true;
+  if (/\bbattlecard\b/.test(lower)) return true;
+  return false;
+}
+
+function hasSwotData(d: SwotData | null | undefined): boolean {
+  return !!(
+    d &&
+    (d.strengths?.length > 0 ||
+      d.weaknesses?.length > 0 ||
+      d.opportunities?.length > 0 ||
+      d.threats?.length > 0)
+  );
+}
+
+function hasBattleCardData(d: BattleCardData | null | undefined): boolean {
+  return !!(d && (d.title || d.keyDifferentiators?.length || d.complianceHighlights?.length));
+}
 
 export function SalesEnablement() {
   useEffect(() => {
@@ -198,6 +175,10 @@ export function SalesEnablement() {
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const pendingAgentMessageRef = useRef<ChatMessageItem | null>(null);
+  /** Cached SWOT and Battle Card for the selected assessment (after user clicks the button) */
+  const [generatedSwot, setGeneratedSwot] = useState<SwotData | null>(null);
+  const [generatedBattleCard, setGeneratedBattleCard] = useState<BattleCardData | null>(null);
+  const [generatedForAssessmentId, setGeneratedForAssessmentId] = useState<string>("");
 
   const quickActionsEnabled = !!selectedAssessmentId;
 
@@ -259,48 +240,211 @@ export function SalesEnablement() {
   }, [selectedAssessmentId, completedVendorAssessments]);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedAssessmentId(e.target.value);
+    const value = e.target.value;
+    setSelectedAssessmentId(value);
+    if (value !== generatedForAssessmentId) {
+      setGeneratedSwot(null);
+      setGeneratedBattleCard(null);
+      setGeneratedForAssessmentId("");
+    }
   };
+
+  const fetchSalesEnablement = useCallback(
+    (assessmentId: string): Promise<{ swot: SwotData; battleCard: BattleCardData } | null> => {
+      const token = sessionStorage.getItem("bearerToken");
+      if (!token) return Promise.resolve(null);
+      return fetch(`${BASE_URL}/salesEnablement`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ assessmentId }),
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          if (result?.success && result?.data) {
+            return {
+              swot: result.data.swot ?? { strengths: [], weaknesses: [], opportunities: [], threats: [] },
+              battleCard: result.data.battleCard ?? { title: "Battle Card" },
+            };
+          }
+          throw new Error(result?.message ?? "Failed to generate");
+        });
+    },
+    []
+  );
+
+  const fetchSalesAgentChat = useCallback(
+    (assessmentId: string, question: string): Promise<string> => {
+      const token = sessionStorage.getItem("bearerToken");
+      if (!token) return Promise.reject(new Error("Not authenticated"));
+      return fetch(`${BASE_URL}/salesEnablement/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ assessmentId, question }),
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          if (result?.success && result?.data?.answer != null) {
+            return String(result.data.answer);
+          }
+          throw new Error(result?.message ?? "Failed to get answer");
+        });
+    },
+    []
+  );
 
   const handleSend = () => {
     const text = messageInput.trim();
     if (!text || isGenerating) return;
 
-    const lower = text.toLowerCase();
-    const isSwot =
-      text === SWOT_QUESTION ||
-      (lower.includes("swot") && lower.includes("analysis"));
-    const isBattleCard =
-      text === BATTLE_CARD_QUESTION || lower.includes("battle card");
-
-    if (isSwot) {
-      pendingAgentMessageRef.current = {
-        role: "agent",
-        text: "Here's your sales positioning SWOT analysis - use these insights when engaging with prospects:",
-        swot: DUMMY_SWOT,
-      };
-    } else if (isBattleCard) {
-      pendingAgentMessageRef.current = {
-        role: "agent",
-        text: "Here's your battle card for sales conversations:",
-        battleCard: DUMMY_BATTLE_CARD,
-      };
-    } else {
-      pendingAgentMessageRef.current = null;
-    }
+    const isSwot = isSwotRequest(text);
+    const isBattleCard = isBattleCardRequest(text);
 
     setMessages((prev) => [...prev, { role: "user", text }]);
     setMessageInput("");
     setIsGenerating(true);
 
-    setTimeout(() => {
-      const agentMsg = pendingAgentMessageRef.current;
-      pendingAgentMessageRef.current = null;
-      if (agentMsg) {
-        setMessages((prev) => [...prev, agentMsg]);
+    // User asked for SWOT (via NLP in textarea)
+    if (isSwot) {
+      if (!selectedAssessmentId) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "agent" as const,
+            text: "Please select a vendor assessment above, then ask again or click the SWOT Analysis button to generate from the complete report.",
+          },
+        ]);
+        setIsGenerating(false);
+        return;
       }
+      if (hasSwotData(generatedSwot) && generatedForAssessmentId === selectedAssessmentId) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "agent" as const,
+            text: "Here's your sales positioning SWOT analysis - use these insights when engaging with prospects:",
+            swot: generatedSwot!,
+          },
+        ]);
+        setIsGenerating(false);
+        return;
+      }
+      fetchSalesEnablement(selectedAssessmentId)
+        .then((data) => {
+          if (!data) return;
+          setGeneratedSwot(data.swot);
+          setGeneratedBattleCard(data.battleCard);
+          setGeneratedForAssessmentId(selectedAssessmentId);
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "agent" as const,
+              text: "Here's your sales positioning SWOT analysis - use these insights when engaging with prospects:",
+              swot: data.swot,
+            },
+          ]);
+        })
+        .catch((err) => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "agent" as const,
+              text: err?.message ?? "Failed to generate SWOT analysis. Please try again.",
+            },
+          ]);
+        })
+        .finally(() => setIsGenerating(false));
+      return;
+    }
+
+    // User asked for Battle Card (via NLP in textarea)
+    if (isBattleCard) {
+      if (!selectedAssessmentId) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "agent" as const,
+            text: "Please select a vendor assessment above, then ask again or click the Battle Card button to generate from the complete report.",
+          },
+        ]);
+        setIsGenerating(false);
+        return;
+      }
+      if (hasBattleCardData(generatedBattleCard) && generatedForAssessmentId === selectedAssessmentId) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "agent" as const,
+            text: "Here's your battle card for sales conversations:",
+            battleCard: generatedBattleCard!,
+          },
+        ]);
+        setIsGenerating(false);
+        return;
+      }
+      fetchSalesEnablement(selectedAssessmentId)
+        .then((data) => {
+          if (!data) return;
+          setGeneratedSwot(data.swot);
+          setGeneratedBattleCard(data.battleCard);
+          setGeneratedForAssessmentId(selectedAssessmentId);
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "agent" as const,
+              text: "Here's your battle card for sales conversations:",
+              battleCard: data.battleCard,
+            },
+          ]);
+        })
+        .catch((err) => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "agent" as const,
+              text: err?.message ?? "Failed to generate battle card. Please try again.",
+            },
+          ]);
+        })
+        .finally(() => setIsGenerating(false));
+      return;
+    }
+
+    // General question about the selected assessment
+    if (!selectedAssessmentId) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "agent" as const,
+          text: "Please select a vendor assessment above to ask questions about it.",
+        },
+      ]);
       setIsGenerating(false);
-    }, 800);
+      return;
+    }
+
+    fetchSalesAgentChat(selectedAssessmentId, text)
+      .then((answer) => {
+        setMessages((prev) => [
+          ...prev,
+          { role: "agent" as const, text: answer },
+        ]);
+      })
+      .catch((err) => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "agent" as const,
+            text: err?.message ?? "Sorry, I couldn't answer that. Please try again.",
+          },
+        ]);
+      })
+      .finally(() => setIsGenerating(false));
   };
 
   const handleExampleClick = (question: string) => {
@@ -309,47 +453,93 @@ export function SalesEnablement() {
 
   function handleQuickActionSwot() {
     if (!quickActionsEnabled || isGenerating) return;
-    setMessageInput(SWOT_QUESTION);
-    pendingAgentMessageRef.current = {
-      role: "agent",
-      text: "Here's your sales positioning SWOT analysis - use these insights when engaging with prospects:",
-      swot: DUMMY_SWOT,
-    };
     setMessages((prev) => [...prev, { role: "user", text: SWOT_QUESTION }]);
+    if (hasSwotData(generatedSwot) && generatedForAssessmentId === selectedAssessmentId) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "agent" as const,
+          text: "Here's your sales positioning SWOT analysis - use these insights when engaging with prospects:",
+          swot: generatedSwot!,
+        },
+      ]);
+      return;
+    }
     setIsGenerating(true);
-    setTimeout(() => {
-      const agentMsg = pendingAgentMessageRef.current;
-      pendingAgentMessageRef.current = null;
-      if (agentMsg) setMessages((prev) => [...prev, agentMsg]);
-      setIsGenerating(false);
-      setMessageInput("");
-    }, 800);
+    fetchSalesEnablement(selectedAssessmentId)
+      .then((data) => {
+        if (!data) return;
+        setGeneratedSwot(data.swot);
+        setGeneratedBattleCard(data.battleCard);
+        setGeneratedForAssessmentId(selectedAssessmentId);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "agent" as const,
+            text: "Here's your sales positioning SWOT analysis - use these insights when engaging with prospects:",
+            swot: data.swot,
+          },
+        ]);
+      })
+      .catch((err) => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "agent" as const,
+            text: err?.message ?? "Failed to generate SWOT analysis. Please try again.",
+          },
+        ]);
+      })
+      .finally(() => setIsGenerating(false));
   }
 
   function handleQuickActionBattleCard() {
     if (!quickActionsEnabled || isGenerating) return;
-    setMessageInput(BATTLE_CARD_QUESTION);
-    pendingAgentMessageRef.current = {
-      role: "agent",
-      text: "Here's your battle card for sales conversations:",
-      battleCard: DUMMY_BATTLE_CARD,
-    };
     setMessages((prev) => [...prev, { role: "user", text: BATTLE_CARD_QUESTION }]);
+    if (hasBattleCardData(generatedBattleCard) && generatedForAssessmentId === selectedAssessmentId) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "agent" as const,
+          text: "Here's your battle card for sales conversations:",
+          battleCard: generatedBattleCard!,
+        },
+      ]);
+      return;
+    }
     setIsGenerating(true);
-    setTimeout(() => {
-      const agentMsg = pendingAgentMessageRef.current;
-      pendingAgentMessageRef.current = null;
-      if (agentMsg) setMessages((prev) => [...prev, agentMsg]);
-      setIsGenerating(false);
-      setMessageInput("");
-    }, 800);
+    fetchSalesEnablement(selectedAssessmentId)
+      .then((data) => {
+        if (!data) return;
+        setGeneratedSwot(data.swot);
+        setGeneratedBattleCard(data.battleCard);
+        setGeneratedForAssessmentId(selectedAssessmentId);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "agent" as const,
+            text: "Here's your battle card for sales conversations:",
+            battleCard: data.battleCard,
+          },
+        ]);
+      })
+      .catch((err) => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "agent" as const,
+            text: err?.message ?? "Failed to generate battle card. Please try again.",
+          },
+        ]);
+      })
+      .finally(() => setIsGenerating(false));
   }
 
   function handleQuickAction(key: string) {
     if (key === "swot") handleQuickActionSwot();
     else if (key === "battlecard") handleQuickActionBattleCard();
-    else if (key === "reports")
-      setMessageInput("View sales reports and briefs");
+    // else if (key === "reports")
+    //   setMessageInput("View sales reports and briefs");
   }
 
   return (
@@ -645,7 +835,7 @@ export function SalesEnablement() {
                 type="button"
                 className="sales_enablement_send_btn"
                 onClick={handleSend}
-                disabled={isGenerating || !selectedAssessmentId}
+                disabled={isGenerating}
               >
                 {isGenerating ? (
                   <Loader2 size={20} className="sales_enablement_send_loader" aria-hidden />
@@ -658,7 +848,7 @@ export function SalesEnablement() {
               <button
                 type="button"
                 className="sales_enablement_chat_action_btn"
-                disabled={!quickActionsEnabled}
+                disabled={!quickActionsEnabled || isGenerating}
                 onClick={handleQuickActionSwot}
               >
                 <BarChart3 size={16} aria-hidden />
@@ -667,7 +857,7 @@ export function SalesEnablement() {
               <button
                 type="button"
                 className="sales_enablement_chat_action_btn"
-                disabled={!quickActionsEnabled}
+                disabled={!quickActionsEnabled || isGenerating}
                 onClick={handleQuickActionBattleCard}
               >
                 <Swords size={16} aria-hidden />
@@ -682,8 +872,7 @@ export function SalesEnablement() {
               {QUICK_ACTIONS.map((action) => {
                 const Icon = action.icon;
                 const isDisabled =
-                  ((action.key === "swot" || action.key === "battlecard") &&
-                    !quickActionsEnabled) ||
+                  ((action.key === "swot" || action.key === "battlecard") && !quickActionsEnabled) ||
                   isGenerating;
                 return (
                   <Button

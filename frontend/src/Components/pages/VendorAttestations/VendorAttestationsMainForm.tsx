@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useLocation, useParams, useNavigate } from "react-router-dom";
+import { useLocation, useParams, useNavigate, Navigate } from "react-router-dom";
 import CardContainerOnBoarding from "../../UI/CardContainerOnBoarding";
 import CardOnBoarding from "../../UI/CardOnBoarding";
 import Button from "../../UI/Button";
@@ -496,6 +496,7 @@ const VendorAttestationsMainForm = () => {
   // Load vendor self attestation from vendor_self_attestations (GET /vendorSelfAttestation).
   // With editId: load that draft; without editId: treat as new (empty attestation).
   const [fetchDone, setFetchDone] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
   useEffect(() => {
     const token =
       sessionStorage.getItem("bearerToken") ??
@@ -548,16 +549,27 @@ const VendorAttestationsMainForm = () => {
         if (!response.ok) {
           if (!cancelled) {
             setFormState(defaultFormState);
-            const errMsg =
-              response.status === 401
-                ? (result.message as string) || "Session expired. Please sign in again."
-                : null;
-            setFetchError(errMsg);
+            if (response.status === 403) {
+              setAccessDenied(true);
+            } else {
+              const errMsg =
+                response.status === 401
+                  ? (result.message as string) || "Session expired. Please sign in again."
+                  : null;
+              setFetchError(errMsg);
+            }
             setFetchDone(true);
           }
           return;
         }
         if (result.success) {
+          if (editId && !result.attestation) {
+            if (!cancelled) {
+              setAccessDenied(true);
+              setFetchDone(true);
+            }
+            return;
+          }
           if (
             result.companyProfile?.organizationId &&
             !sessionStorage.getItem("organizationId")
@@ -1176,6 +1188,10 @@ const VendorAttestationsMainForm = () => {
       navigate("/product_profile", { replace: true });
     }
   };
+
+  if (accessDenied) {
+    return <Navigate to="/pageNotFound" replace />;
+  }
 
   return (
     <div className="sec_user_page org_settings_page">

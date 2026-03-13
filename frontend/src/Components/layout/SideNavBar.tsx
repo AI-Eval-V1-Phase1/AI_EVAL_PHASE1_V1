@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { NAVIGATION } from "../../constants/navConfig"; // the list of side navigation bar
 import { NavLink, useLocation } from "react-router-dom";
 import { Shield } from "lucide-react";
+import { normalizeSystemRole, isPathAllowedForUserRole } from "../../guards/rbacConfig";
+import type { SystemRole } from "../../guards/rbacConfig";
 import "../../styles/layout/sideNav.css";
 
 const ASSESSMENT_PATHS = ["/assessments", "/vendorcots", "/buyerAssessment"];
@@ -21,77 +23,34 @@ const SideNavBar = () => {
     window.addEventListener("userProfileUpdated", onProfileUpdated);
     return () => window.removeEventListener("userProfileUpdated", onProfileUpdated);
   }, []);
-  const rawUserRole = sessionStorage.getItem("userRole") ?? "";
   const rawSystemRole = sessionStorage.getItem("systemRole") ?? "";
-  const userRole = String(rawUserRole).toLowerCase().trim();
-  let systemRole = String(rawSystemRole).toLowerCase().trim();
-  if (systemRole === "system_admin") systemRole = "system admin";
-  if (systemRole === "system_manager") systemRole = "system manager";
-  if (systemRole === "system_viewer") systemRole = "system viewer";
-  if (systemRole === "ai_directory_curator") systemRole = "ai directory curator";
-  const normalizedUserRole =
-    userRole && userRole !== "null" && userRole !== "undefined" ? userRole : "";
-  const normalizedSystemRole =
-    systemRole && systemRole !== "null" && systemRole !== "undefined"
-      ? systemRole
-      : "";
+  const rawUserRole = sessionStorage.getItem("userRole") ?? "";
+  const normalizedSystemRole = normalizeSystemRole(rawSystemRole) as SystemRole | "";
 
-  const isSystemAdminForBoth =
-    normalizedSystemRole === "system admin" &&
-    (normalizedUserRole === "system admin" || normalizedUserRole === "admin");
-
-  const isSystemManager = normalizedSystemRole === "system manager";
-  const isSystemViewer = normalizedSystemRole === "system viewer";
-  const isAiDirectoryCurator = normalizedSystemRole === "ai directory curator";
-
-  const filterItems = (requireRole: boolean, requireSystem: boolean) =>
-    NAVIGATION.admin.filter((item) => {
-      const roleMatch =
-        !requireRole ||
-        normalizedUserRole === "" ||
-        item.accessRoles.some((r) => r.toLowerCase().trim() === normalizedUserRole);
-      const systemMatch =
-        !requireSystem ||
-        normalizedSystemRole === "" ||
-        item.systemRoles.some((r) => r.toLowerCase().trim() === normalizedSystemRole);
-      return roleMatch && systemMatch;
-    });
-
-  let navItems =
-    isSystemAdminForBoth
-      ? NAVIGATION.admin
-      : isSystemManager || isSystemViewer || isAiDirectoryCurator
-        ? filterItems(false, true)
-        : filterItems(true, true);
-
-  if (navItems.length === 0 && !isSystemAdminForBoth) {
-    navItems = filterItems(false, true);
-  }
-  if (navItems.length === 0 && !isSystemAdminForBoth) {
-    navItems = filterItems(true, false);
-  }
-  if (navItems.length === 0) {
-    navItems = NAVIGATION.admin;
-  }
+  // Only show nav items for routes this role is allowed to access (same rules as RBACGuard).
+  // e.g. vendor lead does not see User Management; only admin/manager do.
+  const navItems = NAVIGATION.admin.filter((item) =>
+    isPathAllowedForUserRole(item.path, normalizedSystemRole, rawUserRole)
+  );
 
   const seenPaths = new Set<string>();
-  navItems = navItems.filter((item) => {
+  const navItemsDeduped = navItems.filter((item) => {
     if (seenPaths.has(item.path)) return false;
     seenPaths.add(item.path);
     return true;
   });
 
   const portalLabel =
-    systemRole === "vendor"
+    normalizedSystemRole === "vendor"
       ? "VENDOR PORTAL"
-      : systemRole === "buyer"
+      : normalizedSystemRole === "buyer"
         ? "ORGANIZATION PORTAL"
         : null;
 
   const footerLabel =
-    systemRole === "vendor"
+    normalizedSystemRole === "vendor"
       ? "MY VENDOR"
-      : systemRole === "buyer"
+      : normalizedSystemRole === "buyer"
         ? "MY BUYER"
         : "ACCOUNT";
 
@@ -138,7 +97,7 @@ const SideNavBar = () => {
         </p>
       )}
       <ul className="side_nav_list">
-        {navItems.map((item) => {
+        {navItemsDeduped.map((item) => {
           const Icon = item.icon;
           const isAssessmentsItem = item.path === "/assessments";
           const isAttestationItem = item.path === "/attestation_details";

@@ -38,6 +38,7 @@ import "../Assessments/assessments.css";
 import "../../../styles/page_tabs.css";
 import "./vendor_attestation_details.css";
 import { formatDateDDMMMYYYY } from "../../../utils/formatDate.js";
+import { isVendorAttestationOnlyRole } from "../../../guards/rbacConfig";
 
 type AttestationStatus = "Draft" | "Completed" | "Rejected" | "Expired";
 
@@ -156,14 +157,17 @@ const VendorAttestationDetails = () => {
   const [previewLoading, setPreviewLoading] = useState(false);
 
   const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim();
+  const userRole = sessionStorage.getItem("userRole");
   const currentUserId = (sessionStorage.getItem("userId") ?? "").toString().trim();
   const isSystemAdmin = systemRole === "system admin" || systemRole === "system_admin";
   const isSystemViewer = systemRole === "system viewer" || systemRole === "system_viewer";
+  const isVendorAttestationOnly = systemRole === "vendor" && isVendorAttestationOnlyRole(userRole);
+  const isViewOnly = isSystemViewer || isVendorAttestationOnly;
   const currentUserOrgId = (sessionStorage.getItem("organizationId") ?? "").toString().trim();
 
-  /** System viewer: view only (no edit). System admin: edit only AI Eval org attestations. Owner: edit draft or rejected. Same-org non-owner: edit only draft. */
+  /** System viewer or vendor Engineer / Viewer: view only (no edit, no add). System admin: edit only AI Eval org attestations. Owner: edit draft or rejected. Same-org non-owner: edit only draft. */
   const canEditAttestation = (item: AttestationCardItem): boolean => {
-    if (isSystemViewer) return false;
+    if (isViewOnly) return false;
     const itemOrgId = (item.organizationId ?? "").toString().trim();
     const isOwner = item.createdByUserId != null && currentUserId !== "" && item.createdByUserId === currentUserId;
     const isSameOrg = currentUserOrgId !== "" && itemOrgId === currentUserOrgId;
@@ -487,7 +491,7 @@ const VendorAttestationDetails = () => {
             </p>
           </div>
         </div>
-        {!isSystemViewer && (
+        {!isViewOnly && (
           <div className="btn_user_page">
             <Button
               className="invite_user_btn"

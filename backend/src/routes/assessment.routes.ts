@@ -18,6 +18,8 @@ import customerRiskMitigationPlan from "../controllers/assessments/customerRiskM
 import implementationRoadmapProposal from "../controllers/assessments/implementationRoadmapProposal.controller.js";
 import listGeneralReports from "../controllers/assessments/listGeneralReports.controller.js";
 import getGeneralReportById from "../controllers/assessments/getGeneralReportById.controller.js";
+import salesEnablement from "../controllers/assessments/salesEnablement.controller.js";
+import salesAgentChat from "../controllers/assessments/salesAgentChat.controller.js";
 
 const assessmentRouter = express.Router();
 
@@ -29,6 +31,8 @@ assessmentRouter
 .get("/generalReports", authenticateToken, listGeneralReports)
 .get("/generalReports/:id", authenticateToken, getGeneralReportById)
 .post("/executiveStakeholderBrief", authenticateToken, executiveStakeholderBrief)
+.post("/salesEnablement/chat", authenticateToken, salesAgentChat)
+.post("/salesEnablement", authenticateToken, salesEnablement)
 .post("/salesQualificationReport", authenticateToken, salesQualificationReport)
 .post("/customerRiskMitigationPlan", authenticateToken, customerRiskMitigationPlan)
 .post("/implementationRoadmapProposal", authenticateToken, implementationRoadmapProposal)

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Navigate } from "react-router-dom";
 import CardContainerOnBoarding from "../../../UI/CardContainerOnBoarding";
 import CardOnBoarding from "../../../UI/CardOnBoarding";
 import MultiStepTabs from "../../../UI/MultiStepTabs";
@@ -119,6 +119,7 @@ const VendorCOTSMain = () => {
   );
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [validationAttemptedSteps, setValidationAttemptedSteps] = useState<
     Set<number>
   >(() => new Set());
@@ -197,9 +198,14 @@ const VendorCOTSMain = () => {
         Authorization: `Bearer ${token}`,
       },
     })
-      .then((res) => res.json())
-      .then((result) => {
+      .then(async (res) => {
+        const result = await res.json().catch(() => ({}));
         if (cancelled) return;
+        if (res.status === 403 || (!res.ok && !result?.success)) {
+          setAccessDenied(true);
+          setDraftLoaded(true);
+          return;
+        }
         if (!result?.success || !result?.data) {
           setDraftLoaded(true);
           return;
@@ -447,6 +453,10 @@ const VendorCOTSMain = () => {
     { length: currentStep },
     (_, i) => i,
   );
+
+  if (assessmentIdFromUrl && accessDenied) {
+    return <Navigate to="/pageNotFound" replace />;
+  }
 
   return (
     <div className="sec_user_page org_settings_page">
