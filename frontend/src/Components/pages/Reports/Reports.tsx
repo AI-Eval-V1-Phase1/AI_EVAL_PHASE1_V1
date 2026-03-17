@@ -90,10 +90,13 @@ function Reports() {
   const userRoleForAccess = (sessionStorage.getItem("userRole") ?? "").toLowerCase().trim();
   const isAssessmentAnalysisViewOnly =
     systemRoleForAccess === "system manager" || systemRoleForAccess === "system viewer";
-  // T&SA Manager / Lead / Engineer / Viewer (vendor + manager, lead, engineer, or viewer): view-only on Reports page (no generate, no delete)
+  // T&SA Manager / Lead / Engineer / Viewer (vendor): view-only on Reports (no generate, no delete).
+  // Buyer Engineer: can generate reports (dropdown shows their assessments only).
+  // Buyer Viewer: view-only for Dashboard, AI Vendor Directory, and Reports.
   const isReportsViewOnly =
     isAssessmentAnalysisViewOnly ||
-    (systemRoleForAccess === "vendor" && (userRoleForAccess === "manager" || userRoleForAccess === "lead" || userRoleForAccess === "engineer" || userRoleForAccess === "viewer"));
+    (systemRoleForAccess === "vendor" && (userRoleForAccess === "manager" || userRoleForAccess === "lead" || userRoleForAccess === "engineer" || userRoleForAccess === "viewer")) ||
+    (systemRoleForAccess === "buyer" && userRoleForAccess === "viewer");
 
   useEffect(() => {
     setCompleteReportsPage(1);

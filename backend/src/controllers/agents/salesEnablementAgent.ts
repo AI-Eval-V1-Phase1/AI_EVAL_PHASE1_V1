@@ -55,6 +55,32 @@ Output ONLY a single JSON object in a fenced code block starting with \`\`\`json
 
 Use only the data provided in the report. Do not invent facts. If the report lacks detail, infer only from context or use brief placeholders. Be concise.`;
 
+const SWOT_ONLY_PROMPT = `You are a sales enablement analyst. Using ONLY the Assessment Analysis Report (complete report) data provided below, generate a SWOT analysis for sales positioning when engaging prospects:
+
+- **Strengths:** 3–5 strengths (e.g. security posture, compliance, differentiators).
+- **Weaknesses:** 2–4 weaknesses or gaps (e.g. dependencies, cost, coverage).
+- **Opportunities:** 2–4 opportunities (e.g. market fit, certifications, use cases).
+- **Threats:** 2–4 threats (e.g. regulatory, competitive, operational).
+
+Output ONLY a single JSON object in a fenced code block starting with \`\`\`json and ending with \`\`\`. The JSON must have exactly one key: "swot".
+- "swot" must be: { "strengths": string[], "weaknesses": string[], "opportunities": string[], "threats": string[] }
+
+Use only the data provided in the report. Do not invent facts. Be concise.`;
+
+const BATTLE_CARD_ONLY_PROMPT = `You are a sales enablement analyst. Using ONLY the Assessment Analysis Report (complete report) data provided below, generate a Battle Card (one-pager for sales conversations):
+
+- **title:** A compelling one-line title for this solution (e.g. "Trust and Reliability in AI: [Product] Enterprise-Grade Solution").
+- **keyDifferentiators:** 3–5 bullet points (security, compliance, reliability, governance).
+- **complianceHighlights:** 2–4 bullets on certifications and compliance posture from the report.
+- **objectionHandling:** One common objection with a concise answer: { "question": "...", "answer": "..." }.
+- **qaBlocks:** 1–3 Q&A pairs (question, answer) for common buyer questions.
+- **idealCustomerProfile:** 1–2 sentences describing the ideal customer for this solution.
+
+Output ONLY a single JSON object in a fenced code block starting with \`\`\`json and ending with \`\`\`. The JSON must have exactly one key: "battleCard".
+- "battleCard" must be: { "title": string, "keyDifferentiators"?: string[], "complianceHighlights"?: string[], "objectionHandling"?: { "question": string, "answer": string }, "qaBlocks"?: { "question": string, "answer": string }[], "idealCustomerProfile"?: string }
+
+Use only the data provided in the report. Do not invent facts. Be concise.`;
+
 function buildReportContext(reportJson: Record<string, unknown>): string {
   const reportStr =
     typeof reportJson === "object" && reportJson !== null
@@ -133,17 +159,36 @@ function parseBattleCard(v: unknown): BattleCardData {
   };
 }
 
+const DEFAULT_SWOT: SwotData = {
+  strengths: [],
+  weaknesses: [],
+  opportunities: [],
+  threats: [],
+};
+const DEFAULT_BATTLE_CARD: BattleCardData = { title: "Battle Card" };
+
+export type SalesEnablementType = "swot" | "battlecard" | "both";
+
 /**
- * Generate SWOT analysis and Battle Card from a complete assessment report (report JSON).
- * Used by the Sales Agent page when a user selects an assessment.
+ * Generate SWOT and/or Battle Card from a complete assessment report (report JSON).
+ * When type is "swot" only SWOT is generated; when "battlecard" only Battle Card; when "both" both are generated.
  */
 export async function generateSalesEnablement(
-  reportJson: Record<string, unknown>
+  reportJson: Record<string, unknown>,
+  type: SalesEnablementType = "both"
 ): Promise<SalesEnablementOutput | null> {
   try {
     const context = buildReportContext(reportJson);
-    const userInput = SALES_ENABLEMENT_PROMPT + "\n\n" + context;
-    const rawReply = await invokeModel(userInput);
+    let prompt: string;
+    if (type === "swot") {
+      prompt = SWOT_ONLY_PROMPT + "\n\n" + context;
+    } else if (type === "battlecard") {
+      prompt = BATTLE_CARD_ONLY_PROMPT + "\n\n" + context;
+    } else {
+      prompt = SALES_ENABLEMENT_PROMPT + "\n\n" + context;
+    }
+
+    const rawReply = await invokeModel(prompt);
     if (!rawReply.trim()) return null;
 
     const jsonBlock =
@@ -154,6 +199,15 @@ export async function generateSalesEnablement(
       return null;
     }
     const parsed = JSON.parse(jsonBlock.trim()) as Record<string, unknown>;
+
+    if (type === "swot") {
+      const swot = parseSwot(parsed.swot);
+      return { swot, battleCard: DEFAULT_BATTLE_CARD };
+    }
+    if (type === "battlecard") {
+      const battleCard = parseBattleCard(parsed.battleCard);
+      return { swot: DEFAULT_SWOT, battleCard };
+    }
     const swot = parseSwot(parsed.swot);
     const battleCard = parseBattleCard(parsed.battleCard);
     return { swot, battleCard };

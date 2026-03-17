@@ -220,9 +220,15 @@ function renderBriefBody(body: string, sectionKey: string, stripNumbers = false)
 
 const LOADER_MIN_MS = 2500;
 
+function isSystemUserRole(): boolean {
+  const role = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim().replace(/_/g, " ");
+  return role === "system admin" || role === "system manager" || role === "system viewer";
+}
+
 function GeneralReportDetail() {
   const { reportId } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
+  const showDownload = !isSystemUserRole();
   const [report, setReport] = useState<GeneratedReportItem | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -375,7 +381,7 @@ function GeneralReportDetail() {
         </a>
         <div className="report_assessment_title_row">
           <h1 className="report_detail_title report_assessment_title">{getReportTypeDisplayLabel(report.reportType)}</h1>
-          {!isArchived && (
+          {!isArchived && showDownload && (
             <button
               type="button"
               className="report_detail_export_btn"

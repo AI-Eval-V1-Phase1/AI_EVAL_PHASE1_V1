@@ -508,7 +508,7 @@ const VendorAttestationDetails = () => {
         )}
       </div>
 
-      {/* Trust Profile Attestation */}
+      {/* Card 1: Trust Profile Attestation – shield, title, "Your self-attestation covers:", 4-column grid */}
       <div className="attestation_section attestation_trust_profile">
         <div className="attestation_section_header">
           <span>
@@ -526,7 +526,6 @@ const VendorAttestationDetails = () => {
             </p>
           </div>
         </div>
-
         <p className="attestation_covers_heading">
           Your self-attestation covers:
         </p>
@@ -572,7 +571,10 @@ const VendorAttestationDetails = () => {
             </li>
           </ul>
         </div>
+      </div>
 
+      {/* Card 2: YOUR ATTESTATIONS – tabs, search, list */}
+      <div className="ai_assessments_section">
         <div className="assessment_list_header_row">
           <p className="your_assessments_title">YOUR ATTESTATIONS</p>
           <div className="attestation_tabs_and_search_row">

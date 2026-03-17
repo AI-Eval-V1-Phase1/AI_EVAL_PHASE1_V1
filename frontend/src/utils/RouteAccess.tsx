@@ -9,7 +9,7 @@ const AUTH_TOKEN_KEY = "bearerToken";
 const SYSTEM_ROLE_KEY = "systemRole";
 const USER_ROLE_KEY = "userRole";
 const LOGIN_PATH = "/login";
-const NOT_FOUND_PATH = "/pageNotFound";
+const ACCESS_DENIED_PATH = "/accessDenied";
 
 /**
  * Combined route guard: auth + RBAC (system role + user role).
@@ -30,7 +30,7 @@ const RouteAccess = () => {
   const pathAllowed = isPathAllowedForUserRole(path, normalizedRole, userRoleRaw);
 
   if (!pathAllowed) {
-    return <Navigate to={NOT_FOUND_PATH} replace />;
+    return <Navigate to={ACCESS_DENIED_PATH} replace />;
   }
 
   return <Outlet />;

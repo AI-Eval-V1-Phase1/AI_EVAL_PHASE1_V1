@@ -90,6 +90,11 @@ const BuyerOverview = () => {
     fetchAssessments();
   }, [fetchAssessments]);
 
+  const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim().replace(/_/g, " ");
+  const userRole = (sessionStorage.getItem("userRole") ?? "").toLowerCase().trim();
+  const isViewOnlyRole =
+    systemRole === "system viewer" || (systemRole === "buyer" && userRole === "viewer");
+
   const organizationId = sessionStorage.getItem("organizationId") ?? "";
   const orgScopedList = organizationId
     ? assessmentsList.filter((a) => String(a.organizationId ?? "") === String(organizationId))
@@ -135,12 +140,14 @@ const BuyerOverview = () => {
             </select>
             <ChevronDown size={18} className="governance_overview_chevron governance_overview_chevron_select" aria-hidden />
           </div>
-          <div className="btn_user_page">
-            <Button className="invite_user_btn" onClick={() => navigate("/buyerAssessment")}>
-              <Plus size={24} />
-              New Assessment
-            </Button>
-          </div>
+          {!isViewOnlyRole && (
+            <div className="btn_user_page">
+              <Button className="invite_user_btn" onClick={() => navigate("/buyerAssessment")}>
+                <Plus size={24} />
+                New Assessment
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -314,41 +321,43 @@ const BuyerOverview = () => {
             </div>
           </div>
 
-          <div className="governance_risk_search">
-            <h3 className="governance_risk_search_title">
-              <Sparkles size={20} aria-hidden />
-              AI Risk Search
-            </h3>
-            <p className="governance_risk_search_subtitle">
-              Searching risks for: {selectedAssessment ? getAssessmentLabel(selectedAssessment) : "Select an assessment"} …
-            </p>
-            <div className="governance_risk_search_suggestions">
-              {[
-                "What are the privacy risks for AI chatbots?",
-                "Show me bias risks in hiring AI",
-                "What security vulnerabilities affect LLMs?",
-                "Risks of AI in healthcare decisions",
-                "Data leakage risks in generative AI",
-              ].map((q) => (
-                <button key={q} type="button" className="governance_risk_search_pill" onClick={() => setAiSearchQuery(q)}>
-                  {q}
+          {!isViewOnlyRole && (
+            <div className="governance_risk_search">
+              <h3 className="governance_risk_search_title">
+                <Sparkles size={20} aria-hidden />
+                AI Risk Search
+              </h3>
+              <p className="governance_risk_search_subtitle">
+                Searching risks for: {selectedAssessment ? getAssessmentLabel(selectedAssessment) : "Select an assessment"} …
+              </p>
+              <div className="governance_risk_search_suggestions">
+                {[
+                  "What are the privacy risks for AI chatbots?",
+                  "Show me bias risks in hiring AI",
+                  "What security vulnerabilities affect LLMs?",
+                  "Risks of AI in healthcare decisions",
+                  "Data leakage risks in generative AI",
+                ].map((q) => (
+                  <button key={q} type="button" className="governance_risk_search_pill" onClick={() => setAiSearchQuery(q)}>
+                    {q}
+                  </button>
+                ))}
+              </div>
+              <div className="governance_risk_search_input_row">
+                <input
+                  type="text"
+                  className="governance_risk_search_input"
+                  placeholder="Ask about AI risks..."
+                  value={aiSearchQuery}
+                  onChange={(e) => setAiSearchQuery(e.target.value)}
+                  aria-label="Ask about AI risks"
+                />
+                <button type="button" className="governance_risk_search_send" aria-label="Send">
+                  <Send size={20} />
                 </button>
-              ))}
+              </div>
             </div>
-            <div className="governance_risk_search_input_row">
-              <input
-                type="text"
-                className="governance_risk_search_input"
-                placeholder="Ask about AI risks..."
-                value={aiSearchQuery}
-                onChange={(e) => setAiSearchQuery(e.target.value)}
-                aria-label="Ask about AI risks"
-              />
-              <button type="button" className="governance_risk_search_send" aria-label="Send">
-                <Send size={20} />
-              </button>
-            </div>
-          </div>
+          )}
         </>
       )}
     </div>

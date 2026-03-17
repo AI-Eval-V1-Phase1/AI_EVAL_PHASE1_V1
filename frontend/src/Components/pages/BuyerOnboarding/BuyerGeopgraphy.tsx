@@ -145,8 +145,8 @@ const BuyerGeography = ({
           id="dataResidency"
           labelName={
             <div className="labelSection">
-              <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
               <span>Data Residency Requirements</span>
+              <sup className="form_field_mandatory_asterisk" aria-hidden="true">*</sup>
               <ClickTooltip content={BUYER_HELPTEXT.dataResidencyRequirements}>
                 <Info size={14} color="#6B7280" />
               </ClickTooltip>

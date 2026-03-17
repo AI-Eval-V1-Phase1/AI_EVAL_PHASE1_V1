@@ -20,8 +20,15 @@ const getBuyerCotsById = async (req: Request, res: Response) => {
 
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, Number(userId))).limit(1);
     if (!user) return res.status(404).json({ message: "User not found" });
+    const platformRole = String((user as Record<string, unknown>).user_platform_role ?? "").trim().toLowerCase().replace(/_/g, " ");
+    const isSystemUser =
+      platformRole === "system admin" || platformRole === "system manager" || platformRole === "system viewer";
     const orgId = String((user as Record<string, unknown>).organization_id ?? "").trim();
-    if (!orgId) return res.status(400).json({ message: "User has no organization" });
+    if (!isSystemUser && !orgId) return res.status(400).json({ message: "User has no organization" });
+
+    const whereCondition = isSystemUser
+      ? and(eq(assessments.id, id), eq(assessments.type, "cots_buyer"))
+      : and(eq(assessments.id, id), eq(assessments.organization_id, orgId), eq(assessments.type, "cots_buyer"));
 
     const rows = await db
       .select({
@@ -29,6 +36,9 @@ const getBuyerCotsById = async (req: Request, res: Response) => {
         type: assessments.type,
         status: assessments.status,
         organizationId: assessments.organization_id,
+        created_at: assessments.created_at,
+        updated_at: assessments.updated_at,
+        expiry_at: assessments.expiry_at,
         organization_name: cotsBuyerAssessments.organization_name,
         industry_sector: cotsBuyerAssessments.industry_sector,
         employee_count: cotsBuyerAssessments.employee_count,
@@ -72,7 +82,7 @@ const getBuyerCotsById = async (req: Request, res: Response) => {
       })
       .from(assessments)
       .leftJoin(cotsBuyerAssessments, eq(assessments.id, cotsBuyerAssessments.assessment_id))
-      .where(and(eq(assessments.id, id), eq(assessments.organization_id, orgId), eq(assessments.type, "cots_buyer")))
+      .where(whereCondition)
       .limit(1);
 
     const r = rows[0];
@@ -90,8 +100,12 @@ const getBuyerCotsById = async (req: Request, res: Response) => {
           : "";
     const data: Record<string, unknown> = {
       assessmentId: r.assessmentId,
+      type: "cots_buyer",
       status: r.status,
       organizationId: r.organizationId,
+      createdAt: (r as { created_at?: unknown }).created_at,
+      updatedAt: (r as { updated_at?: unknown }).updated_at,
+      expiryAt: (r as { expiry_at?: unknown }).expiry_at,
       organizationName: r.organization_name ?? "",
       industrySector: r.industry_sector ?? "",
       employeeCount: r.employee_count ?? "",

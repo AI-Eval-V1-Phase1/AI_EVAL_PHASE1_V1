@@ -136,25 +136,29 @@ const ROLE_DEFINITIONS: {
   },
   {
     title: "AI Adoption Manager",
-    description: "Full access across AI Adoption platform.",
+    description:
+      "Full access for Dashboard, AI Vendor Directory, Assessments, Risk Mapping, Reports, and User Management pages.",
     icon: Sparkles,
     category: "buyer",
   },
   {
     title: "AI Adoption Lead",
-    description: "Full access across AI Adoption platform; except for User Managment.",
+    description:
+      "Full access for Dashboard, AI Vendor Directory, Assessments, Risk Mapping, and Reports; no access to User Management.",
     icon: UserCheck,
     category: "buyer",
   },
   {
     title: "AI Adoption Engineer",
-    description: "Full access across AI Adoption platform; except for User Managment; and limited access for Risk Mapping and Reports.",
+    description:
+      "Full access for Dashboard, AI Vendor Directory, and Assessments; limited access for Risk Mapping and Reports (user-based details only); no access to User Management.",
     icon: Wrench,
     category: "buyer",
   },
   {
     title: "AI Adoption Viewer",
-    description: "Read-only access to Dashboard, AI Vendor Directory, and Reports.",
+    description:
+      "View-only access for Dashboard, AI Vendor Directory, and Reports pages.",
     icon: Eye,
     category: "buyer",
   },

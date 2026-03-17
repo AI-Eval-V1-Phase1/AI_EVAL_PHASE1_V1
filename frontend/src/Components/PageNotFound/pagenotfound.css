@@ -9,14 +9,23 @@
  
 } */
 
+/* Full-page 404: no app layout, occupies entire viewport */
 .page-not {
-  position: absolute; 
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); 
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f6f8fb;
   text-align: center;
-  width: 90%; 
-  max-width: 500px; 
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.page-not > div {
+  width: 90%;
+  max-width: 500px;
 }
 
 .page-not img {
@@ -42,9 +51,26 @@
   margin-top: 15px;
   font-size: 1.2em;
 }
-.goBack a {
+.goBack a,
+.page-not .goBack .page-not-home-link {
   color: #00d9ff;
   text-decoration: none;
   border-bottom: 1px solid #00d9ff;
   margin-left: 10px;
+}
+
+.page-not .goBack .page-not-home-link {
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-radius: 0 !important;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.page-not .goBack .page-not-home-link:hover {
+  color: #00b8d9;
+  border-bottom-color: #00b8d9;
 }

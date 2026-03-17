@@ -1,9 +1,21 @@
 // import React from "react";
-import { NavLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./pagenotfound.css";
 import PageNotFoundImg from "../../assets/pageNotFound.svg";
 
 const PageNotFound = () => {
+  const navigate = useNavigate();
+
+  const handleHomeClick = () => {
+    const isLoggedIn = !!sessionStorage.getItem("bearerToken");
+    if (isLoggedIn) {
+      navigate("/", { replace: true });
+    } else {
+      sessionStorage.clear();
+      navigate("/login", { replace: true });
+    }
+  };
+
   return (
     <div className="page-not">
       <div>
@@ -14,7 +26,10 @@ const PageNotFound = () => {
           <h2>404 Error - Page Not Found</h2>
         </div>
         <p className="goBack">
-          Go Back to<NavLink to="/login"> Home</NavLink>
+          Go back to{" "}
+          <button type="button" className="page-not-home-link" onClick={handleHomeClick}>
+            Home
+          </button>
         </p>
       </div>
     </div>

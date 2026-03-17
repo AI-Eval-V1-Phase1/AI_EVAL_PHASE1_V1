@@ -43,7 +43,16 @@ const listGeneralReports = async (req: Request, res: Response): Promise<void> =>
         typeof req.query?.organizationId === "string" ? req.query.organizationId.trim() || "" : "";
       if (fromQuery) orgId = fromQuery;
     }
-    if (!orgId) {
+    const assessmentIdFromQuery =
+      typeof req.query?.assessmentId === "string" ? req.query.assessmentId.trim() || null : null;
+
+    const whereCondition = assessmentIdFromQuery
+      ? eq(generalReports.assessment_id, assessmentIdFromQuery)
+      : orgId
+        ? eq(generalReports.organization_id, orgId)
+        : null;
+
+    if (!whereCondition) {
       res.status(200).json({ success: true, data: { reports: [] } });
       return;
     }
@@ -70,7 +79,7 @@ const listGeneralReports = async (req: Request, res: Response): Promise<void> =>
           eq(cotsVendorAssessments.vendor_attestation_id, vendorSelfAttestations.vendor_self_attestation_id),
         ),
       )
-      .where(eq(generalReports.organization_id, orgId))
+      .where(whereCondition)
       .orderBy(desc(generalReports.created_at))
       .limit(200);
 

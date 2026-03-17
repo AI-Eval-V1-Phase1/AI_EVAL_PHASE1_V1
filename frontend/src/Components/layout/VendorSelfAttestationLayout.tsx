@@ -3,13 +3,13 @@ import MainLayout from "./MainLayout";
 import LayoutWithoutNav from "./LayoutWithoutNav";
 import { isVendorAttestationOnlyRole } from "../../guards/rbacConfig";
 
-const PAGE_NOT_FOUND_PATH = "/pageNotFound";
+const ACCESS_DENIED_PATH = "/accessDenied";
 
 /**
  * Renders Vendor Self Attestation with side + top nav when the user has a session
  * (e.g. after vendor onboarding auto-login), otherwise without nav.
  * View-only users (vendor Engineer/Viewer) who try to access the attestation form
- * (e.g. via edit link) are redirected to page not found.
+ * (e.g. via edit link) are redirected to access denied.
  */
 function VendorSelfAttestationLayout() {
   const hasSession = !!sessionStorage.getItem("bearerToken");
@@ -20,7 +20,7 @@ function VendorSelfAttestationLayout() {
     const isViewOnlyVendor =
       systemRole === "vendor" && isVendorAttestationOnlyRole(userRole);
     if (isViewOnlyVendor) {
-      return <Navigate to={PAGE_NOT_FOUND_PATH} replace />;
+      return <Navigate to={ACCESS_DENIED_PATH} replace />;
     }
     return <MainLayout />;
   }

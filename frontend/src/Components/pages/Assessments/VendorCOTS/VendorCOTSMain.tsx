@@ -455,11 +455,24 @@ const VendorCOTSMain = () => {
   );
 
   if (assessmentIdFromUrl && accessDenied) {
-    return <Navigate to="/pageNotFound" replace />;
+    return <Navigate to="/accessDenied" replace />;
   }
 
   return (
     <div className="sec_user_page org_settings_page">
+      <div className="org_settings_header page_header_align">
+        <div className="org_settings_headers page_header_row">
+          <span className="icon_size_header" aria-hidden>
+            <FileCheck size={24} className="header_icon_svg" />
+          </span>
+          <div className="page_header_title_block">
+            <h1 className="org_settings_title page_header_title">Customer Assessment</h1>
+            <p className="org_settings_subtitle page_header_subtitle">
+              Complete and submit your customer assessment for sales opportunities.
+            </p>
+          </div>
+        </div>
+      </div>
       {submitting && (
         <div
           className="vendor_attestation_submit_overlay"

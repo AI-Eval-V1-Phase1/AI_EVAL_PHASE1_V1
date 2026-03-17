@@ -444,6 +444,10 @@
   margin-top: 0.5rem;
 }
 
+.org_preview_tab_content .ai_assessments_section {
+  background-color: transparent;
+}
+
 .org_attestations_section {
   min-height: 120px;
 }
@@ -496,4 +500,19 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Organizations view – attestation tab: Expired status in tomato (not grey) */
+.vendor_preview .attestation_list_rows .general_rpr_card .general_report_card_header p.assessment_card_status_expired,
+.vendor_preview .attestation_list_rows .general_rpr_card .general_report_card_header p.assessment_card_status_expired .general_rpr_card_report_type_icon {
+  color: tomato;
+  font-weight: 600;
+}
+
+/* Attestation tab cards: "Expires on" date in red */
+.vendor_preview .attestation_list_rows .general_rpr_card .assessment_card_header_expiry {
+  color: tomato;
+  display: block;
+  font-size: 0.85em;
+  font-weight: 400;
 }

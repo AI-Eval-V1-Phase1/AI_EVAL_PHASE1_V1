@@ -7,9 +7,9 @@ import { generateSalesEnablement } from "../agents/salesEnablementAgent.js";
 
 /**
  * POST /assessments/salesEnablement
- * Body: { assessmentId: string }
- * Fetches the complete customer risk report for the given assessment,
- * generates SWOT analysis and Battle Card from the report via LLM, returns both.
+ * Body: { assessmentId: string, type?: "swot" | "battlecard" }
+ * Fetches the complete customer risk report for the given assessment.
+ * When type is "swot" only SWOT analysis is generated; when "battlecard" only Battle Card; when omitted, both (legacy).
  */
 const salesEnablement = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -26,6 +26,11 @@ const salesEnablement = async (req: Request, res: Response): Promise<void> => {
       res.status(400).json({ success: false, message: "assessmentId is required" });
       return;
     }
+
+    const type =
+      req.body?.type === "swot" || req.body?.type === "battlecard"
+        ? (req.body.type as "swot" | "battlecard")
+        : "both";
 
     const [user] = await db
       .select({ organization_id: usersTable.organization_id })
@@ -61,21 +66,27 @@ const salesEnablement = async (req: Request, res: Response): Promise<void> => {
     }
 
     const reportJson = reportRow.report as Record<string, unknown>;
-    const result = await generateSalesEnablement(reportJson);
+    const result = await generateSalesEnablement(reportJson, type);
     if (!result) {
       res.status(500).json({
         success: false,
-        message: "Failed to generate SWOT and Battle Card",
+        message:
+          type === "swot"
+            ? "Failed to generate SWOT analysis"
+            : type === "battlecard"
+              ? "Failed to generate Battle Card"
+              : "Failed to generate SWOT and Battle Card",
       });
       return;
     }
 
+    const data: Record<string, unknown> = {};
+    if (type === "swot" || type === "both") data.swot = result.swot;
+    if (type === "battlecard" || type === "both") data.battleCard = result.battleCard;
+
     res.status(200).json({
       success: true,
-      data: {
-        swot: result.swot,
-        battleCard: result.battleCard,
-      },
+      data,
     });
   } catch (error) {
     console.error("salesEnablement controller error:", error);

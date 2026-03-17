@@ -26,13 +26,16 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const platformRole = String((user as Record<string, unknown>).user_platform_role ?? "").trim().toLowerCase();
+    const platformRole = String((user as Record<string, unknown>).user_platform_role ?? "").trim().toLowerCase().replace(/_/g, " ");
     const isSystemAdmin = platformRole === "system admin";
+    const isSystemManager = platformRole === "system manager";
+    const isSystemViewer = platformRole === "system viewer";
+    const isSystemUser = isSystemAdmin || isSystemManager || isSystemViewer;
 
     const organizationIdFromQuery = typeof req.query?.organizationId === "string" ? req.query.organizationId.trim() || null : null;
     const orgIdFromUser = user.organization_id;
     const orgIdStrFromUser = orgIdFromUser != null ? String(orgIdFromUser).trim() : "";
-    const orgIdStr = (isSystemAdmin && organizationIdFromQuery ? organizationIdFromQuery : orgIdStrFromUser) || "";
+    const orgIdStr = (isSystemUser && organizationIdFromQuery ? organizationIdFromQuery : orgIdStrFromUser) || "";
     if (!isSystemAdmin && !orgIdStr) {
       return res.status(400).json({ message: "User has no organization" });
     }
@@ -44,9 +47,10 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
       `UPDATE assessments SET status = 'expired' WHERE expiry_at IS NOT NULL AND expiry_at < now() AND status = 'submitted'`,
     );
 
-    // Use raw SQL to avoid Drizzle query builder errors (e.g. param binding) on this endpoint
-    const whereClause = isSystemAdmin ? "1 = 1" : 'a.organization_id = $1';
-    const queryParams = isSystemAdmin ? [] : [orgIdParam];
+    // System user (admin/manager/viewer) with organizationId in query: filter to that org. Non-system: filter to user's org. System admin without query: no filter (all).
+    const filterByOrg = !isSystemUser || (isSystemUser && organizationIdFromQuery != null);
+    const whereClause = filterByOrg ? "a.organization_id = $1" : "1 = 1";
+    const queryParams = filterByOrg ? [orgIdParam] : [];
     const { rows } = await pool.query<Record<string, unknown>>(
       `SELECT
         a.id AS "assessmentId",

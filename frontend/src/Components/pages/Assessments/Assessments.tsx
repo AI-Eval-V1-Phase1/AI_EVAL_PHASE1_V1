@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Plus,
   Ban,
@@ -18,6 +18,7 @@ import {
   Search,
   Trash2,
   ChevronRight,
+  Landmark,
 } from "lucide-react";
 import DataTable from "react-data-table-component";
 import Button from "../../UI/Button";
@@ -39,6 +40,7 @@ import "../Reports/general_reports.css";
 import "../../preview/preview_table.css";
 import "./assessments.css";
 import { ReportsPagination } from "../Reports/ReportsPagination";
+import AssessmentPreviewModalContent from "./AssessmentPreviewModalContent";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -281,7 +283,15 @@ const ASSESSMENT_PREVIEW_SECTIONS = [
               : (r.type ?? undefined),
       },
       { label: "Status", value: (r) => getAssessmentStatusLabel(r) },
-      { label: "Created on", value: (r) => formatDateDDMMMYYYY(r.createdAt) },
+      {
+        label: "Created on",
+        value: (r) =>
+          formatDateDDMMMYYYY(
+            (r?.status ?? "").toLowerCase() === "draft"
+              ? (r.updatedAt ?? r.createdAt)
+              : r.createdAt,
+          ),
+      },
       { label: "Expires on", value: (r) => formatDateDDMMMYYYY(r.expiryAt) },
     ],
   },
@@ -775,495 +785,7 @@ const Assessments = () => {
         )}
       </div>
 
-      {isSystemUser && (
-        <div className="ai_assessments_page">
-          <div className="page_tabs">
-            <button
-              type="button"
-              className={`page_tab ${activeTab === "vendor" ? "page_tab_active" : ""}`}
-              onClick={() => setActiveTab("vendor")}
-            >
-              Vendor
-            </button>
-            <button
-              type="button"
-              className={`page_tab ${activeTab === "buyer" ? "page_tab_active" : ""}`}
-              onClick={() => setActiveTab("buyer")}
-            >
-              Buyer
-            </button>
-            <button
-              type="button"
-              className={`page_tab ${activeTab === "my" ? "page_tab_active" : ""}`}
-              onClick={() => setActiveTab("my")}
-            >
-              My Assessments
-            </button>
-            <button
-              type="button"
-              className={`page_tab ${activeTab === "archived" ? "page_tab_active" : ""}`}
-              onClick={() => setActiveTab("archived")}
-            >
-              Archived
-            </button>
-          </div>
-          {activeTab === "vendor" && (
-            <div className="ai_assessments_section">
-              <h2>Vendor COTS Assessment</h2>
-              <p className="section_desc">
-                Assess your solution fit and customer context for buyers.
-              </p>
-              <ul className="ai_assessments_checklist">
-                <li>
-                  <CircleCheck size={16} /> Customer discovery and pain points
-                </li>
-                <li>
-                  <CircleCheck size={16} /> Solution fit and implementation
-                </li>
-                <li>
-                  <CircleCheck size={16} /> Risk context and mitigation
-                </li>
-              </ul>
-              <div className="assessment_list_header_row">
-                <p className="your_assessments_title">YOUR ASSESSMENTS</p>
-                <div className="assessment_search_wrap">
-                  <Search
-                    size={18}
-                    className="assessment_search_icon"
-                    aria-hidden
-                  />
-                  <input
-                    type="search"
-                    placeholder="Search assessments…"
-                    value={assessmentSearch}
-                    onChange={(e) => setAssessmentSearch(e.target.value)}
-                    className="assessment_search_input"
-                    aria-label="Search assessments by name"
-                  />
-                </div>
-              </div>
-              {loading && <LoadingMessage message="Loading assessments…" />}
-              {fetchError && (
-                <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>
-                  {fetchError}
-                </p>
-              )}
-              {!loading && !fetchError && (
-                <div className="assessment_list_rows">
-                  {(() => {
-                    const q = assessmentSearch.trim().toLowerCase();
-                    const filtered =
-                      q === ""
-                        ? nonExpiredVendor
-                        : nonExpiredVendor.filter((row) =>
-                            getAssessmentTitle(row, false)
-                              .toLowerCase()
-                              .includes(q),
-                          );
-                    if (filtered.length === 0) {
-                      return (
-                        <p className="assessment_search_no_results">
-                          {nonExpiredVendor.length === 0
-                            ? "No vendor assessments yet."
-                            : "No assessments match your search."}
-                        </p>
-                      );
-                    }
-                    const start = (vendorCardPage - 1) * assessmentCardPageSize;
-                    const paginated = filtered.slice(
-                      start,
-                      start + assessmentCardPageSize,
-                    );
-                    return (
-                      <>
-                        <div className="general_rpr_cards_sec vendor_directory_grid">
-                          {paginated.map((row) => {
-                            const isDraft =
-                              (row.status || "").toLowerCase() === "draft";
-                            const statusLabel = getAssessmentStatusLabel(row);
-                            const archived = statusLabel === "Expired";
-                            const title = getAssessmentDisplayTitle(row, false);
-                            const statusDisplay =
-                              statusLabel === "Completed"
-                                ? "COMPLETED"
-                                : statusLabel;
-                            const statusHeaderClass =
-                              statusLabel === "Completed"
-                                ? "assessment_card_status_completed"
-                                : statusLabel === "Expired"
-                                  ? "assessment_card_status_expired"
-                                  : "assessment_card_status_draft";
-                            return (
-                              <article
-                                key={row.assessmentId}
-                                className={`vendor_directory_card general_rpr_card${archived ? " general_rpr_card_archived" : ""}`}
-                                data-accent="risk"
-                              >
-                                <div className="general_report_card_header">
-                                  <div className="assessment_card_header_left">
-                                    <p
-                                      className={`vendor_directory_card_products general_rpr_card_report_type ${statusHeaderClass}`}
-                                    >
-                                      <span
-                                        className="general_rpr_card_report_type_icon"
-                                        aria-hidden
-                                      >
-                                        <FileText size={16} />
-                                      </span>
-                                      <span>
-                                        <span>{statusDisplay}</span>
-                                        {statusLabel === "Completed" && (
-                                          <span className="assessment_card_header_expiry">
-                                            Expires on:{" "}
-                                            {formatDateDDMMMYYYY(row.expiryAt)}
-                                          </span>
-                                        )}
-                                      </span>
-                                    </p>
-                                  </div>
-                                  <span className="general_rpr_card_download_wrap">
-                                    {isDraft && !isAssessmentViewOnly ? (
-                                      <button
-                                        type="button"
-                                        className="general_rpr_card_download_btn assessment_card_header_action_btn"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          navigate(
-                                            `/vendorcots/${row.assessmentId}`,
-                                          );
-                                        }}
-                                        aria-label={`Edit assessment: ${title}`}
-                                        title="Edit"
-                                      >
-                                        <SquarePen size={14} aria-hidden />
-                                      </button>
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        className="general_rpr_card_download_btn assessment_card_header_action_btn"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setPreviewRow(row);
-                                        }}
-                                        aria-label={`View assessment: ${title}`}
-                                        title="View"
-                                      >
-                                        <Eye size={14} aria-hidden />
-                                      </button>
-                                    )}
-                                  </span>
-                                </div>
-                                <div className="general_rpr_title">
-                                  <div className="vendor_directory_card_header_text">
-                                    <ClickTooltip
-                                      content={title}
-                                      position="top"
-                                      showOn="hover"
-                                    >
-                                      <span className="general_rpr_card_title_wrap">
-                                        <h2 className="vendor_directory_card_name general_rpr_card_title_clamp">
-                                          {title}
-                                        </h2>
-                                      </span>
-                                    </ClickTooltip>
-                                  </div>
-                                </div>
-                                <div className="general_rpr_card_footer">
-                                  <div className="general_rpr_card_dates">
-                                    <div className="general_rpr_card_date_row">
-                                      <span className="general_rpr_card_date_label_expiry">
-                                        {isDraft
-                                          ? "Drafted by:"
-                                          : "Completed by:"}
-                                      </span>
-                                      <span className="general_rpr_card_date_value_expiry">
-                                        {getCompletedByDisplay(row) || "—"}
-                                      </span>
-                                    </div>
-                                    {!isDraft && (
-                                      <div className="general_rpr_card_date_row">
-                                        <span className="general_rpr_card_date_label_expiry">
-                                          Created on:
-                                        </span>
-                                        <span className="general_rpr_card_date_value_expiry">
-                                          {formatDateDDMMMYYYY(row.createdAt)}
-                                        </span>
-                                      </div>
-                                    )}
-                                    {(archived || isDraft) && (
-                                      <div className="general_rpr_card_date_row">
-                                        {archived ? (
-                                          <span className="general_rpr_card_status general_rpr_card_status_archived">
-                                            Archived
-                                          </span>
-                                        ) : (
-                                          <>
-                                            <span className="general_rpr_card_date_label_expiry">
-                                              Drafted on:
-                                            </span>
-                                            <span className="general_rpr_card_date_value_expiry">
-                                              {formatDateDDMMMYYYY(
-                                                row.createdAt,
-                                              )}
-                                            </span>
-                                          </>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </article>
-                            );
-                          })}
-                        </div>
-                        <ReportsPagination
-                          totalItems={filtered.length}
-                          currentPage={vendorCardPage}
-                          pageSize={assessmentCardPageSize}
-                          onPageChange={setVendorCardPage}
-                          onPageSizeChange={(size) => {
-                            setAssessmentCardPageSize(size);
-                            setVendorCardPage(1);
-                          }}
-                        />
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-          )}
-          {activeTab === "buyer" && (
-            <div className="ai_assessments_section">
-              <h2>Buy AI Product (COTS)</h2>
-              <p className="section_desc">
-                Assess a third-party vendor tool for your organization.
-              </p>
-              <ul className="ai_assessments_checklist">
-                <li>
-                  <CircleCheck size={16} /> Vendor security and compliance
-                  evaluation
-                </li>
-                <li>
-                  <CircleCheck size={16} /> Data handling and privacy assessment
-                </li>
-                <li>
-                  <CircleCheck size={16} /> Implementation readiness scoring
-                </li>
-                <li>
-                  <CircleCheck size={16} /> Risk mitigation recommendations
-                </li>
-              </ul>
-              <div className="assessment_list_header_row">
-                <p className="your_assessments_title">YOUR ASSESSMENTS</p>
-                <div className="assessment_search_wrap">
-                  <Search
-                    size={18}
-                    className="assessment_search_icon"
-                    aria-hidden
-                  />
-                  <input
-                    type="search"
-                    placeholder="Search assessments…"
-                    value={assessmentSearch}
-                    onChange={(e) => setAssessmentSearch(e.target.value)}
-                    className="assessment_search_input"
-                    aria-label="Search assessments by name"
-                  />
-                </div>
-              </div>
-              {loading && <LoadingMessage message="Loading assessments…" />}
-              {fetchError && (
-                <p style={{ color: "#dc2626", fontSize: "0.875rem" }}>
-                  {fetchError}
-                </p>
-              )}
-              {!loading && !fetchError && (
-                <div className="assessment_list_rows">
-                  {(() => {
-                    const q = assessmentSearch.trim().toLowerCase();
-                    const filtered =
-                      q === ""
-                        ? nonExpiredBuyer
-                        : nonExpiredBuyer.filter((row) =>
-                            getAssessmentTitle(row, true)
-                              .toLowerCase()
-                              .includes(q),
-                          );
-                    if (filtered.length === 0) {
-                      return (
-                        <p className="assessment_search_no_results">
-                          {nonExpiredBuyer.length === 0
-                            ? "No assessments yet."
-                            : "No assessments match your search."}
-                        </p>
-                      );
-                    }
-                    const start = (buyerCardPage - 1) * assessmentCardPageSize;
-                    const paginated = filtered.slice(
-                      start,
-                      start + assessmentCardPageSize,
-                    );
-                    return (
-                      <>
-                        <div className="general_rpr_cards_sec vendor_directory_grid">
-                          {paginated.map((row) => {
-                            const isDraft =
-                              (row.status || "").toLowerCase() === "draft";
-                            const statusLabel = getAssessmentStatusLabel(row);
-                            const archived = statusLabel === "Expired";
-                            const title = getAssessmentDisplayTitle(row, true);
-                            const statusDisplay =
-                              statusLabel === "Completed"
-                                ? "COMPLETED"
-                                : statusLabel;
-                            const statusHeaderClass =
-                              statusLabel === "Completed"
-                                ? "assessment_card_status_completed"
-                                : statusLabel === "Expired"
-                                  ? "assessment_card_status_expired"
-                                  : "assessment_card_status_draft";
-                            return (
-                              <article
-                                key={row.assessmentId}
-                                className={`vendor_directory_card general_rpr_card${archived ? " general_rpr_card_archived" : ""}`}
-                                data-accent="sales"
-                              >
-                                <div className="general_report_card_header">
-                                  <div className="assessment_card_header_left">
-                                    <p
-                                      className={`vendor_directory_card_products general_rpr_card_report_type ${statusHeaderClass}`}
-                                    >
-                                      <span
-                                        className="general_rpr_card_report_type_icon"
-                                        aria-hidden
-                                      >
-                                        <FileText size={16} />
-                                      </span>
-                                      <span>
-                                        <span>{statusDisplay}</span>
-                                        {statusLabel === "Completed" && (
-                                          <span className="assessment_card_header_expiry">
-                                            Expires on:{" "}
-                                            {formatDateDDMMMYYYY(row.expiryAt)}
-                                          </span>
-                                        )}
-                                      </span>
-                                    </p>
-                                  </div>
-                                  <span className="general_rpr_card_download_wrap">
-                                    {isDraft && !isAssessmentViewOnly ? (
-                                      <button
-                                        type="button"
-                                        className="general_rpr_card_download_btn assessment_card_header_action_btn"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          navigate(
-                                            `/buyerAssessment/${row.assessmentId}`,
-                                          );
-                                        }}
-                                        aria-label={`Edit assessment: ${title}`}
-                                        title="Edit"
-                                      >
-                                        <SquarePen size={14} aria-hidden />
-                                      </button>
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        className="general_rpr_card_download_btn assessment_card_header_action_btn"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setPreviewRow(row);
-                                        }}
-                                        aria-label={`View assessment: ${title}`}
-                                        title="View"
-                                      >
-                                        <Eye size={14} aria-hidden />
-                                      </button>
-                                    )}
-                                  </span>
-                                </div>
-                                <div className="general_rpr_title">
-                                  <div className="vendor_directory_card_header_text">
-                                    <ClickTooltip
-                                      content={title}
-                                      position="top"
-                                      showOn="hover"
-                                    >
-                                      <span className="general_rpr_card_title_wrap">
-                                        <h2 className="vendor_directory_card_name general_rpr_card_title_clamp">
-                                          {title}
-                                        </h2>
-                                      </span>
-                                    </ClickTooltip>
-                                  </div>
-                                </div>
-                                <div className="general_rpr_card_footer">
-                                  <div className="general_rpr_card_dates">
-                                    <div className="general_rpr_card_date_row">
-                                      <span className="general_rpr_card_date_label_expiry">
-                                        {isDraft
-                                          ? "Drafted by:"
-                                          : "Completed by:"}
-                                      </span>
-                                      <span className="general_rpr_card_date_value_expiry">
-                                        {getCompletedByDisplay(row) || "—"}
-                                      </span>
-                                    </div>
-                                    {!isDraft && (
-                                      <div className="general_rpr_card_date_row">
-                                        <span className="general_rpr_card_date_label_expiry">
-                                          Created on:
-                                        </span>
-                                        <span className="general_rpr_card_date_value_expiry">
-                                          {formatDateDDMMMYYYY(row.createdAt)}
-                                        </span>
-                                      </div>
-                                    )}
-                                    {(archived || isDraft) && (
-                                      <div className="general_rpr_card_date_row">
-                                        {archived ? (
-                                          <span className="general_rpr_card_status general_rpr_card_status_archived">
-                                            Archived
-                                          </span>
-                                        ) : (
-                                          <>
-                                            <span className="general_rpr_card_date_label_expiry">
-                                              Drafted on:
-                                            </span>
-                                            <span className="general_rpr_card_date_value_expiry">
-                                              {formatDateDDMMMYYYY(
-                                                row.createdAt,
-                                              )}
-                                            </span>
-                                          </>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </article>
-                            );
-                          })}
-                        </div>
-                        <ReportsPagination
-                          totalItems={filtered.length}
-                          currentPage={buyerCardPage}
-                          pageSize={assessmentCardPageSize}
-                          onPageChange={setBuyerCardPage}
-                          onPageSizeChange={(size) => {
-                            setAssessmentCardPageSize(size);
-                            setBuyerCardPage(1);
-                          }}
-                        />
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-          )}
-          {activeTab === "my" && (
+      {false && (isVendor || isSystemUser) && (
             <div className="ai_assessments_section">
               <h2>My Assessments</h2>
               <p className="section_desc">Assessments for your organization.</p>
@@ -1335,9 +857,7 @@ const Assessments = () => {
                             );
                             const accent = isBuyerRow ? "sales" : "risk";
                             const statusDisplay =
-                              statusLabel === "Completed"
-                                ? "COMPLETED"
-                                : statusLabel;
+                              (statusLabel || "").toUpperCase();
                             const statusHeaderClass =
                               statusLabel === "Completed"
                                 ? "assessment_card_status_completed"
@@ -1456,7 +976,7 @@ const Assessments = () => {
                                             </span>
                                             <span className="general_rpr_card_date_value_expiry">
                                               {formatDateDDMMMYYYY(
-                                                row.createdAt,
+                                                row.updatedAt ?? row.createdAt,
                                               )}
                                             </span>
                                           </>
@@ -1486,7 +1006,7 @@ const Assessments = () => {
               )}
             </div>
           )}
-          {activeTab === "archived" && (
+          {false && activeTab === "archived" && (
             <div className="ai_assessments_section">
               <h2>Archived</h2>
               <p className="section_desc">
@@ -1594,8 +1114,6 @@ const Assessments = () => {
               )}
             </div>
           )}
-        </div>
-      )}
 
       {isBuyer && (
         <div className="ai_assessments_page">
@@ -1706,9 +1224,7 @@ const Assessments = () => {
                           const archived = statusLabel === "Expired";
                           const title = getAssessmentDisplayTitle(row, true);
                           const statusDisplay =
-                            statusLabel === "Completed"
-                              ? "COMPLETED"
-                              : statusLabel;
+                            (statusLabel || "").toUpperCase();
                           const statusHeaderClass =
                             statusLabel === "Completed"
                               ? "assessment_card_status_completed"
@@ -1824,7 +1340,7 @@ const Assessments = () => {
                                             Drafted on:
                                           </span>
                                           <span className="general_rpr_card_date_value_expiry">
-                                            {formatDateDDMMMYYYY(row.createdAt)}
+                                            {formatDateDDMMMYYYY(row.updatedAt ?? row.createdAt)}
                                           </span>
                                         </>
                                       )}
@@ -1980,7 +1496,7 @@ const Assessments = () => {
         </div>
       )}
 
-      {isVendor && (
+      {(isVendor || isSystemUser) && (
         <div className="ai_assessments_page">
           <div className="ai_assessments_section">
             <div className="header_cots">
@@ -2000,30 +1516,25 @@ const Assessments = () => {
             </div>
 
             <p className="section_desc">Each customer assessment covers:</p>
-            <ul className="ai_assessments_checklist">
-              <div>
-                <li>
-                  <CircleCheck size={16} /> Customer discovery and pain points
-                </li>
-                <li>
-                  <CircleCheck size={16} /> Solution fit and implementation
-                </li>
-                <li>
-                  <CircleCheck size={16} /> Risk context and mitigation
-                </li>
-              </div>
-              <div>
-                <li>
-                  <CircleCheck size={16} /> Customer risk environment
-                </li>
-                <li>
-                  <CircleCheck size={16} /> Tailored risk mitigation
-                </li>
-                <li>
-                  <CircleCheck size={16} />
-                  Customer-ready reports
-                </li>
-              </div>
+            <ul className="ai_assessments_checklist ai_assessments_checklist_3x2">
+              <li>
+                <CircleCheck size={16} /> Customer discovery and pain points
+              </li>
+              <li>
+                <CircleCheck size={16} /> Solution fit and implementation
+              </li>
+              <li>
+                <CircleCheck size={16} /> Risk context and mitigation
+              </li>
+              <li>
+                <CircleCheck size={16} /> Customer risk environment
+              </li>
+              <li>
+                <CircleCheck size={16} /> Tailored risk mitigation
+              </li>
+              <li>
+                <CircleCheck size={16} /> Customer-ready reports
+              </li>
             </ul>
           </div>
           <div className="ai_assessments_section">
@@ -2114,9 +1625,7 @@ const Assessments = () => {
                           const archived = statusLabel === "Expired";
                           const title = getAssessmentDisplayTitle(row, false);
                           const statusDisplay =
-                            statusLabel === "Completed"
-                              ? "COMPLETED"
-                              : statusLabel;
+                            (statusLabel || "").toUpperCase();
                           const statusHeaderClass =
                             statusLabel === "Completed"
                               ? "assessment_card_status_completed"
@@ -2232,7 +1741,7 @@ const Assessments = () => {
                                             Drafted on:
                                           </span>
                                           <span className="general_rpr_card_date_value_expiry">
-                                            {formatDateDDMMMYYYY(row.createdAt)}
+                                            {formatDateDDMMMYYYY(row.updatedAt ?? row.createdAt)}
                                           </span>
                                         </>
                                       )}
@@ -2445,301 +1954,11 @@ const Assessments = () => {
               </button>
             </div>
             <div className="vendor_attestation_preview_modal_body">
-              <div className="vendor_preview">
-                <p className="vendor_preview_intro">
-                  {previewRow.type === "cots_vendor"
-                    ? "Vendor COTS assessment details."
-                    : "Buyer COTS assessment details."}
-                </p>
-                <div className="vendor_preview_sections">
-                  {previewRow.type === "cots_vendor" ? (
-                    <>
-                      {vendorCotsPreviewLoading ? (
-                        <LoadingMessage message="Loading assessment details…" />
-                      ) : (
-                        <>
-                          <section className="vendor_preview_card">
-                            <h3 className="vendor_preview_card_title">
-                              Assessment
-                            </h3>
-                            <dl className="vendor_preview_list">
-                              <div className="vendor_preview_row">
-                                <dt className="vendor_preview_label">Type</dt>
-                                <dd className="vendor_preview_value">
-                                  COTS Vendor
-                                </dd>
-                              </div>
-                              <div className="vendor_preview_row">
-                                <dt className="vendor_preview_label">Status</dt>
-                                <dd className="vendor_preview_value">
-                                  {getAssessmentStatusLabel(
-                                    vendorCotsPreviewDetail || previewRow,
-                                  )}
-                                </dd>
-                              </div>
-                              <div className="vendor_preview_row">
-                                <dt className="vendor_preview_label">
-                                  {(
-                                    vendorCotsPreviewDetail || previewRow
-                                  )?.status?.toLowerCase() === "draft"
-                                    ? "Drafted on"
-                                    : "Created on"}
-                                </dt>
-                                <dd className="vendor_preview_value">
-                                  {formatDateDDMMMYYYY(previewRow.createdAt)}
-                                </dd>
-                              </div>
-                              {(
-                                vendorCotsPreviewDetail || previewRow
-                              )?.status?.toLowerCase() !== "draft" && (
-                                <div className="vendor_preview_row">
-                                  <dt className="vendor_preview_label">
-                                    Expires on
-                                  </dt>
-                                  <dd className="vendor_preview_value vendor_preview_value_expiry">
-                                    {formatDateDDMMMYYYY(previewRow.expiryAt)}
-                                  </dd>
-                                </div>
-                              )}
-                            </dl>
-                          </section>
-                          <section className="vendor_preview_card">
-                            <h3 className="vendor_preview_card_title">
-                              Vendor COTS
-                            </h3>
-                            <dl className="vendor_preview_list">
-                              {[
-                                {
-                                  label: "Customer organization",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "customerOrganizationName",
-                                  ),
-                                },
-                                {
-                                  label: "Customer sector",
-                                  value: formatSectorForPreview(
-                                    getRowPreviewValue(
-                                      vendorCotsPreviewDetail || previewRow,
-                                      "customerSector",
-                                    ),
-                                  ),
-                                },
-                                {
-                                  label: "Primary pain point",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "primaryPainPoint",
-                                  ),
-                                },
-                                {
-                                  label: "Expected outcomes",
-                                  value:
-                                    vendorCotsPreviewDetail != null
-                                      ? getRowPreviewValue(
-                                          vendorCotsPreviewDetail,
-                                          "expectedOutcomes",
-                                        )
-                                      : getRowPreviewValue(
-                                          previewRow,
-                                          "vendorExpectedOutcomes",
-                                        ),
-                                },
-                                {
-                                  label: "Budget range",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "customerBudgetRange",
-                                  ),
-                                },
-                                {
-                                  label: "Timeline",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "implementationTimeline",
-                                  ),
-                                },
-                                {
-                                  label: "Product name",
-                                  value:
-                                    (vendorCotsPreviewDetail || previewRow)
-                                      ?.attestationProductName != null &&
-                                    String(
-                                      (vendorCotsPreviewDetail || previewRow)
-                                        .attestationProductName,
-                                    ).trim() !== ""
-                                      ? String(
-                                          (
-                                            vendorCotsPreviewDetail ||
-                                            previewRow
-                                          ).attestationProductName,
-                                        ).trim()
-                                      : undefined,
-                                },
-                                {
-                                  label: "Product features",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "productFeatures",
-                                  ),
-                                },
-                                {
-                                  label: "Implementation approach",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "implementationApproach",
-                                  ),
-                                },
-                                {
-                                  label: "Customization level",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "customizationLevel",
-                                  ),
-                                },
-                                {
-                                  label: "Integration complexity",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "integrationComplexity",
-                                  ),
-                                },
-                                {
-                                  label: "Regulatory requirements",
-                                  value:
-                                    vendorCotsPreviewDetail != null
-                                      ? getRowPreviewValue(
-                                          vendorCotsPreviewDetail,
-                                          "regulatoryRequirements",
-                                        )
-                                      : getRowPreviewValue(
-                                          previewRow,
-                                          "vendorRegulatoryRequirements",
-                                        ),
-                                },
-                                {
-                                  label: "Regulatory requirements (other)",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "regulatoryRequirementsOther",
-                                  ),
-                                },
-                                {
-                                  label: "Data sensitivity",
-                                  value:
-                                    vendorCotsPreviewDetail != null
-                                      ? getRowPreviewValue(
-                                          vendorCotsPreviewDetail,
-                                          "dataSensitivity",
-                                        )
-                                      : getRowPreviewValue(
-                                          previewRow,
-                                          "vendorDataSensitivity",
-                                        ),
-                                },
-                                {
-                                  label: "Customer risk tolerance",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "customerRiskTolerance",
-                                  ),
-                                },
-                                {
-                                  label: "Alternatives considered",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "alternativesConsidered",
-                                  ),
-                                },
-                                {
-                                  label: "Key advantages",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "keyAdvantages",
-                                  ),
-                                },
-                                {
-                                  label: "Customer-specific risks",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "customerSpecificRisks",
-                                  ),
-                                },
-                                {
-                                  label: "Customer-specific risks (other)",
-                                  value: getRowPreviewValue(
-                                    vendorCotsPreviewDetail || previewRow,
-                                    "customerSpecificRisksOther",
-                                  ),
-                                },
-                              ].map(({ label, value }) => (
-                                <div key={label} className="vendor_preview_row">
-                                  <dt className="vendor_preview_label">
-                                    {label}
-                                  </dt>
-                                  <dd className="vendor_preview_value">
-                                    {formatPreviewValue(value, label)}
-                                  </dd>
-                                </div>
-                              ))}
-                            </dl>
-                          </section>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    ASSESSMENT_PREVIEW_SECTIONS.map((section) => (
-                      <section
-                        key={section.title}
-                        className="vendor_preview_card"
-                      >
-                        <h3 className="vendor_preview_card_title">
-                          {section.title}
-                        </h3>
-                        <dl className="vendor_preview_list">
-                          {section.fields
-                            .filter(
-                              (field) =>
-                                !(
-                                  field.label === "Expires on" &&
-                                  (previewRow?.status ?? "").toLowerCase() ===
-                                    "draft"
-                                ),
-                            )
-                            .map((field) => {
-                              const isDraftPreview =
-                                (previewRow?.status ?? "").toLowerCase() ===
-                                "draft";
-                              const label =
-                                field.label === "Created on" && isDraftPreview
-                                  ? "Drafted on"
-                                  : field.label;
-                              const isExpiry = field.label === "Expires on";
-                              return (
-                                <div
-                                  key={field.label}
-                                  className="vendor_preview_row"
-                                >
-                                  <dt className="vendor_preview_label">
-                                    {label}
-                                  </dt>
-                                  <dd
-                                    className={`vendor_preview_value${isExpiry ? " vendor_preview_value_expiry" : ""}`}
-                                  >
-                                    {formatPreviewValue(
-                                      field.value(previewRow),
-                                      field.label,
-                                    )}
-                                  </dd>
-                                </div>
-                              );
-                            })}
-                        </dl>
-                      </section>
-                    ))
-                  )}
-                </div>
-              </div>
+              <AssessmentPreviewModalContent
+                previewRow={previewRow}
+                vendorDetail={vendorCotsPreviewDetail}
+                vendorLoading={vendorCotsPreviewLoading}
+              />
             </div>
           </div>
         </div>

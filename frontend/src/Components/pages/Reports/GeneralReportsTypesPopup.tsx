@@ -1,7 +1,7 @@
 import { Ban, FileText, InfoIcon } from "lucide-react";
 import React, { useState } from "react";
 import Button from "../../UI/Button";
-import { REPORT_TYPES } from "./reportTypes";
+import { getReportTypesForPortal, type ReportTypeOption } from "./reportTypes";
 
 export const REPORT_TYPE_ERROR = "Please select any of the report";
 
@@ -11,6 +11,8 @@ interface GeneralReportsTypesPopupProps {
   onClose: () => void;
   onGenerateReport?: (reportType: string) => void;
   alreadyGeneratedError?: string;
+  /** "vendor" | "buyer" – filters report types by portal (vendor-only vs buyer-only). Defaults to "vendor". */
+  portal?: "vendor" | "buyer";
 }
 
 function GeneralReportsTypesPopup({
@@ -19,8 +21,10 @@ function GeneralReportsTypesPopup({
   onClose,
   onGenerateReport,
   alreadyGeneratedError = "",
+  portal = "vendor",
 }: GeneralReportsTypesPopupProps) {
   const [generateError, setGenerateError] = useState("");
+  const reportTypesToShow: ReportTypeOption[] = getReportTypesForPortal(portal);
 
   function handleGenerateReport() {
     const trimmed = (selectedReport ?? "").trim();
@@ -36,7 +40,7 @@ function GeneralReportsTypesPopup({
     <>
       <div className="popup_fields">
         <div className="general_reports_types_popup_options">
-          {REPORT_TYPES.map(({ label, Icon, accent }, index) => (
+          {reportTypesToShow.map(({ label, Icon, accent }, index) => (
             <div
               className="report_type_option_wrap"
               key={index}

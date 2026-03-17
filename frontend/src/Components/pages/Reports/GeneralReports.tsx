@@ -32,6 +32,9 @@ interface AssessmentRow {
   expiryAt?: string | null;
   /** When in the past, linked attestation is expired (exclude from dropdown). */
   attestationExpiryAt?: string | null;
+  /** User who completed this assessment (buyer: b.user_id; vendor: v.user_id). Used to filter "only his assessments" for buyer engineer. */
+  completedByUserId?: string | number | null;
+  organizationName?: string | null;
   [key: string]: unknown;
 }
 
@@ -87,6 +90,37 @@ function isGeneralReportArchived(report: GeneratedReportItem): boolean {
   return isAssessmentExpired || isAttestationExpired;
 }
 
+/** Minimal shape for a complete (customer risk) report – used for buyer engineer dropdown. */
+interface CompleteReportItem {
+  id: string;
+  assessmentId: string;
+  title: string;
+  createdAt: string;
+  expiryAt?: string | null;
+  attestationExpiryAt?: string | null;
+}
+
+function isCompleteReportArchived(report: CompleteReportItem): boolean {
+  const expiryAt = report.expiryAt;
+  const attestationExpiryAt = report.attestationExpiryAt;
+  const assessmentExpired =
+    expiryAt != null &&
+    String(expiryAt).trim() !== "" &&
+    !Number.isNaN(new Date(expiryAt).getTime()) &&
+    new Date(expiryAt).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0);
+  const attestationExpired =
+    attestationExpiryAt != null &&
+    String(attestationExpiryAt).trim() !== "" &&
+    !Number.isNaN(new Date(attestationExpiryAt).getTime()) &&
+    new Date(attestationExpiryAt).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0);
+  return assessmentExpired || attestationExpired;
+}
+
+function getCompleteReportDropdownTitle(fullTitle: string): string {
+  if (!fullTitle || typeof fullTitle !== "string") return fullTitle || "—";
+  return fullTitle.replace(/^Analysis Report:\s*/i, "").trim() || fullTitle;
+}
+
 interface GeneralReportsProps {
   /** Search filter from Reports page (org name, product name, published, archived). */
   searchQuery?: string;
@@ -107,6 +141,8 @@ interface GeneralReportsProps {
 const GeneralReports = ({ searchQuery = "", showArchivedOnly, hideDropdown, archivedPageSize, renderArchivedListOnly, onArchivedReportsChange, canGenerateReports = true }: GeneralReportsProps) => {
   const [loading, setLoading] = useState(true);
   const [assessmentsList, setAssessmentsList] = useState<AssessmentRow[]>([]);
+  /** For buyer engineer: list of complete reports (customerRiskReports) so dropdown shows "completed reports" not assessments. */
+  const [completeReports, setCompleteReports] = useState<CompleteReportItem[]>([]);
   const [selectedAssessmentId, setSelectedAssessmentId] = useState("");
   const [isTypeReportPopupOpen, setIsTypeReportPopupOpen] = useState(false);
   const [selectedReportType, setSelectedReportType] = useState("");
@@ -164,6 +200,18 @@ const GeneralReports = ({ searchQuery = "", showArchivedOnly, hideDropdown, arch
     return `Vendor assessment #${a.assessmentId}`;
   }
 
+  function getBuyerAssessmentLabel(a: AssessmentRow): string {
+    const org = (a.organizationName ?? "").toString().trim();
+    const product = (a.productName ?? "").toString().trim();
+    const vendor = (a.vendorName ?? "").toString().trim();
+    if (org && product) return `${org} - ${product}`;
+    if (org && vendor) return `${org} - ${vendor}`;
+    if (org) return org;
+    if (product) return product;
+    if (vendor) return vendor;
+    return `Buyer assessment #${a.assessmentId}`;
+  }
+
   // The below code is to fetch the assessments
   const fetchAssessments = useCallback(() => {
     const token = sessionStorage.getItem("bearerToken");
@@ -198,6 +246,38 @@ const GeneralReports = ({ searchQuery = "", showArchivedOnly, hideDropdown, arch
     fetchAssessments();
   }, [fetchAssessments]);
 
+  // Buyer engineer: fetch complete reports (customerRiskReports) so dropdown shows "completed reports" not assessments.
+  useEffect(() => {
+    const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim().replace(/_/g, " ");
+    const userRole = (sessionStorage.getItem("userRole") ?? "").toLowerCase().trim();
+    if (systemRole !== "buyer" || userRole !== "engineer") {
+      setCompleteReports([]);
+      return;
+    }
+    const token = sessionStorage.getItem("bearerToken");
+    if (!token) return;
+    fetch(`${BASE_URL}/customerRiskReports`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data?.data?.reports)) {
+          const list = data.data.reports.map((r: { id: string; assessmentId: string; title?: string; createdAt?: string; expiryAt?: string | null; attestationExpiryAt?: string | null }) => ({
+            id: r.id,
+            assessmentId: String(r.assessmentId),
+            title: r.title ?? "",
+            createdAt: r.createdAt ?? "",
+            expiryAt: r.expiryAt ?? null,
+            attestationExpiryAt: r.attestationExpiryAt ?? null,
+          }));
+          setCompleteReports(list);
+        } else {
+          setCompleteReports([]);
+        }
+      })
+      .catch(() => setCompleteReports([]));
+  }, []);
+
   // Load general reports from DB (stored with assessment_id, created_at, created_by)
   useEffect(() => {
     const token = sessionStorage.getItem("bearerToken");
@@ -231,6 +311,10 @@ const GeneralReports = ({ searchQuery = "", showArchivedOnly, hideDropdown, arch
       .catch(() => setGeneratedReports([]));
   }, []);
 
+  const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim().replace(/_/g, " ");
+  const userRole = (sessionStorage.getItem("userRole") ?? "").toLowerCase().trim();
+  const currentUserId = (sessionStorage.getItem("userId") ?? "").toString().trim();
+
   const completedVendorAssessments = assessmentsList.filter(
     (a) =>
       (a.type ?? "").toLowerCase() === "cots_vendor" &&
@@ -239,19 +323,74 @@ const GeneralReports = ({ searchQuery = "", showArchivedOnly, hideDropdown, arch
       !isAttestationExpired(a),
   );
 
-  // Dropdown label: "Org Name - Product Name" (customer org + attestation product name from API)
-  const selectOptions = completedVendorAssessments.map((a) => {
-    const orgName = (a.customerOrganizationName ?? "").toString().trim();
-    const productName = (a.vendorProductName ?? a.productName ?? "").toString().trim();
-    const label =
-      orgName && productName
-        ? `${orgName} - ${productName}`
-        : productName || orgName || getVendorAssessmentLabel(a);
-    return {
-      value: String(a.assessmentId),
-      label,
-    };
-  });
+  const completedBuyerAssessments = assessmentsList.filter(
+    (a) =>
+      (a.type ?? "").toLowerCase() === "cots_buyer" &&
+      (a.status ?? "").toLowerCase() !== "draft" &&
+      !isAssessmentExpired(a) &&
+      !isAttestationExpired(a),
+  );
+
+  // Buyer engineer: show only assessments completed by this user (user-scoped dropdown).
+  const isBuyerEngineer = systemRole === "buyer" && userRole === "engineer";
+  const assessmentsForDropdown =
+    systemRole === "buyer"
+      ? isBuyerEngineer
+        ? completedBuyerAssessments.filter((a) => {
+            const by = a.completedByUserId;
+            if (by == null) return false;
+            return String(by).trim() === currentUserId;
+          })
+        : completedBuyerAssessments
+      : completedVendorAssessments;
+
+  const engineerAssessmentIds = new Set(
+    assessmentsForDropdown.map((a) => String(a.assessmentId))
+  );
+
+  // Buyer engineer: only assessments that have a complete report and were created by this user; dropdown shows that user's assessments (assessment labels).
+  const completedReportsForEngineer = isBuyerEngineer
+    ? completeReports.filter(
+        (r) =>
+          engineerAssessmentIds.has(String(r.assessmentId)) &&
+          !isCompleteReportArchived(r)
+      )
+    : [];
+
+  const engineerAssessmentIdToOption = React.useMemo(() => {
+    if (!isBuyerEngineer || assessmentsForDropdown.length === 0) return new Map<string, { value: string; label: string }>();
+    const map = new Map<string, { value: string; label: string }>();
+    const seenIds = new Set<string>();
+    for (const r of completedReportsForEngineer) {
+      const id = String(r.assessmentId);
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+      const assessment = assessmentsForDropdown.find((a) => String(a.assessmentId) === id);
+      const label = assessment ? getBuyerAssessmentLabel(assessment) : getCompleteReportDropdownTitle(r.title) || `Assessment ${id}`;
+      map.set(id, { value: id, label });
+    }
+    return map;
+  }, [isBuyerEngineer, completedReportsForEngineer, assessmentsForDropdown]);
+
+  // Dropdown: for buyer engineer show that user's assessments (only those with a complete report); otherwise use assessments.
+  const selectOptions = isBuyerEngineer
+    ? Array.from(engineerAssessmentIdToOption.values())
+    : assessmentsForDropdown.map((a) => {
+        if ((a.type ?? "").toLowerCase() === "cots_buyer") {
+          const label = getBuyerAssessmentLabel(a);
+          return { value: String(a.assessmentId), label };
+        }
+        const orgName = (a.customerOrganizationName ?? "").toString().trim();
+        const productName = (a.vendorProductName ?? a.productName ?? "").toString().trim();
+        const label =
+          orgName && productName
+            ? `${orgName} - ${productName}`
+            : productName || orgName || getVendorAssessmentLabel(a);
+        return {
+          value: String(a.assessmentId),
+          label,
+        };
+      });
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -584,7 +723,13 @@ const GeneralReports = ({ searchQuery = "", showArchivedOnly, hideDropdown, arch
               name="vendor_assessment"
               labelName=""
               value={selectedAssessmentId}
-              default_option="Select a vendor assessment"
+              default_option={
+                isBuyerEngineer
+                  ? "Select your assessment"
+                  : systemRole === "buyer"
+                    ? "Select a buyer assessment"
+                    : "Select a vendor assessment"
+              }
               options={selectOptions}
               onChange={handleSelectChange}
             />
@@ -640,6 +785,7 @@ const GeneralReports = ({ searchQuery = "", showArchivedOnly, hideDropdown, arch
           }}
           onGenerateReport={canGenerateReports ? handleGenerateReport : undefined}
           alreadyGeneratedError={alreadyGeneratedError}
+          portal={systemRole === "buyer" ? "buyer" : "vendor"}
         />
       </Modal>
       {briefError && (
@@ -685,27 +831,41 @@ const GeneralReports = ({ searchQuery = "", showArchivedOnly, hideDropdown, arch
           const pageSize = showArchivedOnly && archivedPageSize != null ? archivedPageSize : generalReportsPageSize;
           const start = (generalReportsPage - 1) * pageSize;
           const paginatedList = filteredList.slice(start, start + pageSize);
+          const isEmpty = filteredList.length === 0;
           return (
             <>
-              <GeneralReportsCards
-                reports={paginatedList}
-                onViewReport={handleViewReport}
-                onDownload={showArchivedOnly ? undefined : handleDownloadReport}
-              />
-              <ReportsPagination
-                totalItems={filteredList.length}
-                currentPage={generalReportsPage}
-                pageSize={pageSize}
-                onPageChange={setGeneralReportsPage}
-                onPageSizeChange={
-                  showArchivedOnly && archivedPageSize != null
-                    ? undefined
-                    : (size) => {
-                        setGeneralReportsPageSize(size);
-                        setGeneralReportsPage(1);
-                      }
-                }
-              />
+              {isEmpty && !showArchivedOnly ? (
+                <div className="report_detail_empty" role="status">
+                  <h2 className="report_detail_empty_title">No reports</h2>
+                  {canGenerateReports && (
+                    <p className="report_detail_empty_text">
+                      Choose an assessment above to generate a report.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <GeneralReportsCards
+                    reports={paginatedList}
+                    onViewReport={handleViewReport}
+                    onDownload={showArchivedOnly ? undefined : handleDownloadReport}
+                  />
+                  <ReportsPagination
+                    totalItems={filteredList.length}
+                    currentPage={generalReportsPage}
+                    pageSize={pageSize}
+                    onPageChange={setGeneralReportsPage}
+                    onPageSizeChange={
+                      showArchivedOnly && archivedPageSize != null
+                        ? undefined
+                        : (size) => {
+                            setGeneralReportsPageSize(size);
+                            setGeneralReportsPage(1);
+                          }
+                    }
+                  />
+                </>
+              )}
             </>
           );
         })()}

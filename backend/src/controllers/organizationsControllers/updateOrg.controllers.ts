@@ -4,34 +4,64 @@ import { createOrganization, organizationEditLogs } from "../../schema/schema.js
 import { eq } from "drizzle-orm";
 
 const updateOrganization = async (req: Request, res: Response) => {
-  const data = req.body;
-  const orgId = Number(req.params.id);
+  const data = req.body as {
+    isOrganization?: string;
+    isStatus?: string;
+    isReason?: string;
+    userId?: string | number | null;
+  };
+  const rawId = req.params.id;
+  const orgId = rawId != null && rawId.trim() !== "" ? Number(rawId) : NaN;
 
-  console.log("data =>", data);
-  console.log("userId =>", orgId);
-
-  if (!orgId) {
+  if (!Number.isInteger(orgId) || orgId < 1) {
     return res.status(400).json({
       success: false,
       message: "Invalid organization id",
     });
   }
 
+  const organizationName = typeof data.isOrganization === "string" ? data.isOrganization.trim() : "";
+  const organizationStatus = typeof data.isStatus === "string" ? data.isStatus.trim().toLowerCase() : "";
+  const reason = typeof data.isReason === "string" ? data.isReason.trim() : "";
+
+  if (!organizationName) {
+    return res.status(400).json({
+      success: false,
+      message: "Organization name is required",
+    });
+  }
+  if (organizationStatus !== "active" && organizationStatus !== "inactive") {
+    return res.status(400).json({
+      success: false,
+      message: "Status must be active or inactive",
+    });
+  }
+
+  const userIdFromBody = data.userId != null && String(data.userId).trim() !== "" ? String(data.userId).trim() : null;
+  const userIdFromToken = (req as { user?: { id?: number } }).user?.id;
+  const updatedBy = userIdFromBody ?? (userIdFromToken != null ? String(userIdFromToken) : null);
+  if (!updatedBy) {
+    return res.status(400).json({
+      success: false,
+      message: "User ID is required for audit log. Please log in again.",
+    });
+  }
+
   try {
-    const updateOrg = await db
+    await db
       .update(createOrganization)
       .set({
-        organizationName: data.isOrganization,
-        organizationStatus: data.isStatus,
+        organizationName,
+        organizationStatus: organizationStatus as "active" | "inactive",
       })
       .where(eq(createOrganization.id, orgId));
 
     await db.insert(organizationEditLogs).values({
       organizationId: String(orgId),
-      organizationName: data.isOrganization,
-      organizationStatus: data.isStatus,
-      updated_by: data.userId,
-      reason: data.isReason,
+      organizationName,
+      organizationStatus: organizationStatus as "active" | "inactive",
+      updated_by: updatedBy,
+      reason: reason || "—",
     });
 
     return res.status(200).json({
@@ -39,7 +69,7 @@ const updateOrganization = async (req: Request, res: Response) => {
       message: "Organization updated successfully",
     });
   } catch (error) {
-    console.error(error);
+    console.error("updateOrganization error:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update organization",

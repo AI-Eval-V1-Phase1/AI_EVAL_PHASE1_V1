@@ -172,6 +172,7 @@ export function isPathAllowedForRole(path: string, normalizedRole: SystemRole | 
   if (routesForRole.includes(path)) return true;
 
   // Dynamic segment rules
+  if (path.startsWith("/organizations/") && routesForRole.includes("/organizations")) return true;
   if (path.startsWith("/reports/") && path.length > "/reports/".length) return true;
   if (normalizedRole === "vendor" && path.startsWith("/vendorSelfAttestation/")) return true;
   if (normalizedRole === "vendor" && path.startsWith("/vendorcots/")) return true;
@@ -186,11 +187,21 @@ export function isPathAllowedForRole(path: string, normalizedRole: SystemRole | 
   return false;
 }
 
+/** Buyer Viewer: view-only access limited to Dashboard, AI Vendor Directory, and Reports. */
+const BUYER_VIEWER_ALLOWED_PATHS = ["/", "/dashboard", "/vendor-directory", "/reports"];
+
+function isPathAllowedForBuyerViewer(path: string): boolean {
+  if (BUYER_VIEWER_ALLOWED_PATHS.includes(path)) return true;
+  if (path.startsWith("/reports/") && path.length > "/reports/".length) return true;
+  return false;
+}
+
 /**
  * Returns whether the path is allowed for this system role and user role.
  * - Vendor Engineer and Viewer: keep all previous vendor pages; only the attestation form
  *   (/vendorSelfAttestation) is blocked so they cannot add or edit attestations. On the
  *   attestation details page they get view-only UI (handled in VendorAttestationDetails).
+ * - Buyer Viewer: view-only for Dashboard, AI Vendor Directory, and Reports only (no Assessments, Risk Mapping, User Management).
  * - For paths in PATH_USER_ROLE_RESTRICTIONS (e.g. /user-management), user must be in allowed list.
  */
 export function isPathAllowedForUserRole(
@@ -199,6 +210,11 @@ export function isPathAllowedForUserRole(
   userRole: string
 ): boolean {
   const normalizedUser = normalizeUserRole(userRole);
+
+  // Buyer Viewer: only Dashboard, AI Vendor Directory, and Reports (view-only)
+  if (normalizedSystemRole === "buyer" && normalizedUser === "viewer") {
+    return isPathAllowedForBuyerViewer(path);
+  }
 
   // Vendor Engineer / Viewer: block only the attestation form route; allow all other vendor paths
   if (

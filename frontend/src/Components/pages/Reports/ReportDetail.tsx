@@ -109,9 +109,15 @@ function riskLevelClass(level: string): string {
   return "risk_low"
 }
 
+function isSystemUserRole(): boolean {
+  const role = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim().replace(/_/g, " ")
+  return role === "system admin" || role === "system manager" || role === "system viewer"
+}
+
 function ReportDetail() {
   const { reportId } = useParams<{ reportId: string }>()
   const navigate = useNavigate()
+  const showExportPdf = !isSystemUserRole()
   const [report, setReport] = useState<{
     id: string
     assessmentId?: string
@@ -277,7 +283,7 @@ function ReportDetail() {
         </a>
         <div className="report_assessment_title_row">
           <h1 className="report_assessment_title">{title}</h1>
-          {!isArchived && (
+          {!isArchived && showExportPdf && (
             <button type="button" className="report_detail_export_btn">
               <Download size={18} /> Export PDF
             </button>

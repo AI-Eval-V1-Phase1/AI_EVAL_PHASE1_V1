@@ -1,11 +1,27 @@
-/* Auth pages layout (Login, Forgot Password, Reset Password, Sign Up) */
+/* Auth pages layout (Login, Forgot Password, Reset Password, Sign Up) – single background only */
+body:has(.authPage) {
+  background-color: #f6f8fb;
+}
+
 .authPage {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
   padding: 1rem;
-  background-color: #f6f8fb;
+  background: none; /* use body background only when on auth (sign-in, success, redirect) */
+}
+
+/* Avoid a second background: only .authPage/body have background; inner containers are transparent */
+.authPage .authContent,
+.authPage .loginData,
+.authPage .loginCred,
+.authPage .loginForm {
+  background: none;
+}
+
+.authPage .loginForm {
+  background-color: white;
 }
 
 .authContent {
@@ -59,10 +75,9 @@
 
 .loginForm {
   width: 100%;
-  width: 100%;
-  background: white;
   padding: 1.3em 1.5em 1.5em 1.5em;
   border-radius: 5px;
+  /* Single background: use .authPage only; no card background here */
 }
 
 .emailData,

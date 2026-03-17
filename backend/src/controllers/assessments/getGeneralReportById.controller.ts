@@ -29,15 +29,28 @@ const getGeneralReportById = async (req: Request, res: Response): Promise<void> 
     }
 
     const [user] = await db
-      .select({ organization_id: usersTable.organization_id })
+      .select({
+        organization_id: usersTable.organization_id,
+        user_platform_role: usersTable.user_platform_role,
+      })
       .from(usersTable)
       .where(eq(usersTable.id, Number(userId)))
       .limit(1);
     const orgId = user?.organization_id != null ? String(user.organization_id).trim() : "";
-    if (!orgId) {
+    const platformRole = String((user as { user_platform_role?: string })?.user_platform_role ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/_/g, " ");
+    const isSystemUser =
+      platformRole === "system admin" || platformRole === "system manager" || platformRole === "system viewer";
+    if (!isSystemUser && !orgId) {
       res.status(403).json({ success: false, message: "User has no organization" });
       return;
     }
+
+    const whereClause = isSystemUser
+      ? and(eq(generalReports.id, id))
+      : and(eq(generalReports.id, id), eq(generalReports.organization_id, orgId));
 
     const [row] = await db
       .select({
@@ -61,7 +74,7 @@ const getGeneralReportById = async (req: Request, res: Response): Promise<void> 
           eq(cotsVendorAssessments.vendor_attestation_id, vendorSelfAttestations.vendor_self_attestation_id),
         ),
       )
-      .where(and(eq(generalReports.id, id), eq(generalReports.organization_id, orgId)))
+      .where(whereClause)
       .limit(1);
 
     if (!row) {

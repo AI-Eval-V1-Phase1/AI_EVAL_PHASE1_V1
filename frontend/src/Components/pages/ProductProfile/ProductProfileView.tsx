@@ -538,8 +538,7 @@ function ProductProfileView({
       </section>
       )}
 
-      {(currentProducts.length > 0 || archivedProducts.length > 0) && (
-        <section className="product_profile_products_section">
+      <section className="product_profile_products_section">
           {selectedProductIdForDetail ? (
             <div className="product_profile_detail_on_page">
               <button
@@ -686,6 +685,12 @@ function ProductProfileView({
           >
             {productTab === "current" && (
               <>
+                {filteredCurrentProducts.length === 0 ? (
+                  <p className="product_profile_no_products" role="status">
+                    No products
+                  </p>
+                ) : (
+                <>
                 <div className="product_profile_product_cards">
                   {paginatedCurrentProducts.map((product) => {
               const productReport = asGeneratedReport(product.generated_profile_report);
@@ -749,6 +754,8 @@ function ProductProfileView({
                     setCurrentProductPage(1);
                   }}
                 />
+                </>
+                )}
               </>
             )}
           </div>
@@ -761,6 +768,12 @@ function ProductProfileView({
           >
             {productTab === "archived" && (
               <>
+                {filteredArchivedProducts.length === 0 ? (
+                  <p className="product_profile_no_products" role="status">
+                    No products
+                  </p>
+                ) : (
+                <>
                 <div className="product_profile_product_cards">
                   {paginatedArchivedProducts.map((product) => {
               const productReport = asGeneratedReport(product.generated_profile_report);
@@ -824,13 +837,14 @@ function ProductProfileView({
                     setArchivedProductPage(1);
                   }}
                 />
+                </>
+                )}
               </>
             )}
           </div>
             </>
           )}
         </section>
-      )}
 
     </div>
   );

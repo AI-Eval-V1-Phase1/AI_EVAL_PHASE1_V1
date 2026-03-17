@@ -1,5 +1,5 @@
 import "./App.css";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Login from "./Components/Authentication/Login/Login";
 import ForgotPassword from "./Components/Authentication/ForgotPassword/ForgotPassword";
 import ResetPassword from "./Components/Authentication/ResetPassword/ResetPassword";
@@ -19,6 +19,7 @@ import ReportDetail from "./Components/pages/Reports/ReportDetail";
 import GeneralReportDetail from "./Components/pages/Reports/GeneralReportDetail";
 import MyVendors from "./Components/pages/MyVendors/MyVendors";
 import Organizations from "./Components/pages/Organizations/Organizations";
+import OrganizationAssessmentView from "./Components/pages/Organizations/OrganizationAssessmentView";
 import Toaster from "./Components/Toaster/Toaster";
 import LayoutWithoutNav from "./Components/layout/LayoutWithoutNav";
 import VendorMainForm from "./Components/pages/VendorOnboarding/VendorMainForm";
@@ -26,6 +27,7 @@ import Onboarding from "./Components/pages/OnBoarding/Onboarding";
 import BuyerMainForm from "./Components/pages/BuyerOnboarding/BuyerMainForm";
 import SignUp from "./Components/Authentication/SignUp/SignUp";
 import PageNotFound from "./Components/PageNotFound/PageNotFound";
+import AccessDenied from "./Components/AccessDenied/AccessDenied";
 import { AuthGuard, RBACGuard } from "./guards";
 import OnboardingAccess from "./utils/OnboardingVerify";
 import VendorAttestationsMainForm from "./Components/pages/VendorAttestations/VendorAttestationsMainForm";
@@ -41,6 +43,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/pageNotFound" element={<PageNotFound />} />
           <Route path="/forgotPassword" element={<ForgotPassword />} />
           <Route path="/resetPassword" element={<ResetPassword />} />
           <Route path="/signup/:token" element={<SignUp />} />
@@ -49,11 +52,13 @@ function App() {
             <Route path=":token" element={<VendorAttestationsMainForm />} />
           </Route>
           <Route element={<AuthGuard />}>
+            <Route path="/accessDenied" element={<AccessDenied />} />
             <Route element={<RBACGuard />}>
               <Route element={<MainLayout />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/organizations" element={<Organizations />} />
+                <Route path="/organizations/assessment/:assessmentId" element={<OrganizationAssessmentView />} />
                 <Route path="/assessments" element={<Assessments />} />
                 <Route path="/vendorcots/:assessmentId" element={<VendorCOTSMain />} />
                 <Route path="/vendorcots" element={<VendorCOTSMain />} />
@@ -78,6 +83,7 @@ function App() {
                 />
 
                 <Route path="/user-management" element={<UserManagement />} />
+                <Route path="*" element={<Navigate to="/pageNotFound" replace />} />
               </Route>
             </Route>
           </Route>
@@ -103,7 +109,7 @@ function App() {
             <Route path="/buyerAssessment" element={<BuyerAssessment />} />
           </Route>
           {/* </Route> */}
-          <Route path="*" element={<PageNotFound />} />
+          <Route path="*" element={<Navigate to="/pageNotFound" replace />} />
         </Routes>
       </BrowserRouter>
     </>

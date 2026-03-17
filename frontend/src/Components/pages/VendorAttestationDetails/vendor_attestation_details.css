@@ -11,7 +11,7 @@
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 5px;
-  padding: 1.5rem;
+  padding: 1.5rem 1.5rem 0 1.5rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -107,11 +107,16 @@
 
 .attestation_covers_grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 0 2rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid #00000012;
-  padding: 0 0 0.8em 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+@media (max-width: 900px) {
+  .attestation_covers_grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 600px) {
@@ -277,7 +282,7 @@
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 5px;
-  padding: 1.5rem;
+  /* padding: 1.5rem; */
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -349,7 +354,12 @@
   margin: 0;
 }
 
-/* Trust Profile: coverage list */
+/* Trust Profile card (same UI as Assessments page) – checklist wraps when many items */
+.attestation_page .ai_assessments_section .ai_assessments_checklist {
+  flex-wrap: wrap;
+}
+
+/* Trust Profile: coverage list (legacy) */
 .attestation_covers_heading {
   font-size: 0.9375rem;
   color: #374151;
@@ -942,7 +952,7 @@
   color: var(--main-auth-button-color, #2563eb);
   border-bottom: 2px solid var(--main-auth-button-color, #2563eb);
   border-bottom-color: var(--main-auth-button-color, #2563eb);
-  background: #fff;
+  /* background: #fff; */
   box-shadow: 0 1px 0 0 #fff;
   border-radius: 0 !important;
 }

@@ -1,16 +1,21 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import "../../../styles/page_tabs.css";
 import "./organization.css";
 import "../UserManagement/user_management.css";
 import "../VendorOnboarding/StepVendorOnboardingPreview.css";
 import "../VendorAttestationDetails/vendor_attestation_details.css";
+import "../Assessments/assessments.css";
 import CreateOrganization from "./CreateOrganization";
 import OrganizationDataTable from "./OrganizationDataTable";
 import StepVendorSelfAttestationPrev from "../VendorAttestations/StepVendorSelfAttestationPrev";
+import LoadingMessage from "../../UI/LoadingMessage";
+import { ReportsPagination } from "../Reports/ReportsPagination";
 // import { buildFormStateFromApi } from "../../utils/vendorAttestationState";
 import { buildFormStateFromApi } from "../../../utils/vendorAttestationState";
 import { formatDateDDMMMYYYY } from "../../../utils/formatDate.js";
-import { Landmark, Plus, User, FileCheck, ClipboardList, Eye, CircleX } from "lucide-react";
+import { Landmark, Plus, User, FileCheck, ClipboardList, Eye, CircleX, Search, FileText } from "lucide-react";
 import Button from "../../UI/Button";
 import Breadcrumbs from "../../UI/Breadcrumbs";
 
@@ -91,11 +96,64 @@ function formatOnboardingDate(isoString) {
   return s === "—" ? null : s;
 }
 
+/** Helpers for org assessment cards (same logic as Assessments page). */
+function isOrgAssessmentExpired(row) {
+  const expiryStr = row?.expiryAt ?? row?.attestationExpiryAt;
+  if (expiryStr == null || String(expiryStr).trim() === "") return false;
+  try {
+    const expiry = new Date(expiryStr);
+    if (Number.isNaN(expiry.getTime())) return false;
+    const today = new Date();
+    expiry.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return expiry.getTime() < today.getTime();
+  } catch {
+    return false;
+  }
+}
+
+function getOrgAssessmentStatusLabel(row) {
+  if (!row) return "—";
+  const s = (row.status ?? "").toLowerCase();
+  if (s === "draft") return "Draft";
+  if (s === "expired") return "Expired";
+  if (s === "submitted" || s === "completed") return isOrgAssessmentExpired(row) ? "Expired" : "Completed";
+  return row.status ?? "—";
+}
+
+function getOrgAssessmentDisplayTitle(row) {
+  const isBuyer = (row.type ?? "").toLowerCase().includes("buyer");
+  const org = isBuyer ? (row.organizationName ?? "") : (row.customerOrganizationName ?? "");
+  const product = row.productName ?? "";
+  const o = String(org).trim();
+  const p = String(product).trim();
+  if (o === "" && p === "") return "Draft";
+  return `${o || "—"} - ${p || "—"}`;
+}
+
+function getOrgAssessmentCompletedBy(row) {
+  if (!row) return "";
+  const userName = (row.completedByUserName ?? "").toString().trim();
+  if (userName) return userName;
+  const first = (row.completedByUserFirstName ?? "").toString().trim();
+  const last = (row.completedByUserLastName ?? "").toString().trim();
+  const fullName = [first, last].filter(Boolean).join(" ");
+  if (fullName) return fullName;
+  const email = (row.completedByUserEmail ?? "").toString().trim();
+  if (email) return email;
+  const userId = row.completedByUserId;
+  if (userId != null && userId !== "") return `User #${userId}`;
+  return "";
+}
+
 const TAB_ONBOARDING = "onboarding";
 const TAB_ATTESTATION = "attestation";
+const TAB_ASSESSMENTS = "assessments";
 
 const Organizations = () => {
   document.title = "AI Eval | Organizations";
+  const navigate = useNavigate();
+  const location = useLocation();
   const systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim();
   const isViewOnly =
     systemRole === "system manager" ||
@@ -112,6 +170,15 @@ const Organizations = () => {
   const [attestations, setAttestations] = useState([]);
   const [attestationsLoading, setAttestationsLoading] = useState(false);
   const [attestationsError, setAttestationsError] = useState(null);
+  const [attestationSearch, setAttestationSearch] = useState("");
+  const [orgAttestationCardPage, setOrgAttestationCardPage] = useState(1);
+  const [orgAttestationCardPageSize, setOrgAttestationCardPageSize] = useState(10);
+  const [orgAssessments, setOrgAssessments] = useState([]);
+  const [orgAssessmentsLoading, setOrgAssessmentsLoading] = useState(false);
+  const [orgAssessmentsError, setOrgAssessmentsError] = useState(null);
+  const [orgAssessmentSearch, setOrgAssessmentSearch] = useState("");
+  const [orgAssessmentCardPage, setOrgAssessmentCardPage] = useState(1);
+  const [orgAssessmentCardPageSize, setOrgAssessmentCardPageSize] = useState(10);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewFormState, setPreviewFormState] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -147,6 +214,7 @@ const Organizations = () => {
     setOnboardingError(null);
     setAttestationsError(null);
     setAttestations([]);
+    setOrgAssessments([]);
     setOnboardingLoading(true);
     setIsOnboardingData({ buyer: null, vendor: null });
     const orgId = String(org.id ?? org.organizationId ?? "").trim();
@@ -246,11 +314,75 @@ const Organizations = () => {
   };
 
   const orgIdForFetch = previewOrg ? String(previewOrg.id ?? previewOrg.organizationId ?? "").trim() : "";
+
+  const fetchOrgAssessments = async (orgId) => {
+    const token = sessionStorage.getItem("bearerToken");
+    setOrgAssessmentsError(null);
+    setOrgAssessmentsLoading(true);
+    try {
+      const url = `${BASE_URL.replace(/\/$/, "")}/assessments?organizationId=${encodeURIComponent(orgId)}`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.message || "Failed to fetch assessments");
+      setOrgAssessments(Array.isArray(result?.data?.assessments) ? result.data.assessments : []);
+    } catch (err) {
+      setOrgAssessmentsError(err?.message || "Failed to load assessments");
+      setOrgAssessments([]);
+    } finally {
+      setOrgAssessmentsLoading(false);
+    }
+  };
+
+  const organizationsList = useSelector((state: { organizations?: { data?: Array<{ id?: number | string; organizationId?: string; organizationName?: string; organizationStatus?: string }> } }) => state?.organizations?.data ?? []);
+
+  useEffect(() => {
+    const openOrg = (location.state as { openOrganization?: { id?: string; organizationId?: string; organizationName?: string } } | null)?.openOrganization;
+    if (!openOrg || !(openOrg.id || openOrg.organizationId)) return;
+    const orgId = String(openOrg.id ?? openOrg.organizationId ?? "").trim();
+    const fullOrg = organizationsList.find(
+      (o) => String(o.id ?? o.organizationId ?? "").trim() === orgId
+    );
+    openPreview(fullOrg ?? openOrg);
+    navigate("/organizations", { replace: true, state: {} });
+  }, [location.state, organizationsList]);
+
+  // When organizations list loads after opening from breadcrumb, refresh preview with full org (including organizationStatus)
+  useEffect(() => {
+    if (!previewOrg || organizationsList.length === 0) return;
+    if (previewOrg.organizationStatus != null) return;
+    const orgId = String(previewOrg.id ?? previewOrg.organizationId ?? "").trim();
+    if (!orgId) return;
+    const fullOrg = organizationsList.find(
+      (o) => String(o.id ?? o.organizationId ?? "").trim() === orgId
+    );
+    if (fullOrg) setPreviewOrg(fullOrg);
+  }, [organizationsList, previewOrg?.id, previewOrg?.organizationId, previewOrg?.organizationStatus]);
+
   useEffect(() => {
     if (activeTab === TAB_ATTESTATION && orgIdForFetch) {
       fetchAttestations(orgIdForFetch);
     }
   }, [activeTab, orgIdForFetch]);
+
+  useEffect(() => {
+    if (activeTab === TAB_ASSESSMENTS && orgIdForFetch) {
+      fetchOrgAssessments(orgIdForFetch);
+    }
+  }, [activeTab, orgIdForFetch]);
+
+  useEffect(() => {
+    setOrgAttestationCardPage(1);
+  }, [attestationSearch]);
+
+  useEffect(() => {
+    setOrgAssessmentCardPage(1);
+  }, [orgAssessmentSearch]);
 
   const handleViewAttestation = useCallback(
     async (attestationId) => {
@@ -392,7 +524,7 @@ const Organizations = () => {
                 </section>
               </div>
 
-              {/* Tabs: Onboarding | Attestation */}
+              {/* Tabs: Onboarding | Attestation | Assessments */}
               <div className="org_preview_tabs_wrap">
                 <div className="page_tabs org_preview_tabs">
                   <button
@@ -410,6 +542,14 @@ const Organizations = () => {
                   >
                     <FileCheck size={18} />
                     Attestation
+                  </button>
+                  <button
+                    type="button"
+                    className={`page_tab ${activeTab === TAB_ASSESSMENTS ? "page_tab_active" : ""}`}
+                    onClick={() => setActiveTab(TAB_ASSESSMENTS)}
+                  >
+                    <FileText size={18} />
+                    Assessments
                   </button>
                 </div>
 
@@ -500,64 +640,336 @@ const Organizations = () => {
                 )}
 
                 {activeTab === TAB_ATTESTATION && (
-                  <div className="org_preview_tab_content org_attestations_section">
-                    {attestationsLoading && (
-                      <p className="organizationPreviewEmpty">Loading attestations…</p>
-                    )}
-                    {attestationsError && (
-                      <p className="organizationPreviewError">{attestationsError}</p>
-                    )}
-                    {!attestationsLoading && !attestationsError && attestations.length === 0 && (
-                      <p className="organizationPreviewEmpty">No attestations for this organization.</p>
-                    )}
-                    {!attestationsLoading && !attestationsError && attestations.length > 0 && (
-                      <div className="vendor_attestation_cards org_attestation_cards">
-                        {attestations.map((a) => (
-                          <div key={a.id} className="vendor_attestation_card org_attestation_card">
-                            <h2 className="vendor_attestation_card_title">
-                              {a.product_name?.trim() || "Vendor Self-Attestation"}
-                            </h2>
-                            <p className="org_attestation_card_desc">
-                              {a.company_description?.trim() || "No description."}
-                            </p>
-                            <div className="vendor_attestation_card_meta">
-                              <div className="vendor_attestation_card_meta_row">
-                                <span className="vendor_attestation_card_meta_label">
-                                  {(a.status || "").toUpperCase() === "COMPLETED" ? "Completed by" : "Updated by"}
-                                </span>
-                                <span>{a.completedBy?.name?.trim() || "—"}</span>
-                              </div>
-                              <div className="vendor_attestation_card_meta_row">
-                                <span className="vendor_attestation_card_meta_label">Status</span>
-                                <span
-                                  className={
-                                    (a.status || "").toUpperCase() === "COMPLETED"
-                                      ? "vendor_attestation_status vendor_attestation_status_completed"
-                                      : "vendor_attestation_status vendor_attestation_status_draft"
-                                  }
-                                >
-                                  {a.status || "DRAFT"}
-                                </span>
-                              </div>
-                              <div className="vendor_attestation_card_meta_row">
-                                <span className="vendor_attestation_card_meta_label">{(a.status || "").toUpperCase() === "COMPLETED" ? "Updated" : "Updated at"}</span>
-                                <span>{formatAttestationDate(a.updated_at || a.created_at)}</span>
-                              </div>
-                            </div>
-                            <div className="vendor_attestation_card_actions">
-                              <button
-                                type="button"
-                                className="vendor_attestation_card_btn vendor_attestation_card_btn_secondary"
-                                onClick={() => handleViewAttestation(a.id)}
-                              >
-                                <Eye size={14} />
-                                View
-                              </button>
-                            </div>
+                  <div className="org_preview_tab_content">
+                    <div className="ai_assessments_section">
+                      <div className="assessment_list_header_row">
+                        <p className="your_assessments_title">YOUR ATTESTATIONS</p>
+                        <div className="attestation_tabs_and_search_row">
+                          <div className="assessment_search_wrap">
+                            <Search
+                              size={18}
+                              className="assessment_search_icon"
+                              aria-hidden
+                            />
+                            <input
+                              type="search"
+                              placeholder="Search attestations…"
+                              value={attestationSearch}
+                              onChange={(e) => setAttestationSearch(e.target.value)}
+                              className="assessment_search_input"
+                              aria-label="Search attestations by name"
+                            />
                           </div>
-                        ))}
+                        </div>
                       </div>
-                    )}
+                      {attestationsLoading && (
+                        <LoadingMessage message="Loading attestations…" />
+                      )}
+                      {attestationsError && (
+                        <div className="vendor_attestation_error">{attestationsError}</div>
+                      )}
+                      {!attestationsLoading && !attestationsError && attestations.length === 0 && (
+                        <p className="organizationPreviewEmpty">No attestations for this organization.</p>
+                      )}
+                      {!attestationsLoading && !attestationsError && attestations.length > 0 && (() => {
+                        const q = (attestationSearch || "").trim().toLowerCase();
+                        const filtered = q === ""
+                          ? attestations
+                          : attestations.filter((a) =>
+                              (a.product_name || "").toLowerCase().includes(q)
+                            );
+                        if (filtered.length === 0) {
+                          return (
+                            <p className="assessment_search_no_results">
+                              No attestations match your search.
+                            </p>
+                          );
+                        }
+                        const start = (orgAttestationCardPage - 1) * orgAttestationCardPageSize;
+                        const paginated = filtered.slice(start, start + orgAttestationCardPageSize);
+                        return (
+                          <>
+                            <div className="attestation_list_rows assessment_list_rows">
+                              <div className="general_rpr_cards_sec vendor_directory_grid">
+                                {paginated.map((a) => {
+                                const statusUpper = (a.status || "").toUpperCase();
+                                const isCompleted = statusUpper === "COMPLETED";
+                                const rawExpiry = a.expiry_at ?? a.expiryAt;
+                                const expiryStr = rawExpiry != null ? (typeof rawExpiry === "string" ? rawExpiry : rawExpiry?.toISOString?.()) : "";
+                                const isExpiredByDate = (() => {
+                                  if (!expiryStr || expiryStr.trim() === "") return false;
+                                  try {
+                                    const expiry = new Date(expiryStr);
+                                    if (Number.isNaN(expiry.getTime())) return false;
+                                    const today = new Date();
+                                    expiry.setHours(0, 0, 0, 0);
+                                    today.setHours(0, 0, 0, 0);
+                                    return expiry.getTime() < today.getTime();
+                                  } catch {
+                                    return false;
+                                  }
+                                })();
+                                const isExpired = statusUpper === "EXPIRED" || (isCompleted && isExpiredByDate);
+                                const statusDisplay = isExpired ? "EXPIRED" : isCompleted ? "COMPLETED" : "Draft";
+                                const statusHeaderClass = isExpired
+                                  ? "assessment_card_status_expired"
+                                  : isCompleted
+                                    ? "assessment_card_status_completed"
+                                    : "assessment_card_status_draft";
+                                const title = a.product_name?.trim() || "Vendor Self-Attestation";
+                                const completedBy = a.completedBy?.name?.trim() || a.completedBy?.email?.trim() || "—";
+                                return (
+                                  <article
+                                    key={a.id}
+                                    className="vendor_directory_card general_rpr_card"
+                                    data-accent="sales"
+                                  >
+                                    <div className="general_report_card_header">
+                                      <div className="assessment_card_header_left">
+                                        <p
+                                          className={`vendor_directory_card_products general_rpr_card_report_type ${statusHeaderClass}`}
+                                        >
+                                          <span className="general_rpr_card_report_type_icon" aria-hidden>
+                                            <FileText size={16} />
+                                          </span>
+                                          <span>
+                                            <span>{statusDisplay}</span>
+                                            {isCompleted && !isExpired && expiryStr && (
+                                              <span className="assessment_card_header_expiry">
+                                                {" "}Expires on: {formatDateDDMMMYYYY(expiryStr)}
+                                              </span>
+                                            )}
+                                          </span>
+                                        </p>
+                                      </div>
+                                      <span className="general_rpr_card_download_wrap">
+                                        <button
+                                          type="button"
+                                          className="general_rpr_card_download_btn assessment_card_header_action_btn"
+                                          onClick={() => handleViewAttestation(a.id)}
+                                          aria-label={`View attestation: ${title}`}
+                                          title="View"
+                                        >
+                                          <Eye size={14} aria-hidden />
+                                        </button>
+                                      </span>
+                                    </div>
+                                    <div className="general_rpr_title">
+                                      <div className="vendor_directory_card_header_text">
+                                        <span className="general_rpr_card_title_wrap">
+                                          <h2 className="vendor_directory_card_name general_rpr_card_title_clamp">
+                                            {title}
+                                          </h2>
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="general_rpr_card_footer">
+                                      <div className="general_rpr_card_dates">
+                                        <div className="general_rpr_card_date_row">
+                                          <span className="general_rpr_card_date_label_expiry">
+                                            {isCompleted || isExpired ? "Completed by:" : "Updated by:"}
+                                          </span>
+                                          <span className="general_rpr_card_date_value_expiry">
+                                            {completedBy}
+                                          </span>
+                                        </div>
+                                        <div className="general_rpr_card_date_row">
+                                          <span className="general_rpr_card_date_label_expiry">
+                                            {isCompleted || isExpired ? "Created on:" : "Drafted on:"}
+                                          </span>
+                                          <span className="general_rpr_card_date_value_expiry">
+                                            {formatAttestationDate(isCompleted || isExpired ? a.created_at : (a.updated_at || a.created_at))}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </article>
+                                );
+                                })}
+                              </div>
+                            </div>
+                            <ReportsPagination
+                              totalItems={filtered.length}
+                              currentPage={orgAttestationCardPage}
+                              pageSize={orgAttestationCardPageSize}
+                              onPageChange={setOrgAttestationCardPage}
+                              onPageSizeChange={(size) => {
+                                setOrgAttestationCardPageSize(size);
+                                setOrgAttestationCardPage(1);
+                              }}
+                            />
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === TAB_ASSESSMENTS && (
+                  <div className="org_preview_tab_content">
+                    <div className="ai_assessments_section">
+                      <div className="assessment_list_header_row">
+                        <p className="your_assessments_title">ASSESSMENTS</p>
+                        <div className="attestation_tabs_and_search_row">
+                          <div className="assessment_search_wrap">
+                            <Search size={18} className="assessment_search_icon" aria-hidden />
+                            <input
+                              type="search"
+                              placeholder="Search assessments…"
+                              value={orgAssessmentSearch}
+                              onChange={(e) => setOrgAssessmentSearch(e.target.value)}
+                              className="assessment_search_input"
+                              aria-label="Search assessments by name"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      {orgAssessmentsLoading && (
+                        <LoadingMessage message="Loading assessments…" />
+                      )}
+                      {orgAssessmentsError && (
+                        <div className="vendor_attestation_error">{orgAssessmentsError}</div>
+                      )}
+                      {!orgAssessmentsLoading && !orgAssessmentsError && orgAssessments.length === 0 && (
+                        <p className="organizationPreviewEmpty">No assessments for this organization.</p>
+                      )}
+                      {!orgAssessmentsLoading && !orgAssessmentsError && orgAssessments.length > 0 && (() => {
+                        const q = (orgAssessmentSearch || "").trim().toLowerCase();
+                        const filtered = q === ""
+                          ? orgAssessments
+                          : orgAssessments.filter((row) =>
+                              getOrgAssessmentDisplayTitle(row).toLowerCase().includes(q)
+                            );
+                        if (filtered.length === 0) {
+                          return (
+                            <p className="assessment_search_no_results">
+                              No assessments match your search.
+                            </p>
+                          );
+                        }
+                        const start = (orgAssessmentCardPage - 1) * orgAssessmentCardPageSize;
+                        const paginated = filtered.slice(start, start + orgAssessmentCardPageSize);
+                        const isBuyerRow = (r) => (r.type ?? "").toLowerCase().includes("buyer");
+                        return (
+                          <>
+                            <div className="attestation_list_rows assessment_list_rows">
+                              <div className="general_rpr_cards_sec vendor_directory_grid">
+                                {paginated.map((row) => {
+                                  const statusLabel = getOrgAssessmentStatusLabel(row);
+                                  const isDraft = (row.status ?? "").toLowerCase() === "draft";
+                                  const archived = statusLabel === "Expired";
+                                  const statusDisplay = (statusLabel || "").toUpperCase();
+                                  const statusHeaderClass =
+                                    statusLabel === "Completed"
+                                      ? "assessment_card_status_completed"
+                                      : statusLabel === "Expired"
+                                        ? "assessment_card_status_expired"
+                                        : "assessment_card_status_draft";
+                                  const title = getOrgAssessmentDisplayTitle(row);
+                                  const completedBy = getOrgAssessmentCompletedBy(row) || "—";
+                                  return (
+                                    <article
+                                      key={row.assessmentId}
+                                      className={`vendor_directory_card general_rpr_card${archived ? " general_rpr_card_archived" : ""}`}
+                                      data-accent="risk"
+                                    >
+                                      <div className="general_report_card_header">
+                                        <div className="assessment_card_header_left">
+                                          <p
+                                            className={`vendor_directory_card_products general_rpr_card_report_type ${statusHeaderClass}`}
+                                          >
+                                            <span className="general_rpr_card_report_type_icon" aria-hidden>
+                                              <FileText size={16} />
+                                            </span>
+                                            <span>
+                                              <span>{statusDisplay}</span>
+                                              {statusLabel === "Completed" && row.expiryAt && (
+                                                <span className="assessment_card_header_expiry">
+                                                  Expires on: {formatDateDDMMMYYYY(row.expiryAt)}
+                                                </span>
+                                              )}
+                                            </span>
+                                          </p>
+                                        </div>
+                                        <span className="general_rpr_card_download_wrap">
+                                          <button
+                                            type="button"
+                                            className="general_rpr_card_download_btn assessment_card_header_action_btn"
+                                            onClick={() =>
+                                              navigate(
+                                                `/organizations/assessment/${row.assessmentId}?type=${encodeURIComponent(row.type ?? "")}`,
+                                                {
+                                                  state: {
+                                                    organizationName: previewOrg?.organizationName ?? "Organization",
+                                                    organizationId: orgIdForFetch,
+                                                    type: row.type,
+                                                    row,
+                                                  },
+                                                }
+                                              )
+                                            }
+                                            aria-label={`View assessment: ${title}`}
+                                            title="View"
+                                          >
+                                            <Eye size={14} aria-hidden />
+                                          </button>
+                                        </span>
+                                      </div>
+                                      <div className="general_rpr_title">
+                                        <div className="vendor_directory_card_header_text">
+                                          <span className="general_rpr_card_title_wrap">
+                                            <h2 className="vendor_directory_card_name general_rpr_card_title_clamp">
+                                              {title}
+                                            </h2>
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="general_rpr_card_footer">
+                                        <div className="general_rpr_card_dates">
+                                          <div className="general_rpr_card_date_row">
+                                            <span className="general_rpr_card_date_label_expiry">
+                                              {isDraft ? "Drafted by:" : "Completed by:"}
+                                            </span>
+                                            <span className="general_rpr_card_date_value_expiry">
+                                              {completedBy}
+                                            </span>
+                                          </div>
+                                          {isDraft ? (
+                                            <div className="general_rpr_card_date_row">
+                                              <span className="general_rpr_card_date_label_expiry">Drafted on:</span>
+                                              <span className="general_rpr_card_date_value_expiry">
+                                                {formatDateDDMMMYYYY(row.updatedAt ?? row.createdAt)}
+                                              </span>
+                                            </div>
+                                          ) : (
+                                            <div className="general_rpr_card_date_row">
+                                              <span className="general_rpr_card_date_label_expiry">Created on:</span>
+                                              <span className="general_rpr_card_date_value_expiry">
+                                                {formatDateDDMMMYYYY(row.createdAt)}
+                                              </span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </article>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <ReportsPagination
+                              totalItems={filtered.length}
+                              currentPage={orgAssessmentCardPage}
+                              pageSize={orgAssessmentCardPageSize}
+                              onPageChange={setOrgAssessmentCardPage}
+                              onPageSizeChange={(size) => {
+                                setOrgAssessmentCardPageSize(size);
+                                setOrgAssessmentCardPage(1);
+                              }}
+                            />
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
                 )}
               </div>
@@ -600,11 +1012,15 @@ const Organizations = () => {
                     />
                   )}
                 </div>
+                
               </div>
             </div>
           )}
+          
         </div>
+        
       )}
+
     </>
   );
 };

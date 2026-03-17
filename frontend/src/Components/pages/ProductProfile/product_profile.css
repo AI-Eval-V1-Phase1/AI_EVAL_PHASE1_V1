@@ -436,6 +436,17 @@
   text-transform: uppercase;
 }
 
+.product_profile_no_products {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  color: #6b7280;
+  font-size: 0.9375rem;
+  text-align: center;
+  background: #f9fafb;
+  border-radius: 5px;
+  border: 1px dashed #e5e7eb;
+}
+
 .product_profile_product_cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

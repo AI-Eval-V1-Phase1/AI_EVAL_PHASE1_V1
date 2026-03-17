@@ -57,6 +57,7 @@ const listOrgAttestations = async (req: Request, res: Response) => {
         company_description: vendorSelfAttestations.company_description,
         created_at: vendorSelfAttestations.created_at,
         updated_at: vendorSelfAttestations.updated_at,
+        expiry_at: vendorSelfAttestations.expiry_at,
         user_name: usersTable.user_name,
         user_first_name: usersTable.user_first_name,
         user_last_name: usersTable.user_last_name,
@@ -86,6 +87,7 @@ const listOrgAttestations = async (req: Request, res: Response) => {
           company_description: a.company_description ?? "",
           created_at: a.created_at,
           updated_at: a.updated_at,
+          expiry_at: a.expiry_at ?? null,
           completedBy: { name: completedByName },
         };
       }),

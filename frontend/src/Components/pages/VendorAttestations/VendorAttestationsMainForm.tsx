@@ -1190,7 +1190,7 @@ const VendorAttestationsMainForm = () => {
   };
 
   if (accessDenied) {
-    return <Navigate to="/pageNotFound" replace />;
+    return <Navigate to="/accessDenied" replace />;
   }
 
   return (

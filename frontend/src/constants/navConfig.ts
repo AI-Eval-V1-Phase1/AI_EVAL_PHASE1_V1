@@ -69,7 +69,7 @@ export const NAVIGATION = {
       label: "AI Vendor Directory",
       icon: Building2,
       path: "/vendor-directory",
-      accessRoles: ["admin"],
+      accessRoles: ["admin", "manager", "lead", "engineer", "viewer"],
       systemRoles: ["system admin", "system manager", "system viewer", "ai directory curator", "buyer"],
     },
     {
@@ -83,7 +83,7 @@ export const NAVIGATION = {
       label: "Risk Mapping",
       icon: Users,
       path: "/my-vendor",
-      accessRoles: ["admin"],
+      accessRoles: ["admin", "manager", "lead", "engineer"],
       systemRoles: ["system admin", "system manager", "system viewer", "buyer"],
     },
     // {

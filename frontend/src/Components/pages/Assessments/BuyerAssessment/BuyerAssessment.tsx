@@ -1,6 +1,7 @@
 import "../../VendorOnboarding/vendor_onboarding.css";
 import "../../BuyerOnboarding/buyer_onboarding.css";
 import "../../VendorAttestations/vendor_attestation_preview.css";
+import "../../UserManagement/user_management.css";
 import "../../../../styles/card.css";
 import CardContainerOnBoarding from "../../../UI/CardContainerOnBoarding";
 import CardOnBoarding from "../../../UI/CardOnBoarding";
@@ -24,6 +25,7 @@ import {
   Send,
   Save,
   Loader2,
+  FileCheck,
 } from "lucide-react";
 import CardConfirmation from "../../../UI/CardConfirmation";
 import UseCase from "./UseCase";
@@ -198,13 +200,6 @@ const BuyerAssessment = () => {
   useEffect(() => {
     if (assessmentIdFromUrl) setAssessmentId(assessmentIdFromUrl);
   }, [assessmentIdFromUrl]);
-
-  // When assessment completes: show "You're all set!" then navigate to assessments page after 2 seconds
-  useEffect(() => {
-    if (!allStepsFilled) return;
-    const t = setTimeout(() => navigate("/assessments"), 2000);
-    return () => clearTimeout(t);
-  }, [allStepsFilled, navigate]);
 
   // Load draft by id when URL has /buyerAssessment/:id
   useEffect(() => {
@@ -509,9 +504,7 @@ const BuyerAssessment = () => {
       if (!response.ok) {
         throw new Error(result.message || "Failed to submit assessment");
       }
-      setAllStepsFilled(true);
-      toast.success("Assessment submitted successfully.");
-      setTimeout(() => navigate("/reports"), 2500);
+      navigate("/reports", { replace: true });
     } catch (err) {
       setSubmitError(err.message || "Failed to submit assessment");
     } finally {
@@ -676,11 +669,24 @@ const BuyerAssessment = () => {
   );
 
   if (assessmentIdFromUrl && accessDenied) {
-    return <Navigate to="/pageNotFound" replace />;
+    return <Navigate to="/accessDenied" replace />;
   }
 
   return (
-    <div className="form_card_centered">
+    <div className="sec_user_page org_settings_page">
+      <div className="org_settings_header page_header_align">
+        <div className="org_settings_headers page_header_row">
+          <span className="icon_size_header" aria-hidden>
+            <FileCheck size={24} className="header_icon_svg" />
+          </span>
+          <div className="page_header_title_block">
+            <h1 className="org_settings_title page_header_title">Buyer COTS Assessment</h1>
+            <p className="org_settings_subtitle page_header_subtitle">
+              Complete and submit your buyer assessment.
+            </p>
+          </div>
+        </div>
+      </div>
       {submitting && (
         <div
           className="vendor_attestation_submit_overlay"
@@ -695,6 +701,7 @@ const BuyerAssessment = () => {
           </div>
         </div>
       )}
+      <div className="form_card_centered">
       <CardContainerOnBoarding>
         <button
           type="button"
@@ -806,6 +813,7 @@ const BuyerAssessment = () => {
           )}
         </form>
       </CardContainerOnBoarding>
+      </div>
     </div>
   );
 };

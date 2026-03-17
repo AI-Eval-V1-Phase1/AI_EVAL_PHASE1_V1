@@ -250,7 +250,10 @@ export function SalesEnablement() {
   };
 
   const fetchSalesEnablement = useCallback(
-    (assessmentId: string): Promise<{ swot: SwotData; battleCard: BattleCardData } | null> => {
+    (
+      assessmentId: string,
+      type: "swot" | "battlecard"
+    ): Promise<{ swot?: SwotData; battleCard?: BattleCardData } | null> => {
       const token = sessionStorage.getItem("bearerToken");
       if (!token) return Promise.resolve(null);
       return fetch(`${BASE_URL}/salesEnablement`, {
@@ -259,14 +262,14 @@ export function SalesEnablement() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ assessmentId }),
+        body: JSON.stringify({ assessmentId, type }),
       })
         .then((res) => res.json())
         .then((result) => {
           if (result?.success && result?.data) {
             return {
-              swot: result.data.swot ?? { strengths: [], weaknesses: [], opportunities: [], threats: [] },
-              battleCard: result.data.battleCard ?? { title: "Battle Card" },
+              swot: result.data.swot,
+              battleCard: result.data.battleCard,
             };
           }
           throw new Error(result?.message ?? "Failed to generate");
@@ -334,18 +337,17 @@ export function SalesEnablement() {
         setIsGenerating(false);
         return;
       }
-      fetchSalesEnablement(selectedAssessmentId)
+      fetchSalesEnablement(selectedAssessmentId, "swot")
         .then((data) => {
-          if (!data) return;
+          if (!data?.swot) return;
           setGeneratedSwot(data.swot);
-          setGeneratedBattleCard(data.battleCard);
           setGeneratedForAssessmentId(selectedAssessmentId);
           setMessages((prev) => [
             ...prev,
             {
               role: "agent" as const,
               text: "Here's your sales positioning SWOT analysis - use these insights when engaging with prospects:",
-              swot: data.swot,
+              swot: data.swot!,
             },
           ]);
         })
@@ -387,10 +389,9 @@ export function SalesEnablement() {
         setIsGenerating(false);
         return;
       }
-      fetchSalesEnablement(selectedAssessmentId)
+      fetchSalesEnablement(selectedAssessmentId, "battlecard")
         .then((data) => {
-          if (!data) return;
-          setGeneratedSwot(data.swot);
+          if (!data?.battleCard) return;
           setGeneratedBattleCard(data.battleCard);
           setGeneratedForAssessmentId(selectedAssessmentId);
           setMessages((prev) => [
@@ -398,7 +399,7 @@ export function SalesEnablement() {
             {
               role: "agent" as const,
               text: "Here's your battle card for sales conversations:",
-              battleCard: data.battleCard,
+              battleCard: data.battleCard!,
             },
           ]);
         })
@@ -466,11 +467,10 @@ export function SalesEnablement() {
       return;
     }
     setIsGenerating(true);
-    fetchSalesEnablement(selectedAssessmentId)
+    fetchSalesEnablement(selectedAssessmentId, "swot")
       .then((data) => {
-        if (!data) return;
+        if (!data?.swot) return;
         setGeneratedSwot(data.swot);
-        setGeneratedBattleCard(data.battleCard);
         setGeneratedForAssessmentId(selectedAssessmentId);
         setMessages((prev) => [
           ...prev,
@@ -508,10 +508,9 @@ export function SalesEnablement() {
       return;
     }
     setIsGenerating(true);
-    fetchSalesEnablement(selectedAssessmentId)
+    fetchSalesEnablement(selectedAssessmentId, "battlecard")
       .then((data) => {
-        if (!data) return;
-        setGeneratedSwot(data.swot);
+        if (!data?.battleCard) return;
         setGeneratedBattleCard(data.battleCard);
         setGeneratedForAssessmentId(selectedAssessmentId);
         setMessages((prev) => [

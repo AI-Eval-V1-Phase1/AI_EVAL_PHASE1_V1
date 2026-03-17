@@ -43,7 +43,16 @@ const listCustomerRiskReports = async (req: Request, res: Response): Promise<voi
         typeof req.query?.organizationId === "string" ? req.query.organizationId.trim() || "" : "";
       if (fromQuery) orgId = fromQuery;
     }
-    if (!orgId) {
+    const assessmentIdFromQuery =
+      typeof req.query?.assessmentId === "string" ? req.query.assessmentId.trim() || null : null;
+
+    const whereClause = assessmentIdFromQuery
+      ? eq(customerRiskAssessmentReports.assessment_id, assessmentIdFromQuery)
+      : orgId
+        ? eq(customerRiskAssessmentReports.organization_id, orgId)
+        : null;
+
+    if (!whereClause) {
       res.status(200).json({ success: true, data: { reports: [] } });
       return;
     }
@@ -68,7 +77,7 @@ const listCustomerRiskReports = async (req: Request, res: Response): Promise<voi
           eq(cotsVendorAssessments.vendor_attestation_id, vendorSelfAttestations.vendor_self_attestation_id),
         ),
       )
-      .where(eq(customerRiskAssessmentReports.organization_id, orgId))
+      .where(whereClause)
       .orderBy(desc(customerRiskAssessmentReports.created_at))
       .limit(100);
 
