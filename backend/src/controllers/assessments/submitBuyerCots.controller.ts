@@ -4,6 +4,76 @@ import { usersTable } from "../../schema/schema.js";
 import { assessments } from "../../schema/assessments/assessments.js";
 import { cotsBuyerAssessments } from "../../schema/assessments/cotsBuyerAssessments.js";
 import { eq, and } from "drizzle-orm";
+import { findAttestationForBuyerVendorProduct } from "../../services/findAttestationForBuyerVendorProduct.js";
+import { generateBuyerVendorRiskReport } from "../agents/buyerVendorRiskReportAgent.js";
+
+function buildBuyerContextForReport(body: Record<string, unknown>): Record<string, unknown> {
+  const g = (k: string) => body[k];
+  return {
+    organizationName: g("organizationName"),
+    industrySector: g("industrySector"),
+    employeeCount: g("employeeCount"),
+    operatingRegions: g("operatingRegions"),
+    businessPainPoint: g("businessPainPoint"),
+    expectedOutcomes: g("expectedOutcomes"),
+    owningDepartment: g("owningDepartment"),
+    budgetRange: g("budgetRange"),
+    targetTimeline: g("targetTimeline"),
+    criticality: g("criticality"),
+    vendorName: g("vendorName"),
+    productName: g("productName"),
+    requirementGaps: g("requirementGaps"),
+    integrationSystems: g("integrationSystems"),
+    integrationSystemsOther: g("integrationSystemsOther"),
+    techStack: g("techStack"),
+    digitalMaturityLevel: g("digitalMaturityLevel"),
+    dataGovernanceMaturity: g("dataGovernanceMaturity"),
+    aiGovernanceBoard: g("aiGovernanceBoard"),
+    aiEthicsPolicy: g("aiEthicsPolicy"),
+    implementationTeamComposition: g("implementationTeamComposition"),
+    dataSensitivity: g("dataSensitivity"),
+    regulatoryRequirements: g("regulatoryRequirements"),
+    riskAppetite: g("riskAppetite"),
+    decisionStakes: g("decisionStakes"),
+    impactedStakeholders: g("impactedStakeholders"),
+    vendorValidationApproach: g("vendorValidationApproach"),
+    vendorSecurityPosture: g("vendorSecurityPosture"),
+    vendorCertifications: g("vendorCertifications"),
+    pilotRolloutPlan: g("pilotRolloutPlan"),
+    rollbackCapability: g("rollbackCapability"),
+    changeManagementPlan: g("changeManagementPlan"),
+    identifiedRisks: g("identifiedRisks"),
+    riskDomainScores: g("riskDomainScores"),
+    riskMitigation: g("riskMitigation"),
+    riskMitigationMappingIds: g("riskMitigationMappingIds"),
+  };
+}
+
+async function persistVendorRiskReport(
+  assessmentId: string,
+  body: Record<string, unknown>,
+  vendorName: string,
+  productName: string,
+): Promise<void> {
+  try {
+    const attestation = await findAttestationForBuyerVendorProduct(vendorName, productName);
+    const report = await generateBuyerVendorRiskReport(
+      buildBuyerContextForReport(body),
+      attestation,
+      vendorName || "Vendor",
+      productName || "Product",
+    );
+    await db
+      .update(cotsBuyerAssessments)
+      .set({
+        vendor_risk_assessment_report: report as unknown as Record<string, unknown>,
+        updated_at: new Date(),
+      })
+      .where(eq(cotsBuyerAssessments.assessment_id, assessmentId));
+  } catch (e) {
+    console.error("persistVendorRiskReport:", e);
+  }
+}
 
 /** Map API (camelCase) to DB columns (Excel buyer_cots sheet names). */
 function buildPayloadCots(body: Record<string, unknown>) {
@@ -111,9 +181,16 @@ const submitBuyerCotsAssessment = async (req: Request, res: Response) => {
           .set({ ...payloadCots, updated_at: new Date() })
           .where(eq(cotsBuyerAssessments.assessment_id, assessmentId));
       });
+      await persistVendorRiskReport(
+        assessmentId,
+        body as Record<string, unknown>,
+        String(payloadCots.vendor_name ?? ""),
+        String(payloadCots.specific_product ?? ""),
+      );
       return res.status(200).json({
         message: "Buyer COTS assessment submitted successfully",
         assessmentId,
+        vendorRiskReportAvailable: true,
       });
     }
 
@@ -130,9 +207,16 @@ const submitBuyerCotsAssessment = async (req: Request, res: Response) => {
       await tx.insert(cotsBuyerAssessments).values({ assessment_id: a.id, ...payloadCots });
       return [a];
     });
+    await persistVendorRiskReport(
+      assessment.id,
+      body as Record<string, unknown>,
+      String(payloadCots.vendor_name ?? ""),
+      String(payloadCots.specific_product ?? ""),
+    );
     return res.status(201).json({
       message: "Buyer COTS assessment submitted successfully",
       assessmentId: assessment.id,
+      vendorRiskReportAvailable: true,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

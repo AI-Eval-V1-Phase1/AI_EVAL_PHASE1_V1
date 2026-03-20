@@ -9,6 +9,7 @@ const client = new BedrockRuntimeClient({ region: REGION });
 
 import {
   getTop5RisksWithMitigations,
+  formatTop5RisksForPrompt,
   type Top5RisksWithMitigations,
 } from "../../services/getTop5RisksFromAssessmentContext.js";
 
@@ -130,23 +131,6 @@ After the sections above, output a single JSON object in a fenced code block sta
 Use only the data provided; if a field is empty or "Not specified", say so or use empty value. Be concise.
 `;
 
-function buildDbRisksSection(top5: Top5RisksWithMitigations | null): string {
-  if (!top5 || top5.top5Risks.length === 0) return "";
-  const lines: string[] = ["--- Database-matched top risks and mitigations ---"];
-  for (const r of top5.top5Risks) {
-    lines.push(
-      `Risk [${r.risk_id}]: ${r.risk_title ?? "N/A"} | Domain: ${r.domains ?? "N/A"} | Intent: ${r.intent ?? "N/A"} | Timing: ${r.timing ?? "N/A"} | Primary risk: ${r.primary_risk ?? "N/A"}`
-    );
-    if (r.description) lines.push(`  Description: ${r.description.slice(0, 300)}${r.description.length > 300 ? "..." : ""}`);
-    const mitigations = r.risk_id ? top5.mitigationsByRiskId[r.risk_id] ?? [] : [];
-    for (const m of mitigations) {
-      lines.push(`  Mitigation: ${m.mitigation_action_name} (${m.mitigation_category})${m.mitigation_definition ? ` – ${m.mitigation_definition.slice(0, 150)}` : ""}`);
-    }
-  }
-  lines.push("--- End of database-matched risks ---");
-  return lines.join("\n");
-}
-
 function buildAssessmentContext(payload: Record<string, unknown>, top5: Top5RisksWithMitigations | null): string {
   const toStr = (v: unknown): string => {
     if (v == null) return "Not specified";
@@ -180,7 +164,7 @@ function buildAssessmentContext(payload: Record<string, unknown>, top5: Top5Risk
     `Risk mitigation: ${toStr(payload.risk_mitigation ?? payload.riskMitigation)}`,
     "--- End of data ---",
   ];
-  const dbSection = buildDbRisksSection(top5);
+  const dbSection = formatTop5RisksForPrompt(top5);
   if (dbSection) lines.push("", dbSection);
   return lines.join("\n");
 }

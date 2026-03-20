@@ -504,7 +504,20 @@ const BuyerAssessment = () => {
       if (!response.ok) {
         throw new Error(result.message || "Failed to submit assessment");
       }
-      navigate("/reports", { replace: true });
+      const submittedId =
+        result.assessmentId != null
+          ? String(result.assessmentId)
+          : assessmentId != null
+            ? String(assessmentId)
+            : "";
+      if (submittedId) {
+        navigate(
+          `/buyer-vendor-risk-report/${encodeURIComponent(submittedId)}`,
+          { replace: true },
+        );
+      } else {
+        navigate("/reports", { replace: true });
+      }
     } catch (err) {
       setSubmitError(err.message || "Failed to submit assessment");
     } finally {

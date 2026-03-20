@@ -91,17 +91,26 @@ const listGeneralReports = async (req: Request, res: Response): Promise<void> =>
         seen.add(id);
         return true;
       })
-      .map((r) => ({
+      .map((r) => {
+        const contentRaw = r.content;
+        const briefContent =
+          contentRaw == null
+            ? undefined
+            : typeof contentRaw === "string"
+              ? contentRaw
+              : JSON.stringify(contentRaw);
+        return {
         id: String(r.id),
         assessmentId: String(r.assessment_id),
         assessmentLabel: r.assessment_label ?? undefined,
         reportType: r.report_type,
         generatedAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
-        briefContent: r.content ?? undefined,
+        briefContent,
         createdBy: r.created_by,
         expiryAt: r.expiryAt instanceof Date ? r.expiryAt.toISOString() : (r.expiryAt != null ? String(r.expiryAt) : null),
         attestationExpiryAt: r.attestationExpiryAt instanceof Date ? r.attestationExpiryAt.toISOString() : (r.attestationExpiryAt != null ? String(r.attestationExpiryAt) : null),
-      }));
+      };
+      });
 
     res.status(200).json({
       success: true,

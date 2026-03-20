@@ -172,6 +172,8 @@ export function isPathAllowedForRole(path: string, normalizedRole: SystemRole | 
   if (routesForRole.includes(path)) return true;
 
   // Dynamic segment rules
+  if (path.startsWith("/buyer-vendor-risk-report/") && routesForRole.includes("/buyerAssessment"))
+    return true;
   if (path.startsWith("/organizations/") && routesForRole.includes("/organizations")) return true;
   if (path.startsWith("/reports/") && path.length > "/reports/".length) return true;
   if (normalizedRole === "vendor" && path.startsWith("/vendorSelfAttestation/")) return true;

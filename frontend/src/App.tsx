@@ -34,6 +34,7 @@ import VendorAttestationsMainForm from "./Components/pages/VendorAttestations/Ve
 import VendorCOTSMain from "./Components/pages/Assessments/VendorCOTS/VendorCOTSMain";
 import VendorAttestationDetails from "./Components/pages/VendorAttestationDetails/VendorAttestationDetails";
 import BuyerAssessment from "./Components/pages/Assessments/BuyerAssessment/BuyerAssessment";
+import BuyerVendorRiskReport from "./Components/pages/Assessments/BuyerAssessment/BuyerVendorRiskReport";
 import VendorSelfAttestationLayout from "./Components/layout/VendorSelfAttestationLayout";
 
 function App() {
@@ -64,6 +65,10 @@ function App() {
                 <Route path="/vendorcots" element={<VendorCOTSMain />} />
                 <Route path="/buyerAssessment/:id" element={<BuyerAssessment />} />
                 <Route path="/buyerAssessment" element={<BuyerAssessment />} />
+                <Route
+                  path="/buyer-vendor-risk-report/:assessmentId"
+                  element={<BuyerVendorRiskReport />}
+                />
                 <Route path="/vendor-directory" element={<VendorDirectory />} />
                 <Route path="/my-vendor" element={<MyVendors />} />
                 <Route path="/security_center" element={<Compilance />} />
@@ -81,7 +86,6 @@ function App() {
                   path="/attestation_details"
                   element={<VendorAttestationDetails />}
                 />
-
                 <Route path="/user-management" element={<UserManagement />} />
                 <Route path="*" element={<Navigate to="/pageNotFound" replace />} />
               </Route>

@@ -100,13 +100,14 @@ export const BUYER_COTS_ASSESSMENT = {
   vendorEvaluation: {
     0: {
       label: "What is the vendor name for the AI solution you're evaluating?",
-      placeholder: "Example: Anthropic, OpenAI, Acme AI Solutions",
+      placeholder:
+        "Choose from the AI Vendor Directory, or type a name if not listed",
       required: "true",
     },
     1: {
       label: "What is the specific product or solution name?",
       placeholder:
-        "Example: Claude for Enterprise, GPT-4, Acme Document Processor",
+        "Select a product after choosing a directory vendor, or type the product name",
       required: "true",
     },
     2: {

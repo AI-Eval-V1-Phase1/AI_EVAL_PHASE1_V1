@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { db, pool } from "../../database/db.js";
+import { expireSubmittedAssessmentsAndArchiveBuyerReports } from "../../services/expireAndArchiveCotsBuyerAssessments.js";
 import { usersTable } from "../../schema/schema.js";
 import { eq } from "drizzle-orm";
 
@@ -42,10 +43,7 @@ const listAssessmentsByOrganization = async (req: Request, res: Response) => {
     // Ensure string for varchar column (avoids driver/DB type mismatch)
     const orgIdParam = String(orgIdStr);
 
-    // Mark assessments as expired in DB when expiry_at has passed
-    await pool.query(
-      `UPDATE assessments SET status = 'expired' WHERE expiry_at IS NOT NULL AND expiry_at < now() AND status = 'submitted'`,
-    );
+    await expireSubmittedAssessmentsAndArchiveBuyerReports(pool);
 
     // System user (admin/manager/viewer) with organizationId in query: filter to that org. Non-system: filter to user's org. System admin without query: no filter (all).
     const filterByOrg = !isSystemUser || (isSystemUser && organizationIdFromQuery != null);

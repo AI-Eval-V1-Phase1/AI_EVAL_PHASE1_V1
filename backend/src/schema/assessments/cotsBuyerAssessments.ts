@@ -57,6 +57,10 @@ export const cotsBuyerAssessments = pgTable("cots_buyer_assessments", {
   buyer_risk_mitigation: text("buyer_risk_mitigation"),
   assessment_id: uuid("assessment_id").notNull(),
   risk_mitigation_mapping_ids: jsonb("risk_mitigation_mapping_ids"),
+  /** Generated on submit: full Vendor Risk Assessment Report (buyer + attestation). */
+  vendor_risk_assessment_report: jsonb("vendor_risk_assessment_report"),
+  /** Set when assessment expires: frozen JSON; live vendor_risk_assessment_report is cleared. */
+  archived_vendor_risk_assessment_report: jsonb("archived_vendor_risk_assessment_report"),
   created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

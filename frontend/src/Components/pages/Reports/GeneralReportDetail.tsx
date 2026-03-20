@@ -23,6 +23,18 @@ import {
 } from "lucide-react";
 import LoadingMessage from "../../UI/LoadingMessage";
 import { getReportTypeDisplayLabel } from "./reportTypes";
+import VendorComparisonMatrixReportBody, {
+  parseVendorComparisonMatrixJson,
+} from "./VendorComparisonMatrixReportBody";
+import ComplianceRiskSummaryReportBody, {
+  parseComplianceRiskSummaryJson,
+} from "./ComplianceRiskSummaryReportBody";
+import ImplementationRiskAssessmentReportBody, {
+  parseImplementationRiskAssessmentJson,
+} from "./ImplementationRiskAssessmentReportBody";
+import MitigationActionPlanReportBody, {
+  parseMitigationActionPlanJson,
+} from "./MitigationActionPlanReportBody";
 import "../UserManagement/user_management.css";
 import "./reports.css";
 
@@ -34,7 +46,8 @@ interface GeneratedReportItem {
   assessmentLabel: string;
   reportType: string;
   generatedAt: string;
-  briefContent?: string;
+  /** Stored general report body: markdown for most types, or JSON (string or parsed) for Vendor Comparison Matrix. */
+  briefContent?: string | Record<string, unknown>;
   expiryAt?: string | null;
   attestationExpiryAt?: string | null;
 }
@@ -299,7 +312,36 @@ function GeneralReportDetail() {
   const handleDownload = () => {
     if (!report) return;
     const dateStr = formatDate(report.generatedAt);
-    const bodyContent = report.briefContent ?? "This report was generated from the Reports Library. Full report content can be viewed in the application.";
+    const vcm =
+      report.reportType === "Vendor Comparison Matrix"
+        ? parseVendorComparisonMatrixJson(report.briefContent)
+        : null;
+    const ira =
+      report.reportType === "Implementation Risk Assessment"
+        ? parseImplementationRiskAssessmentJson(report.briefContent)
+        : null;
+    const map =
+      report.reportType === "Mitigation Action Plan"
+        ? parseMitigationActionPlanJson(report.briefContent)
+        : null;
+    const crs =
+      report.reportType === "Compliance & Risk Summary"
+        ? parseComplianceRiskSummaryJson(report.briefContent)
+        : null;
+    const bodyContent =
+      ira != null
+        ? JSON.stringify(ira, null, 2)
+        : map != null
+        ? JSON.stringify(map, null, 2)
+        : crs != null
+        ? JSON.stringify(crs, null, 2)
+        : vcm != null
+        ? JSON.stringify(vcm, null, 2)
+        : typeof report.briefContent === "string"
+          ? report.briefContent
+          : report.briefContent != null
+            ? JSON.stringify(report.briefContent, null, 2)
+            : "This report was generated from the Reports Library. Full report content can be viewed in the application.";
     const reportTypeLabel = getReportTypeDisplayLabel(report.reportType);
     const content = [
       "General Report",
@@ -368,6 +410,26 @@ function GeneralReportDetail() {
     new Date(report.attestationExpiryAt).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0);
   const isArchived = isAssessmentExpired || isAttestationExpired;
 
+  const vendorComparisonMatrixData =
+    report.reportType === "Vendor Comparison Matrix"
+      ? parseVendorComparisonMatrixJson(report.briefContent)
+      : null;
+
+  const complianceRiskSummaryData =
+    report.reportType === "Compliance & Risk Summary"
+      ? parseComplianceRiskSummaryJson(report.briefContent)
+      : null;
+
+  const implementationRiskAssessmentData =
+    report.reportType === "Implementation Risk Assessment"
+      ? parseImplementationRiskAssessmentJson(report.briefContent)
+      : null;
+
+  const mitigationActionPlanData =
+    report.reportType === "Mitigation Action Plan"
+      ? parseMitigationActionPlanJson(report.briefContent)
+      : null;
+
   return (
     <div className="sec_user_page org_settings_page reports_page report_detail_page report_detail_full report_detail_type_general">
       <header className="report_assessment_header">
@@ -396,6 +458,42 @@ function GeneralReportDetail() {
         <p className="report_assessment_subtitle report_detail_subtitle">
           {report.assessmentLabel} • {generatedDate}
         </p>
+        {isArchived && report.reportType === "Vendor Comparison Matrix" ? (
+          <p
+            className="report_assessment_subtitle"
+            style={{ color: "#92400e", marginTop: "0.5rem" }}
+            role="status"
+          >
+            This assessment is archived; this matrix snapshot is read-only.
+          </p>
+        ) : null}
+        {isArchived && report.reportType === "Compliance & Risk Summary" ? (
+          <p
+            className="report_assessment_subtitle"
+            style={{ color: "#92400e", marginTop: "0.5rem" }}
+            role="status"
+          >
+            This assessment is archived; this summary snapshot is read-only.
+          </p>
+        ) : null}
+        {isArchived && report.reportType === "Implementation Risk Assessment" ? (
+          <p
+            className="report_assessment_subtitle"
+            style={{ color: "#92400e", marginTop: "0.5rem" }}
+            role="status"
+          >
+            This assessment is archived; this assessment snapshot is read-only.
+          </p>
+        ) : null}
+        {isArchived && report.reportType === "Mitigation Action Plan" ? (
+          <p
+            className="report_assessment_subtitle"
+            style={{ color: "#92400e", marginTop: "0.5rem" }}
+            role="status"
+          >
+            This assessment is archived; this plan snapshot is read-only.
+          </p>
+        ) : null}
       </header>
 {/* 
       <section className="report_section_card general_report_info_card">
@@ -426,9 +524,55 @@ function GeneralReportDetail() {
 
       <section className="report_section_card">
         <h2 className="report_section_heading">
-          {report.briefContent ? getReportTypeDisplayLabel(report.reportType) : "Summary"}
+          {implementationRiskAssessmentData
+            ? "Implementation Risk Assessment"
+            : mitigationActionPlanData
+              ? "Mitigation Action Plan"
+              : complianceRiskSummaryData
+                ? "Compliance & Risk Summary"
+                : vendorComparisonMatrixData
+                  ? "Vendor Comparison Matrix"
+                  : report.briefContent
+                    ? getReportTypeDisplayLabel(report.reportType)
+                    : "Summary"}
         </h2>
-        {report.briefContent ? (
+        {implementationRiskAssessmentData ? (
+          <div className="report_summary_body">
+            <ImplementationRiskAssessmentReportBody data={implementationRiskAssessmentData} />
+          </div>
+        ) : report.reportType === "Implementation Risk Assessment" ? (
+          <p className="report_summary_body">
+            Implementation Risk Assessment data is missing or could not be read. Try generating the report
+            again from Assessment Analysis.
+          </p>
+        ) : mitigationActionPlanData ? (
+          <div className="report_summary_body">
+            <MitigationActionPlanReportBody data={mitigationActionPlanData} />
+          </div>
+        ) : report.reportType === "Mitigation Action Plan" ? (
+          <p className="report_summary_body">
+            Mitigation Action Plan data is missing or could not be read. Try generating the report again from
+            Assessment Analysis.
+          </p>
+        ) : complianceRiskSummaryData ? (
+          <div className="report_summary_body">
+            <ComplianceRiskSummaryReportBody data={complianceRiskSummaryData} />
+          </div>
+        ) : report.reportType === "Compliance & Risk Summary" ? (
+          <p className="report_summary_body">
+            Compliance &amp; Risk Summary data is missing or could not be read. Try generating the report
+            again from Assessment Analysis.
+          </p>
+        ) : vendorComparisonMatrixData ? (
+          <div className="report_summary_body">
+            <VendorComparisonMatrixReportBody data={vendorComparisonMatrixData} />
+          </div>
+        ) : report.reportType === "Vendor Comparison Matrix" ? (
+          <p className="report_summary_body">
+            Vendor Comparison Matrix data is missing or could not be read. Try generating the report
+            again from Assessment Analysis.
+          </p>
+        ) : typeof report.briefContent === "string" && report.briefContent.trim() !== "" ? (
           <div className="report_summary_body report_exec_brief_body">
             {parseBriefContent(report.briefContent).map((section, idx) => {
               const { displayTitle, Icon } = getBriefSectionDisplay(section.title);

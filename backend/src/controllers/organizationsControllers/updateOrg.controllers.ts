@@ -10,8 +10,10 @@ const updateOrganization = async (req: Request, res: Response) => {
     isReason?: string;
     userId?: string | number | null;
   };
-  const rawId = req.params.id;
-  const orgId = rawId != null && rawId.trim() !== "" ? Number(rawId) : NaN;
+  const idParam = req.params?.id;
+  const rawId = Array.isArray(idParam) ? idParam[0] : idParam;
+  const orgId =
+    rawId != null && String(rawId).trim() !== "" ? Number(String(rawId).trim()) : NaN;
 
   if (!Number.isInteger(orgId) || orgId < 1) {
     return res.status(400).json({

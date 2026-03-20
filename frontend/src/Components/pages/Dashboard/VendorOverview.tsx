@@ -203,6 +203,48 @@ const VendorOverview = () => {
     return new Date(bDate).getTime() - new Date(aDate).getTime();
   });
 
+  const openComplianceDocumentInNewTab = useCallback(
+    async (attestationId: string, fileName: string) => {
+      const token = sessionStorage.getItem("bearerToken");
+      if (!token || !attestationId || !fileName?.trim()) return;
+      const base = (BASE_URL ?? "").toString().replace(/\/$/, "");
+      const url = `${base}/vendorSelfAttestation/document/${encodeURIComponent(attestationId)}/${encodeURIComponent(fileName.trim())}`;
+      let blobUrl: string | null = null;
+      try {
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const blob = await res.blob();
+        blobUrl = URL.createObjectURL(blob);
+        // Open synchronously after blob is ready — new tab must keep URL valid (do not revoke quickly).
+        const w = window.open(blobUrl, "_blank", "noopener,noreferrer");
+        if (!w) {
+          URL.revokeObjectURL(blobUrl);
+          window.alert(
+            "Could not open a new tab. Allow pop-ups for this site, then try View Document again.",
+          );
+          return;
+        }
+        const revokeLater = () => {
+          if (blobUrl) {
+            URL.revokeObjectURL(blobUrl);
+            blobUrl = null;
+          }
+        };
+        try {
+          w.addEventListener("beforeunload", revokeLater);
+        } catch {
+          /* ignore */
+        }
+        setTimeout(revokeLater, 60 * 60 * 1000);
+      } catch {
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
+      }
+    },
+    [],
+  );
+
   /** Selected attestation (product) – used for trust score and filtering assessments */
   const selectedAttestation = selectedCompletedId
     ? completedAttestations.find((a) => a.id === selectedCompletedId)
@@ -313,14 +355,16 @@ const VendorOverview = () => {
                     </p>
                   </div>
                   <div className="vendor_overview_attestation_actions">
-                    <Link
-                      to="/attestation_details"
-                      state={{ attestationId: cert.attestationId }}
+                    <button
+                      type="button"
                       className="vendor_overview_btn_view"
+                      onClick={() =>
+                        openComplianceDocumentInNewTab(cert.attestationId, cert.name)
+                      }
                     >
                       <Eye size={16} aria-hidden />
                       View Document
-                    </Link>
+                    </button>
                   </div>
                 </div>
               ))

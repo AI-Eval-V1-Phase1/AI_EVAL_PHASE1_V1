@@ -66,8 +66,8 @@ export interface GeneratedReportItem {
   assessmentLabel: string;
   reportType: string;
   generatedAt: string;
-  /** For Executive Stakeholder Brief: generated content (sections 16–21). */
-  briefContent?: string;
+  /** Markdown for most types; JSON string or object for Vendor Comparison Matrix. */
+  briefContent?: string | Record<string, unknown>;
   /** When in the past, report is archived (assessment expired). */
   expiryAt?: string | null;
   /** When in the past, report is archived (linked attestation expired). */
@@ -651,6 +651,234 @@ const GeneralReports = ({ searchQuery = "", showArchivedOnly, hideDropdown, arch
       }
       return;
     }
+    if (reportType === "Vendor Comparison Matrix") {
+      const alreadyExistsVcm = generatedReports.some(
+        (r) => r.assessmentId === assessmentId && r.reportType === reportType,
+      );
+      if (alreadyExistsVcm) {
+        setAlreadyGeneratedError(ALREADY_GENERATED_MSG);
+        return;
+      }
+      setReportError("");
+      setAlreadyGeneratedError("");
+      setSelectedReportType("");
+      setIsTypeReportPopupOpen(false);
+      setBriefError(null);
+      setBriefGenerating(true);
+      const token = sessionStorage.getItem("bearerToken");
+      if (!token) {
+        setBriefError("Please log in to generate the report.");
+        setBriefGenerating(false);
+        return;
+      }
+      const option = selectOptions.find((o) => o.value === assessmentId);
+      const assessmentLabel = option?.label ?? `Assessment ${assessmentId}`;
+      try {
+        const res = await fetch(`${BASE_URL}/vendorComparisonMatrixReport`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ assessmentId, assessmentLabel }),
+        });
+        const data = await res.json();
+        if (data?.success && data?.data?.report) {
+          const report = data.data.report;
+          const newReport: GeneratedReportItem = {
+            id: report.id,
+            assessmentId: report.assessmentId,
+            assessmentLabel: report.assessmentLabel ?? assessmentLabel,
+            reportType: report.reportType,
+            generatedAt: report.generatedAt,
+            briefContent: report.briefContent,
+          };
+          setGeneratedReports((prev) => [...prev, newReport]);
+        } else {
+          setBriefError(
+            data?.message ??
+              "Failed to generate Vendor Comparison Matrix. Ensure the complete report exists in Complete Reports.",
+          );
+        }
+      } catch {
+        setBriefError("Failed to generate Vendor Comparison Matrix. Please try again.");
+      } finally {
+        setBriefGenerating(false);
+        setAssessmentIdForReport("");
+      }
+      return;
+    }
+    if (reportType === "Compliance & Risk Summary") {
+      const alreadyExistsCrs = generatedReports.some(
+        (r) => r.assessmentId === assessmentId && r.reportType === reportType,
+      );
+      if (alreadyExistsCrs) {
+        setAlreadyGeneratedError(ALREADY_GENERATED_MSG);
+        return;
+      }
+      setReportError("");
+      setAlreadyGeneratedError("");
+      setSelectedReportType("");
+      setIsTypeReportPopupOpen(false);
+      setBriefError(null);
+      setBriefGenerating(true);
+      const token = sessionStorage.getItem("bearerToken");
+      if (!token) {
+        setBriefError("Please log in to generate the report.");
+        setBriefGenerating(false);
+        return;
+      }
+      const option = selectOptions.find((o) => o.value === assessmentId);
+      const assessmentLabel = option?.label ?? `Assessment ${assessmentId}`;
+      try {
+        const res = await fetch(`${BASE_URL}/complianceRiskSummaryReport`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ assessmentId, assessmentLabel }),
+        });
+        const data = await res.json();
+        if (data?.success && data?.data?.report) {
+          const report = data.data.report;
+          const newReport: GeneratedReportItem = {
+            id: report.id,
+            assessmentId: report.assessmentId,
+            assessmentLabel: report.assessmentLabel ?? assessmentLabel,
+            reportType: report.reportType,
+            generatedAt: report.generatedAt,
+            briefContent: report.briefContent,
+          };
+          setGeneratedReports((prev) => [...prev, newReport]);
+        } else {
+          setBriefError(
+            data?.message ??
+              "Failed to generate Compliance & Risk Summary. Ensure the complete report exists in Complete Reports.",
+          );
+        }
+      } catch {
+        setBriefError("Failed to generate Compliance & Risk Summary. Please try again.");
+      } finally {
+        setBriefGenerating(false);
+        setAssessmentIdForReport("");
+      }
+      return;
+    }
+    if (reportType === "Implementation Risk Assessment") {
+      const alreadyExistsIra = generatedReports.some(
+        (r) => r.assessmentId === assessmentId && r.reportType === reportType,
+      );
+      if (alreadyExistsIra) {
+        setAlreadyGeneratedError(ALREADY_GENERATED_MSG);
+        return;
+      }
+      setReportError("");
+      setAlreadyGeneratedError("");
+      setSelectedReportType("");
+      setIsTypeReportPopupOpen(false);
+      setBriefError(null);
+      setBriefGenerating(true);
+      const token = sessionStorage.getItem("bearerToken");
+      if (!token) {
+        setBriefError("Please log in to generate the report.");
+        setBriefGenerating(false);
+        return;
+      }
+      const option = selectOptions.find((o) => o.value === assessmentId);
+      const assessmentLabel = option?.label ?? `Assessment ${assessmentId}`;
+      try {
+        const res = await fetch(`${BASE_URL}/implementationRiskAssessmentReport`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ assessmentId, assessmentLabel }),
+        });
+        const data = await res.json();
+        if (data?.success && data?.data?.report) {
+          const report = data.data.report;
+          const newReport: GeneratedReportItem = {
+            id: report.id,
+            assessmentId: report.assessmentId,
+            assessmentLabel: report.assessmentLabel ?? assessmentLabel,
+            reportType: report.reportType,
+            generatedAt: report.generatedAt,
+            briefContent: report.briefContent,
+          };
+          setGeneratedReports((prev) => [...prev, newReport]);
+        } else {
+          setBriefError(
+            data?.message ??
+              "Failed to generate Implementation Risk Assessment. Ensure the complete report exists in Complete Reports.",
+          );
+        }
+      } catch {
+        setBriefError("Failed to generate Implementation Risk Assessment. Please try again.");
+      } finally {
+        setBriefGenerating(false);
+        setAssessmentIdForReport("");
+      }
+      return;
+    }
+    if (reportType === "Mitigation Action Plan") {
+      const alreadyExistsMap = generatedReports.some(
+        (r) => r.assessmentId === assessmentId && r.reportType === reportType,
+      );
+      if (alreadyExistsMap) {
+        setAlreadyGeneratedError(ALREADY_GENERATED_MSG);
+        return;
+      }
+      setReportError("");
+      setAlreadyGeneratedError("");
+      setSelectedReportType("");
+      setIsTypeReportPopupOpen(false);
+      setBriefError(null);
+      setBriefGenerating(true);
+      const token = sessionStorage.getItem("bearerToken");
+      if (!token) {
+        setBriefError("Please log in to generate the report.");
+        setBriefGenerating(false);
+        return;
+      }
+      const option = selectOptions.find((o) => o.value === assessmentId);
+      const assessmentLabel = option?.label ?? `Assessment ${assessmentId}`;
+      try {
+        const res = await fetch(`${BASE_URL}/mitigationActionPlanReport`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ assessmentId, assessmentLabel }),
+        });
+        const data = await res.json();
+        if (data?.success && data?.data?.report) {
+          const report = data.data.report;
+          const newReport: GeneratedReportItem = {
+            id: report.id,
+            assessmentId: report.assessmentId,
+            assessmentLabel: report.assessmentLabel ?? assessmentLabel,
+            reportType: report.reportType,
+            generatedAt: report.generatedAt,
+            briefContent: report.briefContent,
+          };
+          setGeneratedReports((prev) => [...prev, newReport]);
+        } else {
+          setBriefError(
+            data?.message ??
+              "Failed to generate Mitigation Action Plan. Ensure the complete report exists in Complete Reports.",
+          );
+        }
+      } catch {
+        setBriefError("Failed to generate Mitigation Action Plan. Please try again.");
+      } finally {
+        setBriefGenerating(false);
+        setAssessmentIdForReport("");
+      }
+      return;
+    }
     const alreadyExists = generatedReports.some(
       (r) => r.assessmentId === assessmentId && r.reportType === reportType,
     );
@@ -692,7 +920,12 @@ const GeneralReports = ({ searchQuery = "", showArchivedOnly, hideDropdown, arch
     const sanitize = (s: string) =>
       s.replace(/[<>:"/\\|?*]/g, "").replace(/\s+/g, "-").slice(0, 80);
     const dateStr = formatDate(report.generatedAt);
-    const bodyContent = report.briefContent ?? "This report was generated from the Reports Library. Full report content can be viewed in the application.";
+    const bodyContent =
+      typeof report.briefContent === "string"
+        ? report.briefContent
+        : report.briefContent != null
+          ? JSON.stringify(report.briefContent, null, 2)
+          : "This report was generated from the Reports Library. Full report content can be viewed in the application.";
     const content = [
       "General Report",
       "—",

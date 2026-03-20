@@ -644,6 +644,10 @@ const Organizations = () => {
                     <div className="ai_assessments_section">
                       <div className="assessment_list_header_row">
                         <p className="your_assessments_title">YOUR ATTESTATIONS</p>
+                        <p className="org_attestation_compliance_tab_hint">
+                          Compliance certificate PDFs are scanned for expiry after submit; refresh this page if dates
+                          are not shown yet.
+                        </p>
                         <div className="attestation_tabs_and_search_row">
                           <div className="assessment_search_wrap">
                             <Search
@@ -781,6 +785,60 @@ const Organizations = () => {
                                             {formatAttestationDate(isCompleted || isExpired ? a.created_at : (a.updated_at || a.created_at))}
                                           </span>
                                         </div>
+                                        {isCompleted &&
+                                          a.compliance_document_expiries &&
+                                          typeof a.compliance_document_expiries === "object" &&
+                                          Object.keys(a.compliance_document_expiries).length > 0 && (
+                                            <div className="org_attestation_compliance_docs">
+                                              <span className="general_rpr_card_date_label_expiry org_attestation_compliance_heading">
+                                                Compliance uploads (parsed expiry)
+                                              </span>
+                                              <ul className="org_attestation_compliance_list">
+                                                {Object.entries(
+                                                  a.compliance_document_expiries as Record<
+                                                    string,
+                                                    {
+                                                      category?: string;
+                                                      expiryAt?: string | null;
+                                                      error?: string;
+                                                    }
+                                                  >,
+                                                ).map(([fileName, meta]) => {
+                                                  const cat = meta?.category?.trim() || "Document";
+                                                  const exp = meta?.expiryAt?.trim();
+                                                  const expiredDoc =
+                                                    exp &&
+                                                    !Number.isNaN(new Date(exp).getTime()) &&
+                                                    new Date(exp).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0);
+                                                  return (
+                                                    <li key={fileName} className="org_attestation_compliance_item">
+                                                      <span className="org_attestation_compliance_cat">{cat}</span>
+                                                      <span className="org_attestation_compliance_fname" title={fileName}>
+                                                        {fileName}
+                                                      </span>
+                                                      {exp ? (
+                                                        <span
+                                                          className={
+                                                            expiredDoc
+                                                              ? "org_attestation_compliance_exp org_attestation_compliance_exp_past"
+                                                              : "org_attestation_compliance_exp"
+                                                          }
+                                                        >
+                                                          Expires: {formatDateDDMMMYYYY(exp)}
+                                                        </span>
+                                                      ) : (
+                                                        <span className="org_attestation_compliance_exp_na">
+                                                          {meta?.error?.includes?.("not detected")
+                                                            ? "Expiry not detected"
+                                                            : meta?.error || "—"}
+                                                        </span>
+                                                      )}
+                                                    </li>
+                                                  );
+                                                })}
+                                              </ul>
+                                            </div>
+                                          )}
                                       </div>
                                     </div>
                                   </article>

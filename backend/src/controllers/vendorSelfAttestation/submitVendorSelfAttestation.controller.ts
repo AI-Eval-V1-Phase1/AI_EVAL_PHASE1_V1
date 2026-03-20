@@ -6,6 +6,7 @@ import { vendorSelfAttestations, usersTable, generatedProfileReports } from "../
 import { and, eq, or, sql } from "drizzle-orm";
 import { buildVendorDataFromPayload } from "../../utils/buildVendorDataFromPayload.js";
 import { generateVendorAttestationReport, buildReportPayloadAndSummary } from "../agents/vendorAttestation.js";
+import { parseAndStoreComplianceDocumentExpiries } from "../../services/complianceDocumentParser.js";
 
 const UPLOADS_DIR = path.resolve(process.cwd(), "public", "uploads_vendor_attestations");
 
@@ -364,7 +365,42 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
       const [inserted] = await db
         .insert(vendorSelfAttestations)
         .values(values)
-        .returning();
+        .returning({
+          id: vendorSelfAttestations.id,
+          status: vendorSelfAttestations.status,
+          created_at: vendorSelfAttestations.created_at,
+          updated_at: vendorSelfAttestations.updated_at,
+          product_name: vendorSelfAttestations.product_name,
+          purchase_decisions_by: vendorSelfAttestations.purchase_decisions_by,
+          pain_points: vendorSelfAttestations.pain_points,
+          alternatives_consider: vendorSelfAttestations.alternatives_consider,
+          unique_solution: vendorSelfAttestations.unique_solution,
+          roi_value_metrics: vendorSelfAttestations.roi_value_metrics,
+          product_capabilities: vendorSelfAttestations.product_capabilities,
+          ai_models_usage: vendorSelfAttestations.ai_models_usage,
+          ai_model_transparency: vendorSelfAttestations.ai_model_transparency,
+          ai_autonomy_level: vendorSelfAttestations.ai_autonomy_level,
+          security_compliance_certificates: vendorSelfAttestations.security_compliance_certificates,
+          assessment_feedback: vendorSelfAttestations.assessment_feedback,
+          pii_information: vendorSelfAttestations.pii_information,
+          data_residency_options: vendorSelfAttestations.data_residency_options,
+          data_retention_policy: vendorSelfAttestations.data_retention_policy,
+          bias_ai: vendorSelfAttestations.bias_ai,
+          security_testing: vendorSelfAttestations.security_testing,
+          human_oversight: vendorSelfAttestations.human_oversight,
+          training_data_document: vendorSelfAttestations.training_data_document,
+          sla_guarantee: vendorSelfAttestations.sla_guarantee,
+          incident_response_plan: vendorSelfAttestations.incident_response_plan,
+          rollback_deployment_issues: vendorSelfAttestations.rollback_deployment_issues,
+          solution_hosted: vendorSelfAttestations.solution_hosted,
+          deployment_scale: vendorSelfAttestations.deployment_scale,
+          stage_product: vendorSelfAttestations.stage_product,
+          available_usage_data: vendorSelfAttestations.available_usage_data,
+          audit_logs: vendorSelfAttestations.audit_logs,
+          test_results: vendorSelfAttestations.test_results,
+          document_uploads: vendorSelfAttestations.document_uploads,
+          generated_profile_report: vendorSelfAttestations.generated_profile_report,
+        });
       const insertedId = inserted?.id as string | undefined;
       let reportPayload: ReportPayload | null = null;
       if (status === "COMPLETED" && insertedId) {
@@ -375,9 +411,54 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
           organizationIdStr ?? null,
           insertedId,
         );
+        if (document_uploads) {
+          void parseAndStoreComplianceDocumentExpiries(
+            insertedId,
+            document_uploads as Record<string, unknown>,
+          ).catch((err) => console.error("Compliance document expiry parse:", err));
+        }
       }
       const [rowAfter] = insertedId
-        ? await db.select().from(vendorSelfAttestations).where(eq(vendorSelfAttestations.id, insertedId)).limit(1)
+        ? await db
+            .select({
+              id: vendorSelfAttestations.id,
+              status: vendorSelfAttestations.status,
+              created_at: vendorSelfAttestations.created_at,
+              updated_at: vendorSelfAttestations.updated_at,
+              product_name: vendorSelfAttestations.product_name,
+              purchase_decisions_by: vendorSelfAttestations.purchase_decisions_by,
+              pain_points: vendorSelfAttestations.pain_points,
+              alternatives_consider: vendorSelfAttestations.alternatives_consider,
+              unique_solution: vendorSelfAttestations.unique_solution,
+              roi_value_metrics: vendorSelfAttestations.roi_value_metrics,
+              product_capabilities: vendorSelfAttestations.product_capabilities,
+              ai_models_usage: vendorSelfAttestations.ai_models_usage,
+              ai_model_transparency: vendorSelfAttestations.ai_model_transparency,
+              ai_autonomy_level: vendorSelfAttestations.ai_autonomy_level,
+              security_compliance_certificates: vendorSelfAttestations.security_compliance_certificates,
+              assessment_feedback: vendorSelfAttestations.assessment_feedback,
+              pii_information: vendorSelfAttestations.pii_information,
+              data_residency_options: vendorSelfAttestations.data_residency_options,
+              data_retention_policy: vendorSelfAttestations.data_retention_policy,
+              bias_ai: vendorSelfAttestations.bias_ai,
+              security_testing: vendorSelfAttestations.security_testing,
+              human_oversight: vendorSelfAttestations.human_oversight,
+              training_data_document: vendorSelfAttestations.training_data_document,
+              sla_guarantee: vendorSelfAttestations.sla_guarantee,
+              incident_response_plan: vendorSelfAttestations.incident_response_plan,
+              rollback_deployment_issues: vendorSelfAttestations.rollback_deployment_issues,
+              solution_hosted: vendorSelfAttestations.solution_hosted,
+              deployment_scale: vendorSelfAttestations.deployment_scale,
+              stage_product: vendorSelfAttestations.stage_product,
+              available_usage_data: vendorSelfAttestations.available_usage_data,
+              audit_logs: vendorSelfAttestations.audit_logs,
+              test_results: vendorSelfAttestations.test_results,
+              document_uploads: vendorSelfAttestations.document_uploads,
+              generated_profile_report: vendorSelfAttestations.generated_profile_report,
+            })
+            .from(vendorSelfAttestations)
+            .where(eq(vendorSelfAttestations.id, insertedId))
+            .limit(1)
         : [inserted];
       const att = rowAfter ? buildAttestationResponse(rowAfter as Record<string, unknown>) : (inserted ? buildAttestationResponse(inserted as Record<string, unknown>) : null);
       if (att && reportPayload) (att as Record<string, unknown>).generated_profile_report = reportPayload;
@@ -450,9 +531,50 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
           organizationIdStr ?? null,
           attestationId,
         );
+        if (document_uploads) {
+          void parseAndStoreComplianceDocumentExpiries(
+            attestationId,
+            document_uploads as Record<string, unknown>,
+          ).catch((err) => console.error("Compliance document expiry parse:", err));
+        }
       }
       const [savedRow] = await db
-        .select()
+        .select({
+          id: vendorSelfAttestations.id,
+          status: vendorSelfAttestations.status,
+          created_at: vendorSelfAttestations.created_at,
+          updated_at: vendorSelfAttestations.updated_at,
+          product_name: vendorSelfAttestations.product_name,
+          purchase_decisions_by: vendorSelfAttestations.purchase_decisions_by,
+          pain_points: vendorSelfAttestations.pain_points,
+          alternatives_consider: vendorSelfAttestations.alternatives_consider,
+          unique_solution: vendorSelfAttestations.unique_solution,
+          roi_value_metrics: vendorSelfAttestations.roi_value_metrics,
+          product_capabilities: vendorSelfAttestations.product_capabilities,
+          ai_models_usage: vendorSelfAttestations.ai_models_usage,
+          ai_model_transparency: vendorSelfAttestations.ai_model_transparency,
+          ai_autonomy_level: vendorSelfAttestations.ai_autonomy_level,
+          security_compliance_certificates: vendorSelfAttestations.security_compliance_certificates,
+          assessment_feedback: vendorSelfAttestations.assessment_feedback,
+          pii_information: vendorSelfAttestations.pii_information,
+          data_residency_options: vendorSelfAttestations.data_residency_options,
+          data_retention_policy: vendorSelfAttestations.data_retention_policy,
+          bias_ai: vendorSelfAttestations.bias_ai,
+          security_testing: vendorSelfAttestations.security_testing,
+          human_oversight: vendorSelfAttestations.human_oversight,
+          training_data_document: vendorSelfAttestations.training_data_document,
+          sla_guarantee: vendorSelfAttestations.sla_guarantee,
+          incident_response_plan: vendorSelfAttestations.incident_response_plan,
+          rollback_deployment_issues: vendorSelfAttestations.rollback_deployment_issues,
+          solution_hosted: vendorSelfAttestations.solution_hosted,
+          deployment_scale: vendorSelfAttestations.deployment_scale,
+          stage_product: vendorSelfAttestations.stage_product,
+          available_usage_data: vendorSelfAttestations.available_usage_data,
+          audit_logs: vendorSelfAttestations.audit_logs,
+          test_results: vendorSelfAttestations.test_results,
+          document_uploads: vendorSelfAttestations.document_uploads,
+          generated_profile_report: vendorSelfAttestations.generated_profile_report,
+        })
         .from(vendorSelfAttestations)
         .where(eq(vendorSelfAttestations.id, attestationId))
         .limit(1);

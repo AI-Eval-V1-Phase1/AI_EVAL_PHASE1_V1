@@ -82,6 +82,14 @@ const getGeneralReportById = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
+    const contentRaw = row.content;
+    const briefContent =
+      contentRaw == null
+        ? undefined
+        : typeof contentRaw === "string"
+          ? contentRaw
+          : JSON.stringify(contentRaw);
+
     const generatedAt =
       row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at);
     const expiryAt =
@@ -99,7 +107,7 @@ const getGeneralReportById = async (req: Request, res: Response): Promise<void> 
         assessmentLabel: row.assessment_label ?? undefined,
         reportType: row.report_type,
         generatedAt,
-        briefContent: row.content ?? undefined,
+        briefContent,
         createdBy: row.created_by,
         expiryAt,
         attestationExpiryAt,

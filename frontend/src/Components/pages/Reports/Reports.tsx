@@ -10,7 +10,7 @@ import "../../../styles/popovers.css";
 import "../UserManagement/user_management.css";
 import "../UserProfile/user_profile.css";
 import "./reports.css";
-import GeneralReports, { type GeneratedReportItem } from "./GeneralReports.js";
+import GeneralReports, { type GeneratedReportItem } from "./GeneralReports";
 import GeneralReportsCards from "./GeneralReportsCards";
 import CompleteReportsCards from "./CompleteReportsCards";
 import { ReportsPagination } from "./ReportsPagination";
@@ -22,11 +22,13 @@ export interface CustomerRiskReportItem {
   id: string;
   assessmentId: string;
   title: string;
-  report: Record<string, unknown>;
+  report?: Record<string, unknown>;
   createdAt: string;
   expiryAt?: string | null;
   /** When set and in the past, report is archived (linked attestation expired). */
   attestationExpiryAt?: string | null;
+  /** Buyer vendor risk reports use buyer-vendor-risk-report route. */
+  source?: "customer" | "buyer_vendor_risk";
 }
 
 type TabId = "assessment" | "general" | "archived";
@@ -135,16 +137,51 @@ function Reports() {
     const organizationId = (sessionStorage.getItem("organizationId") ?? "").trim();
     const isSystemManagerOrViewer = systemRole === "system manager" || systemRole === "system viewer";
     const query = isSystemManagerOrViewer && organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : "";
-    fetch(`${BASE_URL}/customerRiskReports${query}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.success && Array.isArray(data?.data?.reports)) {
-          setReports(data.data.reports);
-        } else {
-          setReports([]);
-        }
+    Promise.all([
+      fetch(`${BASE_URL}/customerRiskReports${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((res) => res.json()),
+      fetch(`${BASE_URL}/buyerVendorRiskReports${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((res) => res.json()),
+    ])
+      .then(([customerData, buyerData]) => {
+        const customerList: CustomerRiskReportItem[] = Array.isArray(
+          customerData?.data?.reports,
+        )
+          ? customerData.data.reports.map((r: CustomerRiskReportItem) => ({
+              ...r,
+              source: "customer" as const,
+            }))
+          : [];
+        const buyerList: CustomerRiskReportItem[] = Array.isArray(
+          buyerData?.data?.reports,
+        )
+          ? buyerData.data.reports.map(
+              (r: {
+                id: string;
+                assessmentId: string;
+                title: string;
+                createdAt: string;
+                expiryAt?: string | null;
+                attestationExpiryAt?: string | null;
+                source: string;
+              }) => ({
+                id: r.id,
+                assessmentId: r.assessmentId,
+                title: r.title,
+                createdAt: r.createdAt,
+                expiryAt: r.expiryAt ?? null,
+                attestationExpiryAt: r.attestationExpiryAt ?? null,
+                source: "buyer_vendor_risk" as const,
+              }),
+            )
+          : [];
+        const merged = [...customerList, ...buyerList].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+        setReports(merged);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Failed to load reports");
@@ -153,8 +190,14 @@ function Reports() {
       .finally(() => finishLoading());
   }, [activeTab]);
 
-  const handleSelectReport = (reportId: string) => {
-    navigate(`/reports/${reportId}`);
+  const handleSelectReport = (report: CustomerRiskReportItem) => {
+    if (report.source === "buyer_vendor_risk" && report.assessmentId) {
+      navigate(
+        `/buyer-vendor-risk-report/${encodeURIComponent(report.assessmentId)}`,
+      );
+    } else {
+      navigate(`/reports/${report.id}`);
+    }
   };
 
   const handleViewGeneralReport = (report: GeneratedReportItem) => {
@@ -313,7 +356,7 @@ function Reports() {
                 getTitle={(r) => getReportCardTitle(r.title ?? "")}
                 isArchived={isCustomerReportArchived}
                 getExpiryDate={getCompleteReportExpiryDate}
-                onViewReport={(r) => handleSelectReport(r.id)}
+                onViewReport={handleSelectReport}
                 onDownload={(r, e) => handleDownload(r.id, e)}
               />
               <ReportsPagination
@@ -370,7 +413,7 @@ function Reports() {
                         getTitle={(r) => getReportCardTitle(r.title ?? "")}
                         isArchived={() => true}
                         getExpiryDate={getCompleteReportExpiryDate}
-                        onViewReport={(r) => handleSelectReport(r.id)}
+                        onViewReport={handleSelectReport}
                         viewEnabledWhenArchived
                         singleCard
                       />

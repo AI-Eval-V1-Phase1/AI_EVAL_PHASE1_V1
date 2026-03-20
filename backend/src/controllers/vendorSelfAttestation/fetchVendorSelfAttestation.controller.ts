@@ -48,6 +48,28 @@ function buildCertificatesFromDocumentUploads(docUploads: unknown): Array<{ name
   return list;
 }
 
+/**
+ * Attach parsed document expiry (from compliance_document_expiries, keyed by file name) to each certificate row.
+ */
+function mergeCertificateExpiries(
+  certificates: Array<{ name: string; expiryDate: string | null }>,
+  expiries: unknown,
+): Array<{ name: string; expiryDate: string | null }> {
+  if (!expiries || typeof expiries !== "object" || Array.isArray(expiries)) return certificates;
+  const map = expiries as Record<string, { expiryAt?: string | null }>;
+  return certificates.map((c) => {
+    const key = String(c.name ?? "").trim();
+    if (!key) return c;
+    const base = /[/\\]/.test(key) ? (key.split(/[/\\]/).pop() ?? key) : key;
+    const meta = map[key] ?? map[base];
+    const exp = meta?.expiryAt;
+    if (exp != null && String(exp).trim() !== "") {
+      return { ...c, expiryDate: String(exp).trim() };
+    }
+    return c;
+  });
+}
+
 /** Expiry is 3 months from created date. Returns ISO string or undefined. */
 function expiryFromCreatedAt(createdAt: unknown): string | undefined {
   if (createdAt == null) return undefined;
@@ -79,7 +101,10 @@ function mapAttestationRow(attestRow: Record<string, unknown>, completedByName?:
   const raw = String(attestRow.status ?? "").toUpperCase();
   const rowStatus = raw === "DRAFT" ? "DRAFT" : raw === "EXPIRED" ? "EXPIRED" : "COMPLETED";
   const document_uploads = attestRow.document_uploads;
-  const certificates = buildCertificatesFromDocumentUploads(document_uploads);
+  const certificates = mergeCertificateExpiries(
+    buildCertificatesFromDocumentUploads(document_uploads),
+    attestRow.compliance_document_expiries,
+  );
   const sector = parseSectorFromRow(attestRow);
   const base: Record<string, unknown> = {
     id: attestRow.id,
@@ -344,6 +369,7 @@ const fetchVendorSelfAttestation = async (req: Request, res: Response): Promise<
       updated_at: vendorSelfAttestations.updated_at,
       submitted_at: vendorSelfAttestations.submitted_at,
       expiry_at: vendorSelfAttestations.expiry_at,
+      compliance_document_expiries: vendorSelfAttestations.compliance_document_expiries,
       generated_profile_report: vendorSelfAttestations.generated_profile_report,
       user_name: usersTable.user_name,
       user_first_name: usersTable.user_first_name,
