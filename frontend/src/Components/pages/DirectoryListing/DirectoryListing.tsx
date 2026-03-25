@@ -335,7 +335,7 @@ export const DirectoryListing = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ vendorData }),
+        body: JSON.stringify({ vendorData, formData: formState }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.success && data?.data) {
@@ -354,7 +354,7 @@ export const DirectoryListing = () => {
     } finally {
       setGenerateLoading(false);
     }
-  }, [vendorDataInput, fetchGeneratedReports]);
+  }, [vendorDataInput, formState, fetchGeneratedReports]);
 
   const handleProductVisibilityToggle = useCallback(
     async (productId: string, visible: boolean) => {

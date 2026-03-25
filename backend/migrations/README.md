@@ -1,5 +1,7 @@
 # Migrations
 
+**Windows PowerShell 5.x:** `&&` is not supported between commands. Use `;` instead (for example `cd backend; npm run db:migrate`) or run commands on separate lines. PowerShell 7+ and Command Prompt support `&&`.
+
 ## Quick start: full schema and seed data
 
 - **Fresh or clean database:** from the `backend` folder run:

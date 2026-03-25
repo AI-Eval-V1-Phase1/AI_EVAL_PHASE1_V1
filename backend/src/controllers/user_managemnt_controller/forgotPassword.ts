@@ -87,7 +87,7 @@ const forgotPassword = async (req: Request, res: Response) => {
       await transporter.sendMail({
         from: {
           name: "AI Eval",
-          address: process.env.SENDER_EMAIL || process.env.SENDER__GMAIL_EMAIL || "",
+          address: process.env.SENDER_EMAIL_ID || "",
         },
         to: email,
         subject: "Reset your AI Eval password",

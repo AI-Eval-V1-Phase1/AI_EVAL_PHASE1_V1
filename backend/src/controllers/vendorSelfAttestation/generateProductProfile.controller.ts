@@ -52,7 +52,11 @@ const generateProductProfile = async (req: Request, res: Response): Promise<void
       .limit(1);
     const organizationIdStr = userRow?.organization_id != null ? String(userRow.organization_id) : null;
 
-    const report = await generateVendorAttestationReport(vendorData);
+    const formulaPayload =
+      req.body?.formData && typeof req.body.formData === "object"
+        ? (req.body.formData as Record<string, unknown>)
+        : undefined;
+    const report = await generateVendorAttestationReport(vendorData, formulaPayload);
     const { reportPayload, trustScoreNum, summaryToStore } = buildReportPayloadAndSummary(report);
 
     const attestationIdRaw = req.body?.attestationId ?? req.body?.attestation_id;
@@ -63,11 +67,12 @@ const generateProductProfile = async (req: Request, res: Response): Promise<void
     console.log("[Summary] Step: generateProductProfile (controller) — before DB insert | summaryToStore:", summaryToStore == null ? "undefined" : "length " + summaryToStore.length, "| summary column value:", summaryForDb == null ? "null" : "length " + summaryForDb.length);
     if (summaryForDb) console.log("[Summary] Step: generateProductProfile — complete summary being stored:", summaryForDb);
 
+    const trustScoreForDb = Number.isFinite(trustScoreNum) ? Math.round(trustScoreNum) : 0;
     await db.insert(generatedProfileReports).values({
       user_id: userId,
       organization_id: organizationIdStr,
       attestation_id: attestationId ?? undefined,
-      trust_score: trustScoreNum,
+      trust_score: trustScoreForDb,
       summary: summaryForDb,
       report: reportPayload,
     });

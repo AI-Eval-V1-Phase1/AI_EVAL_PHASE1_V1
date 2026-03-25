@@ -140,6 +140,8 @@ function asGeneratedReport(raw: unknown): GeneratedProductProfileReport | null {
 
 /** True when attestation expiry date is set and in the past. */
 function isAttestationExpired(product: ProductProfileProduct): boolean {
+  const status = String(product.status ?? "").trim().toUpperCase();
+  if (status === "EXPIRED") return true;
   const exp = product.attestationExpiryAt;
   if (exp == null || String(exp).trim() === "") return false;
   const expiry = new Date(exp);
@@ -302,9 +304,8 @@ function ProductProfileView({
 
   /** Average Trust Score = rounded average of current (non-archived) products' trust scores only. */
   const averageTrustScore = useMemo(() => {
-    const currentOnly = products.filter((p) => !isAttestationExpired(p));
     const scores: number[] = [];
-    currentOnly.forEach((p) => {
+    currentProducts.forEach((p) => {
       const report = asGeneratedReport(p.generated_profile_report);
       const score =
         report?.trustScore?.overallScore ??
@@ -316,7 +317,7 @@ function ProductProfileView({
     if (scores.length === 0) return null;
     const sum = scores.reduce((a, b) => a + b, 0);
     return Math.round(sum / scores.length);
-  }, [products]);
+  }, [currentProducts]);
 
   const company = formState?.companyProfile;
   const attestation = formState?.attestation ?? {};

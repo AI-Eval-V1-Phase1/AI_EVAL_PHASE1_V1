@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
 const emailConfig = () => {
-  const EMAIL_SERVICE = process.env.EMAIL_SERVICE_NAME;
+  const EMAIL_SERVICE = process.env.EMAIL_SERVICE_TYPE;
   let transporter;
   if (EMAIL_SERVICE === "gmail") {
     // console.log("here gmail");
@@ -12,8 +12,8 @@ const emailConfig = () => {
       secure: false,
       auth: {
         user:
-          process.env.SENDER_GMAIL_EMAIL ,
-        pass: process.env.SENDER_GMAIL_PASSWORD,
+          process.env.SENDER_EMAIL_ID ,
+        pass: process.env.SENDER_EMAIL_PASSWORD,
       },
     });
   } else if (EMAIL_SERVICE === "office365") {
@@ -22,8 +22,8 @@ const emailConfig = () => {
       port: 587,
       secure: false,
       auth: {
-        user: process.env.SENDER_OFFICE_EMAIL,
-        pass: process.env.SENDER_OFFICE_PASSWORD,
+        user: process.env.SENDER_EMAIL_ID,
+        pass: process.env.SENDER_EMAIL_PASSWORD,
       },
     });
   } else {

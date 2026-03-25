@@ -3,6 +3,7 @@ import { db } from "../../database/db.js";
 import { vendors, vendorSelfAttestations, usersTable, generatedProfileReports } from "../../schema/schema.js";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { mergeSummaryIntoReport } from "../../utils/mergeProfileReportSummary.js";
+import { canViewDirectoryProductViaAssessment } from "../../services/vendorDirectoryAssessmentProducts.js";
 
 function mapAttestationRow(attestRow: Record<string, unknown>): Record<string, unknown> {
   return {
@@ -56,9 +57,11 @@ function mapAttestationRow(attestRow: Record<string, unknown>): Record<string, u
 
 /**
  * GET /vendorDirectory/:vendorId/products/:productId
- * Returns full attestation detail for one product. Only if vendor has public listing,
+ * Returns full attestation detail for one product. Default: vendor has public listing,
  * product is COMPLETED, visible_to_buyer = true, and not archived (expiry_at null or in future).
- * Query ?all=true (system admin only): returns product regardless of status/visibility.
+ * Query ?all=true (system admin only): returns product regardless of status/visibility/public listing.
+ * If the user has a COTS assessment referencing this vendor product, they may open detail even when
+ * the vendor is not publicly listed or the product is not buyer-visible.
  */
 const getVendorProductDetail = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -93,6 +96,18 @@ const getVendorProductDetail = async (req: Request, res: Response): Promise<void
       }
     }
 
+    const authPayload = req.user as { id?: number; userId?: string | number; email?: string } | undefined;
+    let rawViewer = authPayload?.id ?? authPayload?.userId;
+    let viewerUserId = rawViewer != null ? Number(rawViewer) : NaN;
+    if ((!Number.isInteger(viewerUserId) || viewerUserId < 1) && authPayload?.email) {
+      const [u] = await db
+        .select({ id: usersTable.id })
+        .from(usersTable)
+        .where(eq(usersTable.email, String(authPayload.email).trim()))
+        .limit(1);
+      if (u) viewerUserId = u.id;
+    }
+
     const [vendor] = await db
       .select({
         id: vendors.id,
@@ -108,39 +123,70 @@ const getVendorProductDetail = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    if (!allParam && !vendor.publicDirectoryListing) {
-      res.status(404).json({ success: false, message: "Vendor or product not found" });
-      return;
-    }
-
     const vendorUserId = vendor.userId != null ? Number(vendor.userId) : null;
     if (vendorUserId == null) {
       res.status(404).json({ success: false, message: "Product not found" });
       return;
     }
 
-    const whereClause =
-      allParam && isSystemAdmin
-        ? and(eq(vendorSelfAttestations.id, productId), eq(vendorSelfAttestations.user_id, vendorUserId))
-        : and(
+    let row: Record<string, unknown> | undefined;
+
+    if (allParam && isSystemAdmin) {
+      const [r] = await db
+        .select()
+        .from(vendorSelfAttestations)
+        .where(and(eq(vendorSelfAttestations.id, productId), eq(vendorSelfAttestations.user_id, vendorUserId)))
+        .limit(1);
+      row = r as Record<string, unknown> | undefined;
+    } else if (vendor.publicDirectoryListing) {
+      const [r] = await db
+        .select()
+        .from(vendorSelfAttestations)
+        .where(
+          and(
             eq(vendorSelfAttestations.id, productId),
             eq(vendorSelfAttestations.user_id, vendorUserId),
             eq(vendorSelfAttestations.status, "COMPLETED"),
             eq(vendorSelfAttestations.visible_to_buyer, true),
-            sql`(${vendorSelfAttestations.expiry_at} IS NULL OR ${vendorSelfAttestations.expiry_at} >= now())`
-          );
-    const [row] = await db.select().from(vendorSelfAttestations).where(whereClause).limit(1);
+            sql`(${vendorSelfAttestations.expiry_at} IS NULL OR ${vendorSelfAttestations.expiry_at} >= now())`,
+          ),
+        )
+        .limit(1);
+      row = r as Record<string, unknown> | undefined;
+    }
+
+    if (
+      !row &&
+      Number.isInteger(viewerUserId) &&
+      viewerUserId >= 1 &&
+      (await canViewDirectoryProductViaAssessment(viewerUserId, vendor.id, vendorUserId, productId))
+    ) {
+      const [r] = await db
+        .select()
+        .from(vendorSelfAttestations)
+        .where(
+          and(
+            eq(vendorSelfAttestations.id, productId),
+            eq(vendorSelfAttestations.user_id, vendorUserId),
+            eq(vendorSelfAttestations.status, "COMPLETED"),
+          ),
+        )
+        .limit(1);
+      row = r as Record<string, unknown> | undefined;
+    }
 
     if (!row) {
-      res.status(404).json({ success: false, message: "Product not found" });
+      res.status(404).json({ success: false, message: "Vendor or product not found" });
       return;
     }
 
     const rowRecord = row as Record<string, unknown>;
+    const attestationIdForReport =
+      rowRecord.id != null && String(rowRecord.id).trim() !== "" ? String(rowRecord.id) : productId;
     const [reportRow] = await db
       .select({ report: generatedProfileReports.report, summary: generatedProfileReports.summary })
       .from(generatedProfileReports)
-      .where(eq(generatedProfileReports.attestation_id, productId))
+      .where(eq(generatedProfileReports.attestation_id, attestationIdForReport))
       .orderBy(desc(generatedProfileReports.created_at))
       .limit(1);
     const rawReport = reportRow?.report ?? rowRecord.generated_profile_report;
@@ -163,7 +209,7 @@ const getVendorProductDetail = async (req: Request, res: Response): Promise<void
       success: true,
       attestation,
       sectionVisibility,
-      productName: (row.product_name ?? "").trim() || "Product",
+      productName: String(rowRecord.product_name ?? "").trim() || "Product",
     });
   } catch (e) {
     console.error("getVendorProductDetail error:", e);

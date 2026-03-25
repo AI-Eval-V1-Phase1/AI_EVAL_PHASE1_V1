@@ -351,7 +351,9 @@ const VendorOverview = () => {
                     <p className="vendor_overview_attestation_name">{cert.name}</p>
                     <p className="vendor_overview_attestation_status_label">Verified</p>
                     <p className="vendor_overview_attestation_date">
-                      Expiry: {cert.expiryDate ? formatDisplayDate(cert.expiryDate) : "—"}
+                      Expiry: {cert.expiryDate && formatDisplayDate(cert.expiryDate) !== "—"
+                        ? formatDisplayDate(cert.expiryDate)
+                        : (cert.expiryDate || "Expiry date not specified")}
                     </p>
                   </div>
                   <div className="vendor_overview_attestation_actions">

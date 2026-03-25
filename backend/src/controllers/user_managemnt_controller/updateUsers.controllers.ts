@@ -123,7 +123,7 @@ const updatesUsers = async (req: Request, res: Response) => {
           await transporter.sendMail({
             from: {
               name: "AI_Eval",
-              address: process.env.SENDER_EMAIL ?? "noreply@aieval.example.com",
+              address: process.env.SENDER_EMAIL_ID || "",
             },
             to: emailLower,
             subject: "Your AI Eval account has been reactivated – Confirm your email",

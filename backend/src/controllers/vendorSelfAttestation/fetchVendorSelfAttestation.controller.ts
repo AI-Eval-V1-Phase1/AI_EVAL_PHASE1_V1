@@ -63,10 +63,8 @@ function mergeCertificateExpiries(
     const base = /[/\\]/.test(key) ? (key.split(/[/\\]/).pop() ?? key) : key;
     const meta = map[key] ?? map[base];
     const exp = meta?.expiryAt;
-    if (exp != null && String(exp).trim() !== "") {
-      return { ...c, expiryDate: String(exp).trim() };
-    }
-    return c;
+    if (exp != null && String(exp).trim() !== "") return { ...c, expiryDate: String(exp).trim() };
+    return { ...c, expiryDate: "Expiry date not specified" };
   });
 }
 

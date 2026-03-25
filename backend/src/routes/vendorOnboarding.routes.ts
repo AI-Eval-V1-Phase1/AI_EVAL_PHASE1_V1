@@ -3,6 +3,7 @@ import insertVendorOnboarding from "../controllers/vendorOnboarding/addVendor.co
 import fetchVendorOnboarding from "../controllers/vendorOnboarding/fetchVendorOnboarding.controller.js";
 import updatePublicDirectoryListing from "../controllers/vendorOnboarding/updatePublicDirectoryListing.controller.js";
 import listPublicVendors from "../controllers/vendorOnboarding/listPublicVendors.controller.js";
+import listVendorDirectoryAssessmentProducts from "../controllers/vendorOnboarding/listVendorDirectoryAssessmentProducts.controller.js";
 import listVendorVisibleProducts from "../controllers/vendorOnboarding/listVendorVisibleProducts.controller.js";
 import getVendorProductDetail from "../controllers/vendorOnboarding/getVendorProductDetail.controller.js";
 import saveVendorOnboardingProgress from "../controllers/vendorOnboarding/saveVendorOnboardingProgress.controller.js";
@@ -19,6 +20,8 @@ vendorRoutes.patch("/vendorOnboarding/public-directory-listing", authenticateTok
 
 // GET: List vendors who have Public Directory Listing on (for buyer Vendor Portal)
 vendorRoutes.get("/vendorDirectory", authenticateToken, listPublicVendors);
+// GET: Products this user has used in COTS assessments (must be before :vendorId routes)
+vendorRoutes.get("/vendorDirectory/assessment-products", authenticateToken, listVendorDirectoryAssessmentProducts);
 // GET: List products visible to buyers for a vendor (only COMPLETED + visible_to_buyer)
 vendorRoutes.get("/vendorDirectory/:vendorId/products", authenticateToken, listVendorVisibleProducts);
 // GET: Full product detail for buyer (only if visible to buyers)

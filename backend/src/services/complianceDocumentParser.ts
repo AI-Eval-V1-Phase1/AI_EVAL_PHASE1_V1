@@ -9,6 +9,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const pdfParse = require("pdf-parse-new") as (
   dataBuffer: Buffer,
+  options?: { verbosityLevel?: number },
 ) => Promise<{ text?: string }>;
 import { db } from "../database/db.js";
 import { vendorSelfAttestations } from "../schema/schema.js";
@@ -162,7 +163,7 @@ async function extractTextFromFile(filePath: string, ext: string): Promise<strin
   const buf = await fs.promises.readFile(filePath);
   const e = ext.toLowerCase();
   if (e === ".pdf") {
-    const data = await pdfParse(buf);
+    const data = await pdfParse(buf, { verbosityLevel: 0 });
     return (data.text ?? "").trim();
   }
   if (e === ".docx" || e === ".doc") {
@@ -178,17 +179,35 @@ function collectComplianceFiles(
   documentUploads: Record<string, unknown> | null | undefined,
 ): Array<{ fileName: string; category: string }> {
   const out: Array<{ fileName: string; category: string }> = [];
+  const seen = new Set<string>();
   if (!documentUploads || typeof documentUploads !== "object") return out;
-  const slot2 = documentUploads["2"];
-  if (slot2 == null || typeof slot2 !== "object" || Array.isArray(slot2)) return out;
-  const byCat = (slot2 as Record<string, unknown>).byCategory;
-  if (!byCat || typeof byCat !== "object") return out;
-  for (const [category, files] of Object.entries(byCat)) {
-    if (!Array.isArray(files)) continue;
+  const addFile = (rawName: string, category: string) => {
+    const base = path.basename(rawName.trim());
+    if (!base || base === "." || base === "..") return;
+    if (path.extname(base).toLowerCase() !== ".pdf") return;
+    if (seen.has(base)) return;
+    seen.add(base);
+    out.push({ fileName: base, category });
+  };
+  const addFiles = (files: unknown, category: string) => {
+    if (!Array.isArray(files)) return;
     for (const f of files) {
       if (typeof f !== "string" || !f.trim()) continue;
-      const base = path.basename(f.trim());
-      if (base && base !== "." && base !== "..") out.push({ fileName: base, category });
+      addFile(f, category);
+    }
+  };
+
+  addFiles(documentUploads["0"], "marketing_material");
+  addFiles(documentUploads["1"], "technical_material");
+  addFiles(documentUploads["evidenceTestingPolicy"], "evidence_testing_policy");
+
+  const slot2 = documentUploads["2"];
+  if (slot2 != null && typeof slot2 === "object" && !Array.isArray(slot2)) {
+    const byCat = (slot2 as Record<string, unknown>).byCategory;
+    if (byCat && typeof byCat === "object") {
+      for (const [category, files] of Object.entries(byCat)) {
+        addFiles(files, category);
+      }
     }
   }
   return out;

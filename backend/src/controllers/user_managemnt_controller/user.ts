@@ -160,7 +160,7 @@ export const inviteUser = async (req: Request, res: Response) => {
     await transporter.sendMail({
       from: {
         name: "AI_Eval",
-        address: process.env.SENDER_EMAIL! ,
+        address: process.env.SENDER_EMAIL_ID! ,
       },
       to: email,
       subject: "Confirm your AI Eval account",
@@ -247,7 +247,7 @@ export const reinviteUser = async (req: Request, res: Response) => {
 
     const transporter = emailConfig();
     await transporter.sendMail({
-      from: { name: "AI_Eval", address: process.env.SENDER_EMAIL! },
+      from: { name: "AI_Eval", address: process.env.SENDER_EMAIL_ID! },
       to: email,
       subject: "Confirm your AI Eval account",
       html: inviteEmailTemplate(email, organizationNameCapitalized, roleCapitalized, confirmationLink),
@@ -347,7 +347,7 @@ export const resendOnboardingLink = async (req: Request, res: Response) => {
 
     const transporter = emailConfig();
     await transporter.sendMail({
-      from: { name: "AI_Eval", address: process.env.SENDER_EMAIL! },
+      from: { name: "AI_Eval", address: process.env.SENDER_EMAIL_ID! },
       to: email,
       subject: "Onboarding in AI Eval",
       html: onboardingEmailTemplate(name, roleCapitalized, onboardingLink, orgDisplayName),

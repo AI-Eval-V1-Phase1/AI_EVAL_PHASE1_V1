@@ -225,7 +225,7 @@ const userSignup = async (req: Request, res: Response) => {
         await transporter.sendMail({
           from: {
             name: "AI_Eval",
-            address: process.env.SENDER_EMAIL!,
+            address: process.env.SENDER_EMAIL_ID!,
           },
           to: email,
           subject: "Onboarding in AI Eval",

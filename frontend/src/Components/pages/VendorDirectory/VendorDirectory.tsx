@@ -128,40 +128,74 @@ function productInitials(name: string): string {
 
 const SECTOR_KEYS_ORDER = ["public_sector", "private_sector", "non_profit_sector"] as const;
 
-/** Format sector for display: only the values from arrays that have data (e.g. "Defense & Military"). Handles object or JSON string. */
-function formatSector(sector: string | Record<string, unknown> | null | undefined): string {
-  if (sector == null) return "";
-  let obj: Record<string, unknown> | null = null;
+const MAX_SECTORS_ON_CARD = 3;
+
+type SectorParts =
+  | { kind: "empty" }
+  | { kind: "plain"; text: string }
+  | { kind: "buckets"; buckets: string[][] };
+
+function parseSectorStructure(
+  sector: string | Record<string, unknown> | null | undefined,
+): SectorParts {
+  if (sector == null) return { kind: "empty" };
   if (typeof sector === "string") {
     const t = sector.trim();
-    if (!t) return "";
+    if (!t) return { kind: "empty" };
     if (t.startsWith("{") || t.startsWith("[")) {
       try {
-        const parsed = JSON.parse(t) as Record<string, unknown>;
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) obj = parsed;
+        const parsed = JSON.parse(t) as unknown;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          return parseSectorStructure(parsed as Record<string, unknown>);
+        }
       } catch {
-        return "";
+        return { kind: "empty" };
       }
-    } else {
-      return t;
+      return { kind: "empty" };
     }
-  } else if (typeof sector === "object" && sector !== null) {
-    obj = sector;
+    return { kind: "plain", text: t };
   }
-  if (obj) {
-    const parts: string[] = [];
+  if (typeof sector === "object" && sector !== null) {
+    const buckets: string[][] = [];
     for (const key of SECTOR_KEYS_ORDER) {
-      const val = obj[key];
+      const val = sector[key];
       if (Array.isArray(val) && val.length > 0) {
-        const items = val.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean);
-        if (items.length > 0) parts.push(items.join(", "));
+        const items = val
+          .filter((x): x is string => typeof x === "string")
+          .map((x) => x.trim())
+          .filter(Boolean);
+        if (items.length > 0) buckets.push(items);
       }
     }
-    if (parts.length > 0) return parts.join(" • ");
-    const name = (obj.name ?? obj.sectorName ?? obj.industryName) as string | undefined;
-    if (typeof name === "string" && name.trim()) return name.trim();
+    if (buckets.length > 0) return { kind: "buckets", buckets };
+    const name = (sector.name ?? sector.sectorName ?? sector.industryName) as string | undefined;
+    if (typeof name === "string" && name.trim()) return { kind: "plain", text: name.trim() };
   }
-  return "";
+  return { kind: "empty" };
+}
+
+/** Full sector line for search matching and tooltips (bucket groups joined with " • "). */
+function formatSector(sector: string | Record<string, unknown> | null | undefined): string {
+  const p = parseSectorStructure(sector);
+  if (p.kind === "empty") return "";
+  if (p.kind === "plain") return p.text;
+  return p.buckets.map((b) => b.join(", ")).filter(Boolean).join(" • ");
+}
+
+/** Card line: at most the first {@link MAX_SECTORS_ON_CARD} individual sectors, with "+N more" when truncated. */
+function formatSectorCard(sector: string | Record<string, unknown> | null | undefined): string {
+  const p = parseSectorStructure(sector);
+  if (p.kind === "empty") return "";
+  if (p.kind === "plain") {
+    const partsList = p.text.split(/,\s*/).map((s) => s.trim()).filter(Boolean);
+    if (partsList.length === 0) return "";
+    if (partsList.length <= MAX_SECTORS_ON_CARD) return partsList.join(", ");
+    return `${partsList.slice(0, MAX_SECTORS_ON_CARD).join(", ")} +${partsList.length - MAX_SECTORS_ON_CARD} more`;
+  }
+  const flat = p.buckets.flat();
+  if (flat.length === 0) return "";
+  if (flat.length <= MAX_SECTORS_ON_CARD) return flat.join(", ");
+  return `${flat.slice(0, MAX_SECTORS_ON_CARD).join(", ")} +${flat.length - MAX_SECTORS_ON_CARD} more`;
 }
 
 type VendorTab = "all" | "listed" | "my";
@@ -176,9 +210,8 @@ const VendorDirectory = () => {
   const [vendors, setVendors] = useState<PublicVendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [myVendors, setMyVendors] = useState<PublicVendor[]>([]);
-  const [myVendorsLoading, setMyVendorsLoading] = useState(false);
-  const [myVendorsError, setMyVendorsError] = useState<string | null>(null);
+  const [myProductsTabLoading, setMyProductsTabLoading] = useState(false);
+  const [myProductsTabError, setMyProductsTabError] = useState<string | null>(null);
   const [selectedVendor, setSelectedVendor] = useState<PublicVendor | null>(null);
   const [vendorProducts, setVendorProducts] = useState<VendorProduct[]>([]);
   const [vendorProductsLoading, setVendorProductsLoading] = useState(false);
@@ -259,27 +292,62 @@ const VendorDirectory = () => {
     }
   }, []);
 
-  const fetchMyVendors = useCallback(async () => {
+  /** My Products tab: COTS assessments (buyer vendor+product, or vendor assessment product). */
+  const fetchMyAssessmentProducts = useCallback(async () => {
     const token = sessionStorage.getItem("bearerToken");
-    if (!token) return;
-    setMyVendorsError(null);
-    setMyVendorsLoading(true);
+    if (!token) {
+      setMyProductsTabError("Please log in to view your assessment products.");
+      setDirectoryProducts([]);
+      return;
+    }
+    setMyProductsTabError(null);
+    setMyProductsTabLoading(true);
+    setDirectoryProducts([]);
     try {
-      const res = await fetch(`${BASE_URL}/vendorDirectory/my`, {
+      const res = await fetch(`${BASE_URL}/vendorDirectory/assessment-products`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (!res.ok) {
-        setMyVendorsError(data?.message ?? "Failed to load my vendors");
-        setMyVendors([]);
+        setMyProductsTabError(data?.message ?? "Failed to load assessment products");
+        setDirectoryProducts([]);
         return;
       }
-      setMyVendors(data?.vendors ?? []);
+      const raw = data?.products as unknown;
+      if (!Array.isArray(raw)) {
+        setDirectoryProducts([]);
+        return;
+      }
+      const mapped: DirectoryProduct[] = raw.map((item: unknown) => {
+        const o = item as Record<string, unknown>;
+        const v = o.vendor as Record<string, unknown> | undefined;
+        const vendor: PublicVendor = {
+          id: String(v?.id ?? ""),
+          organizationId: String(v?.organizationId ?? ""),
+          organizationName: v?.organizationName != null ? String(v.organizationName) : null,
+          vendorType: String(v?.vendorType ?? ""),
+          companyWebsite: String(v?.companyWebsite ?? ""),
+          companyDescription: String(v?.companyDescription ?? ""),
+          headquartersLocation: String(v?.headquartersLocation ?? ""),
+          vendorMaturity: v?.vendorMaturity != null ? String(v.vendorMaturity) : undefined,
+          sector: (v?.sector as PublicVendor["sector"]) ?? undefined,
+        };
+        return {
+          productId: String(o.productId ?? ""),
+          productName: String(o.productName ?? "Product"),
+          status: String(o.status ?? ""),
+          vendorId: String(o.vendorId ?? vendor.id),
+          vendor,
+          trustScore: typeof o.trustScore === "number" ? o.trustScore : undefined,
+          sector: (o.sector as DirectoryProduct["sector"]) ?? undefined,
+        };
+      });
+      setDirectoryProducts(mapped.filter((dp) => dp.productId && dp.vendorId));
     } catch {
-      setMyVendorsError(null);
-      setMyVendors([]);
+      setMyProductsTabError("Network or server error");
+      setDirectoryProducts([]);
     } finally {
-      setMyVendorsLoading(false);
+      setMyProductsTabLoading(false);
     }
   }, []);
 
@@ -432,19 +500,17 @@ const VendorDirectory = () => {
       if (isBuyer) fetchListedVendors();
       else fetchAllVendors();
     } else if (vendorTab === "listed") fetchListedVendors();
-    else if (vendorTab === "my") fetchMyVendors();
-  }, [vendorTab, isBuyer, fetchAllVendors, fetchListedVendors, fetchMyVendors]);
+    else if (vendorTab === "my") fetchMyAssessmentProducts();
+  }, [vendorTab, isBuyer, fetchAllVendors, fetchListedVendors, fetchMyAssessmentProducts]);
 
-  /** When vendors or myVendors load (or tab changes), build flat product list for grid. */
+  /** When vendor list tabs load, build flat product list. My Products tab loads products via assessment API. */
   useEffect(() => {
+    if (vendorTab === "my") return;
     if (vendorTab === "all" || vendorTab === "listed") {
       if (vendors.length > 0) fetchDirectoryProducts(vendors);
       else setDirectoryProducts([]);
-    } else {
-      if (myVendors.length > 0) fetchDirectoryProducts(myVendors);
-      else setDirectoryProducts([]);
     }
-  }, [vendorTab, vendors, myVendors, fetchDirectoryProducts]);
+  }, [vendorTab, vendors, fetchDirectoryProducts]);
 
   const displayName = (v: PublicVendor) => {
     if (v.organizationName && String(v.organizationName).trim()) return String(v.organizationName).trim();
@@ -593,8 +659,11 @@ const VendorDirectory = () => {
                     <span className="product_profile_product_card_trust_label">Trust score</span>
                     <span className="product_profile_product_card_trust_value">{dp.trustScore != null ? `${dp.trustScore}%` : "—"}</span>
                   </div>
-                  <span className="vendor_directory_card_sector" title="Sectors">
-                    {formatSector(dp.sector ?? dp.vendor.sector) || "—"}
+                  <span
+                    className="vendor_directory_card_sector"
+                    title={formatSector(dp.sector ?? dp.vendor.sector) || undefined}
+                  >
+                    {formatSectorCard(dp.sector ?? dp.vendor.sector) || "—"}
                   </span>
                 </div>
               </div>
@@ -632,7 +701,7 @@ const VendorDirectory = () => {
 
       {vendorTab === "my" && (
         <>
-          {!myVendorsLoading && !myVendorsError && (myVendors.length > 0 || directoryProducts.length > 0) && (
+          {!myProductsTabLoading && !myProductsTabError && directoryProducts.length > 0 && (
             <div className="vendor_directory_search_wrap">
               <Search size={18} className="vendor_directory_search_icon" aria-hidden />
               <input
@@ -645,30 +714,23 @@ const VendorDirectory = () => {
               />
             </div>
           )}
-          {(myVendorsLoading || directoryProductsLoading) && (
-            <div className="vendor_directory_loading">
-              {myVendorsLoading ? "Loading my vendors…" : "Loading products…"}
-            </div>
+          {myProductsTabLoading && (
+            <div className="vendor_directory_loading">Loading your assessment products…</div>
           )}
-          {myVendorsError && (
-            <div className="vendor_directory_error">{myVendorsError}</div>
+          {myProductsTabError && (
+            <div className="vendor_directory_error">{myProductsTabError}</div>
           )}
-          {!myVendorsLoading && !myVendorsError && myVendors.length === 0 && (
+          {!myProductsTabLoading && !myProductsTabError && directoryProducts.length === 0 && (
             <div className="vendor_directory_empty">
-              No vendors in your list.
+              No products found from your assessments yet. Products appear here after you use them in a buyer or vendor COTS assessment.
             </div>
           )}
-          {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && !directoryProductsLoading && directoryProducts.length === 0 && (
-            <div className="vendor_directory_empty">
-              No products are currently visible from your vendors.
-            </div>
-          )}
-          {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && directoryProducts.length > 0 && filteredDirectoryProducts.length === 0 && (
+          {!myProductsTabLoading && !myProductsTabError && directoryProducts.length > 0 && filteredDirectoryProducts.length === 0 && (
             <div className="vendor_directory_empty">
               No products match your search.
             </div>
           )}
-          {!myVendorsLoading && !myVendorsError && myVendors.length > 0 && directoryProducts.length > 0 && filteredDirectoryProducts.length > 0 && (
+          {!myProductsTabLoading && !myProductsTabError && directoryProducts.length > 0 && filteredDirectoryProducts.length > 0 && (
             <div className="vendor_directory_grid" id="vendor-directory-panel-my" role="tabpanel" aria-labelledby="vendor-tab-my">
               {filteredDirectoryProducts.map((dp) => (
             <article
@@ -690,8 +752,11 @@ const VendorDirectory = () => {
                     <span className="product_profile_product_card_trust_label">Trust score</span>
                     <span className="product_profile_product_card_trust_value">{dp.trustScore != null ? `${dp.trustScore}%` : "—"}</span>
                   </div>
-                  <span className="vendor_directory_card_sector" title="Sectors">
-                    {formatSector(dp.sector ?? dp.vendor.sector) || "—"}
+                  <span
+                    className="vendor_directory_card_sector"
+                    title={formatSector(dp.sector ?? dp.vendor.sector) || undefined}
+                  >
+                    {formatSectorCard(dp.sector ?? dp.vendor.sector) || "—"}
                   </span>
                 </div>
               </div>
@@ -775,8 +840,13 @@ const VendorDirectory = () => {
                       <div className="vendor_directory_product_card_content">
                         <span className="vendor_directory_product_card_name">{p.productName}</span>
                         <span className="vendor_directory_product_card_status">Completed</span>
-                        {formatSector(p.sector) ? (
-                          <span className="vendor_directory_product_card_sector">{formatSector(p.sector)}</span>
+                        {formatSectorCard(p.sector) ? (
+                          <span
+                            className="vendor_directory_product_card_sector"
+                            title={formatSector(p.sector) || undefined}
+                          >
+                            {formatSectorCard(p.sector)}
+                          </span>
                         ) : null}
                       </div>
                       {p.trustScore != null && (

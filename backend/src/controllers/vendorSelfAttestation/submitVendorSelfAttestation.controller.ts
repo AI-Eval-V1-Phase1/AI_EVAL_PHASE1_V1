@@ -128,23 +128,25 @@ type ReportPayload = { trustScore: unknown; sections: unknown[] };
  */
 async function generateAndStoreProfileReport(
   vendorData: string,
+  formulaPayload: Record<string, unknown>,
   userId: number,
   organizationIdStr: string | null,
   attestationId: string,
 ): Promise<ReportPayload | null> {
   try {
-    const report = await generateVendorAttestationReport(vendorData);
+    const report = await generateVendorAttestationReport(vendorData, formulaPayload);
     const { reportPayload, trustScoreNum, summaryToStore } = buildReportPayloadAndSummary(report);
 
     const summaryForDb = summaryToStore && summaryToStore.length > 0 ? summaryToStore : null;
     // console.log("[Summary] Step: submitVendorSelfAttestation (generateAndStoreProfileReport) — before DB insert | attestation_id:", attestationId, "| summaryToStore:", summaryToStore == null ? "undefined" : "length " + summaryToStore.length, "| summary column value:", summaryForDb == null ? "null" : "length " + summaryForDb.length);
     // if (summaryForDb) console.log("[Summary] Step: submitVendorSelfAttestation — complete summary being stored:", summaryForDb);
 
+    const trustScoreForDb = Number.isFinite(trustScoreNum) ? Math.round(trustScoreNum) : 0;
     await db.insert(generatedProfileReports).values({
       user_id: userId,
       organization_id: organizationIdStr ?? undefined,
       attestation_id: attestationId,
-      trust_score: trustScoreNum,
+      trust_score: trustScoreForDb,
       summary: summaryForDb,
       report: reportPayload,
     });
@@ -407,6 +409,7 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
         const vendorData = buildVendorDataFromPayload(b);
         reportPayload = await generateAndStoreProfileReport(
           vendorData,
+          b as Record<string, unknown>,
           userId,
           organizationIdStr ?? null,
           insertedId,
@@ -527,6 +530,7 @@ const submitVendorSelfAttestation = async (req: Request, res: Response): Promise
         const vendorData = buildVendorDataFromPayload(b);
         reportPayload = await generateAndStoreProfileReport(
           vendorData,
+          b as Record<string, unknown>,
           userId,
           organizationIdStr ?? null,
           attestationId,

@@ -2,7 +2,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
 import {defineConfig} from "drizzle-kit";
-// config({ path: ".env.local" });
+
+config({
+  path: path.join(path.dirname(fileURLToPath(import.meta.url)), ".env.local"),
+});
+
 const DATABASE_USER = process.env.DATABASE_USER ?? "postgres";
 const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD ?? "Postgresql123";
 const DATABASE_HOST = process.env.DATABASE_HOST ?? "localhost";

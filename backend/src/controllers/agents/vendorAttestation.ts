@@ -526,7 +526,36 @@ async function chat(
  */
 export async function generateVendorAttestationReport(
   vendorData: string,
+  formulaPayload?: Record<string, unknown>,
 ): Promise<VendorAttestationReport> {
+  if (formulaPayload && typeof formulaPayload === "object") {
+    const formulaInput = buildFormulaInputFromPayload(formulaPayload);
+    const formula = calculateVendorTrustScore(formulaInput);
+    const productScore = Math.max(0, Math.min(100, 100 - Number(formula.product_risk || 0)));
+    const governanceScore = Math.max(0, Math.min(100, 100 - Number(formula.governance_risk || 0)));
+    const operationalScore = Math.max(0, Math.min(100, 100 - Number(formula.operational_risk || 0)));
+    const companyProfile =
+      formulaPayload.companyProfile && typeof formulaPayload.companyProfile === "object"
+        ? (formulaPayload.companyProfile as Record<string, unknown>)
+        : {};
+    const summary = buildSummaryFromAssessmentData(formulaPayload);
+    const overallRounded = Math.round(Number(formula.vendor_trust_score ?? 0));
+    return {
+      trustScore: {
+        overallScore: overallRounded,
+        label: String(formula.classification ?? "Not specified"),
+        summary,
+        scoreByCategory: {
+          Product: Number(productScore.toFixed(2)),
+          Governance: Number(governanceScore.toFixed(2)),
+          Operational: Number(operationalScore.toFixed(2)),
+        },
+      },
+      sections: buildSectionsFromPayload(formulaPayload),
+      raw: vendorData || "",
+    };
+  }
+
   const userInput = VENDOR_ATTESTATION_PROMPT + (vendorData || "");
   const messages: {
     role: string;
@@ -548,3 +577,1140 @@ export async function generateVendorAttestationReport(
     raw: reply,
   };
 }
+
+type LooseInput = Record<string, any>;
+
+function buildSummaryFromAssessmentData(payload: Record<string, unknown>): string {
+  const cp =
+    payload.companyProfile && typeof payload.companyProfile === "object"
+      ? (payload.companyProfile as Record<string, unknown>)
+      : {};
+  const pick = (...vals: unknown[]) => vals.map((v) => String(v ?? "").trim()).find((v) => v.length > 0) ?? "";
+  const has = (v: unknown) => String(v ?? "").trim().length > 0;
+  const yes = (v: unknown) => {
+    const s = String(v ?? "").trim().toLowerCase();
+    return s === "yes" || s === "true" || s === "available";
+  };
+  const vendorName = pick(cp.vendorName, payload.vendor_name) || "This vendor";
+  const maturity = pick(cp.vendorMaturity, payload.company_stage).toLowerCase();
+  const posture =
+    maturity.includes("mature") || maturity.includes("growth")
+      ? "moderate-to-strong"
+      : maturity.includes("early") || maturity.includes("startup")
+        ? "moderate"
+        : "moderate";
+
+  const strengths: string[] = [];
+  if (has(payload.uptime_sla) || has(payload.sla_guarantee)) strengths.push("operations reliability");
+  if (has(payload.human_oversight)) strengths.push("human oversight");
+  if (has(payload.adversarial_security_testing) || has(payload.security_testing)) strengths.push("adversarial testing");
+  if (has(payload.security_certifications) || has(payload.security_compliance_certificates)) strengths.push("core security controls");
+  if (yes(payload.incident_response_plan)) strengths.push("incident response preparedness");
+
+  const improvements: string[] = [];
+  if (!has(payload.security_certifications) && !has(payload.security_compliance_certificates)) {
+    improvements.push("deeper compliance certifications");
+  }
+  if (!has(payload.model_transparency) && !has(payload.ai_model_transparency)) {
+    improvements.push("more comprehensive model transparency");
+  }
+  if (!has(cp.vendorMaturity) && !has(payload.company_stage)) {
+    improvements.push("a more mature company profile");
+  }
+  if (!has(payload.data_retention_policy)) {
+    improvements.push("clearer data retention commitments");
+  }
+
+  const strengthsText = strengths.length > 0 ? strengths.slice(0, 3).join(", ") : "baseline operational controls";
+  const improvementsText = improvements.length > 0 ? improvements.slice(0, 3).join(", ") : "continued enhancement of governance documentation";
+
+  return `${vendorName} demonstrates a ${posture} overall trust posture as an AI vendor with reasonable security controls, data practices, and AI governance frameworks in place. Key strengths include ${strengthsText}. Areas for improvement include ${improvementsText}.`;
+}
+
+function buildFormulaInputFromPayload(payload: Record<string, unknown>): LooseInput {
+  const cp =
+    payload.companyProfile && typeof payload.companyProfile === "object"
+      ? (payload.companyProfile as Record<string, unknown>)
+      : {};
+  const get = (k: string) => payload[k] ?? cp[k];
+  const asStr = (v: unknown) => String(v ?? "").trim();
+  const lower = (v: unknown) => asStr(v).toLowerCase();
+  const inSet = (v: string, allowed: string[], fallback: string) =>
+    allowed.includes(v) ? v : fallback;
+  const toNum = (v: unknown, fallback: number) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const text = [
+    lower(get("decision_autonomy")),
+    lower(get("ai_autonomy_level")),
+    lower(get("assessment_completion_level")),
+    lower(get("pii_handling")),
+    lower(get("incident_response_plan")),
+  ].join(" ");
+  const employeeRaw = lower(get("employeeCount") ?? get("no_of_employees"));
+  const yearFounded = Math.max(1990, Math.min(new Date().getFullYear(), toNum(get("yearFounded") ?? get("year_founded"), 2020)));
+  const regionCount = Array.isArray(get("operatingRegions")) ? (get("operatingRegions") as unknown[]).length : 1;
+  const decisionAutonomyLevel =
+    text.includes("fully") && text.includes("autonom") ? "fully_autonomous" :
+    text.includes("autonom") ? "autonomous" :
+    text.includes("assist") ? "assisted" :
+    text.includes("advis") ? "advisory" : "supervised";
+  const decisionStakeLevel =
+    text.includes("life") ? "Life-Critical" :
+    text.includes("critical") ? "Critical" :
+    text.includes("high") ? "High" :
+    text.includes("moderate") ? "Moderate" : "Low";
+  const devStage = inSet(lower(get("product_stage") ?? get("stage_product")), ["design", "development", "testing", "staging", "production"], "development");
+  const hostingType = lower(get("hosting_deployment") ?? get("solution_hosted")).includes("hybrid")
+    ? "hybrid"
+    : lower(get("hosting_deployment") ?? get("solution_hosted")).includes("prem")
+      ? "on_premise"
+      : "cloud_hosted";
+  const employeeCount =
+    employeeRaw.includes("10000") ? "10000+" :
+    employeeRaw.includes("5001") ? "5001-10000" :
+    employeeRaw.includes("1001") ? "1001-5000" :
+    employeeRaw.includes("201") ? "201-1000" :
+    employeeRaw.includes("51") ? "51-200" :
+    employeeRaw.includes("11") ? "11-50" : "1-10";
+  const geographicRegions = regionCount >= 5 ? "global" : regionCount >= 3 ? "multi_national" : regionCount === 2 ? "national" : "regional";
+  return {
+    likelihoodScores: [3, 3, 3],
+    impactScores: [3, 3, 3],
+    decisionAutonomyLevel,
+    decisionStakeLevel,
+    devStage,
+    assessmentPhase: "vendor_evaluation",
+    customizationLevel: "lightly_customized",
+    integrationComplexity: "moderate_integration",
+    hostingType,
+    employeeCount,
+    geographicRegions,
+    dataVolumeScale: "moderate",
+    aiRiskAppetite: "moderate",
+    intentionalRiskCount: 1,
+    unintentionalRiskCount: 2,
+    applicableDomains: [
+      { domain: "Privacy & Security", riskCount: 1 },
+      { domain: "AI System Safety", riskCount: 1 },
+      { domain: "Accountability & Governance", riskCount: 1 },
+    ],
+    sector: asStr(get("sector")) || "Technology",
+    aiCapabilityType: "administrative",
+    piiHandling: text.includes("critical") ? "critical" : "moderate",
+    regulatoryComplexity: [],
+    deploymentScale: lower(get("deployment_scale")) || "mid_market",
+    patientDemographic: "general",
+    requiredCategories: MITIGATION_CATEGORIES.slice(0, 6),
+    implementedCategories: MITIGATION_CATEGORIES.slice(0, 4),
+    mitigations: [{ mitigationId: "default", riskCount: 1, avgRelevance: 0.7 }],
+    assessmentMethod: "internal_audit",
+    complianceDocumentationComplete: true,
+    penetrationTestReportAvailable: !!asStr(get("adversarial_security_testing")),
+    soc2Type2Current: lower(get("security_certifications")).includes("soc2"),
+    soc2Certification: lower(get("security_certifications")).includes("type 2") ? "Type 2 (current)" : "None",
+    isoCertifications: lower(get("security_certifications")).includes("iso 27001") ? "ISO 27001 only" : "None",
+    hipaaCertification: lower(get("security_certifications")).includes("hipaa") ? "HIPAA BAA only" : "None",
+    yearFounded,
+    fundingStatus: "series_a",
+    revenueSufficient: true,
+    enterpriseCustomers: 5,
+    auditFrequency: "annual",
+    dataRetentionPolicy: !!asStr(get("data_retention_policy")),
+    dataRetentionPolicyCompleteness: "documented_not_enforced",
+    incidentResponsePlan: !!asStr(get("incident_response_plan")),
+    incidentResponsePlanMaturity: "documented_not_tested",
+    privacyPolicy: true,
+    privacyPolicyScope: "standard",
+    aiEthicsPolicy: true,
+    aiEthicsMaturity: "documented_not_operationalized",
+    rollbackProcedures: "manual_documented",
+    humanOversightCapabilities: "monitoring_with_intervention",
+    continuousMonitoring: "daily_dashboard",
+    modelVersionControl: true,
+    versioningMaturity: "manual_documented",
+    slaUptime: asStr(get("uptime_sla") ?? get("sla_guarantee")) || "99.5-99.9%",
+    criticalIncidentResponse: "< 4 hours",
+    criticalIncidentResolution: "< 24 hours",
+    planTesting: "annual_test",
+    incidentCommunication: "email_notifications",
+    multiTenancySupport: true,
+    isolationMethod: "schema_isolation",
+    financialStatus: "break_even",
+    customerRetentionRate: 85,
+    supportTiers: "business_hours_email",
+    supportsHipaaWorkflows: lower(get("sector")).includes("health"),
+    technicalAccountManager: "standard_support",
+  };
+}
+
+function buildSectionsFromPayload(payload: Record<string, unknown>): ReportSection[] {
+  const cp =
+    payload.companyProfile && typeof payload.companyProfile === "object"
+      ? (payload.companyProfile as Record<string, unknown>)
+      : {};
+  const get = (k: string) => payload[k] ?? cp[k];
+  const text = (v: unknown) => (v == null || String(v).trim() === "" ? "Not specified" : String(v));
+  const json = (v: unknown) => {
+    if (v == null) return "Not specified";
+    if (Array.isArray(v)) return v.length ? v.map((x) => String(x)).join(", ") : "Not specified";
+    if (typeof v === "object") return JSON.stringify(v);
+    return String(v);
+  };
+  const titleCase = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+      .replace(/\bSoc\b/g, "SOC")
+      .replace(/\bHipaa\b/g, "HIPAA")
+      .replace(/\bIso\b/g, "ISO")
+      .replace(/\bGdpr\b/g, "GDPR");
+  const certNameFromFile = (name: string): string => {
+    const base = name
+      .replace(/\.[a-z0-9]+$/i, "")
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const directPatterns: Array<{ re: RegExp; value: string }> = [
+      { re: /\bSOC\s*2\b.*\bTYPE\s*2\b/i, value: "SOC 2 Type 2" },
+      { re: /\bSOC\s*2\b.*\bTYPE\s*1\b/i, value: "SOC 2 Type 1" },
+      { re: /\bSOC\s*2\b/i, value: "SOC 2" },
+      { re: /\bHIPAA\b/i, value: "HIPAA" },
+      { re: /\bHITRUST\b/i, value: "HITRUST" },
+      { re: /\bISO\s*27001\b/i, value: "ISO 27001" },
+      { re: /\bISO\s*42001\b/i, value: "ISO 42001" },
+      { re: /\bISO\s*9001\b/i, value: "ISO 9001" },
+      { re: /\bPCI(?:\s|-)?DSS\b/i, value: "PCI DSS" },
+      { re: /\bGDPR\b/i, value: "GDPR" },
+      { re: /\bCCPA\b/i, value: "CCPA" },
+      { re: /\bFedRAMP\b/i, value: "FedRAMP" },
+    ];
+    for (const p of directPatterns) {
+      if (p.re.test(base)) return p.value;
+    }
+    const cleaned = base
+      .replace(/\b(report|assessment|compliance|security|certificate|certification|final|draft|version|v\d+)\b/gi, "")
+      .replace(/\b(19|20)\d{2}\b/g, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    return cleaned ? titleCase(cleaned) : titleCase(base);
+  };
+  const targetIndustry = (() => {
+    const raw = cp.sector ?? payload.sector;
+    if (raw == null) return "Not specified";
+    if (typeof raw === "object" && !Array.isArray(raw)) {
+      const privateList = (raw as Record<string, unknown>).private_sector;
+      if (Array.isArray(privateList)) {
+        const values = privateList
+          .map((x) => String(x).trim())
+          .filter((x) => x.length > 0);
+        return values.length > 0 ? values.join(", ") : "Not specified";
+      }
+      return "Not specified";
+    }
+    if (Array.isArray(raw)) {
+      const values = raw.map((x) => String(x).trim()).filter((x) => x.length > 0);
+      return values.length > 0 ? values.join(", ") : "Not specified";
+    }
+    if (typeof raw === "string") {
+      const v = raw.trim();
+      return v.length > 0 ? v : "Not specified";
+    }
+    return "Not specified";
+  })();
+  const docUploads =
+    payload.document_uploads && typeof payload.document_uploads === "object"
+      ? (payload.document_uploads as Record<string, unknown>)
+      : (payload.documentUpload && typeof payload.documentUpload === "object"
+          ? (payload.documentUpload as Record<string, unknown>)
+          : null);
+  const complianceUploadNames: string[] = [];
+  if (docUploads && docUploads["2"] && typeof docUploads["2"] === "object" && !Array.isArray(docUploads["2"])) {
+    const slot2 = docUploads["2"] as Record<string, unknown>;
+    const byCategory =
+      slot2.byCategory && typeof slot2.byCategory === "object" ? (slot2.byCategory as Record<string, unknown>) : {};
+    Object.values(byCategory).forEach((arr) => {
+      if (Array.isArray(arr)) {
+        arr.forEach((name) => {
+          if (typeof name === "string" && name.trim()) complianceUploadNames.push(name.trim());
+        });
+      }
+    });
+  }
+  const explicitCerts = get("security_certifications") ?? get("security_compliance_certificates");
+  const certificationsDisplay =
+    explicitCerts != null && String(json(explicitCerts)).trim() !== "Not specified"
+      ? json(explicitCerts)
+      : (complianceUploadNames.length > 0
+          ? Array.from(new Set(complianceUploadNames.map(certNameFromFile))).join(", ")
+          : "Not specified");
+
+  return [
+    {
+      id: 1,
+      title: "Product Information",
+      items: {
+        "Product Name": text(get("product_name") ?? get("productName")),
+        Version: text(get("model_version") ?? get("version")),
+        "Primary Use Case": text(get("pain_points_solved") ?? get("pain_points")),
+        "Target Industry": targetIndustry,
+        "Deployment Model": json(get("hosting_deployment") ?? get("solution_hosted")),
+        Pricing: text(get("pricing") ?? "Contact vendor"),
+        "Product Description": text(
+          get("product_description") ??
+            get("unique_value_proposition") ??
+            cp.companyDescription ??
+            get("company_description"),
+        ),
+      },
+    },
+    {
+      id: 2,
+      title: "Company Overview",
+      items: {
+        "Legal Name": text(cp.vendorName ?? get("vendor_name")),
+        "Vendor Type": text(cp.vendorType ?? get("vendorType")),
+        "Year Founded": text(cp.yearFounded ?? get("yearFounded") ?? get("year_founded")),
+        Employees: text(cp.employeeCount ?? get("employeeCount") ?? get("no_of_employees")),
+        "Operating Regions": json(cp.operatingRegions ?? get("operatingRegions") ?? get("operate_regions")),
+      },
+    },
+    {
+      id: 3,
+      title: "AI Models & Technology",
+      items: {
+        "Model Types": json(get("ai_model_types") ?? get("ai_models_usage")),
+        "Model Purpose": json(get("ai_capabilities") ?? get("product_capabilities")),
+        "Training Data / Transparency": text(get("model_transparency") ?? get("ai_model_transparency")),
+        "Human Oversight": json(get("human_oversight")),
+      },
+    },
+    {
+      id: 4,
+      title: "AI Governance",
+      items: {
+        "AI Ethics Policy": text(get("aiEthicsPolicy") ? "Available" : "Not specified"),
+        "Bias Detection": json(get("bias_testing_approach") ?? get("bias_ai")),
+        "Model Governance": text(get("ai_autonomy_level") ?? get("decision_autonomy")),
+        "Human-in-the-Loop": json(get("human_oversight")),
+      },
+    },
+    {
+      id: 5,
+      title: "Security Posture",
+      items: {
+        Certifications: json(get("security_certifications") ?? get("security_compliance_certificates")),
+        "Penetration Testing": text(get("adversarial_security_testing") ?? get("security_testing")),
+        "Incident Response": text(get("incident_response_plan")),
+        "Uptime SLA": text(get("uptime_sla") ?? get("sla_guarantee")),
+      },
+    },
+    {
+      id: 6,
+      title: "Data Practices",
+      items: {
+        "PII Handling": text(get("pii_handling") ?? get("pii_information")),
+        "Data Retention": text(get("data_retention_policy")),
+        "Data Residency": json(get("data_residency_options")),
+      },
+    },
+    {
+      id: 7,
+      title: "Compliance & Certifications",
+      items: {
+        Certifications: certificationsDisplay,
+        "Audit Frequency": text(get("audit_frequency") ?? get("assessment_completion_level") ?? get("assessment_feedback")),
+      },
+    },
+    {
+      id: 8,
+      title: "Operations & Support",
+      items: {
+        "Support Hours": text(get("support_hours")),
+        "Support SLAs": text(get("support_slas")),
+        "Uptime SLA": text(get("uptime_sla") ?? get("sla_guarantee")),
+        "Change Management": text(get("change_management") ?? get("deployment_scale") ?? get("stage_product")),
+      },
+    },
+    {
+      id: 9,
+      title: "Vendor Management",
+      items: {
+        "Critical Vendors": text(get("critical_vendors")),
+        "Vendor Assessment": text(get("vendor_assessment_frequency")),
+      },
+    },
+  ];
+}
+
+function calculateLikelihood(likelihoodScores: number[]) {
+  if (!likelihoodScores || likelihoodScores.length === 0) {
+    throw new Error('likelihoodScores must be a non-empty array');
+  }
+  const value = likelihoodScores.reduce((a: number, b: number) => a + b, 0) / likelihoodScores.length;
+  return {
+    value: parseFloat(value.toFixed(4)),
+    riskCount: likelihoodScores.length,
+  };
+}
+
+function calculateImpact(impactScores: number[]) {
+  if (!impactScores || impactScores.length === 0) {
+    throw new Error('impactScores must be a non-empty array');
+  }
+  const value = impactScores.reduce((a: number, b: number) => a + b, 0) / impactScores.length;
+  return {
+    value: parseFloat(value.toFixed(4)),
+    riskCount: impactScores.length,
+  };
+}
+
+function calcEntityTypeMultiplier(p: LooseInput) {
+  const baseMap: Record<string, number> = {
+    advisory: 0.8,
+    assisted: 0.9,
+    supervised: 1.0,
+    autonomous: 1.2,
+    fully_autonomous: 1.3,
+  };
+  const stakeMap: Record<string, number> = {
+    Low: -0.1,
+    Moderate: 0.0,
+    High: 0.1,
+    Critical: 0.15,
+    'Life-Critical': 0.2,
+  };
+
+  const base = baseMap[p.decisionAutonomyLevel];
+  if (base === undefined) throw new Error(`Unknown decisionAutonomyLevel: ${p.decisionAutonomyLevel}`);
+  const stakeAdj = stakeMap[p.decisionStakeLevel];
+  if (stakeAdj === undefined) throw new Error(`Unknown decisionStakeLevel: ${p.decisionStakeLevel}`);
+
+  return {
+    et_base: base,
+    stake_adjustment: stakeAdj,
+    value: parseFloat((base + stakeAdj).toFixed(4)),
+  };
+}
+
+function calcTimingMultiplier(p: LooseInput) {
+  const baseMap: Record<string, number> = {
+    design: 0.75,
+    development: 0.80,
+    testing: 0.85,
+    staging: 0.95,
+    production: 1.30,
+  };
+  const phaseMap: Record<string, number> = {
+    pre_procurement: -0.05,
+    vendor_evaluation: -0.03,
+    pilot: 0.0,
+    scaling: 0.05,
+    mature_deployment: 0.10,
+  };
+
+  const base = baseMap[p.devStage];
+  if (base === undefined) throw new Error(`Unknown devStage: ${p.devStage}`);
+  const phaseAdj = phaseMap[p.assessmentPhase];
+  if (phaseAdj === undefined) throw new Error(`Unknown assessmentPhase: ${p.assessmentPhase}`);
+
+  return {
+    tm_base: base,
+    phase_adjustment: phaseAdj,
+    value: parseFloat((base + phaseAdj).toFixed(4)),
+  };
+}
+
+function calcArchitectureMultiplier(p: LooseInput) {
+  const baseMap: Record<string, number> = {
+    off_the_shelf: 0.70,
+    lightly_customized: 0.85,
+    moderately_customized: 1.00,
+    heavily_customized: 1.20,
+    fully_custom: 1.40,
+  };
+  const integMap: Record<string, number> = {
+    standalone: 0.00,
+    simple_api: 0.05,
+    moderate_integration: 0.10,
+    complex_integration: 0.15,
+    legacy_systems: 0.20,
+  };
+  const hostMap: Record<string, number> = {
+    cloud_hosted: 0.00,
+    on_premise: 0.05,
+    hybrid: 0.08,
+    edge_devices: 0.10,
+  };
+
+  const base = baseMap[p.customizationLevel];
+  if (base === undefined) throw new Error(`Unknown customizationLevel: ${p.customizationLevel}`);
+  const integAdj = integMap[p.integrationComplexity];
+  if (integAdj === undefined) throw new Error(`Unknown integrationComplexity: ${p.integrationComplexity}`);
+  const hostAdj = hostMap[p.hostingType];
+  if (hostAdj === undefined) throw new Error(`Unknown hostingType: ${p.hostingType}`);
+
+  return {
+    am_base: base,
+    integration_adj: integAdj,
+    hosting_adj: hostAdj,
+    value: parseFloat((base + integAdj + hostAdj).toFixed(4)),
+  };
+}
+
+function calcScaleMultiplier(p: LooseInput) {
+  const empMap: Record<string, number> = {
+    '1-10': 0.70,
+    '11-50': 0.75,
+    '51-200': 0.80,
+    '201-1000': 0.90,
+    '1001-5000': 1.00,
+    '5001-10000': 1.10,
+    '10000+': 1.20,
+  };
+  const geoMap: Record<string, number> = {
+    single_location: 1.00,
+    regional: 1.05,
+    national: 1.10,
+    multi_national: 1.15,
+    global: 1.20,
+  };
+  const dataMap: Record<string, number> = {
+    minimal: 0.00,
+    moderate: 0.03,
+    large: 0.06,
+    very_large: 0.09,
+    petabyte_scale: 0.12,
+  };
+
+  const empBase = empMap[p.employeeCount];
+  if (empBase === undefined) throw new Error(`Unknown employeeCount: ${p.employeeCount}`);
+  const geoFactor = geoMap[p.geographicRegions];
+  if (geoFactor === undefined) throw new Error(`Unknown geographicRegions: ${p.geographicRegions}`);
+  const dataAdj = dataMap[p.dataVolumeScale];
+  if (dataAdj === undefined) throw new Error(`Unknown dataVolumeScale: ${p.dataVolumeScale}`);
+
+  return {
+    employee_base: empBase,
+    geographic_factor: geoFactor,
+    data_volume_adj: dataAdj,
+    value: parseFloat(((empBase * geoFactor) + dataAdj).toFixed(4)),
+  };
+}
+
+
+function calcRiskToleranceMultiplier(p: LooseInput) {
+  const map: Record<string, number> = {
+    aggressive: 0.85,
+    moderate: 1.00,
+    conservative: 1.15,
+    risk_averse: 1.25,
+  };
+  const value = map[p.aiRiskAppetite];
+  if (value === undefined) throw new Error(`Unknown aiRiskAppetite: ${p.aiRiskAppetite}`);
+  return { value };
+}
+
+function calcIntentMultiplier(p: LooseInput) {
+  const total = p.intentionalRiskCount + p.unintentionalRiskCount;
+  if (total === 0) throw new Error('Total risk count must be > 0 for intent multiplier');
+
+  const intentionalPct = p.intentionalRiskCount / total;
+  const unintentionalPct = p.unintentionalRiskCount / total;
+
+  let value, profile;
+  if (intentionalPct > 0.6) { value = 1.2; profile = 'Intentional'; }
+  else if (unintentionalPct > 0.6) { value = 0.7; profile = 'Unintentional'; }
+  else { value = 1.0; profile = 'Mixed'; }
+
+  return {
+    intentional_count: p.intentionalRiskCount,
+    unintentional_count: p.unintentionalRiskCount,
+    intentional_pct: parseFloat((intentionalPct * 100).toFixed(2)),
+    unintentional_pct: parseFloat((unintentionalPct * 100).toFixed(2)),
+    profile,
+    value,
+  };
+}
+
+function calculateCombinedContextualMultiplier(params: LooseInput) {
+  const ET = calcEntityTypeMultiplier(params);
+  const TM = calcTimingMultiplier(params);
+  const AM = calcArchitectureMultiplier(params);
+  const SM = calcScaleMultiplier(params);
+  const RTM = calcRiskToleranceMultiplier(params);
+  const IM = calcIntentMultiplier(params);
+
+  const value = parseFloat(
+    (ET.value * TM.value * AM.value * SM.value * RTM.value * IM.value).toFixed(4)
+  );
+
+  return {
+    entity_type_multiplier: ET,
+    timing_multiplier: TM,
+    architecture_multiplier: AM,
+    scale_multiplier: SM,
+    risk_tolerance_multiplier: RTM,
+    intent_multiplier: IM,
+    value,
+  };
+}
+
+const DOMAIN_WEIGHTS: Record<string, number> = {
+  'Privacy & Security': 1.20,
+  'AI System Safety': 1.20,
+  'Fairness & Non-discrimination': 1.15,
+  'Transparency & Explainability': 1.10,
+  'Human Oversight': 1.10,
+  'Accountability & Governance': 1.00,
+  'Socioeconomic Impact': 0.90,
+};
+
+function calculateDomainWeight(applicableDomains: Array<{ domain: string; riskCount: number }>) {
+  if (!applicableDomains || applicableDomains.length === 0) {
+    throw new Error('applicableDomains must be a non-empty array');
+  }
+
+  let weightedSum = 0;
+  let totalRisks = 0;
+  const breakdown = [];
+
+  for (const d of applicableDomains) {
+    const w = DOMAIN_WEIGHTS[d.domain];
+    if (w === undefined) throw new Error(`Unknown domain: ${d.domain}`);
+    weightedSum += w * d.riskCount;
+    totalRisks += d.riskCount;
+    breakdown.push({ domain: d.domain, weight: w, risk_count: d.riskCount, contribution: parseFloat((w * d.riskCount).toFixed(4)) });
+  }
+
+  const value = parseFloat((weightedSum / totalRisks).toFixed(4));
+  return { breakdown, weighted_sum: parseFloat(weightedSum.toFixed(4)), total_risks: totalRisks, value };
+}
+
+
+function calculateSectorModifier(p: LooseInput) {
+  let smBase = 0;
+  let useCaseAdj = 0;
+  const adjBreakdown = [];
+
+  switch (p.sector) {
+    case 'Healthcare': {
+      const capMap: Record<string, number> = {
+        diagnostic: 8,
+        treatment_recommendation: 8,
+        patient_communication: 6,
+        administrative: 4,
+        research: 3,
+      };
+      smBase = capMap[p.aiCapabilityType] ?? 5;
+
+      if (p.piiHandling === 'critical') { useCaseAdj += 2; adjBreakdown.push({ reason: 'critical PHI handling', points: 2 }); }
+      if (p.regulatoryComplexity && p.regulatoryComplexity.includes('FDA_clearance')) { useCaseAdj += 1; adjBreakdown.push({ reason: 'FDA clearance required', points: 1 }); }
+      if (p.deploymentScale === 'multi_hospital_system') { useCaseAdj += 1; adjBreakdown.push({ reason: 'multi-hospital deployment', points: 1 }); }
+      if (p.patientDemographic === 'pediatric' || p.patientDemographic === 'elderly') { useCaseAdj += 1; adjBreakdown.push({ reason: 'vulnerable population', points: 1 }); }
+      break;
+    }
+    case 'Financial Services': smBase = 5; break;
+    case 'Autonomous Vehicles': smBase = 6; break;
+    case 'Government': smBase = 5; break;
+    case 'E-Commerce': smBase = 3; break;
+    case 'Technology': smBase = 1; break;
+    default: smBase = 1;
+  }
+
+  return {
+    sector: p.sector,
+    sm_base: smBase,
+    use_case_adjustment: useCaseAdj,
+    adjustment_breakdown: adjBreakdown,
+    value: smBase + useCaseAdj,
+  };
+}
+
+
+function calculateInherentRisk({ L, I, CM, DW, SM }: { L: number; I: number; CM: number; DW: number; SM: number }) {
+  const baseRisk = parseFloat((L * I).toFixed(4));
+  const contextualRisk = parseFloat((baseRisk * CM).toFixed(4));
+  const domainWeightedRisk = parseFloat((contextualRisk * DW).toFixed(4));
+  const sectorAdjustedRisk = parseFloat((domainWeightedRisk + SM).toFixed(4));
+  const normalizedRisk = parseFloat((sectorAdjustedRisk * 4).toFixed(4));
+  const cappedRisk = Math.min(100, normalizedRisk);
+
+  return {
+    base_risk: baseRisk,
+    contextual_risk: contextualRisk,
+    domain_weighted_risk: domainWeightedRisk,
+    sector_adjusted_risk: sectorAdjustedRisk,
+    normalized_risk: normalizedRisk,
+    value: parseFloat(cappedRisk.toFixed(4)),
+  };
+}
+
+
+const MITIGATION_CATEGORIES = [
+  'Data Governance & Privacy Controls',
+  'Model Security & Integrity',
+  'Access Management & Authentication',
+  'Testing & Auditing Procedures',
+  'Post-Deployment Monitoring',
+  'Incident Response & Recovery',
+  'Transparency & Documentation',
+  'Human Oversight Mechanisms',
+  'Bias Detection & Mitigation',
+  'Adversarial Robustness',
+  'Supply Chain Security',
+  'Compliance & Regulatory Adherence',
+  'User Education & Awareness',
+];
+
+function calcCategoryCoverage(p: LooseInput) {
+  const requiredCategories = (p.requiredCategories ?? []) as string[];
+  const implementedCategories = (p.implementedCategories ?? []) as string[];
+  const required = new Set<string>(requiredCategories);
+  const implemented = implementedCategories.filter((c: string) => required.has(c));
+  const coverage = implemented.length / required.size;
+
+  return {
+    required_categories: [...required],
+    required_count: required.size,
+    implemented_categories: implemented,
+    implemented_count: implemented.length,
+    missing_categories: [...required].filter((c: string) => !implemented.includes(c)),
+    value: parseFloat(coverage.toFixed(4)),
+  };
+}
+
+function calcEvidenceQuality(mitigations: Array<{ mitigationId: string; riskCount: number; avgRelevance: number }>) {
+  if (!mitigations || mitigations.length === 0) {
+    throw new Error('mitigations array must be non-empty');
+  }
+
+  let weightedSum = 0;
+  let totalRiskInstances = 0;
+  const breakdown = [];
+
+  for (const m of mitigations) {
+    const contribution = m.riskCount * m.avgRelevance;
+    weightedSum += contribution;
+    totalRiskInstances += m.riskCount;
+    breakdown.push({
+      mitigation_id: m.mitigationId,
+      risk_count: m.riskCount,
+      avg_relevance: m.avgRelevance,
+      weighted_contribution: parseFloat(contribution.toFixed(4)),
+    });
+  }
+
+  return {
+    breakdown,
+    total_weighted: parseFloat(weightedSum.toFixed(4)),
+    total_risk_instances: totalRiskInstances,
+    value: parseFloat((weightedSum / totalRiskInstances).toFixed(4)),
+  };
+}
+
+function calculateMitigationEffectiveness(p: LooseInput) {
+  const coverage = calcCategoryCoverage(p);
+  const quality = calcEvidenceQuality(p.mitigations);
+
+  const value = parseFloat(((coverage.value * 0.6) + (quality.value * 0.4)).toFixed(4));
+
+  return {
+    category_coverage: coverage,
+    evidence_quality: quality,
+    coverage_weight: 0.6,
+    quality_weight: 0.4,
+    value,
+  };
+}
+
+function calculateConfidenceFactor(p: LooseInput) {
+  const methodMap: Record<string, number> = {
+    third_party_audit: 0.90,
+    third_party_review: 0.93,
+    internal_audit: 0.97,
+    self_reported_verified: 1.00,
+    self_reported_unverified: 1.10,
+    no_formal_assessment: 1.15,
+  };
+
+  const base = methodMap[p.assessmentMethod];
+  if (base === undefined) throw new Error(`Unknown assessmentMethod: ${p.assessmentMethod}`);
+
+  const evidenceAdj = [];
+  let factor = base;
+
+  if (p.complianceDocumentationComplete === true) { factor *= 0.98; evidenceAdj.push({ reason: 'compliance documentation complete', multiplier: 0.98 }); }
+  if (p.penetrationTestReportAvailable === true)  { factor *= 0.97; evidenceAdj.push({ reason: 'penetration test report available', multiplier: 0.97 }); }
+  if (p.soc2Type2Current === true)                { factor *= 0.95; evidenceAdj.push({ reason: 'SOC2 Type 2 current', multiplier: 0.95 }); }
+
+  return {
+    method_base: base,
+    evidence_adjustments: evidenceAdj,
+    value: parseFloat(factor.toFixed(4)),
+  };
+}
+
+function calculateProductRisk({ inherentRisk, mitigationEffectiveness, confidenceFactor }: { inherentRisk: number; mitigationEffectiveness: number; confidenceFactor: number }) {
+  const residual = inherentRisk * (1 - mitigationEffectiveness);
+  const value = parseFloat((residual * confidenceFactor).toFixed(4));
+  return {
+    inherent_risk: inherentRisk,
+    mitigation_effectiveness: mitigationEffectiveness,
+    residual_pre_confidence: parseFloat(residual.toFixed(4)),
+    confidence_factor: confidenceFactor,
+    value,
+  };
+}
+
+function calcCertificationsScore(p: LooseInput) {
+  const soc2Map: Record<string, number> = { 'Type 2 (current)': 20, 'Type 1 (current)': 12, 'Type 2 (expired < 1 year)': 8, None: 0 };
+  const isoMap: Record<string, number>  = { 'ISO 27001 + ISO 42001': 25, 'ISO 27001 only': 15, 'ISO 42001 only': 12, 'ISO 9001': 5, None: 0 };
+  const hipaaMap: Record<string, number> = { 'HIPAA BAA + HITRUST': 20, 'HIPAA BAA only': 15, 'HIPAA self-attestation': 8, None: 0 };
+
+  const soc2Points  = soc2Map[p.soc2Certification] ?? 0;
+  const isoPoints   = isoMap[p.isoCertifications]  ?? 0;
+  const hipaaPoints = p.sector === 'Healthcare' ? Math.min(15, hipaaMap[p.hipaaCertification] ?? 0) : 0;
+
+  return {
+    soc2_points: soc2Points,
+    iso_points: isoPoints,
+    hipaa_points: hipaaPoints,
+    value: soc2Points + isoPoints + hipaaPoints,
+  };
+}
+
+function calcAssessmentQualityScore(p: LooseInput) {
+  const methodMap: Record<string, number> = {
+    third_party_audit: 20,
+    third_party_review: 15,
+    internal_audit: 10,
+    internal_review: 8,
+    self_assessment: 3,
+    none: 0,
+  };
+  const freqMap: Record<string, number> = { annual: 5, bi_annual: 3, ad_hoc: 0 };
+
+  const base = methodMap[p.assessmentMethod] ?? 0;
+  const isAudit = ['third_party_audit', 'internal_audit'].includes(p.assessmentMethod);
+  const freqBonus = isAudit ? (freqMap[p.auditFrequency] ?? 0) : 0;
+
+  return { method_base: base, frequency_bonus: freqBonus, value: base + freqBonus };
+}
+
+function calcPolicyScore(p: LooseInput) {
+  const retentionMap: Record<string, number> = { documented_and_enforced: 12, documented_not_enforced: 8, informal: 3 };
+  const irMap: Record<string, number> = { tested_annually: 15, documented_not_tested: 10, basic_runbook: 5 };
+  const privacyMap: Record<string, number> = { comprehensive_gdpr_ccpa: 10, standard: 6, basic: 3 };
+  const ethicsMap: Record<string, number> = { board_approved_operationalized: 8, documented_not_operationalized: 5, draft: 2 };
+
+  const retentionPoints = p.dataRetentionPolicy ? (retentionMap[p.dataRetentionPolicyCompleteness] ?? 0) : 0;
+  const irPoints        = p.incidentResponsePlan ? (irMap[p.incidentResponsePlanMaturity] ?? 0) : 0;
+  const privacyPoints   = p.privacyPolicy ? (privacyMap[p.privacyPolicyScope] ?? 0) : 0;
+  const ethicsPoints    = p.aiEthicsPolicy ? (ethicsMap[p.aiEthicsMaturity] ?? 0) : 0;
+
+  return {
+    data_retention_points: retentionPoints,
+    incident_response_points: irPoints,
+    privacy_policy_points: privacyPoints,
+    ai_ethics_points: ethicsPoints,
+    value: retentionPoints + irPoints + privacyPoints + ethicsPoints,
+  };
+}
+
+function calcOperationalControlsScore(p: LooseInput) {
+  const rollbackMap: Record<string, number> = { automated_instant: 15, automated_manual_trigger: 12, manual_documented: 8, manual_undocumented: 3, none: 0 };
+  const oversightMap: Record<string, number> = { always_in_loop: 12, monitoring_with_intervention: 10, monitoring_only: 6, minimal: 3, none: 0 };
+  const monitorMap: Record<string, number> = { real_time_alerting: 10, daily_dashboard: 7, weekly_reports: 4, monthly_reviews: 2, none: 0 };
+  const versionMap: Record<string, number> = { automated_mlops_pipeline: 8, manual_documented: 5, basic_tracking: 2 };
+
+  const rollbackPts  = rollbackMap[p.rollbackProcedures] ?? 0;
+  const oversightPts = oversightMap[p.humanOversightCapabilities] ?? 0;
+  const monitorPts   = monitorMap[p.continuousMonitoring] ?? 0;
+  const versionPts   = p.modelVersionControl ? (versionMap[p.versioningMaturity] ?? 0) : 0;
+
+  return {
+    rollback_points: rollbackPts,
+    oversight_points: oversightPts,
+    monitoring_points: monitorPts,
+    version_control_points: versionPts,
+    value: rollbackPts + oversightPts + monitorPts + versionPts,
+  };
+}
+
+function calcVendorMaturityAdjustment(p: LooseInput) {
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - p.yearFounded;
+
+  const ageMap = [
+    { min: 10, points: 10 },
+    { min: 5,  points: 5  },
+    { min: 3,  points: 0  },
+    { min: 1,  points: -5 },
+    { min: 0,  points: -10 },
+  ];
+  const agePts = ageMap.find((e: { min: number; points: number }) => age >= e.min)?.points ?? -10;
+
+  const sizeMap: Record<string, number> = { '5001+': 8, '1001-5000': 5, '201-1000': 2, '51-200': 0, '11-50': -3, '1-10': -5 };
+  const sizePts = sizeMap[p.employeeCount] ?? 0;
+
+  const fundingMap: Record<string, number> = { publicly_traded: 7, series_d_plus: 5, series_b_c: 2, series_a: 0, seed_angel: -3 };
+  let fundingPts;
+  if (p.fundingStatus === 'bootstrapped') {
+    fundingPts = p.revenueSufficient ? 3 : -2;
+  } else {
+    fundingPts = fundingMap[p.fundingStatus] ?? 0;
+  }
+
+  const ec = p.enterpriseCustomers ?? 0;
+  const custPts = ec > 10 ? Math.min(10, ec / 2) : (ec - 5);
+
+  return {
+    company_age_years: age,
+    company_age_factor: agePts,
+    company_size_factor: sizePts,
+    funding_stability_factor: fundingPts,
+    customer_base_factor: parseFloat(custPts.toFixed(4)),
+    value: parseFloat((agePts + sizePts + fundingPts + custPts).toFixed(4)),
+  };
+}
+
+function calculateGovernanceRisk(p: LooseInput) {
+  const cert   = calcCertificationsScore(p);
+  const aq     = calcAssessmentQualityScore(p);
+  const policy = calcPolicyScore(p);
+  const ops    = calcOperationalControlsScore(p);
+  const mat    = calcVendorMaturityAdjustment(p);
+
+  const rawScore      = cert.value + aq.value + policy.value + ops.value + mat.value;
+  const governanceScore = Math.min(100, rawScore);
+  const governanceRisk  = 100 - governanceScore;
+
+  return {
+    certifications_score: cert,
+    assessment_quality_score: aq,
+    policy_score: policy,
+    operational_controls_score: ops,
+    vendor_maturity_adjustment: mat,
+    raw_governance_score: parseFloat(rawScore.toFixed(4)),
+    governance_score: parseFloat(governanceScore.toFixed(4)),
+    value: parseFloat(governanceRisk.toFixed(4)),
+  };
+}
+
+function calcSlaScore(p: LooseInput) {
+  const uptimeMap: Record<string, number> = { '99.99%+': 25, '99.95-99.99%': 22, '99.9-99.95%': 20, '99.5-99.9%': 15, '99.0-99.5%': 12, '95.0-99.0%': 8, '< 95%': 3 };
+  const responseMap: Record<string, number> = { '< 15 minutes': 8, '< 1 hour': 6, '< 4 hours': 4, '< 24 hours': 2, '> 24 hours': 0 };
+  const resolutionMap: Record<string, number> = { '< 4 hours': 7, '< 24 hours': 5, '< 72 hours': 3, '> 72 hours': 1 };
+
+  const uptimePts     = uptimeMap[p.slaUptime] ?? 0;
+  const responsePts   = responseMap[p.criticalIncidentResponse] ?? 0;
+  const resolutionPts = resolutionMap[p.criticalIncidentResolution] ?? 0;
+
+  return { uptime_points: uptimePts, response_time_points: responsePts, resolution_time_points: resolutionPts, value: uptimePts + responsePts + resolutionPts };
+}
+
+
+function calcIncidentManagementScore(p: LooseInput) {
+  const planMap: Record<string, number>  = { quarterly_drills: 12, annual_test: 10, documented_untested: 6 };
+  const autoMap: Record<string, number>  = { automated: 10, semi_automated: 7, manual: 3, none: 0 };
+  const commMap: Record<string, number>  = { proactive_status_page: 8, email_notifications: 5, reactive_only: 2, none: 0 };
+
+  const planPts  = p.incidentResponsePlan ? (planMap[p.planTesting] ?? 0) : 0;
+  const autoPts  = autoMap[p.rollbackProcedures] ?? 0;
+  const commPts  = commMap[p.incidentCommunication] ?? 0;
+
+  return { plan_points: planPts, automation_points: autoPts, communication_points: commPts, value: planPts + autoPts + commPts };
+}
+
+
+function calcDeploymentMaturityScore(p: LooseInput) {
+  const scaleMap: Record<string, number> = { enterprise_multi_tenant: 12, enterprise_single_tenant: 10, mid_market: 7, small_business: 4, pilot: 2 };
+  const readinessMap: Record<string, number> = { production_mature: 10, production_new: 8, staging: 4, development: 1 };
+  const isoMap: Record<string, number> = { full_instance_isolation: 8, schema_isolation: 6, row_level_security: 4 };
+
+  const scalePts     = scaleMap[p.deploymentScale] ?? 0;
+  const readinessPts = readinessMap[p.devStage] ?? 0;
+  const multiPts     = p.multiTenancySupport ? (isoMap[p.isolationMethod] ?? 0) : 0;
+
+  return { scale_points: scalePts, production_readiness_points: readinessPts, multi_tenancy_points: multiPts, value: scalePts + readinessPts + multiPts };
+}
+
+
+function calcStabilityScore(p: LooseInput) {
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - p.yearFounded;
+
+  const ageMap = [{ min: 10, pts: 12 }, { min: 5, pts: 9 }, { min: 3, pts: 6 }, { min: 1, pts: 3 }, { min: 0, pts: 0 }];
+  const agePts = ageMap.find((e: { min: number; pts: number }) => age >= e.min)?.pts ?? 0;
+
+  const finMap: Record<string, number> = { profitable_3_years: 10, profitable_1_year: 7, break_even: 5, funded_runway_2_years: 4, funded_runway_1_year: 2, uncertain: 0 };
+  const finPts = finMap[p.financialStatus] ?? 0;
+
+  let retentionPts;
+  if (p.customerRetentionRate === undefined || p.customerRetentionRate === null) {
+    retentionPts = 3;
+  } else if (p.customerRetentionRate >= 95) { retentionPts = 8; }
+  else if (p.customerRetentionRate >= 90)   { retentionPts = 6; }
+  else if (p.customerRetentionRate >= 80)   { retentionPts = 4; }
+  else if (p.customerRetentionRate >= 70)   { retentionPts = 2; }
+  else                                       { retentionPts = 0; }
+
+  return { company_age_years: age, company_age_points: agePts, financial_health_points: finPts, customer_retention_points: retentionPts, value: agePts + finPts + retentionPts };
+}
+
+
+function calcSupportScore(p: LooseInput) {
+  const tierMap: Record<string, number> = { '24_7_phone_chat_email': 10, 'business_hours_phone_chat': 7, 'business_hours_email': 4, 'email_only': 2 };
+  const tamMap: Record<string, number>  = { dedicated_tam: 5, shared_tam: 3, standard_support: 1 };
+
+  const tierPts    = tierMap[p.supportTiers] ?? 0;
+  const coveragePts = p.supportsHipaaWorkflows ? 5 : 0;
+  const tamPts     = tamMap[p.technicalAccountManager] ?? 0;
+
+  return { support_tier_points: tierPts, coverage_points: coveragePts, expertise_points: tamPts, value: tierPts + coveragePts + tamPts };
+}
+
+function calculateOperationalRisk(p: LooseInput) {
+  const sla        = calcSlaScore(p);
+  const incident   = calcIncidentManagementScore(p);
+  const deployment = calcDeploymentMaturityScore(p);
+  const stability  = calcStabilityScore(p);
+  const support    = calcSupportScore(p);
+
+  const rawScore        = sla.value + incident.value + deployment.value + stability.value + support.value;
+  const operationalScore = Math.min(100, rawScore);
+  const operationalRisk  = 100 - operationalScore;
+
+  return {
+    sla_score: sla,
+    incident_management_score: incident,
+    deployment_maturity_score: deployment,
+    stability_score: stability,
+    support_score: support,
+    raw_operational_score: parseFloat(rawScore.toFixed(4)),
+    operational_score: parseFloat(operationalScore.toFixed(4)),
+    value: parseFloat(operationalRisk.toFixed(4)),
+  };
+}
+
+function interpretTrustScore(vts: number) {
+  if (vts >= 90) return { classification: 'Exceptional Vendor', recommended_action: 'Fast-track procurement; minimal additional due diligence' };
+  if (vts >= 76) return { classification: 'Trusted Vendor',     recommended_action: 'Standard procurement process; focus on use-case fit' };
+  if (vts >= 51) return { classification: 'Acceptable Vendor',  recommended_action: 'Enhanced due diligence; require mitigation roadmap' };
+  if (vts >= 26) return { classification: 'Caution Required',   recommended_action: 'Extensive validation; consider alternatives; pilot only' };
+  return              { classification: 'Untrustworthy Vendor', recommended_action: 'Reject; only consider for low-stakes non-production use' };
+}
+
+function calculateVendorTrustScore(userInput: LooseInput) {
+  // ── Product Risk ──────────────────────────────────────────────────────────
+  const L_result  = calculateLikelihood(userInput.likelihoodScores);
+  const I_result  = calculateImpact(userInput.impactScores);
+  const CM_result = calculateCombinedContextualMultiplier(userInput);
+  const DW_result = calculateDomainWeight(userInput.applicableDomains);
+  const SM_result = calculateSectorModifier(userInput);
+  const IR_result = calculateInherentRisk({
+    L: L_result.value,
+    I: I_result.value,
+    CM: CM_result.value,
+    DW: DW_result.value,
+    SM: SM_result.value,
+  });
+  const ME_result = calculateMitigationEffectiveness(userInput);
+  const CF_result = calculateConfidenceFactor(userInput);
+  const PR_result = calculateProductRisk({
+    inherentRisk:          IR_result.value,
+    mitigationEffectiveness: ME_result.value,
+    confidenceFactor:      CF_result.value,
+  });
+
+  // ── Governance Risk ───────────────────────────────────────────────────────
+  const GR_result = calculateGovernanceRisk(userInput);
+
+  // ── Operational Risk ──────────────────────────────────────────────────────
+  const OR_result = calculateOperationalRisk(userInput);
+
+  // ── Final VTS ─────────────────────────────────────────────────────────────
+  const weightedRisk = (PR_result.value * 0.40) + (GR_result.value * 0.30) + (OR_result.value * 0.30);
+  const vts = parseFloat(Math.max(0, 100 - weightedRisk).toFixed(2));
+  console.log("vts",vts)
+  const interpretation = interpretTrustScore(vts);
+
+  // ── DB-ready result ───────────────────────────────────────────────────────\
+  return {
+    // Top-level scores (store these as primary columns)
+    vendor_trust_score:   vts,
+    product_risk:         PR_result.value,
+    governance_risk:      GR_result.value,
+    operational_risk:     OR_result.value,
+    weighted_risk:        parseFloat(weightedRisk.toFixed(4)),
+    classification:       interpretation.classification,
+    recommended_action:   interpretation.recommended_action,
+
+    // Full intermediate breakdown (store as JSONB / TEXT column)
+    detail: {
+      product_risk: {
+        likelihood:              L_result,
+        impact:                  I_result,
+        combined_contextual_multiplier: CM_result,
+        domain_weight:           DW_result,
+        sector_modifier:         SM_result,
+        inherent_risk:           IR_result,
+        mitigation_effectiveness: ME_result,
+        confidence_factor:       CF_result,
+        product_risk:            PR_result,
+      },
+      governance_risk:   GR_result,
+      operational_risk:  OR_result,
+      final_formula: {
+        expression: 'VTS = 100 - [(PR × 0.40) + (GR × 0.30) + (OR × 0.30)]',
+        product_risk_contribution:    parseFloat((PR_result.value * 0.40).toFixed(4)),
+        governance_risk_contribution: parseFloat((GR_result.value * 0.30).toFixed(4)),
+        operational_risk_contribution:parseFloat((OR_result.value * 0.30).toFixed(4)),
+      },
+    },
+  };
+}
+
+export {
+  // Main entry point
+  calculateVendorTrustScore,
+
+  // Individual calculators (useful for partial assessments / unit tests)
+  calculateLikelihood,
+  calculateImpact,
+  calcEntityTypeMultiplier,
+  calcTimingMultiplier,
+  calcArchitectureMultiplier,
+  calcScaleMultiplier,
+  calcRiskToleranceMultiplier,
+  calcIntentMultiplier,
+  calculateCombinedContextualMultiplier,
+  calculateDomainWeight,
+  calculateSectorModifier,
+  calculateInherentRisk,
+  calcCategoryCoverage,
+  calcEvidenceQuality,
+  calculateMitigationEffectiveness,
+  calculateConfidenceFactor,
+  calculateProductRisk,
+  calcCertificationsScore,
+  calcAssessmentQualityScore,
+  calcPolicyScore,
+  calcOperationalControlsScore,
+  calcVendorMaturityAdjustment,
+  calculateGovernanceRisk,
+  calcSlaScore,
+  calcIncidentManagementScore,
+  calcDeploymentMaturityScore,
+  calcStabilityScore,
+  calcSupportScore,
+  calculateOperationalRisk,
+
+  // Constants
+  DOMAIN_WEIGHTS,
+  MITIGATION_CATEGORIES,
+};
+
+
