@@ -12,8 +12,8 @@ interface JwtPayload {
 }
 
 /**
- * PUT /me - update current user's username and/or password.
- * Body: { user_name?: string, newPassword?: string }
+ * PUT /me - update current user's profile fields and/or password.
+ * Body: { user_name?: string, user_first_name?: string, user_last_name?: string, newPassword?: string }
  * Current password is not required to change password (user is already authenticated).
  */
 const updateMyProfile = async (req: Request, res: Response) => {
@@ -26,10 +26,19 @@ const updateMyProfile = async (req: Request, res: Response) => {
 
   const body = req.body ?? {};
   const user_name = typeof body.user_name === "string" ? body.user_name.trim() || null : undefined;
+  const user_first_name =
+    typeof body.user_first_name === "string" ? body.user_first_name.trim() || null : undefined;
+  const user_last_name =
+    typeof body.user_last_name === "string" ? body.user_last_name.trim() || null : undefined;
   const newPassword = typeof body.newPassword === "string" ? body.newPassword : undefined;
 
-  if (user_name === undefined && newPassword === undefined) {
-    return res.status(400).json({ message: "At least one field (username or password) is required to update." });
+  if (
+    user_name === undefined &&
+    user_first_name === undefined &&
+    user_last_name === undefined &&
+    newPassword === undefined
+  ) {
+    return res.status(400).json({ message: "At least one editable field is required to update." });
   }
 
   try {
@@ -38,6 +47,8 @@ const updateMyProfile = async (req: Request, res: Response) => {
         id: usersTable.id,
         email: usersTable.email,
         user_name: usersTable.user_name,
+        user_first_name: usersTable.user_first_name,
+        user_last_name: usersTable.user_last_name,
       })
       .from(usersTable)
       .where(eq(usersTable.id, Number(userId)))
@@ -47,7 +58,12 @@ const updateMyProfile = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const updates: { user_name?: string | null; user_password?: string } = {};
+    const updates: {
+      user_name?: string | null;
+      user_first_name?: string | null;
+      user_last_name?: string | null;
+      user_password?: string;
+    } = {};
 
     if (user_name !== undefined && user_name !== user.user_name) {
       if (user_name !== null && user_name.length > 0) {
@@ -70,9 +86,17 @@ const updateMyProfile = async (req: Request, res: Response) => {
       updates.user_password = await bcrypt.hash(newPassword, SALT_ROUNDS);
     }
 
+    if (user_first_name !== undefined && user_first_name !== user.user_first_name) {
+      updates.user_first_name = user_first_name;
+    }
+
+    if (user_last_name !== undefined && user_last_name !== user.user_last_name) {
+      updates.user_last_name = user_last_name;
+    }
+
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({
-        message: "At least one field (username or password) is required to update.",
+        message: "At least one editable field is required to update.",
       });
     }
 

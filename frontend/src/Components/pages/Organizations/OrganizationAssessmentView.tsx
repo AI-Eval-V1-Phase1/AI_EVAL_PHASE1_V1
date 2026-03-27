@@ -353,7 +353,11 @@ export default function OrganizationAssessmentView() {
                       <button
                         type="button"
                         className="view_rpr_btn vendor_directory_card_action_btn"
-                        onClick={() => navigate(`/reports/${report.id}`)}
+                        onClick={() =>
+                          navigate(`/reports/${report.id}`, {
+                            state: { reportTitle: getReportCardTitle(report.title ?? "") },
+                          })
+                        }
                         aria-label={`View report: ${getReportCardTitle(report.title ?? "")}`}
                       >
                         View Report

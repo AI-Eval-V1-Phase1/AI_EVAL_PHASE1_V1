@@ -17,6 +17,11 @@
     sans-serif;
 }
 
+.userhelptext {
+  font-size: 12px;
+  color: gray;
+}
+
 /* Account header: icon + title, same spacing as list items for consistency */
 .user_popup_account_header {
   display: flex;

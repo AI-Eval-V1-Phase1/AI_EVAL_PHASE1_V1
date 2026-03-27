@@ -1759,6 +1759,16 @@ font-size: 1em;
   color: #1e40af;
 }
 
+.vendor_portal_grade_shield_d {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.vendor_portal_grade_shield_ef {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .vendor_portal_grade_na {
   color: #9ca3af;
 }
@@ -1802,7 +1812,7 @@ font-size: 1em;
 }
 
 .vendor_portal_table_link:hover {
-  text-decoration: underline;
+  /* text-decoration: underline; */
 }
 
 .vendor_portal_compliance_names {

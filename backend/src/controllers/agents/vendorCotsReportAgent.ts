@@ -86,6 +86,12 @@ export interface FullReportJson {
   appendix?: Appendix;
 }
 
+/** LLM-written short bullets per catalog-matched risk (merged into report.dbTop5Risks on save). */
+export interface MatchedRiskSummary {
+  risk_id: string;
+  summary_points: string[];
+}
+
 export interface GeneratedVendorCotsReport {
   overallRiskScore: number;
   riskLevel: string;
@@ -95,6 +101,8 @@ export interface GeneratedVendorCotsReport {
   recommendations: string[];
   recommendationsWithPriority?: RecommendationWithPriority[];
   fullReport?: FullReportJson;
+  /** Model-generated concise bullets for each DB top-5 risk (keyed by risk_id). */
+  matchedRiskSummaries?: MatchedRiskSummary[];
   raw?: string;
 }
 
@@ -121,7 +129,8 @@ If a "Database-matched top risks and mitigations" section is provided below, inc
 ## 4. REPORT_JSON
 After the sections above, output a single JSON object in a fenced code block starting with \`\`\`json and ending with \`\`\`. The JSON must contain only these keys (use empty strings or empty arrays if not applicable). Infer reasonable values from the assessment data.
 - roiAnalysis: object with timeSavedPerEmployee (string), timeSavedSource (string), annualHoursRecovered, productivityValue, annualCost, roiMultiple, paybackPeriod, paybackSource; comparisonAlternatives: array of { alternative, annualCost, roi, notes }
-- securityPosture: object with level (string), score (string e.g. "8/100"), risks (string array), mitigations (string array), residualRisk (string)
+- securityPosture: object with level (string), score (string e.g. "8/100"), risks (string array — each string ONE short bullet phrase, max ~25 words, not paragraphs), mitigations (string array of short actionable lines), residualRisk (string)
+- matchedRiskSummaries: array. If "Database-matched top risks" appears above, include exactly one object per listed catalog risk (same order, max 5). Each: { "risk_id": "<exact Risk [id] from that section>", "summary_points": ["2-4 concise bullets", "..."] } — bullets only from that risk's title/description; each bullet under 25 words; no generic filler. If no database-matched risks, use [].
 - complianceAlignment: object with summary (string), requirements: array of { name, description, status: "Met"|"Pending"|"Deferred" }
 - frameworkMapping: object with rows: array of { framework, coverage, controls, notes }
 - implementationPlan: object with phases: array of { title, timeline, status: "Complete"|"In Progress"|"Planned", activities (string array), deliverables (string array) }
@@ -241,6 +250,7 @@ function parseReportSections(rawReply: string): GeneratedVendorCotsReport {
   }
 
   let fullReport: FullReportJson | undefined;
+  let matchedRiskSummaries: MatchedRiskSummary[] | undefined;
   const jsonBlock = rawReply.match(/```json\s*([\s\S]*?)```/)?.[1] ?? rawReply.match(/---REPORT_JSON---\s*([\s\S]*?)(?=\n---|$)/)?.[1];
   if (jsonBlock) {
     try {
@@ -254,6 +264,7 @@ function parseReportSections(rawReply: string): GeneratedVendorCotsReport {
         competitivePositioning: typeof parsed.competitivePositioning === "string" ? parsed.competitivePositioning : undefined,
         appendix: sanitizeAppendix(parsed.appendix),
       };
+      matchedRiskSummaries = sanitizeMatchedRiskSummaries(parsed.matchedRiskSummaries);
     } catch {
       // ignore invalid JSON
     }
@@ -268,7 +279,28 @@ function parseReportSections(rawReply: string): GeneratedVendorCotsReport {
     recommendations,
     recommendationsWithPriority: recommendationsWithPriority.length > 0 ? recommendationsWithPriority : undefined,
     fullReport,
+    matchedRiskSummaries,
   };
+}
+
+function sanitizeMatchedRiskSummaries(v: unknown): MatchedRiskSummary[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const out: MatchedRiskSummary[] = [];
+  for (const x of v) {
+    if (x == null || typeof x !== "object") continue;
+    const o = x as Record<string, unknown>;
+    const risk_id = String(o.risk_id ?? "").trim();
+    if (!risk_id) continue;
+    const summary_points = Array.isArray(o.summary_points)
+      ? (o.summary_points as unknown[])
+          .map((p) => String(p ?? "").trim())
+          .filter((s) => s.length > 1)
+          .slice(0, 8)
+      : [];
+    if (summary_points.length === 0) continue;
+    out.push({ risk_id, summary_points });
+  }
+  return out.length > 0 ? out : undefined;
 }
 
 function sanitizeRoi(v: unknown): RoiAnalysis | undefined {

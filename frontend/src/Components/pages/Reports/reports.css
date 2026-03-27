@@ -388,7 +388,7 @@
 
 /* Section cards (all sections) – same look as report_risk_category_block */
 .report_section_card {
-  background: #f9fafb;
+  background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 1rem 1.25rem;
@@ -704,7 +704,7 @@
   white-space: normal;
 }
 .report_exec_brief_section {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1em;
 }
 .report_exec_brief_section:last-child {
   margin-bottom: 0;
@@ -740,6 +740,65 @@
 }
 .report_exec_brief_bullet {
   margin-bottom: 0.25rem;
+}
+.report_blocker_list {
+  list-style: none;
+  padding-left: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+.report_blocker_item {
+  margin-bottom: 0;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+@media (max-width: 900px) {
+  .report_blocker_list {
+    grid-template-columns: 1fr;
+  }
+}
+.report_blocker_main {
+  color: #111827;
+}
+.report_blocker_meta {
+  margin-top: 0.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5em;
+  font-size: 0.84rem;
+  flex-direction: row;
+  align-items: center;
+}
+.report_blocker_metric {
+  color: #4b5563;
+}
+.report_blocker_metric_value {
+  font-weight: 700;
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+.report_severity_high {
+  color: #991b1b;
+  background: #fee2e2;
+}
+.report_severity_medium {
+  color: #9a3412;
+  background: #ffedd5;
+}
+.report_severity_low {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+.report_severity_unknown {
+  color: #374151;
+  background: #e5e7eb;
+}
+.report_blocker_evidence {
+  color: #4b5563;
 }
 
 /* Assessment details key-value list */
@@ -1112,7 +1171,7 @@
 
 /* Vendor-Side Context Panel – same card color as report_section_card */
 .report_context_panel {
-  background: #f9fafb;
+  background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 1rem 1.25rem;
@@ -1277,6 +1336,49 @@
   margin: 0 0 1rem 0;
 }
 
+/* Risk Assessment: vendor / buyer / shared scope groups */
+.report_risk_scope_group {
+  margin-bottom: 1.35rem;
+}
+
+.report_risk_scope_group:last-of-type {
+  margin-bottom: 0;
+}
+
+.report_risk_scope_banner {
+  margin-bottom: 0.65rem;
+}
+
+.report_risk_scope_tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+}
+
+.report_risk_tag_vendor {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+.report_risk_tag_buyer {
+  background: #ede9fe;
+  color: #5b21b6;
+  border-color: #ddd6fe;
+}
+
+.report_risk_tag_shared {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
 /* Inner cards – platform gray variant for contrast inside section cards */
 .report_risk_category_block {
   background: #f3f4f6;
@@ -1326,6 +1428,12 @@
   font-size: 0.875rem;
   color: #374151;
   line-height: 1.5;
+}
+
+/* Summarized risk bullets: short, scannable lines */
+.report_risk_summary_list li {
+  line-height: 1.45;
+  margin-bottom: 0.4rem;
 }
 
 .report_risks_list li,

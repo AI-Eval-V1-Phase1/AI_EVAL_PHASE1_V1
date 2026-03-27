@@ -145,7 +145,7 @@
 }
 
 .vendor_directory_card_header_text {
-  flex: 1;
+  /* flex: 1; */
   min-width: 0;
 }
 

@@ -5,6 +5,7 @@ import {
   ChevronRight,
   ClipboardPlus,
   Download,
+  Eye,
   FilePlus,
   FileText,
   FileTextIcon,
@@ -22,6 +23,10 @@ import type {
 } from "./types";
 import { BASE_URL, formatDisplayDate } from "./utils";
 import { formatDateDDMMMYYYY } from "../../../utils/formatDate";
+import {
+  gradeFromOverallRiskScore,
+  type CompleteReportLetterGrade,
+} from "../../../utils/completeReportGrade";
 import "./dashboard.css";
 import ClickTooltip from "../../UI/ClickTooltip";
 
@@ -100,25 +105,6 @@ function normalizeCertificatesFromApi(
   });
 }
 
-function findTrustScoreForAssessment(
-  assessment: VendorAssessmentItem,
-  attestations: AttestationItem[],
-): number | null {
-  const vid = (assessment.vendorAttestationId ?? "").toString().trim();
-  if (!vid) return null;
-  for (const att of attestations) {
-    const idMatch = String(att.id) === vid;
-    const alt =
-      att.vendor_self_attestation_id != null &&
-      String(att.vendor_self_attestation_id).trim() === vid;
-    if (idMatch || alt) {
-      const s = att.generated_profile_report?.trustScore?.overallScore;
-      return s != null && !Number.isNaN(Number(s)) ? Number(s) : null;
-    }
-  }
-  return null;
-}
-
 function findCertificateTypesForAssessment(
   assessment: VendorAssessmentItem,
   attestations: AttestationItem[],
@@ -161,20 +147,9 @@ function findCertificateTypesForAssessment(
   return [...types];
 }
 
-function gradeFromScore(score: number | null): "A" | "B" | "C" | null {
-  if (score == null) return null;
-  if (score >= 90) return "A";
-  if (score >= 75) return "B";
-  return "C";
-}
-
-type ReportGrade = "A+" | "A" | "B" | "C" | "D";
-
 type AssessmentReportMeta = {
   reportId: string;
-  vendorGrade: ReportGrade | null;
-  /** Display percentage for Vendor Grade bar, derived from complete report risk score. */
-  vendorGradePercent: number | null;
+  vendorGrade: CompleteReportLetterGrade | null;
 };
 
 function extractOverallRiskScoreFromCompleteReport(
@@ -196,19 +171,8 @@ function extractOverallRiskScoreFromCompleteReport(
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
-/** Matches Complete Report detail grade mapping (A+..D). */
-function gradeFromCompleteReportRiskScore(
-  score: number | null,
-): ReportGrade | null {
-  if (score == null) return null;
-  if (score <= 20) return "A+";
-  if (score <= 40) return "A";
-  if (score <= 60) return "B";
-  if (score <= 80) return "C";
-  return "D";
-}
-
 const VendorOverview = () => {
+  document.title = "AI Eval | Dashboard"
   const [attestations, setAttestations] = useState<AttestationItem[]>([]);
   const [assessments, setAssessments] = useState<VendorAssessmentItem[]>([]);
   const [reportsByAssessmentId, setReportsByAssessmentId] = useState<
@@ -378,9 +342,8 @@ const VendorOverview = () => {
             );
             byAssessmentId[aid] = {
               reportId: String(r.id),
-              vendorGrade: gradeFromCompleteReportRiskScore(riskScore),
-              vendorGradePercent:
-                riskScore != null ? Math.max(0, Math.min(100, 100 - riskScore)) : null,
+              vendorGrade:
+                riskScore != null ? gradeFromOverallRiskScore(riskScore) : null,
             };
           },
         );
@@ -853,7 +816,6 @@ const VendorOverview = () => {
                   const org = (item.customerOrganizationName ?? "")
                     .toString()
                     .trim();
-                  const displayProduct = org ? `${product} (${org})` : product;
                   const lastVerified = formatDateDDMMMYYYY(
                     item.expiryAt ??
                       item.cotsUpdatedAt ??
@@ -861,12 +823,17 @@ const VendorOverview = () => {
                       item.createdAt,
                   );
                   const reportId = reportMeta?.reportId;
-                  const barColor =
-                    reportMeta?.vendorGrade === "A" ||
-                    reportMeta?.vendorGrade === "A+"
-                      ? "var(--vendor-portal-grade-a, #16a34a)"
-                      : "#2563eb";
-                  const displayScore = reportMeta?.vendorGradePercent ?? null;
+                  const vendorGrade = reportMeta?.vendorGrade ?? null;
+                  const gradeVariantClass =
+                    vendorGrade === "A"
+                      ? "vendor_portal_grade_shield_a"
+                      : vendorGrade === "B" || vendorGrade === "C"
+                        ? "vendor_portal_grade_shield_b"
+                        : vendorGrade === "D"
+                          ? "vendor_portal_grade_shield_d"
+                          : vendorGrade === "E" || vendorGrade === "F"
+                            ? "vendor_portal_grade_shield_ef"
+                            : "";
                   const complianceCertificates = findCertificateTypesForAssessment(
                     item,
                     attestations,
@@ -885,27 +852,17 @@ const VendorOverview = () => {
                       </td>
                       <td>{org}</td>
                       <td>
-                        <div className="vendor_portal_grade_cell">
-                          {displayScore != null && (
-                            <div className="vendor_portal_score_cell">
-                              <span className="vendor_portal_score_pct">
-                                {displayScore}%
-                              </span>
-                              <div className="vendor_portal_progress_track">
-                                <div
-                                  className="vendor_portal_progress_fill"
-                                  style={{
-                                    width: `${Math.min(100, displayScore)}%`,
-                                    background: barColor,
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          )}
-                          {displayScore == null && (
-                            <span className="vendor_portal_grade_na">—</span>
-                          )}
-                        </div>
+                        {vendorGrade ? (
+                          <span
+                            className={`vendor_portal_grade_shield ${gradeVariantClass}`.trim()}
+                            title={`Vendor grade ${vendorGrade} (from complete report)`}
+                          >
+                            <Shield size={14} aria-hidden />
+                            {vendorGrade}
+                          </span>
+                        ) : (
+                          <span className="vendor_portal_grade_na">—</span>
+                        )}
                       </td>
                       <td>
                         {complianceCertificates.length > 0 ? (
@@ -929,9 +886,9 @@ const VendorOverview = () => {
                         {reportId ? (
                           <Link
                             to={`/reports/${reportId}`}
-                            className="vendor_portal_table_link"
+                            className="vendor_portal_table_link user_table_action_btn "
                           >
-                            View
+                            <Eye width={16}/>View
                           </Link>
                         ) : (
                           <span className="vendor_portal_grade_na">—</span>

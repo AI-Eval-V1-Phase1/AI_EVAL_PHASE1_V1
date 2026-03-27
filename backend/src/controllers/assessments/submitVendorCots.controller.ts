@@ -7,7 +7,50 @@ import { customerRiskAssessmentReports } from "../../schema/assessments/customer
 import { vendorSelfAttestations } from "../../schema/assessments/vendorSelfAttestations.js";
 import { eq, and, or } from "drizzle-orm";
 import { generateVendorCotsReport } from "../agents/vendorCotsReportAgent.js";
-import { getTop5RisksWithMitigations } from "../../services/getTop5RisksFromAssessmentContext.js";
+import {
+  getTop5RisksWithMitigations,
+  type Top5RisksWithMitigations,
+} from "../../services/getTop5RisksFromAssessmentContext.js";
+
+/** Persisted under fullReport.appendix: catalog rows used to generate the assessment. */
+function appendixCatalogRisksAndMitigations(
+  top5: Top5RisksWithMitigations | null,
+): Array<{ risk_id: string; mitigation_action_names: string[] }> | undefined {
+  if (!top5?.top5Risks?.length) return undefined;
+  const items: Array<{ risk_id: string; mitigation_action_names: string[] }> = [];
+  for (const r of top5.top5Risks) {
+    const rid = String(r.risk_id ?? "").trim();
+    if (!rid) continue;
+    const mids = top5.mitigationsByRiskId[rid] ?? [];
+    const names = [
+      ...new Set(
+        mids
+          .map((m) => String(m.mitigation_action_name ?? "").trim())
+          .filter(Boolean),
+      ),
+    ];
+    items.push({ risk_id: rid, mitigation_action_names: names });
+  }
+  return items.length ? items : undefined;
+}
+/** Persisted under fullReport.appendix: flat rows of risk_id + mitigation_action_name used to generate the assessment. */
+function appendixRiskMitigationActions(
+  top5: Top5RisksWithMitigations | null,
+): Array<{ risk_id: string; mitigation_action_name: string }> | undefined {
+  if (!top5?.top5Risks?.length) return undefined;
+  const items: Array<{ risk_id: string; mitigation_action_name: string }> = [];
+  for (const r of top5.top5Risks) {
+    const rid = String(r.risk_id ?? "").trim();
+    if (!rid) continue;
+    const mids = top5.mitigationsByRiskId[rid] ?? [];
+    for (const m of mids) {
+      const name = String(m.mitigation_action_name ?? "").trim();
+      if (!name) continue;
+      items.push({ risk_id: rid, mitigation_action_name: name });
+    }
+  }
+  return items.length ? items : undefined;
+}
 import { calculateRoiFromAssessment } from "../../services/roiCalculator.js";
 
 /** Fixed appendix text for all reports; only reviewedBy is set from the user who submitted. */
@@ -103,6 +146,7 @@ async function createCustomerRiskReport(
         domains: r.domains,
         intent: r.intent,
         timing: r.timing,
+        risk_type_detected: r.risk_type_detected,
         primary_risk: r.primary_risk,
         description: r.description,
         executive_summary: r.executive_summary,
@@ -122,6 +166,35 @@ async function createCustomerRiskReport(
 
   const generated = await generateVendorCotsReport(payloadCots, top5RisksWithMitigations);
   if (generated) {
+    if (
+      generated.matchedRiskSummaries &&
+      generated.matchedRiskSummaries.length > 0 &&
+      report.dbTop5Risks != null &&
+      typeof report.dbTop5Risks === "object"
+    ) {
+      const dbTop = report.dbTop5Risks as {
+        top5Risks?: Array<Record<string, unknown>>;
+        mitigationsByRiskId?: unknown;
+      };
+      const rows = dbTop.top5Risks;
+      if (Array.isArray(rows)) {
+        const byId = new Map(
+          generated.matchedRiskSummaries.map((m) => [
+            String(m.risk_id ?? "").trim(),
+            m.summary_points,
+          ] as const),
+        );
+        dbTop.top5Risks = rows.map((r) => {
+          const rid = String(r.risk_id ?? "").trim();
+          const pts = rid ? byId.get(rid) : undefined;
+          if (pts && pts.length > 0) {
+            return { ...r, summary_points: pts };
+          }
+          return r;
+        });
+      }
+    }
+
     const fullReport = generated.fullReport as Record<string, unknown> | undefined;
     const appendix = (fullReport?.appendix && typeof fullReport.appendix === "object")
       ? (fullReport.appendix as Record<string, unknown>)
@@ -145,6 +218,8 @@ async function createCustomerRiskReport(
           reviewedBy: reviewedByUser.trim() || "—",
           confidentiality: APPENDIX_CONFIDENTIALITY,
           dataSources: Array.isArray(appendix.dataSources) ? appendix.dataSources : undefined,
+          catalogRisksAndMitigations: appendixCatalogRisksAndMitigations(top5RisksWithMitigations),
+          catalogRiskMitigationActions: appendixRiskMitigationActions(top5RisksWithMitigations),
         },
       },
     };

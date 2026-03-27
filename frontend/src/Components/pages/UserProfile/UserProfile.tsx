@@ -45,6 +45,8 @@ const UserProfile = () => {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showSettingsPopup, setShowSettingsPopup] = useState(false);
   const [settingsUsername, setSettingsUsername] = useState("");
+  const [settingsFirstName, setSettingsFirstName] = useState("");
+  const [settingsLastName, setSettingsLastName] = useState("");
   const [settingsNewPassword, setSettingsNewPassword] = useState("");
   const [settingsConfirmPassword, setSettingsConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -90,9 +92,16 @@ const UserProfile = () => {
           setSettingsUsername(String(data.user_name));
           sessionStorage.setItem("userName", String(data.user_name));
         }
-        if (data?.user_first_name != null) sessionStorage.setItem("userFirstName", String(data.user_first_name));
-        if (data?.user_last_name != null) sessionStorage.setItem("userLastName", String(data.user_last_name));
-        if (data?.email != null) sessionStorage.setItem("userEmail", String(data.email));
+        if (data?.user_first_name != null) {
+          setSettingsFirstName(String(data.user_first_name));
+          sessionStorage.setItem("userFirstName", String(data.user_first_name));
+        }
+        if (data?.user_last_name != null) {
+          setSettingsLastName(String(data.user_last_name));
+          sessionStorage.setItem("userLastName", String(data.user_last_name));
+        }
+        if (data?.email != null)
+          sessionStorage.setItem("userEmail", String(data.email));
       })
       .catch(() => {});
   }, [showSettingsPopup]);
@@ -113,13 +122,19 @@ const UserProfile = () => {
       }
     }
     const user_name = settingsUsername.trim() || null;
+    const user_first_name = settingsFirstName.trim() || null;
+    const user_last_name = settingsLastName.trim() || null;
     const usernameUnchanged = settingsUsername.trim() === (userName || "");
-    if (usernameUnchanged && !newPass) {
-      setSettingsError("At least one field (username or password) is required to update.");
+    const firstNameUnchanged = settingsFirstName.trim() === (firstName || "");
+    const lastNameUnchanged = settingsLastName.trim() === (lastName || "");
+    if (usernameUnchanged && firstNameUnchanged && lastNameUnchanged && !newPass) {
+      setSettingsError(
+        "At least one editable field is required to update.",
+      );
       return;
     }
-    if (user_name === null && !newPass) {
-      setSettingsError("Enter a username and/or new password.");
+    if (user_name === null && user_first_name === null && user_last_name === null && !newPass) {
+      setSettingsError("Enter a value for username, first name, last name, and/or new password.");
       return;
     }
     setSettingsSaving(true);
@@ -133,6 +148,8 @@ const UserProfile = () => {
         },
         body: JSON.stringify({
           user_name: user_name ?? undefined,
+          user_first_name: user_first_name ?? undefined,
+          user_last_name: user_last_name ?? undefined,
           newPassword: newPass || undefined,
         }),
       });
@@ -140,12 +157,18 @@ const UserProfile = () => {
       if (res.ok) {
         const u = data.user;
         if (u) {
-          if (u.user_name != null) sessionStorage.setItem("userName", String(u.user_name));
-          if (u.user_first_name != null) sessionStorage.setItem("userFirstName", String(u.user_first_name));
-          if (u.user_last_name != null) sessionStorage.setItem("userLastName", String(u.user_last_name));
-          if (u.email != null) sessionStorage.setItem("userEmail", String(u.email));
+          if (u.user_name != null)
+            sessionStorage.setItem("userName", String(u.user_name));
+          if (u.user_first_name != null)
+            sessionStorage.setItem("userFirstName", String(u.user_first_name));
+          if (u.user_last_name != null)
+            sessionStorage.setItem("userLastName", String(u.user_last_name));
+          if (u.email != null)
+            sessionStorage.setItem("userEmail", String(u.email));
         }
-        window.dispatchEvent(new CustomEvent("userProfileUpdated", { detail: u ?? {} }));
+        window.dispatchEvent(
+          new CustomEvent("userProfileUpdated", { detail: u ?? {} }),
+        );
         toast.success(data.message ?? "Settings saved.");
         setShowSettingsPopup(false);
         setSettingsNewPassword("");
@@ -246,6 +269,8 @@ const UserProfile = () => {
             onClick={() => {
               setShowSettingsPopup(true);
               setSettingsUsername(userName || "");
+              setSettingsFirstName(firstName || "");
+              setSettingsLastName(lastName || "");
               setSettingsNewPassword("");
               setSettingsConfirmPassword("");
               setSettingsError("");
@@ -255,6 +280,8 @@ const UserProfile = () => {
                 e.preventDefault();
                 setShowSettingsPopup(true);
                 setSettingsUsername(userName || "");
+                setSettingsFirstName(firstName || "");
+                setSettingsLastName(lastName || "");
                 setSettingsNewPassword("");
                 setSettingsConfirmPassword("");
                 setSettingsError("");
@@ -305,10 +332,13 @@ const UserProfile = () => {
             if (e.target === e.currentTarget) setShowProfilePopup(false);
           }}
         >
-          <div className="profile_modal_content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="profile_modal_content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="profile_modal_header">
               <h2 id="profile_modal_title" className="profile_modal_title">
-              User Profile Details
+                User Profile Details
               </h2>
               <button
                 type="button"
@@ -439,14 +469,24 @@ const UserProfile = () => {
           aria-modal="true"
           aria-labelledby="settings_modal_title"
           onClick={(e) => {
-            if (e.target === e.currentTarget && !settingsSaving) setShowSettingsPopup(false);
+            if (e.target === e.currentTarget && !settingsSaving)
+              setShowSettingsPopup(false);
           }}
         >
-          <div className="profile_modal_content settings_modal_content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="profile_modal_content settings_modal_content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="profile_modal_header">
-              <h2 id="settings_modal_title" className="profile_modal_title">
-                User Settings
-              </h2>
+              <div>
+                <h2 id="settings_modal_title" className="profile_modal_title">
+                  User Settings
+                </h2>
+                <p className="userhelptext">
+                  To change other details contact Admin
+                </p>
+              </div>
+
               <button
                 type="button"
                 className="modal_close_btn"
@@ -492,6 +532,68 @@ const UserProfile = () => {
                 </div>
                 <div className="settings_form_row">
                   <div className="settings_form_group">
+                    <label htmlFor="settings_organization">
+                      <Landmark size={16} aria-hidden />
+                      Organization
+                    </label>
+                    <input
+                      id="settings_organization"
+                      type="text"
+                      className="settings_input settings_input_readonly"
+                      value={organizationName || "—"}
+                      readOnly
+                      aria-readonly="true"
+                    />
+                  </div>
+                  <div className="settings_form_group">
+                    <label htmlFor="settings_role">
+                      <UserStar size={16} aria-hidden />
+                      Role
+                    </label>
+                    <input
+                      id="settings_role"
+                      type="text"
+                      className="settings_input settings_input_readonly"
+                      value={roleLabel || "—"}
+                      readOnly
+                      aria-readonly="true"
+                    />
+                  </div>
+                </div>
+                <div className="settings_form_row">
+                  <div className="settings_form_group">
+                    <label htmlFor="settings_first_name">
+                      <User size={16} aria-hidden />
+                      First Name
+                    </label>
+                    <input
+                      id="settings_first_name"
+                      type="text"
+                      className="settings_input"
+                      value={settingsFirstName}
+                      onChange={(e) => setSettingsFirstName(e.target.value)}
+                      placeholder="Enter first name"
+                      autoComplete="given-name"
+                    />
+                  </div>
+                  <div className="settings_form_group">
+                    <label htmlFor="settings_last_name">
+                      <User size={16} aria-hidden />
+                      Last Name
+                    </label>
+                    <input
+                      id="settings_last_name"
+                      type="text"
+                      className="settings_input"
+                      value={settingsLastName}
+                      onChange={(e) => setSettingsLastName(e.target.value)}
+                      placeholder="Enter last name"
+                      autoComplete="family-name"
+                    />
+                  </div>
+                </div>
+                <div className="settings_form_row">
+                  <div className="settings_form_group">
                     <label htmlFor="settings_new_password">
                       <LockKeyhole size={16} aria-hidden />
                       New password
@@ -511,9 +613,13 @@ const UserProfile = () => {
                         role="button"
                         tabIndex={0}
                         onClick={() => setShowNewPassword((v) => !v)}
-                        onKeyDown={(e) => e.key === "Enter" && setShowNewPassword((v) => !v)}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && setShowNewPassword((v) => !v)
+                        }
                         className="passwordVisible"
-                        aria-label={showNewPassword ? "Hide password" : "Show password"}
+                        aria-label={
+                          showNewPassword ? "Hide password" : "Show password"
+                        }
                       >
                         {showNewPassword ? (
                           <Eye size={20} strokeWidth={1.5} aria-hidden />
@@ -534,7 +640,9 @@ const UserProfile = () => {
                         type={showConfirmPassword ? "text" : "password"}
                         className="settings_input"
                         value={settingsConfirmPassword}
-                        onChange={(e) => setSettingsConfirmPassword(e.target.value)}
+                        onChange={(e) =>
+                          setSettingsConfirmPassword(e.target.value)
+                        }
                         placeholder="Confirm password"
                         autoComplete="new-password"
                       />
@@ -542,9 +650,15 @@ const UserProfile = () => {
                         role="button"
                         tabIndex={0}
                         onClick={() => setShowConfirmPassword((v) => !v)}
-                        onKeyDown={(e) => e.key === "Enter" && setShowConfirmPassword((v) => !v)}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && setShowConfirmPassword((v) => !v)
+                        }
                         className="passwordVisible"
-                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
                       >
                         {showConfirmPassword ? (
                           <Eye size={20} strokeWidth={1.5} aria-hidden />
@@ -555,12 +669,16 @@ const UserProfile = () => {
                     </div>
                   </div>
                 </div>
-                {settingsError && <p className="settings_error">{settingsError}</p>}
+                {settingsError && (
+                  <p className="settings_error">{settingsError}</p>
+                )}
                 <div className="settings_form_actions">
                   <Button
                     type="button"
                     className="orgCancelBtn"
-                    onClick={() => !settingsSaving && setShowSettingsPopup(false)}
+                    onClick={() =>
+                      !settingsSaving && setShowSettingsPopup(false)
+                    }
                     disabled={settingsSaving}
                   >
                     <Ban size={16} aria-hidden />
@@ -575,7 +693,11 @@ const UserProfile = () => {
                     {settingsSaving ? (
                       <>
                         Updating…
-                        <Loader2 size={18} className="auth_spinner" aria-hidden />
+                        <Loader2
+                          size={18}
+                          className="auth_spinner"
+                          aria-hidden
+                        />
                       </>
                     ) : (
                       <>

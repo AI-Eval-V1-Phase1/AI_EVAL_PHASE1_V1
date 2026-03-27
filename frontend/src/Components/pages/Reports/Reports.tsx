@@ -196,12 +196,17 @@ function Reports() {
         `/buyer-vendor-risk-report/${encodeURIComponent(report.assessmentId)}`,
       );
     } else {
-      navigate(`/reports/${report.id}`);
+      navigate(`/reports/${report.id}`, {
+        state: { reportTitle: getReportCardTitle(report.title ?? "") },
+      });
     }
   };
 
   const handleViewGeneralReport = (report: GeneratedReportItem) => {
-    navigate(`/reports/general/${encodeURIComponent(report.id)}`);
+    const reportTitle = `${report.assessmentLabel ?? ""} — ${report.reportType ?? ""}`.trim();
+    navigate(`/reports/general/${encodeURIComponent(report.id)}`, {
+      state: { reportTitle },
+    });
   };
 
   const handleDownload = (reportId: string, e: React.MouseEvent) => {

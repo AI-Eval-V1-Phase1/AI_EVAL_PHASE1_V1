@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   AlertTriangle,
   BarChart2,
@@ -170,11 +170,100 @@ function stripNumberedPrefix(text: string): string {
   return text.replace(/^\s*\d+\.\s*/, "").trim();
 }
 
+function isTopBlockersSectionTitle(title: string): boolean {
+  return /^top\s+blockers\b/i.test(stripSectionNumber(title));
+}
+
+function isTopRisksSectionTitle(title: string): boolean {
+  return /^top\s+risks\b/i.test(stripSectionNumber(title));
+}
+
+function severityClassName(sev: string): string {
+  const s = String(sev ?? "").trim().toLowerCase();
+  if (s.startsWith("high")) return "report_severity_high";
+  if (s.startsWith("medium")) return "report_severity_medium";
+  if (s.startsWith("low")) return "report_severity_low";
+  return "report_severity_unknown";
+}
+
+function parseTopBlockerLine(
+  line: string,
+): { main: string; severity?: string; likelihood?: string; impact?: string; evidence?: string } {
+  const bulletless = stripAssumptionLabel(line.trim().replace(/^\s*[-*]\s+/, "")).replace(/\*\*/g, "");
+  const severityMatch = bulletless.match(/(?:^|\s)Severity:\s*([^|]+?)(?=\s+[|–—-]\s+(?:Likelihood:|Impact:|Evidence:)|\s+Evidence:|$)/i);
+  const likelihoodMatch = bulletless.match(/(?:^|\s)Likelihood:\s*([^|–—-]+?)(?=\s+[|–—-]\s+Impact:|\s+Evidence:|$)/i);
+  const impactMatch = bulletless.match(/(?:^|\s)Impact:\s*([^|]+?)(?=\s+[|–—-]\s+Severity:|\s+Evidence:|$)/i);
+  const evidenceMatch = bulletless.match(/(?:^|\s)Evidence:\s*(.+)$/i);
+  const severity = severityMatch?.[1]?.trim().replace(/\s*[|–—-]\s*$/, "");
+  const likelihood = likelihoodMatch?.[1]?.trim().replace(/\s*[|–—-]\s*$/, "");
+  const impact = impactMatch?.[1]?.trim().replace(/\s*[|–—-]\s*$/, "");
+  const evidence = evidenceMatch?.[1]?.trim();
+
+  let main = bulletless;
+  main = main.replace(/\s*Severity:\s*[^|]+?(?=\s+Evidence:|$)/i, "").trim();
+  main = main.replace(/\s*[|–—-]\s*Severity:\s*[^|]+?(?=\s+Evidence:|$)/i, "").trim();
+  main = main.replace(/\s*Likelihood:\s*[^|–—-]+?(?=\s+[|–—-]\s+Impact:|\s+Evidence:|$)/i, "").trim();
+  main = main.replace(/\s*[|–—-]\s*Impact:\s*[^|]+?(?=\s+Evidence:|$)/i, "").trim();
+  main = main.replace(/\s*Impact:\s*[^|]+?(?=\s+Evidence:|$)/i, "").trim();
+  main = main.replace(/\s*[|–—-]\s*Severity:\s*[^|]+?(?=\s+Evidence:|$)/i, "").trim();
+  main = main.replace(/\s*Evidence:\s*.+$/i, "").trim();
+  main = main.replace(/\s*[|–—-]\s*$/, "").trim();
+  return { main: main || bulletless, severity, likelihood, impact, evidence };
+}
+
 /** Render a line of body: support **bold** and bullet lines. */
-function renderBriefLine(line: string, key: string, stripNumbers = false): React.ReactNode {
+function renderBriefLine(
+  line: string,
+  key: string,
+  stripNumbers = false,
+  sectionTitle = "",
+): React.ReactNode {
   const trimmed = line.trim();
   if (!trimmed) return null;
   const bullet = /^\s*[-*]\s+/.test(line);
+  if (bullet && (isTopBlockersSectionTitle(sectionTitle) || isTopRisksSectionTitle(sectionTitle))) {
+    const { main, severity, likelihood, impact, evidence } = parseTopBlockerLine(line);
+    const isBlocker = isTopBlockersSectionTitle(sectionTitle);
+    const labelRegex = isBlocker ? /^blocker:\s*/i : /^risk:\s*/i;
+    const prefixMatch = main.match(labelRegex);
+    const label = prefixMatch?.[0]?.trim() ?? "";
+    const body = prefixMatch ? main.slice(prefixMatch[0].length).trim() : main;
+    return (
+      <li key={key} className="report_exec_brief_bullet report_blocker_item report_risk_like_item">
+        <div className="report_blocker_main">
+          {prefixMatch ? (
+            <>
+              <strong>{label}</strong>{body ? ` ${body}` : ""}
+            </>
+          ) : (
+            main
+          )}
+        </div>
+        {(severity || likelihood || impact || evidence) ? (
+          <div className="report_blocker_meta">
+            {severity ? (
+              <span className="report_blocker_metric">
+                Severity: <span className={`report_blocker_metric_value ${severityClassName(severity)}`}>{severity}</span>
+              </span>
+            ) : null}
+            {likelihood ? (
+              <span className="report_blocker_metric">
+                Likelihood: <span className={`report_blocker_metric_value ${severityClassName(likelihood)}`}>{likelihood}</span>
+              </span>
+            ) : null}
+            {impact ? (
+              <span className="report_blocker_metric">
+                Impact: <span className={`report_blocker_metric_value ${severityClassName(impact)}`}>{impact}</span>
+              </span>
+            ) : null}
+            {evidence ? (
+              <span className="report_blocker_evidence">Evidence: {evidence}</span>
+            ) : null}
+          </div>
+        ) : null}
+      </li>
+    );
+  }
   const parts: React.ReactNode[] = [];
   let remaining = trimmed.replace(/^\s*[-*]\s+/, "");
   remaining = stripAssumptionLabel(remaining);
@@ -199,7 +288,12 @@ function renderBriefLine(line: string, key: string, stripNumbers = false): React
   return <p key={key} className="report_exec_brief_para">{content}</p>;
 }
 
-function renderBriefBody(body: string, sectionKey: string, stripNumbers = false): React.ReactNode {
+function renderBriefBody(
+  body: string,
+  sectionKey: string,
+  stripNumbers = false,
+  sectionTitle = "",
+): React.ReactNode {
   const lines = body.split(/\r?\n/).filter((l) => l.trim() !== "" || l.includes("\n"));
   const items: React.ReactNode[] = [];
   const listItems: React.ReactNode[] = [];
@@ -210,23 +304,32 @@ function renderBriefBody(body: string, sectionKey: string, stripNumbers = false)
     const isBullet = /^\s*[-*]\s+/.test(line);
     if (isBullet) {
       if (!inList && listItems.length > 0) {
-        items.push(<ul key={`${key}-ul`} className="report_exec_brief_list">{listItems.slice()}</ul>);
+        const listClass = (isTopBlockersSectionTitle(sectionTitle) || isTopRisksSectionTitle(sectionTitle))
+          ? "report_exec_brief_list report_blocker_list"
+          : "report_exec_brief_list";
+        items.push(<ul key={`${key}-ul`} className={listClass}>{listItems.slice()}</ul>);
         listItems.length = 0;
       }
       inList = true;
-      listItems.push(renderBriefLine(line, key, stripNumbers));
+      listItems.push(renderBriefLine(line, key, stripNumbers, sectionTitle));
     } else {
       if (inList && listItems.length > 0) {
-        items.push(<ul key={`${key}-ul`} className="report_exec_brief_list">{listItems.slice()}</ul>);
+        const listClass = (isTopBlockersSectionTitle(sectionTitle) || isTopRisksSectionTitle(sectionTitle))
+          ? "report_exec_brief_list report_blocker_list"
+          : "report_exec_brief_list";
+        items.push(<ul key={`${key}-ul`} className={listClass}>{listItems.slice()}</ul>);
         listItems.length = 0;
         inList = false;
       }
-      const node = renderBriefLine(line, key, stripNumbers);
+      const node = renderBriefLine(line, key, stripNumbers, sectionTitle);
       if (node) items.push(node);
     }
   });
   if (listItems.length > 0) {
-    items.push(<ul key={`${sectionKey}-ul-end`} className="report_exec_brief_list">{listItems.slice()}</ul>);
+    const listClass = (isTopBlockersSectionTitle(sectionTitle) || isTopRisksSectionTitle(sectionTitle))
+      ? "report_exec_brief_list report_blocker_list"
+      : "report_exec_brief_list";
+    items.push(<ul key={`${sectionKey}-ul-end`} className={listClass}>{listItems.slice()}</ul>);
   }
   return items.length > 0 ? <>{items}</> : <p className="report_exec_brief_para">{body}</p>;
 }
@@ -238,9 +341,20 @@ function isSystemUserRole(): boolean {
   return role === "system admin" || role === "system manager" || role === "system viewer";
 }
 
+function generalReportTabTitle(report: Pick<GeneratedReportItem, "assessmentLabel" | "reportType">): string {
+  const typeLabel = getReportTypeDisplayLabel(String(report.reportType ?? "").trim());
+  return typeLabel || "Report";
+}
+
 function GeneralReportDetail() {
   const { reportId } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const reportTitleFromNavState =
+    ((location.state as { reportTitle?: string } | null)?.reportTitle ?? "").trim();
+  const cachedTitleKey = reportId ? `generalReportTitle:${reportId}` : "";
+  const cachedReportTitle =
+    cachedTitleKey ? (sessionStorage.getItem(cachedTitleKey) ?? "").trim() : "";
   const showDownload = !isSystemUserRole();
   const [report, setReport] = useState<GeneratedReportItem | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -303,6 +417,24 @@ function GeneralReportDetail() {
         finishLoading();
       });
   }, [reportId]);
+
+  useEffect(() => {
+    if (loading) {
+      const loadingTitle = cachedReportTitle || "Report";
+      document.title = `AI Eval | ${loadingTitle}`;
+      return () => { document.title = "AI Eval"; };
+    }
+    if (notFound || !report) {
+      document.title = "AI Eval | Report not found";
+      return () => { document.title = "AI Eval"; };
+    }
+    const resolvedTitle = generalReportTabTitle(report);
+    document.title = `AI Eval | ${resolvedTitle}`;
+    if (cachedTitleKey) {
+      sessionStorage.setItem(cachedTitleKey, resolvedTitle);
+    }
+    return () => { document.title = "AI Eval"; };
+  }, [loading, notFound, report, reportTitleFromNavState, cachedReportTitle, cachedTitleKey]);
 
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -522,8 +654,8 @@ function GeneralReportDetail() {
         </dl>
       </section> */}
 
-      <section className="report_section_card">
-        <h2 className="report_section_heading">
+      <section className="">
+        {/* <h2 className="report_section_heading">
           {implementationRiskAssessmentData
             ? "Implementation Risk Assessment"
             : mitigationActionPlanData
@@ -535,7 +667,7 @@ function GeneralReportDetail() {
                   : report.briefContent
                     ? getReportTypeDisplayLabel(report.reportType)
                     : "Summary"}
-        </h2>
+        </h2> */}
         {implementationRiskAssessmentData ? (
           <div className="report_summary_body">
             <ImplementationRiskAssessmentReportBody data={implementationRiskAssessmentData} />
@@ -577,13 +709,21 @@ function GeneralReportDetail() {
             {parseBriefContent(report.briefContent).map((section, idx) => {
               const { displayTitle, Icon } = getBriefSectionDisplay(section.title);
               return (
-                <div key={idx} className="report_exec_brief_section">
+                <div key={idx} className="report_exec_brief_section report_section_card">
                   <h3 className="report_exec_brief_section_title">
                     <Icon size={20} className="report_exec_brief_section_icon" aria-hidden />
                     {displayTitle}
                   </h3>
                   <div className="report_exec_brief_section_body">
-                    {renderBriefBody(section.body, `sec-${idx}`, report.reportType === "Sales Qualification Report" || report.reportType === "Qualification" || report.reportType === "Customer Risk Mitigation Plan" || report.reportType === "Implementation Roadmap Proposal")}
+                    {renderBriefBody(
+                      section.body,
+                      `sec-${idx}`,
+                      report.reportType === "Sales Qualification Report" ||
+                        report.reportType === "Qualification" ||
+                        report.reportType === "Customer Risk Mitigation Plan" ||
+                        report.reportType === "Implementation Roadmap Proposal",
+                      section.title,
+                    )}
                   </div>
                 </div>
               );

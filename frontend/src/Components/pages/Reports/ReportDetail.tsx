@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, useLocation } from "react-router-dom"
 import { CircleChevronLeft, CheckCircle2, AlertTriangle, XCircle, Download, FileText, Building2, TrendingUp, Shield, BarChart3, Eye, List } from "lucide-react"
 import { formatDateDDMMMYYYY } from "../../../utils/formatDate.js"
+import { gradeFromOverallRiskScore } from "../../../utils/completeReportGrade"
+import {
+  riskScopeFromRow,
+  groupRisksByDomain,
+  type ReportRiskScope,
+} from "../../../utils/reportRiskScope"
+import { riskRowsToSummaryPoints, stringsToSummaryPoints } from "../../../utils/summarizeRiskPoints"
 import LoadingMessage from "../../UI/LoadingMessage"
 import "../UserManagement/user_management.css"
 import "./reports.css"
@@ -15,9 +22,12 @@ type DbRisk = {
   domains: string | null
   intent: string | null
   timing: string | null
+  risk_type_detected?: string | null
   primary_risk: string | null
   description: string | null
   executive_summary: string | null
+  /** Present when the report agent merged LLM bullets for this row (preferred over client-side split). */
+  summary_points?: string[]
 }
 
 type Mitigation = {
@@ -87,7 +97,17 @@ type FullReport = {
   frameworkMapping?: { rows?: FrameworkRow[] }
   implementationPlan?: { phases?: ImplementationPhase[] }
   competitivePositioning?: string
-  appendix?: { methodology?: string; preparedBy?: string; reviewedBy?: string; confidentiality?: string; dataSources?: string[] }
+  appendix?: {
+    methodology?: string
+    preparedBy?: string
+    reviewedBy?: string
+    confidentiality?: string
+    dataSources?: string[]
+    /** Risk catalog IDs and mitigation action names fetched for this assessment (set on submit). */
+    catalogRisksAndMitigations?: Array<{ risk_id: string; mitigation_action_names: string[] }>
+    /** Flat appendix rows with exact risk ID and mitigation action name used in generation. */
+    catalogRiskMitigationActions?: Array<{ risk_id: string; mitigation_action_name: string }>
+  }
 }
 
 function formatReportValue(val: unknown): string {
@@ -114,9 +134,20 @@ function isSystemUserRole(): boolean {
   return role === "system admin" || role === "system manager" || role === "system viewer"
 }
 
+function tabReportTitle(raw: string): string {
+  const t = String(raw ?? "").trim()
+  if (!t) return ""
+  return t.replace(/^Analysis Report:\s*/i, "").trim() || t
+}
+
 function ReportDetail() {
   const { reportId } = useParams<{ reportId: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const reportTitleFromNavState =
+    ((location.state as { reportTitle?: string } | null)?.reportTitle ?? "").trim()
+  const cachedTitleKey = reportId ? `completeReportTitle:${reportId}` : ""
+  const cachedReportTitle = cachedTitleKey ? (sessionStorage.getItem(cachedTitleKey) ?? "").trim() : ""
   const showExportPdf = !isSystemUserRole()
   const [report, setReport] = useState<{
     id: string
@@ -184,17 +215,21 @@ function ReportDetail() {
 
   useEffect(() => {
     if (loading) {
-      document.title = "AI Eval | Report"
+      const loadingTitle = "Complete Report"
+      document.title = `AI Eval | ${loadingTitle}`
       return () => { document.title = "AI Eval" }
     }
     if (notFound || !report) {
       document.title = "AI Eval | Report not found"
       return () => { document.title = "AI Eval" }
     }
-    const title = report.title || "Analysis Report"
+    const title = "Complete Report"
     document.title = `AI Eval | ${title}`
+    if (cachedTitleKey) {
+      sessionStorage.setItem(cachedTitleKey, title)
+    }
     return () => { document.title = "AI Eval" }
-  }, [loading, notFound, report])
+  }, [loading, notFound, report, reportTitleFromNavState, cachedReportTitle, cachedTitleKey])
 
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -261,15 +296,86 @@ function ReportDetail() {
   const deployment = data.deploymentOverview as DeploymentOverview | undefined
   const overallScore = generated?.overallRiskScore ?? 0
   const overallLevel = generated?.riskLevel ?? "Low"
-  const grade = overallScore <= 20 ? "A+" : overallScore <= 40 ? "A" : overallScore <= 60 ? "B" : overallScore <= 80 ? "C" : "D"
+  const grade = gradeFromOverallRiskScore(overallScore)
 
-  const risksByDomain = top5Risks.reduce<Record<string, DbRisk[]>>((acc, r) => {
-    const domain = r.domains?.trim() || "Other"
-    if (!acc[domain]) acc[domain] = []
-    acc[domain].push(r)
-    return acc
-  }, {})
-  const domainOrder = [...new Set(top5Risks.map((r) => r.domains?.trim() || "Other"))]
+  const RISK_SCOPE_SECTIONS: {
+    scope: ReportRiskScope
+    label: string
+    tagClass: string
+  }[] = [
+    { scope: "vendor", label: "Vendor risk", tagClass: "report_risk_tag_vendor" },
+    { scope: "buyer", label: "Buyer risk", tagClass: "report_risk_tag_buyer" },
+    { scope: "shared", label: "Shared risk", tagClass: "report_risk_tag_shared" },
+  ]
+
+  const risksByScope: Record<ReportRiskScope, DbRisk[]> = {
+    vendor: [],
+    buyer: [],
+    shared: [],
+  }
+  for (const r of top5Risks) {
+    risksByScope[riskScopeFromRow(r)].push(r)
+  }
+
+  const renderDomainRiskBlocks = (risks: DbRisk[]) => {
+    const byDomain = groupRisksByDomain(risks)
+    const domains = Object.keys(byDomain)
+    return domains.map((domain, di) => {
+      const domainRisks = byDomain[domain] ?? []
+      const initialRisk = domainRisks[0]?.primary_risk ?? "Low"
+      const riskList = riskRowsToSummaryPoints(domainRisks)
+      const mitigList: string[] = []
+      domainRisks.forEach((r) => {
+        if (r.risk_id && mitigationsByRiskId[r.risk_id]) {
+          mitigationsByRiskId[r.risk_id].forEach((m) =>
+            mitigList.push(
+              m.mitigation_action_name +
+                (m.mitigation_definition
+                  ? ` — ${String(m.mitigation_definition).slice(0, 80)}`
+                  : ""),
+            ),
+          )
+        }
+      })
+      return (
+        <div key={`${domain}-${di}`} className="report_risk_category_block">
+          <div className="report_risk_category_header">
+            <h3 className="report_risk_category_title">{domain}</h3>
+            <span className={`report_risk_badge ${riskLevelClass(initialRisk)}`}>
+              {initialRisk || "Low"}
+            </span>
+            <span className="report_risk_category_score">{(domainRisks.length * 10)}/100</span>
+          </div>
+          <div className="report_risks_list">
+            <h4>RISKS</h4>
+            <ul className="report_risk_summary_list">
+              {riskList.map((t, i) => (
+                <li key={i}>
+                  <AlertTriangle size={14} className="report_icon_warn" /> {t}
+                </li>
+              ))}
+              {riskList.length === 0 && <li>—</li>}
+            </ul>
+          </div>
+          <div className="report_mitigations_list">
+            <h4>MITIGATIONS</h4>
+            <ul>
+              {mitigList.map((t, i) => (
+                <li key={i}>
+                  <CheckCircle2 size={14} className="report_icon_ok" /> {t}
+                </li>
+              ))}
+              {mitigList.length === 0 && <li>—</li>}
+            </ul>
+          </div>
+          <p className="report_residual_risk">
+            Residual Risk:{" "}
+            <span className="report_risk_badge risk_low">Very Low</span>
+          </p>
+        </div>
+      )
+    })
+  }
 
   const recsWithPriority = generated?.recommendationsWithPriority ?? []
   const recsSimple = generated?.recommendations ?? []
@@ -414,48 +520,22 @@ function ReportDetail() {
           <Shield size={20} aria-hidden /> Risk Assessment
         </h2>
         <p className="report_overall_risk">Overall Risk: <span className={`report_risk_badge ${riskLevelClass(overallLevel)}`}>{overallLevel}</span> (Score: {overallScore}/100)</p>
-        {domainOrder.length === 0 ? null : (
-          domainOrder.map((domain) => {
-            const risks = risksByDomain[domain] ?? []
-            const initialRisk = risks[0]?.primary_risk ?? "Low"
-            const riskList = risks.map((r) => r.description || r.risk_title || r.risk_id).filter(Boolean)
-            const mitigList: string[] = []
-            risks.forEach((r) => {
-              if (r.risk_id && mitigationsByRiskId[r.risk_id]) {
-                mitigationsByRiskId[r.risk_id].forEach((m) => mitigList.push(m.mitigation_action_name + (m.mitigation_definition ? ` — ${String(m.mitigation_definition).slice(0, 80)}` : "")))
-              }
-            })
+        {top5Risks.length === 0 ? (
+          <p className="report_no_risks">No risk categories identified.</p>
+        ) : (
+          RISK_SCOPE_SECTIONS.map(({ scope, label, tagClass }) => {
+            const scopeRisks = risksByScope[scope]
+            if (scopeRisks.length === 0) return null
             return (
-              <div key={domain} className="report_risk_category_block">
-                <div className="report_risk_category_header">
-                  <h3 className="report_risk_category_title">{domain}</h3>
-                  <span className={`report_risk_badge ${riskLevelClass(initialRisk)}`}>{initialRisk || "Low"}</span>
-                  <span className="report_risk_category_score">{(risks.length * 10)}/100</span>
+              <div key={scope} className="report_risk_scope_group">
+                <div className="report_risk_scope_banner">
+                  <span className={`report_risk_scope_tag ${tagClass}`}>{label}</span>
                 </div>
-                <div className="report_risks_list">
-                  <h4>RISKS</h4>
-                  <ul>
-                    {riskList.map((t, i) => (
-                      <li key={i}><AlertTriangle size={14} className="report_icon_warn" /> {t}</li>
-                    ))}
-                    {riskList.length === 0 && <li>—</li>}
-                  </ul>
-                </div>
-                <div className="report_mitigations_list">
-                  <h4>MITIGATIONS</h4>
-                  <ul>
-                    {mitigList.map((t, i) => (
-                      <li key={i}><CheckCircle2 size={14} className="report_icon_ok" /> {t}</li>
-                    ))}
-                    {mitigList.length === 0 && <li>—</li>}
-                  </ul>
-                </div>
-                <p className="report_residual_risk">Residual Risk: <span className={`report_risk_badge risk_low`}>Very Low</span></p>
+                {renderDomainRiskBlocks(scopeRisks)}
               </div>
             )
           })
         )}
-        {domainOrder.length === 0 && <p className="report_no_risks">No risk categories identified.</p>}
         {/* Security Posture – same block style, after risk category blocks */}
         <div className="report_risk_category_block">
           <div className="report_risk_category_header">
@@ -465,10 +545,25 @@ function ReportDetail() {
           </div>
           <div className="report_risks_list">
             <h4>RISKS</h4>
-            <ul>
-              {(fullReport?.securityPosture?.risks?.length ? fullReport.securityPosture.risks : ["—"]).map((r, i) => (
-                <li key={i}><AlertTriangle size={14} className="report_icon_warn" /> {formatReportValue(r)}</li>
-              ))}
+            <ul className="report_risk_summary_list">
+              {(() => {
+                const raw = (fullReport?.securityPosture?.risks ?? []).map((r) =>
+                  formatReportValue(r),
+                );
+                const pts = stringsToSummaryPoints(raw);
+                if (pts.length === 0) {
+                  return (
+                    <li>
+                      <AlertTriangle size={14} className="report_icon_warn" /> —
+                    </li>
+                  );
+                }
+                return pts.map((t, i) => (
+                  <li key={i}>
+                    <AlertTriangle size={14} className="report_icon_warn" /> {t}
+                  </li>
+                ));
+              })()}
             </ul>
           </div>
           <div className="report_mitigations_list">
@@ -596,6 +691,46 @@ function ReportDetail() {
             ? fullReport.appendix.dataSources.map((s, i) => <li key={i}>{formatReportValue(s)}</li>)
             : (<><li>Vendor COTS assessment submission data</li><li>Risk mappings database (assessment context match)</li></>)}
         </ul>
+        {fullReport?.appendix?.catalogRiskMitigationActions &&
+          fullReport.appendix.catalogRiskMitigationActions.length > 0 ? (
+          <>
+            <p className="report_appendix_line"><strong>Risk IDs and mitigation action names used:</strong></p>
+            <ul className="report_appendix_sources">
+              {fullReport.appendix.catalogRiskMitigationActions.map((row, i) => (
+                <li key={i}>
+                  <strong>{stripMarkdownBold(row.risk_id)}</strong>
+                  {": "}
+                  {stripMarkdownBold(row.mitigation_action_name)}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : fullReport?.appendix?.catalogRisksAndMitigations &&
+          fullReport.appendix.catalogRisksAndMitigations.length > 0 ? (
+          <>
+            <p className="report_appendix_line"><strong>Risk IDs and mitigation actions used:</strong></p>
+            <ul className="report_appendix_sources">
+              {fullReport.appendix.catalogRisksAndMitigations.map((row, i) => (
+                <li key={i}>
+                  <strong>{stripMarkdownBold(row.risk_id)}</strong>
+                  {row.mitigation_action_names && row.mitigation_action_names.length > 0
+                    ? (
+                      <>
+                        {": "}
+                        {row.mitigation_action_names.map((n, j) => (
+                          <span key={j}>
+                            {j > 0 ? "; " : null}
+                            {stripMarkdownBold(n)}
+                          </span>
+                        ))}
+                      </>
+                    )
+                    : " — no linked catalog mitigations"}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
       </section>
     </div>
   )
