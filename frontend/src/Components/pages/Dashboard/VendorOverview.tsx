@@ -1,28 +1,222 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
-  Eye,
+  Bot,
+  ChevronRight,
+  ClipboardPlus,
+  Download,
+  FilePlus,
   FileText,
+  FileTextIcon,
+  Globe,
+  Info,
   LayoutDashboard,
+  LucideCircleChevronDown,
   Shield,
-  ShieldCheck,
 } from "lucide-react";
-import DashboardMetricCard from "../../UI/DashboardMetricCard";
 import LoadingMessage from "../../UI/LoadingMessage";
-import Select from "../../UI/Select";
-import type { AttestationItem, VendorAssessmentItem } from "./types";
-import { BASE_URL, formatDisplayDate, getCompletedByDisplay } from "./utils";
+import type {
+  AttestationItem,
+  CertificateItem,
+  VendorAssessmentItem,
+} from "./types";
+import { BASE_URL, formatDisplayDate } from "./utils";
 import { formatDateDDMMMYYYY } from "../../../utils/formatDate";
 import "./dashboard.css";
+import ClickTooltip from "../../UI/ClickTooltip";
+
+/** Compliance carousel: how many certificate cards show beside each attestation. */
+const COMPLIANCE_CARDS_PER_VIEW = 3;
+
+type ComplianceDocRow = {
+  key: string;
+  attestationId: string;
+  fileName: string;
+  title: string;
+  /** Compliance certification category (e.g. SOC 2 Type 2), not file format */
+  complianceTypeLabel: string;
+  /** Parsed expiry for footer (Complete Reports style); null → "Expiry not specified" */
+  expiryDateDisplay: string | null;
+  productLabel: string;
+};
+
+function complianceTypeDisplay(
+  complianceType: string | null | undefined,
+): string {
+  const t = (complianceType ?? "").trim();
+  return t || "—";
+}
+
+function buildComplianceRowsForAttestation(
+  att: AttestationItem,
+): ComplianceDocRow[] {
+  const rows: ComplianceDocRow[] = [];
+  const product = (att.productName ?? "").trim() || "Vendor Self-Attestation";
+  const certs = att.certificates ?? [];
+  certs.forEach((c, idx) => {
+    const name = (c.name ?? "").trim();
+    if (!name) return;
+    const exp = c.expiryDate;
+    const hasExpiry =
+      exp != null &&
+      String(exp).trim() !== "" &&
+      formatDisplayDate(exp) !== "—";
+    const expiryDateDisplay = hasExpiry
+      ? formatDateDDMMMYYYY(String(exp))
+      : null;
+    rows.push({
+      key: `${att.id}-${name}-${idx}`,
+      attestationId: att.id,
+      fileName: name,
+      title: name,
+      complianceTypeLabel: complianceTypeDisplay(
+        c.certificateType ?? c.complianceType,
+      ),
+      expiryDateDisplay,
+      productLabel: product,
+    });
+  });
+  return rows;
+}
+
+function normalizeCertificatesFromApi(
+  rows: Array<{
+    name: string;
+    expiryDate: string | null;
+    certificateType?: string | null;
+    complianceType?: string | null;
+    documentType?: string | null;
+  }>,
+): CertificateItem[] {
+  return rows.map((row) => {
+    const certificateType =
+      row.certificateType ?? row.complianceType ?? row.documentType ?? null;
+    return {
+      name: row.name,
+      expiryDate: row.expiryDate,
+      certificateType,
+      complianceType: certificateType,
+    };
+  });
+}
+
+function findTrustScoreForAssessment(
+  assessment: VendorAssessmentItem,
+  attestations: AttestationItem[],
+): number | null {
+  const vid = (assessment.vendorAttestationId ?? "").toString().trim();
+  if (!vid) return null;
+  for (const att of attestations) {
+    const idMatch = String(att.id) === vid;
+    const alt =
+      att.vendor_self_attestation_id != null &&
+      String(att.vendor_self_attestation_id).trim() === vid;
+    if (idMatch || alt) {
+      const s = att.generated_profile_report?.trustScore?.overallScore;
+      return s != null && !Number.isNaN(Number(s)) ? Number(s) : null;
+    }
+  }
+  return null;
+}
+
+function findCertificateTypesForAssessment(
+  assessment: VendorAssessmentItem,
+  attestations: AttestationItem[],
+): string[] {
+  const vid = (assessment.vendorAttestationId ?? "").toString().trim();
+  const assessmentProduct = (assessment.productName ?? "").toString().trim().toLowerCase();
+  const matches: AttestationItem[] = [];
+
+  if (vid) {
+    for (const att of attestations) {
+      const idMatch = String(att.id) === vid;
+      const alt =
+        att.vendor_self_attestation_id != null &&
+        String(att.vendor_self_attestation_id).trim() === vid;
+      if (idMatch || alt) matches.push(att);
+    }
+  }
+
+  if (matches.length === 0 && assessmentProduct) {
+    for (const att of attestations) {
+      const product = (att.productName ?? "").toString().trim().toLowerCase();
+      if (product && product === assessmentProduct) matches.push(att);
+    }
+  }
+
+  const types = new Set<string>();
+  for (const att of matches) {
+    for (const cert of att.certificates ?? []) {
+      const type = (
+        cert.certificateType ??
+        cert.complianceType ??
+        cert.name ??
+        ""
+      )
+        .toString()
+        .trim();
+      if (type) types.add(type);
+    }
+  }
+  return [...types];
+}
+
+function gradeFromScore(score: number | null): "A" | "B" | "C" | null {
+  if (score == null) return null;
+  if (score >= 90) return "A";
+  if (score >= 75) return "B";
+  return "C";
+}
+
+type ReportGrade = "A+" | "A" | "B" | "C" | "D";
+
+type AssessmentReportMeta = {
+  reportId: string;
+  vendorGrade: ReportGrade | null;
+  /** Display percentage for Vendor Grade bar, derived from complete report risk score. */
+  vendorGradePercent: number | null;
+};
+
+function extractOverallRiskScoreFromCompleteReport(
+  report: unknown,
+): number | null {
+  if (!report || typeof report !== "object" || Array.isArray(report))
+    return null;
+  const r = report as Record<string, unknown>;
+  const fromGenerated =
+    r.generatedAnalysis &&
+    typeof r.generatedAnalysis === "object" &&
+    !Array.isArray(r.generatedAnalysis)
+      ? (r.generatedAnalysis as Record<string, unknown>).overallRiskScore
+      : undefined;
+  const raw = fromGenerated ?? r.overallRiskScore;
+  if (raw == null) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+/** Matches Complete Report detail grade mapping (A+..D). */
+function gradeFromCompleteReportRiskScore(
+  score: number | null,
+): ReportGrade | null {
+  if (score == null) return null;
+  if (score <= 20) return "A+";
+  if (score <= 40) return "A";
+  if (score <= 60) return "B";
+  if (score <= 80) return "C";
+  return "D";
+}
 
 const VendorOverview = () => {
   const [attestations, setAttestations] = useState<AttestationItem[]>([]);
   const [assessments, setAssessments] = useState<VendorAssessmentItem[]>([]);
-  const [reportsByAssessmentId, setReportsByAssessmentId] = useState<Record<string, string>>({});
+  const [reportsByAssessmentId, setReportsByAssessmentId] = useState<
+    Record<string, AssessmentReportMeta>
+  >({});
   const [loading, setLoading] = useState(true);
   const [assessmentsLoading, setAssessmentsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCompletedId, setSelectedCompletedId] = useState<string>("");
 
   const LOADER_MIN_MS = 2000;
 
@@ -57,8 +251,21 @@ const VendorOverview = () => {
         updated_at?: string;
         expiry_at?: string | null;
         product_name?: string | null;
-        certificates?: Array<{ name: string; expiryDate: string | null }>;
-        generated_profile_report?: { trustScore?: { overallScore?: number; summary?: string; label?: string }; sections?: unknown[] };
+        certificates?: Array<{
+          name: string;
+          expiryDate: string | null;
+          certificateType?: string | null;
+          complianceType?: string | null;
+          documentType?: string | null;
+        }>;
+        generated_profile_report?: {
+          trustScore?: {
+            overallScore?: number;
+            summary?: string;
+            label?: string;
+          };
+          sections?: unknown[];
+        };
       };
       let result: {
         success?: boolean;
@@ -82,15 +289,21 @@ const VendorOverview = () => {
       if (result.success && Array.isArray(result.attestations)) {
         result.attestations.forEach((a) => {
           if (a?.id) {
+            // console.log("Attestation Data:",result.attestations)
             list.push({
               id: String(a.id),
-              vendor_self_attestation_id: a.vendor_self_attestation_id != null ? String(a.vendor_self_attestation_id) : undefined,
+              vendor_self_attestation_id:
+                a.vendor_self_attestation_id != null
+                  ? String(a.vendor_self_attestation_id)
+                  : undefined,
               status: (a.status ?? "").toUpperCase(),
               createdAt: a.created_at,
               updatedAt: a.updated_at,
               expiryDate: a.expiry_at ?? null,
               productName: a.product_name ?? undefined,
-              certificates: Array.isArray(a.certificates) ? a.certificates : undefined,
+              certificates: Array.isArray(a.certificates)
+                ? normalizeCertificatesFromApi(a.certificates)
+                : undefined,
               generated_profile_report: a.generated_profile_report,
             });
           }
@@ -99,13 +312,18 @@ const VendorOverview = () => {
         const a = result.attestation;
         list.push({
           id: String(a.id),
-          vendor_self_attestation_id: a.vendor_self_attestation_id != null ? String(a.vendor_self_attestation_id) : undefined,
+          vendor_self_attestation_id:
+            a.vendor_self_attestation_id != null
+              ? String(a.vendor_self_attestation_id)
+              : undefined,
           status: (a.status ?? "").toUpperCase(),
           createdAt: a.created_at,
           updatedAt: a.updated_at,
           expiryDate: a.expiry_at ?? null,
           productName: a.product_name ?? undefined,
-          certificates: Array.isArray(a.certificates) ? a.certificates : undefined,
+          certificates: Array.isArray(a.certificates)
+            ? normalizeCertificatesFromApi(a.certificates)
+            : undefined,
           generated_profile_report: a.generated_profile_report,
         });
       }
@@ -117,7 +335,6 @@ const VendorOverview = () => {
     }
   }, []);
 
-  /** Fetch assessments and customer risk reports (for View Report links). */
   const fetchAssessmentsAndReports = useCallback(async () => {
     const token = sessionStorage.getItem("bearerToken");
     if (!token) return;
@@ -129,21 +346,44 @@ const VendorOverview = () => {
     };
     try {
       const [assessmentsRes, reportsRes] = await Promise.all([
-        fetch(`${BASE_URL}/assessments`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${BASE_URL}/customerRiskReports`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${BASE_URL}/assessments`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${BASE_URL}/customerRiskReports`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
       const assessmentsData = await assessmentsRes.json().catch(() => ({}));
       const reportsData = await reportsRes.json().catch(() => ({}));
-      const list: VendorAssessmentItem[] = Array.isArray(assessmentsData?.data?.assessments)
+      const list: VendorAssessmentItem[] = Array.isArray(
+        assessmentsData?.data?.assessments,
+      )
         ? assessmentsData.data.assessments
         : [];
       setAssessments(list);
-      const byAssessmentId: Record<string, string> = {};
+      const byAssessmentId: Record<string, AssessmentReportMeta> = {};
       if (reportsData?.success && Array.isArray(reportsData?.data?.reports)) {
-        reportsData.data.reports.forEach((r: { id: string; assessmentId?: string }): void => {
-          const aid = r.assessmentId != null ? String(r.assessmentId) : "";
-          if (aid && r.id) byAssessmentId[aid] = String(r.id);
-        });
+        reportsData.data.reports.forEach(
+          (r: {
+            id: string;
+            assessmentId?: string;
+            report?: unknown;
+          }): void => {
+            const aid = r.assessmentId != null ? String(r.assessmentId) : "";
+            if (!aid || !r.id) return;
+            // API returns newest first; keep first per assessment as the source of truth.
+            if (byAssessmentId[aid]) return;
+            const riskScore = extractOverallRiskScoreFromCompleteReport(
+              r.report,
+            );
+            byAssessmentId[aid] = {
+              reportId: String(r.id),
+              vendorGrade: gradeFromCompleteReportRiskScore(riskScore),
+              vendorGradePercent:
+                riskScore != null ? Math.max(0, Math.min(100, 100 - riskScore)) : null,
+            };
+          },
+        );
       }
       setReportsByAssessmentId(byAssessmentId);
     } catch {
@@ -162,7 +402,6 @@ const VendorOverview = () => {
     fetchAssessmentsAndReports();
   }, [fetchAssessmentsAndReports]);
 
-  /** Completed attestation is expired when expiry date is in the past (exclude from dropdown). */
   const isAttestationExpired = (item: AttestationItem): boolean => {
     if ((item.status ?? "").toUpperCase() !== "COMPLETED") return false;
     const exp = item.expiryDate;
@@ -175,33 +414,49 @@ const VendorOverview = () => {
     return expiry.getTime() < today.getTime();
   };
 
-  /** Only completed, non-expired attestations (shown in dropdown). */
-  const completedAttestations = attestations.filter(
-    (a) => (a.status ?? "").toUpperCase() === "COMPLETED" && !isAttestationExpired(a)
+  const completedAttestations = useMemo(
+    () =>
+      attestations.filter(
+        (a) =>
+          (a.status ?? "").toUpperCase() === "COMPLETED" &&
+          !isAttestationExpired(a),
+      ),
+    [attestations],
   );
 
-  /** Default dropdown to latest current (non-expired) completed attestation when data loads; clear if selected is expired */
-  useEffect(() => {
-    const current = attestations.filter(
-      (a) => (a.status ?? "").toUpperCase() === "COMPLETED" && !isAttestationExpired(a)
-    );
-    const sorted = [...current].sort((a, b) => {
-      const aDate = a.updatedAt ?? a.createdAt ?? "";
-      const bDate = b.updatedAt ?? b.createdAt ?? "";
-      return new Date(bDate).getTime() - new Date(aDate).getTime();
-    });
-    if (selectedCompletedId && !current.some((a) => a.id === selectedCompletedId)) {
-      setSelectedCompletedId(sorted[0]?.id ?? "");
-    } else if (sorted.length > 0 && !selectedCompletedId) {
-      setSelectedCompletedId(sorted[0].id);
+  const completedAttestationsSorted = useMemo(
+    () =>
+      [...completedAttestations].sort((a, b) => {
+        const aDate = a.createdAt ?? "";
+        const bDate = b.createdAt ?? "";
+        return new Date(bDate).getTime() - new Date(aDate).getTime();
+      }),
+    [completedAttestations],
+  );
+
+  const currentAttestationCards = useMemo(
+    () => completedAttestationsSorted.slice(0, 3),
+    [completedAttestationsSorted],
+  );
+
+  const complianceDocsByAttestationId = useMemo(() => {
+    const m: Record<string, ComplianceDocRow[]> = {};
+    for (const att of currentAttestationCards) {
+      m[att.id] = buildComplianceRowsForAttestation(att);
     }
-  }, [attestations, selectedCompletedId]);
-  /** Sorted by latest first (updatedAt desc) for dropdown default */
-  const completedAttestationsSorted = [...completedAttestations].sort((a, b) => {
-    const aDate = a.updatedAt ?? a.createdAt ?? "";
-    const bDate = b.updatedAt ?? b.createdAt ?? "";
-    return new Date(bDate).getTime() - new Date(aDate).getTime();
-  });
+    return m;
+  }, [currentAttestationCards]);
+
+  const vendorCotsAssessments = useMemo(() => {
+    const list = assessments.filter((a) => a.type === "cots_vendor");
+    return [...list].sort((a, b) => {
+      const da = new Date(a.createdAt ?? 0).getTime();
+      const db = new Date(b.createdAt ?? 0).getTime();
+      return db - da;
+    });
+  }, [assessments]);
+
+  const recentAssessmentsTable = vendorCotsAssessments.slice(0, 3);
 
   const openComplianceDocumentInNewTab = useCallback(
     async (attestationId: string, fileName: string) => {
@@ -217,12 +472,11 @@ const VendorOverview = () => {
         if (!res.ok) return;
         const blob = await res.blob();
         blobUrl = URL.createObjectURL(blob);
-        // Open synchronously after blob is ready — new tab must keep URL valid (do not revoke quickly).
         const w = window.open(blobUrl, "_blank", "noopener,noreferrer");
         if (!w) {
           URL.revokeObjectURL(blobUrl);
           window.alert(
-            "Could not open a new tab. Allow pop-ups for this site, then try View Document again.",
+            "Could not open a new tab. Allow pop-ups for this site, then try again.",
           );
           return;
         }
@@ -245,236 +499,452 @@ const VendorOverview = () => {
     [],
   );
 
-  /** Selected attestation (product) – used for trust score and filtering assessments */
-  const selectedAttestation = selectedCompletedId
-    ? completedAttestations.find((a) => a.id === selectedCompletedId)
-    : null;
-  const trustScoreNum = selectedAttestation?.generated_profile_report?.trustScore?.overallScore;
-  const trustScoreLabel = selectedAttestation?.generated_profile_report?.trustScore?.label;
-  const trustScoreValue =
-    trustScoreNum != null ? `${trustScoreNum}%` : "—";
-  const trimmedLabel = trustScoreLabel ? String(trustScoreLabel).trim() : "";
-  const trustScoreDescription =
-    trustScoreNum != null
-      ? (trimmedLabel && trimmedLabel !== "Not specified" ? trimmedLabel : "Product trust score")
-      : selectedCompletedId
-        ? "No trust score for this product yet."
-        : "Select an attestation to see product trust score.";
-
-  /** Certificates from the selected completed attestation only */
-  const certificateListToShow = selectedCompletedId
-    ? (completedAttestations.find((a) => a.id === selectedCompletedId)?.certificates ?? []).map((c) => ({
-        ...c,
-        attestationId: selectedCompletedId,
-      }))
-    : [];
-
-  /** Assessments for the selected attestation/product (vendor COTS where vendor_attestation_id matches product/attestation id) */
-  const selectedAttestationIds: string[] = selectedAttestation
-    ? [
-        String(selectedAttestation.id).trim(),
-        selectedAttestation.vendor_self_attestation_id != null
-          ? String(selectedAttestation.vendor_self_attestation_id).trim()
-          : null,
-      ].filter((x): x is string => x != null && x !== "")
-    : [];
-  const assessmentsForSelectedAttestation = selectedCompletedId && selectedAttestationIds.length > 0
-    ? assessments.filter((a) => {
-        if (a.type !== "cots_vendor") return false;
-        const vid = (a.vendorAttestationId ?? "").toString().trim();
-        return selectedAttestationIds.some((sid) => sid === vid);
-      })
-    : [];
-
   return (
-    <div className="vendor_overview_page sec_user_page org_settings_page">
+    <div className="vendor_overview_page vendor_portal_dashboard sec_user_page org_settings_page">
       <div className="vendor_overview_heading page_header_align">
         <div className="vendor_overview_headers page_header_row">
           <span className="icon_size_header" aria-hidden>
-            <LayoutDashboard size={24} className="header_icon_svg"/>
+            <LayoutDashboard size={24} className="header_icon_svg" />
           </span>
           <div className="page_header_title_block">
-            <h1 className="page_header_title">Vendor Dashboard</h1>
+            <h1 className="page_header_title">Strategic Oversight</h1>
             <p className="sub_title page_header_subtitle">
-              Manage your security profile and compliance attestations.
+              Global AI posture and multi-product governance
             </p>
           </div>
         </div>
-        {!loading && completedAttestations.length > 0 && (
-          <div className="vendor_overview_dropdown_top_right">
-            <Select
-              name="completed_attestations"
-              value={selectedCompletedId}
-              default_option="Select attestation"
-              options={completedAttestationsSorted.map((item) => ({
-                value: item.id,
-                label: `${(item.productName ?? "").trim() || "Vendor Self-Attestation"} – ${formatDisplayDate(item.updatedAt ?? item.createdAt)}`,
-              }))}
-              onChange={(e) => setSelectedCompletedId(e.target.value)}
-            />
-          </div>
-        )}
       </div>
 
-      <div className="vendor_overview_metrics">
-        <DashboardMetricCard
-          title="Trust Score"
-          icon={<Shield size={24} className="vendor_overview_metric_card_icon_blue" />}
-          value={trustScoreValue}
-          description={trustScoreDescription}
-          valueVariant="grade"
-          className="vendor_overview_metric_card_trust_score_full"
-          iconPosition="left"
-          loading={loading}
-        />
-      </div>
-
-      <div className="vendor_overview_section">
-        <h2 className="vendor_overview_section_title">Security & Compliance</h2>
-        <p className="vendor_overview_section_subtitle">
-          Security documents and compliance evidence.
-        </p>
-        {loading && <LoadingMessage message="Loading attestations…" />}
-        {error && (
-          <div className="vendor_overview_error">{error}</div>
-        )}
-        {!loading && !error && completedAttestations.length > 0 && (
-          <>
-            {certificateListToShow.length > 0 ? (
-              certificateListToShow.map((cert, idx) => (
-                <div
-                  key={`${cert.attestationId}-${cert.name}-${idx}`}
-                  className="vendor_overview_attestation_row"
-                >
-                  <ShieldCheck size={24} className="vendor_overview_attestation_icon vendor_overview_attestation_icon_check" aria-hidden />
-                  <div className="vendor_overview_attestation_content">
-                    <p className="vendor_overview_attestation_name">{cert.name}</p>
-                    <p className="vendor_overview_attestation_status_label">Verified</p>
-                    <p className="vendor_overview_attestation_date">
-                      Expiry: {cert.expiryDate && formatDisplayDate(cert.expiryDate) !== "—"
-                        ? formatDisplayDate(cert.expiryDate)
-                        : (cert.expiryDate || "Expiry date not specified")}
-                    </p>
-                  </div>
-                  <div className="vendor_overview_attestation_actions">
-                    <button
-                      type="button"
-                      className="vendor_overview_btn_view"
-                      onClick={() =>
-                        openComplianceDocumentInNewTab(cert.attestationId, cert.name)
-                      }
-                    >
-                      <Eye size={16} aria-hidden />
-                      View Document
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="vendor_overview_empty">No documents for this attestation.</div>
-            )}
-          </>
-        )}
-        {!loading && !error && completedAttestations.length === 0 && (
-          <div className="vendor_overview_empty">
-            No completed attestations yet. Complete an attestation to see documents here.
-          </div>
-        )}
-      </div>
-
-      <div className="vendor_overview_section">
-        <h2 className="vendor_overview_section_title">
-          Assessments
+      <section
+        className="vendor_portal_section"
+        aria-labelledby="vendor-portal-strategic-heading"
+      >
+        <h2
+          id="vendor-portal-strategic-heading"
+          className="vendor_portal_section_heading"
+        >
+          Quick Actions
         </h2>
-        <p className="vendor_overview_section_subtitle">
-          Assessments completed for the selected attestation or product.
-        </p>
-        {!selectedCompletedId && completedAttestations.length > 0 && (
-          <div className="vendor_overview_empty">
-            Select an attestation above to see its assessments.
-          </div>
-        )}
-        {selectedCompletedId && assessmentsLoading && (
-          <LoadingMessage message="Loading assessments…" />
-        )}
-        {selectedCompletedId && !assessmentsLoading && assessmentsForSelectedAttestation.length === 0 && (
-          <div className="vendor_overview_empty">
-            No assessments yet for this attestation or product.
-          </div>
-        )}
-        {selectedCompletedId && !assessmentsLoading && assessmentsForSelectedAttestation.length > 0 && (
-          <div className="assessment_list_rows">
-            {assessmentsForSelectedAttestation.map((item) => {
-              const reportId = reportsByAssessmentId[String(item.assessmentId)];
-              const org = (item.customerOrganizationName ?? "").toString().trim() || "—";
-              const product = (item.productName ?? "").toString().trim() || "—";
-              const title =
-                org !== "—" || product !== "—"
-                  ? `${org} - ${product}`
-                  : `Assessment #${item.assessmentId}`;
-              const isExpired =
-                item.expiryAt != null &&
-                String(item.expiryAt).trim() !== "" &&
-                !Number.isNaN(new Date(item.expiryAt).getTime()) &&
-                new Date(item.expiryAt).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0);
-              const statusLabel = isExpired ? "Expired" : "Completed";
-              const completedBy = getCompletedByDisplay(item) || "—";
+        {/* <p className="vendor_portal_section_subheading">Quick actions across attestation, assessments, and reporting.</p> */}
+        <div className="vendor_portal_action_cards">
+          <Link
+            to="/vendorSelfAttestation"
+            className="vendor_portal_action_card vendor_portal_action_card_primary"
+          >
+            <FilePlus
+              size={28}
+              className="vendor_portal_action_icon"
+              aria-hidden
+            />
+            <span className="vendor_portal_action_label">
+              Create Attestation
+            </span>
+          </Link>
+          <Link
+            to="/vendorcots"
+            className="vendor_portal_action_card vendor_portal_action_card_primary"
+          >
+            <ClipboardPlus
+              size={26}
+              className="vendor_portal_action_icon_secondary"
+              aria-hidden
+            />
+            <span className="vendor_portal_action_label">
+              Create Assessment
+            </span>
+          </Link>
+          <Link
+            to="/sales-enablement"
+            className="vendor_portal_action_card vendor_portal_action_card_primary"
+          >
+            <Bot
+              size={26}
+              className="vendor_portal_action_icon_secondary"
+              aria-hidden
+            />
+            <span className="vendor_portal_action_label">
+              Access Sales Agent
+            </span>
+          </Link>
+          <Link
+            to="/reports"
+            className="vendor_portal_action_card vendor_portal_action_card_primary"
+          >
+            <FileTextIcon
+              size={26}
+              className="vendor_portal_action_icon_secondary"
+              aria-hidden
+            />
+            <span className="vendor_portal_action_label">Access Reports</span>
+          </Link>
+          <Link
+            to="/product_profile"
+            className="vendor_portal_action_card vendor_portal_action_card_primary"
+          >
+            <Globe
+              size={26}
+              className="vendor_portal_action_icon_secondary"
+              aria-hidden
+            />
+            <span className="vendor_portal_action_label">
+              Access Product Profile
+            </span>
+          </Link>
+        </div>
+      </section>
+
+      <div className="vendor_portal_two_column">
+        <section
+          className="vendor_portal_column_card"
+          aria-labelledby="current-attestations-heading"
+        >
+          <h2
+            id="current-attestations-heading"
+            className="vendor_portal_column_title"
+          >
+            Current Attestations
+          </h2>
+          <p className="vendor_portal_column_subtitle">
+            Active products and trust posture
+          </p>
+          {loading && <LoadingMessage message="Loading attestations…" />}
+          {error && <div className="vendor_overview_error">{error}</div>}
+          {!loading && !error && currentAttestationCards.length === 0 && (
+            <div className="vendor_overview_empty">
+              No completed attestations yet.
+            </div>
+          )}
+          {!loading &&
+            !error &&
+            currentAttestationCards.map((att) => {
+              const product =
+                (att.productName ?? "").trim() || "Vendor Self-Attestation";
+              const score =
+                att.generated_profile_report?.trustScore?.overallScore;
+              const label = att.generated_profile_report?.trustScore?.label;
+              const scoreNum =
+                score != null && !Number.isNaN(Number(score))
+                  ? Math.round(Number(score))
+                  : null;
+              const labelUpper =
+                label &&
+                String(label).trim() &&
+                String(label).trim().toLowerCase() !== "not specified"
+                  ? String(label).trim().toUpperCase()
+                  : "EXCELLENT";
+              const trustSubtitle =
+                scoreNum != null ? `TRUST SCORE` : "";
+              const subtitle =
+                att.generated_profile_report?.trustScore?.summary != null &&
+                String(att.generated_profile_report.trustScore.summary).trim()
+                  ? String(att.generated_profile_report.trustScore.summary)
+                      .trim()
+                      .slice(0, 120)
+                  : "Infrastructure AI component";
               return (
                 <div
-                  key={item.assessmentId}
-                  className="vendor_overview_attestation_row"
+                  key={att.id}
+                  className="vendor_portal_attestation_wide_card"
                 >
-                  <FileText
-                    size={24}
-                    className={
-                      isExpired
-                        ? "vendor_overview_attestation_icon vendor_overview_attestation_icon_expired"
-                        : "vendor_overview_attestation_icon vendor_overview_attestation_icon_check"
-                    }
-                    aria-hidden
-                  />
-                  <div className="vendor_overview_attestation_content">
-                    <p className="vendor_overview_attestation_name">{title}</p>
-                    <p
-                      className={
-                        isExpired
-                          ? "vendor_overview_attestation_status_label vendor_overview_attestation_status_label_expired"
-                          : "vendor_overview_attestation_status_label"
-                      }
-                    >
-                      {statusLabel}
-                    </p>
-                    <p className="vendor_overview_attestation_by">
-                      Completed by: {completedBy}
-                    </p>
-                    <div className="vendor_overview_attestation_date_row">
-                      <p className="vendor_overview_attestation_date">
-                        Created on: {formatDateDDMMMYYYY(item.createdAt)}
+                  <div className="vendor_portal_attestation_wide_left">
+                    <Shield
+                      size={22}
+                      className="vendor_portal_attestation_wide_icon"
+                      aria-hidden
+                    />
+                    <div>
+                      <p className="vendor_portal_attestation_wide_name">
+                        {product}
                       </p>
-                      <p className="vendor_overview_attestation_date vendor_overview_attestation_date_expiry">
-                        Expires on: {formatDateDDMMMYYYY(item.expiryAt)}
+                      <p className="vendor_portal_attestation_wide_desc">
+                        {subtitle}
                       </p>
                     </div>
                   </div>
-                  <div className="vendor_overview_attestation_actions">
-                    {reportId ? (
-                      <Link
-                        to={`/reports/${reportId}`}
-                        className="vendor_overview_btn_view"
-                      >
-                        <Eye size={16} aria-hidden />
-                        View Report
-                      </Link>
+                  <div
+                    className="vendor_portal_attestation_wide_score"
+                    aria-label="Trust score"
+                  >
+                    {scoreNum != null ? (
+                      <>
+                        <span className="vendor_portal_attestation_score_num">
+                          {scoreNum}
+                        </span>
+                        <span className="vendor_portal_attestation_score_label">
+                          {trustSubtitle}
+                          <ClickTooltip content="Trust Score is displayed out of 100">
+                            <Info size={14} color="#6B7280" />
+                          </ClickTooltip>
+                        </span>
+                      </>
                     ) : (
-                      <span className="vendor_overview_attestation_date">No report yet</span>
+                      <span className="vendor_portal_attestation_score_pending">
+                        Pending score
+                      </span>
                     )}
                   </div>
                 </div>
               );
             })}
+        </section>
+
+        <section
+          className="vendor_portal_column_card"
+          aria-labelledby="compliance-repo-heading"
+        >
+          <h2
+            id="compliance-repo-heading"
+            className="vendor_portal_column_title"
+          >
+            Compliance Repository
+          </h2>
+          <p className="vendor_portal_column_subtitle">
+            Certificates grouped by the attestations shown in the other panel
+          </p>
+          {loading && <LoadingMessage message="Loading documents…" />}
+          {!loading && !error && currentAttestationCards.length === 0 && (
+            <div className="vendor_overview_empty" role="status">
+              No attestations — no compliance to show
+            </div>
+          )}
+          {!loading &&
+            !error &&
+            currentAttestationCards.map((att) => {
+              const product =
+                (att.productName ?? "").trim() || "Vendor Self-Attestation";
+              const docs = complianceDocsByAttestationId[att.id] ?? [];
+              const visibleDocs = docs.slice(0, COMPLIANCE_CARDS_PER_VIEW);
+              return (
+                <div
+                  key={att.id}
+                  className="vendor_portal_compliance_attestation_block"
+                >
+                  {docs.length === 0 ? (
+                    <div
+                      className="vendor_overview_empty vendor_portal_compliance_empty_beside"
+                      role="status"
+                    >
+                      No compliance certificates
+                    </div>
+                  ) : (
+                    <div className="vendor_portal_compliance_carousel">
+                      <div
+                        className="vendor_portal_compliance_track"
+                        role="list"
+                        aria-label={`Compliance certificates for ${product}`}
+                      >
+                        {visibleDocs.map((doc) => {
+                          const typeHeading =
+                            doc.complianceTypeLabel !== "—"
+                              ? doc.complianceTypeLabel
+                              : "Compliance certificate";
+                          const openDoc = () =>
+                            openComplianceDocumentInNewTab(
+                              doc.attestationId,
+                              doc.fileName,
+                            );
+                          return (
+                            <div
+                              key={doc.key}
+                              className="vendor_portal_compliance_cell"
+                              role="listitem"
+                            >
+                              <article className="vendor_portal_compliance_repo_card">
+                                <div className="vendor_portal_compliance_repo_card_header">
+                                  <p className="vendor_portal_compliance_repo_card_type">
+                                    <FileText size={10} aria-hidden />
+                                    <span>{typeHeading}</span>
+                                  </p>
+                                  <button
+                                    type="button"
+                                    className="vendor_portal_compliance_repo_card_download"
+                                    aria-label={`Download ${doc.title}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openDoc();
+                                    }}
+                                  >
+                                    <Download size={10} aria-hidden />
+                                  </button>
+                                </div>
+                                <div className="vendor_portal_compliance_repo_card_body">
+                                  <h3 className="vendor_portal_compliance_repo_card_title">
+                                    {doc.title}
+                                  </h3>
+                                </div>
+                                <div className="vendor_portal_compliance_repo_card_footer">
+                                  <span className="vendor_portal_compliance_repo_card_expiry">
+                                    {doc.expiryDateDisplay
+                                      ? `Expires on: ${doc.expiryDateDisplay}`
+                                      : "Expiry not specified"}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="vendor_portal_compliance_repo_card_view"
+                                    onClick={openDoc}
+                                    aria-label={`View report: ${doc.title}`}
+                                  >
+                                    View
+                                    <ChevronRight size={10} aria-hidden />
+                                  </button>
+                                </div>
+                              </article>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+        </section>
+        <div className="vendor_portal_two_column_footer">
+          <Link to="/attestation_details" className="vendor_portal_view_all_bottom">
+            View All <ChevronRight size={14} aria-hidden />
+          </Link>
+        </div>
+      </div>
+
+      <section
+        className="vendor_portal_table_section"
+        aria-labelledby="recent-assessments-heading"
+      >
+        <div className="vendor_portal_table_header_row">
+          <h2
+            id="recent-assessments-heading"
+            className="vendor_portal_section_heading vendor_portal_section_heading_inline"
+          >
+            Recent Product Assessments
+          </h2>
+          <Link to="/reports" className="vendor_portal_view_history">
+            View All <ChevronRight size={14} aria-hidden />
+          </Link>
+        </div>
+        {assessmentsLoading && (
+          <LoadingMessage message="Loading assessments…" />
+        )}
+        {!assessmentsLoading && recentAssessmentsTable.length === 0 && (
+          <div className="vendor_overview_empty">
+            No product assessments yet.
           </div>
         )}
-      </div>
+        {!assessmentsLoading && recentAssessmentsTable.length > 0 && (
+          <div className="vendor_portal_table_wrap">
+            <table className="vendor_portal_table">
+              <thead>
+                <tr>
+                  <th scope="col">Product Entity</th>
+                  <th scope="col">Customer</th>
+                  <th scope="col">Vendor Grade</th>
+                  <th scope="col">Compliance Cerificates</th>
+                  <th scope="col">Expiry Date</th>
+                  <th scope="col" className="vendor_portal_th_actions">
+                    Report
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentAssessmentsTable.map((item) => {
+                  const reportMeta =
+                    reportsByAssessmentId[String(item.assessmentId)];
+                  const product =
+                    (item.productName ?? "").toString().trim() || "—";
+                  const org = (item.customerOrganizationName ?? "")
+                    .toString()
+                    .trim();
+                  const displayProduct = org ? `${product} (${org})` : product;
+                  const lastVerified = formatDateDDMMMYYYY(
+                    item.expiryAt ??
+                      item.cotsUpdatedAt ??
+                      item.updatedAt ??
+                      item.createdAt,
+                  );
+                  const reportId = reportMeta?.reportId;
+                  const barColor =
+                    reportMeta?.vendorGrade === "A" ||
+                    reportMeta?.vendorGrade === "A+"
+                      ? "var(--vendor-portal-grade-a, #16a34a)"
+                      : "#2563eb";
+                  const displayScore = reportMeta?.vendorGradePercent ?? null;
+                  const complianceCertificates = findCertificateTypesForAssessment(
+                    item,
+                    attestations,
+                  );
+                  return (
+                    <tr key={String(item.assessmentId)}>
+                      <td>
+                        <div className="vendor_portal_cell_product">
+                          <Bot
+                            size={18}
+                            className="vendor_portal_cell_product_icon"
+                            aria-hidden
+                          />
+                          <span>{product}</span>
+                        </div>
+                      </td>
+                      <td>{org}</td>
+                      <td>
+                        <div className="vendor_portal_grade_cell">
+                          {displayScore != null && (
+                            <div className="vendor_portal_score_cell">
+                              <span className="vendor_portal_score_pct">
+                                {displayScore}%
+                              </span>
+                              <div className="vendor_portal_progress_track">
+                                <div
+                                  className="vendor_portal_progress_fill"
+                                  style={{
+                                    width: `${Math.min(100, displayScore)}%`,
+                                    background: barColor,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                          {displayScore == null && (
+                            <span className="vendor_portal_grade_na">—</span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        {complianceCertificates.length > 0 ? (
+                          <div className="vendor_portal_compliance_names">
+                            {complianceCertificates.map((docType) => (
+                              <span
+                                key={docType}
+                                className="vendor_portal_compliance_pill"
+                                title={docType}
+                              >
+                                {docType}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="vendor_portal_grade_na">—</span>
+                        )}
+                      </td>
+                      <td>{lastVerified}</td>
+                      <td>
+                        {reportId ? (
+                          <Link
+                            to={`/reports/${reportId}`}
+                            className="vendor_portal_table_link"
+                          >
+                            View
+                          </Link>
+                        ) : (
+                          <span className="vendor_portal_grade_na">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 };

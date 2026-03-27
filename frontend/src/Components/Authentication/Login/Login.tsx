@@ -18,7 +18,7 @@ const Login = () => {
   document.title = "AI Eval Platform | Sign in";
 
   const BASE_URL =
-    import.meta.env.VITE_BASE_URL ?? "http://localhost:5003/api/v1";
+    import.meta.env.VITE_BASE_URL;
   const navigate = useNavigate();
   const location = useLocation();
   const resetSuccess = (location.state as { resetSuccess?: boolean } | null)
@@ -123,7 +123,7 @@ const Login = () => {
         const nextPath =
           userDetails.user_onboarding_completed === true ||
           userDetails.user_onboarding_completed === "true"
-            ? "/"
+            ? "/dashboard"
             : "/onBoarding";
         setTimeout(() => navigate(nextPath), 2000);
       } else {

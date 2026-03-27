@@ -3,7 +3,8 @@ import VendorOverview from "./VendorOverview";
 import BuyerOverview from "./BuyerOverview";
 
 const Dashboard = () => {
-  document.title = "AI Eval | Dashboard"
+  const sr = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim().replace(/_/g, " ");
+  document.title = sr === "vendor" ? "AI Eval | Vendor Portal Dashboard" : "AI Eval | Dashboard";
   let systemRole = (sessionStorage.getItem("systemRole") ?? "").toLowerCase().trim().replace(/_/g, " ");
   if (systemRole === "system_admin") systemRole = "system admin";
   if (systemRole === "system_manager") systemRole = "system manager";

@@ -592,8 +592,8 @@
   text-align: center;
   color: #6b7280;
   font-size: 0.9375rem;
-  background: white;
-  border: 1px dashed #e5e7eb;
+  /* background: white; */
+  /* border: 1px dashed #e5e7eb; */
   border-radius: 8px;
 }
 
@@ -1171,4 +1171,659 @@
 
 .governance_risk_search_send:hover {
   background: #1d4ed8;
+}
+
+/* ========== Vendor Portal Dashboard (governance-style layout) ========== */
+.vendor_portal_dashboard {
+  padding-bottom: 2rem;
+}
+
+.vendor_portal_section {
+  margin-bottom: 1.75rem;
+}
+
+.vendor_portal_section_heading {
+font-size: 1em;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.8em 0;
+}
+
+.vendor_portal_section_heading_inline {
+  margin: 0;
+}
+
+.vendor_portal_section_subheading {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+}
+
+.vendor_portal_action_cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 1200px) {
+  .vendor_portal_action_cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .vendor_portal_action_cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .vendor_portal_action_cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vendor_portal_action_card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 108px;
+  padding: 1.1rem 1.15rem;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  text-decoration: none;
+  color: #1e3a8a;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+.vendor_portal_action_card:hover {
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+  border-color: #bfdbfe;
+  transform: translateY(-1px);
+}
+
+.vendor_portal_action_card_primary {
+  background: white;
+  border-color: #e9f2ff;
+  color: black;
+}
+
+.vendor_portal_action_card_primary:hover {
+  /* border-color: #1e40af; */
+  /* box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4); */
+  /* background-color: #e9f2ff; */
+  background-color: var(--main-auth-button-color);
+  color: white;
+}
+
+.vendor_portal_action_card_primary:hover .vendor_portal_action_icon,
+.vendor_portal_action_card_primary:hover .vendor_portal_action_icon_secondary {
+  color: white;
+}
+
+.vendor_portal_action_icon {
+  color: var(--main-auth-button-color, #2463eb);
+  flex-shrink: 0;
+}
+
+.vendor_portal_action_icon_secondary {
+  color: var(--main-auth-button-color, #2463eb);
+  flex-shrink: 0;
+}
+
+.vendor_portal_action_label {
+  font-size: 0.875em;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.vendor_portal_two_column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: start;
+  background-color: white;
+  border-radius: 5px;
+  border: 1px solid #e6e9ef ;
+  padding: 10px;
+}
+
+.vendor_portal_two_column_footer {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  margin-top: 0;
+}
+
+.vendor_portal_view_all_bottom {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8em;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+
+}
+
+/* .vendor_portal_view_all_bottom:hover {
+  text-decoration: underline;
+} */
+
+@media (max-width: 1024px) {
+  .vendor_portal_two_column {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vendor_portal_compliance_attestation_block {
+  margin-bottom: 0.55rem;
+  min-height: 7em;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: 7em;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  background: #f9fafb;
+  padding: 5px;
+}
+
+.vendor_portal_compliance_attestation_block:last-child {
+  margin-bottom: 0;
+}
+
+.vendor_portal_compliance_block_product {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin: 0 0 0.2rem 0;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vendor_portal_compliance_empty_beside {
+  min-height: 6.1rem;
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  /* background: #f9fafb; */
+  /* border: 1px solid #e5e7eb; */
+  border-radius: 8px;
+  height: 100%;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+.vendor_portal_column_card {
+  /* background: #ffffff; */
+  /* border: 1px solid #e6e9ef; */
+  /* border-radius: 10px; */
+  /* padding: 1rem 1rem 0.95rem; */
+  /* box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04); */
+}
+
+.vendor_portal_two_column_header_row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.vendor_portal_column_title {
+  font-size: 1.2em;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  line-height: 1.08;
+}
+
+.vendor_portal_column_subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0.22rem 0 0.82rem;
+}
+
+.vendor_portal_attestation_wide_card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.55rem;
+  border: 1px solid #e6e9ef;
+  border-radius: 8px;
+  min-height: 7em;
+  background-color:#f9fafb;
+
+}
+
+.vendor_portal_attestation_wide_card:last-child {
+  margin-bottom: 0;
+}
+
+.vendor_portal_attestation_wide_left {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.62rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.vendor_portal_attestation_wide_icon {
+  color: #2563eb;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.vendor_portal_attestation_wide_name {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #111827;
+  margin: 0 0 0.1rem 0;
+  display: flex;
+  align-content: center;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.vendor_portal_attestation_wide_desc {
+  font-size: 0.8em;
+  color: #6b7280;
+  margin: 10px 0;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.vendor_portal_attestation_wide_score {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.vendor_portal_attestation_score_num {
+  display: block;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #16a34a;
+  line-height: 1;
+}
+
+.vendor_portal_attestation_score_label .click_tooltip_wrapper {
+  margin: 0 !important;
+}
+
+.vendor_portal_attestation_score_label {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  /* max-width: 100px; */
+  margin-left: auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.08rem;
+  align-content: center;
+  align-items: center;
+}
+
+.vendor_portal_attestation_score_pending {
+  font-size: 0.875em;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.vendor_portal_compliance_carousel {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.vendor_portal_compliance_nav {
+  flex-shrink: 0;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.vendor_portal_compliance_nav:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+.vendor_portal_compliance_nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Exactly three certificate cards per row; arrows slide horizontally (no vertical scroll) */
+.vendor_portal_compliance_track {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 0.35rem;
+  overflow: hidden;
+  align-items: stretch;
+}
+
+.vendor_portal_compliance_cell {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+/* Compliance Repository card (matches screenshot style) */
+.vendor_portal_compliance_repo_card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  background: #ffffff;
+  border: 1px solid #e7ebf3;
+  border-radius: 5px;
+  box-shadow: none;
+  padding: 0.24rem 0.3rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  min-height: 6.1rem;
+}
+
+.vendor_portal_compliance_repo_card_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.vendor_portal_compliance_repo_card_type {
+  margin: 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+  color: #90a0b6;
+  font-size: 0.5rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.vendor_portal_compliance_repo_card_type span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.vendor_portal_compliance_repo_card_download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.86rem;
+  height: 0.86rem;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: #eff6ff;
+  color: #2563eb;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.vendor_portal_compliance_repo_card_body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.02rem 0.04rem 0.08rem;
+}
+
+.vendor_portal_compliance_repo_card_title {
+  margin: 0;
+  color: #111827;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.14;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.vendor_portal_compliance_repo_card_footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.vendor_portal_compliance_repo_card_expiry {
+  font-size: 0.42rem;
+  color: #98a2b3;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.vendor_portal_compliance_repo_card_view {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.08rem;
+  font: inherit;
+  color: #2563eb;
+  font-size: 0.55rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.vendor_portal_table_section {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1.25rem 1.35rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.vendor_portal_table_header_row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.vendor_portal_view_history {
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+  display: flex;
+  align-content: center;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.8em;
+}
+
+.vendor_portal_view_history:hover {
+  /* text-decoration: underline; */
+}
+
+.vendor_portal_table_wrap {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.vendor_portal_table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.vendor_portal_table th,
+.vendor_portal_table td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+
+.vendor_portal_table th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+  background: #f9fafb;
+}
+
+.vendor_portal_th_actions {
+  text-align: center;
+}
+
+.vendor_portal_table tbody tr:hover {
+  background: #fafafa;
+}
+
+.vendor_portal_cell_product {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.vendor_portal_cell_product_icon {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.vendor_portal_grade_shield {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem 0.2rem 0.35rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.vendor_portal_grade_shield_a {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.vendor_portal_grade_shield_b,
+.vendor_portal_grade_shield_c {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.vendor_portal_grade_na {
+  color: #9ca3af;
+}
+
+.vendor_portal_grade_cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 100px;
+}
+
+.vendor_portal_score_cell {
+  min-width: 100px;
+}
+
+.vendor_portal_score_pct {
+  display: block;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.35rem;
+}
+
+.vendor_portal_progress_track {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.vendor_portal_progress_fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.2s ease;
+}
+
+.vendor_portal_table_link {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.vendor_portal_table_link:hover {
+  text-decoration: underline;
+}
+
+.vendor_portal_compliance_names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-width: 260px;
+}
+
+.vendor_portal_compliance_pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.14rem 0.48rem;
+  border-radius: 999px;
+  border: 1px solid #dbe5f4;
+  background: #f7faff;
+  color: #2f3f58;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

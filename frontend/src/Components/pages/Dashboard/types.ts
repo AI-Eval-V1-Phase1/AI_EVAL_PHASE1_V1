@@ -27,6 +27,10 @@ export interface DashboardStats {
 export interface CertificateItem {
   name: string;
   expiryDate: string | null;
+  /** Certification category from document_uploads["2"].byCategory (e.g. ISO 27001). */
+  certificateType?: string | null;
+  /** Same as certificateType; kept for backward compatibility with API responses. */
+  complianceType?: string | null;
 }
 
 /** Trust score block from generated profile report (per attestation/product) */

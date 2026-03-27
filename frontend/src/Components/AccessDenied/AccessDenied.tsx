@@ -14,7 +14,7 @@ const AccessDenied = () => {
           You do not have permission to access this page.
         </p>
         <p className="goBack">
-          Go back to <Link to="/" replace>Home</Link>
+          Go back to <Link to="/dashboard" replace>Home</Link>
         </p>
       </div>
     </div>

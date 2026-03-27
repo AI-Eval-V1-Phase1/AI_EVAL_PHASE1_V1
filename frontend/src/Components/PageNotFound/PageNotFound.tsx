@@ -9,7 +9,7 @@ const PageNotFound = () => {
   const handleHomeClick = () => {
     const isLoggedIn = !!sessionStorage.getItem("bearerToken");
     if (isLoggedIn) {
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
     } else {
       sessionStorage.clear();
       navigate("/login", { replace: true });

@@ -16,34 +16,86 @@ function userDisplayName(u: { user_name?: string | null; user_first_name?: strin
 
 /**
  * Build certificates array from document_uploads for dashboard display.
- * Only includes entries from slot "2" (Regulatory and Compliance Certification Material) where
- * the corresponding category was selected (checkbox) and at least one document was uploaded.
- * Each entry has name (from uploaded file) and expiryDate (from backend when available; null otherwise).
+ * Slot "2" holds Regulatory and Compliance Certification Material: { categories, byCategory }.
+ * Each file is tagged with certificateType from its byCategory key (e.g. ISO 27001), matching the attestation UI.
  */
-function buildCertificatesFromDocumentUploads(docUploads: unknown): Array<{ name: string; expiryDate: string | null }> {
+function buildCertificatesFromDocumentUploads(
+  docUploads: unknown,
+): Array<{ name: string; expiryDate: string | null; certificateType: string | null }> {
   if (docUploads == null || typeof docUploads !== "object") return [];
   const o = docUploads as Record<string, unknown>;
-  const list: Array<{ name: string; expiryDate: string | null }> = [];
-  const pushNames = (names: unknown[], expiryDate: string | null = null) => {
+  const list: Array<{ name: string; expiryDate: string | null; certificateType: string | null }> = [];
+  const pushNames = (
+    names: unknown[],
+    expiryDate: string | null = null,
+    certificateType: string | null = null,
+  ) => {
     if (!Array.isArray(names)) return;
+    const ct = certificateType?.trim() || null;
     for (const n of names) {
       if (typeof n === "object" && n !== null && "name" in n && typeof (n as { name: unknown }).name === "string") {
-        const entry = n as { name: string; expiryDate?: string | null };
-        list.push({ name: entry.name, expiryDate: entry.expiryDate ?? null });
+        const entry = n as {
+          name: string;
+          expiryDate?: string | null;
+          certificateType?: string | null;
+          certificate_type?: string | null;
+          complianceType?: string | null;
+          documentType?: string | null;
+        };
+        const rowType = (
+          entry.certificateType ??
+          entry.certificate_type ??
+          entry.complianceType ??
+          entry.documentType ??
+          ct
+        )
+          ?.trim() || null;
+        list.push({
+          name: entry.name,
+          expiryDate: entry.expiryDate ?? null,
+          certificateType: rowType,
+        });
       } else if (typeof n === "string" && n.trim()) {
-        list.push({ name: n.trim(), expiryDate });
+        list.push({ name: n.trim(), expiryDate, certificateType: ct });
       }
     }
   };
-  // Only slot 2: categories selected by user (checkbox) with uploaded files per category
+
   const slot2 = o["2"];
-  if (slot2 != null && typeof slot2 === "object" && !Array.isArray(slot2)) {
-    const byCat = (slot2 as Record<string, unknown>).byCategory;
-    if (byCat != null && typeof byCat === "object") {
-      for (const arr of Object.values(byCat)) {
-        pushNames(Array.isArray(arr) ? arr : []);
-      }
+  // Legacy: flat list of file names (no per-file certificate type)
+  if (Array.isArray(slot2)) {
+    pushNames(slot2, null, null);
+    return list;
+  }
+  if (slot2 == null || typeof slot2 !== "object") return list;
+
+  const s = slot2 as Record<string, unknown>;
+  const categoriesList = Array.isArray(s.categories)
+    ? (s.categories as unknown[]).filter((c): c is string => typeof c === "string" && c.trim() !== "")
+    : [];
+  const byCat =
+    s.byCategory != null && typeof s.byCategory === "object" && !Array.isArray(s.byCategory)
+      ? (s.byCategory as Record<string, unknown>)
+      : {};
+
+  const orderedKeys: string[] = [];
+  const seen = new Set<string>();
+  for (const c of categoriesList) {
+    if (!seen.has(c)) {
+      seen.add(c);
+      orderedKeys.push(c);
     }
+  }
+  for (const k of Object.keys(byCat)) {
+    if (!seen.has(k)) {
+      seen.add(k);
+      orderedKeys.push(k);
+    }
+  }
+  for (const catKey of orderedKeys) {
+    const raw = byCat[catKey];
+    const arr = Array.isArray(raw) ? raw : [];
+    pushNames(arr, null, catKey.trim() || null);
   }
   return list;
 }
@@ -52,9 +104,9 @@ function buildCertificatesFromDocumentUploads(docUploads: unknown): Array<{ name
  * Attach parsed document expiry (from compliance_document_expiries, keyed by file name) to each certificate row.
  */
 function mergeCertificateExpiries(
-  certificates: Array<{ name: string; expiryDate: string | null }>,
+  certificates: Array<{ name: string; expiryDate: string | null; certificateType: string | null }>,
   expiries: unknown,
-): Array<{ name: string; expiryDate: string | null }> {
+): Array<{ name: string; expiryDate: string | null; certificateType: string | null }> {
   if (!expiries || typeof expiries !== "object" || Array.isArray(expiries)) return certificates;
   const map = expiries as Record<string, { expiryAt?: string | null }>;
   return certificates.map((c) => {
@@ -99,10 +151,17 @@ function mapAttestationRow(attestRow: Record<string, unknown>, completedByName?:
   const raw = String(attestRow.status ?? "").toUpperCase();
   const rowStatus = raw === "DRAFT" ? "DRAFT" : raw === "EXPIRED" ? "EXPIRED" : "COMPLETED";
   const document_uploads = attestRow.document_uploads;
-  const certificates = mergeCertificateExpiries(
+  const certificatesMerged = mergeCertificateExpiries(
     buildCertificatesFromDocumentUploads(document_uploads),
     attestRow.compliance_document_expiries,
   );
+  /** certificateType from document_uploads slot 2 byCategory; complianceType mirrors it for older clients */
+  const certificates = certificatesMerged.map((c) => ({
+    name: c.name,
+    expiryDate: c.expiryDate,
+    certificateType: c.certificateType,
+    complianceType: c.certificateType,
+  }));
   const sector = parseSectorFromRow(attestRow);
   const base: Record<string, unknown> = {
     id: attestRow.id,
